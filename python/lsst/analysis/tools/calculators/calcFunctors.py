@@ -1,9 +1,9 @@
 __all__ = ["SNCalculator", "KronFluxDivPsfFlux", "MagDiff", "ColorDiff", "ColorDiffPull",
-           "ExtinctionCorrectedMagDiff"]
+           "ExtinctionCorrectedMagDiff", "CalcE", "CalcEDiff", "CalcE1", "CalcE2", "CalcShapeSize"]
 
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 from lsst.pipe.tasks.dataFrameActions import DataFrameAction, DivideColumns, MultiColumnAction
-from lsst.pex.config import Field, DictField
+from lsst.pex.config import ChoiceField, DictField, Field
 from astropy import units as u
 import numpy as np
 import logging
@@ -132,35 +132,82 @@ class ExtinctionCorrectedMagDiff(DataFrameAction):
 
 
 class CalcE(MultiColumnAction):
-    """Calculate a complex value representation of the ellipticity
-
-    This is a shape measurement used for doing QA on the ellipticity
-    of the sources.
+    """Calculate a complex value representation of the ellipticity.
 
     The complex ellipticity is typically defined as
-    E = ((ixx - iyy) + 1j*(2*ixy))/(ixx + iyy) = |E|exp(i*2*theta).
+    e = |e|exp(j*2*theta) = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy), where j is
+    the square root of -1 and Ixx, Iyy, Ixy are second-order central moments.
+    This is sometimes referred to as distortion, and denoted by e = (e1, e2)
+    in GalSim and referred to as chi-type ellipticity following the notation
+    in Eq. 4.4 of Bartelmann and Schneider (2001). The other definition differs
+    in normalization. It is referred to as shear, and denoted by g = (g1, g2)
+    in GalSim and referred to as epsilon-type ellipticity again following the
+    notation in Eq. 4.10 of Bartelmann and Schneider (2001). It is defined as
+    g = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
 
-    For plotting purposes we might want to plot |E|*exp(i*theta).
+    The shear measure is unbiased in weak-lensing shear, but may exclude some
+    objects in the presence of noisy moment estimates. The distortion measure
+    is biased in weak-lensing distortion, but does not suffer from selection
+    artifacts.
+
+    Reference
+    ---------
+    [1] Bartelmann, M. and Schneider, P., “Weak gravitational lensing”,
+    Physics Reports, vol. 340, no. 4–5, pp. 291–472, 2001.
+    doi:10.1016/S0370-1573(00)00082-X; https://arxiv.org/abs/astro-ph/9912508
+
+    Notes
+    -----
+
+    1. This is a shape measurement used for doing QA on the ellipticity
+    of the sources.
+
+    2. For plotting purposes we might want to plot |E|*exp(i*theta).
     If `halvePhaseAngle` config parameter is set to `True`, then
-    the returned quantity therefore corresponds to |E|*exp(i*theta)
+    the returned quantity therefore corresponds to |E|*exp(i*theta).
+
+    See Also
+    --------
+    CalcE1
+    CalcE2
     """
 
-    colXx = Field(doc="The column name to get the xx shape component from.",
-                  dtype=str,
-                  default="ixx")
+    colXx = Field(
+        doc="The column name to get the xx shape component from.",
+        dtype=str,
+        default="ixx",
+    )
 
-    colYy = Field(doc="The column name to get the yy shape component from.",
-                  dtype=str,
-                  default="iyy")
+    colYy = Field(
+        doc="The column name to get the yy shape component from.",
+        dtype=str,
+        default="iyy",
+    )
 
-    colXy = Field(doc="The column name to get the xy shape component from.",
-                  dtype=str,
-                  default="ixy")
+    colXy = Field(
+        doc="The column name to get the xy shape component from.",
+        dtype=str,
+        default="ixy",
+    )
 
-    halvePhaseAngle = Field(doc=("Divide the phase angle by 2? "
-                                 "Suitable for quiver plots."),
-                            dtype=bool,
-                            default=False)
+    ellipticityType = ChoiceField(
+        doc="The type of ellipticity to calculate",
+        dtype=str,
+        allowed={"chi": ("Distortion, defined as (Ixx - Iyy + 2j*Ixy)/"
+                         "(Ixx + Iyy)"
+                         ),
+                 "epsilon": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/"
+                             "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"
+                             ),
+                 },
+        default="chi",
+    )
+
+    halvePhaseAngle = Field(
+        doc="Divide the phase angle by 2? Suitable for quiver plots.",
+        dtype=bool,
+        default=False,
+    )
 
     @property
     def columns(self):
@@ -168,7 +215,13 @@ class CalcE(MultiColumnAction):
 
     def __call__(self, df):
         e = (df[self.colXx] - df[self.colYy]) + 1j*(2*df[self.colXy])
-        e /= (df[self.colXx] + df[self.colYy])
+        denom = (df[self.colXx] + df[self.colYy])
+
+        if self.ellipticityType == "epsilon":
+            denom += 2*np.sqrt(df[self.colXx]*df[self.colYy] - df[self.colXy]**2)
+
+        e /= denom
+
         if self.halvePhaseAngle:
             # Ellipiticity is |e|*exp(i*2*theta), but we want to return
             # |e|*exp(i*theta). So we multiply by |e| and take its square root
@@ -182,28 +235,40 @@ class CalcE(MultiColumnAction):
 class CalcEDiff(DataFrameAction):
     """Calculate the difference of two ellipticities as a complex quantity.
 
-    This is a shape measurement used for doing QA on the ellipticity
+    The complex ellipticity difference between e_A and e_B is defined as
+    e_A - e_B = de = |de|exp(j*2*theta).
+
+    See Also
+    --------
+    CalcE
+
+    Notes
+    -----
+
+    1. This is a shape measurement used for doing QA on the ellipticity
     of the sources.
 
-    The complex ellipticity difference between E_A and E_B is efined as
-    dE = |dE|exp(i*2*theta).
-
-    For plotting purposes we might want to plot |dE|*exp(i*theta).
+    2. For plotting purposes we might want to plot |de|*exp(j*theta).
     If `halvePhaseAngle` config parameter is set to `True`, then
-    the returned quantity therefore corresponds to |E|*exp(i*theta)
+    the returned quantity therefore corresponds to |e|*exp(j*theta).
     """
-    colA = ConfigurableActionField(doc="Ellipticity to subtract from",
-                                   dtype=MultiColumnAction,
-                                   default=CalcE)
+    colA = ConfigurableActionField(
+        doc="Ellipticity to subtract from",
+        dtype=MultiColumnAction,
+        default=CalcE,
+    )
 
-    colB = ConfigurableActionField(doc="Ellipticity to subtract",
-                                   dtype=MultiColumnAction,
-                                   default=CalcE)
+    colB = ConfigurableActionField(
+        doc="Ellipticity to subtract",
+        dtype=MultiColumnAction,
+        default=CalcE,
+    )
 
-    halvePhaseAngle = Field(doc=("Divide the phase angle by 2? "
-                                 "Suitable for quiver plots."),
-                            dtype=bool,
-                            default=False)
+    halvePhaseAngle = Field(
+        doc="Divide the phase angle by 2? Suitable for quiver plots.",
+        dtype=bool,
+        default=False,
+    )
 
     @property
     def columns(self):
@@ -216,7 +281,7 @@ class CalcEDiff(DataFrameAction):
         eDiff = eMeas - ePSF
         if self.halvePhaseAngle:
             # Ellipiticity is |e|*exp(i*2*theta), but we want to return
-            # |e|*exp(i*theta). So we multiply by |e| and take its square root
+            # |e|*exp(j*theta). So we multiply by |e| and take its square root
             # instead of the more expensive trig calls.
             eDiff *= np.abs(eDiff)
             return np.sqrt(eDiff)
@@ -225,87 +290,193 @@ class CalcEDiff(DataFrameAction):
 
 
 class CalcE1(MultiColumnAction):
-    """Calculate E1: (ixx - iyy)/(ixx + iyy)
+    """Calculate chi-type e1 = (Ixx - Iyy)/(Ixx + Iyy) or
+    epsilon-type g1 = (Ixx - Iyy)/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
+
+    See Also
+    --------
+    CalcE
+    CalcE2
+
+    Note
+    ----
     This is a shape measurement used for doing QA on the ellipticity
-    of the sources."""
+    of the sources.
+    """
 
-    colXx = Field(doc="The column name to get the xx shape component from.",
-                  dtype=str,
-                  default="ixx")
+    colXx = Field(
+        doc="The column name to get the xx shape component from.",
+        dtype=str,
+        default="ixx",
+    )
 
-    colYy = Field(doc="The column name to get the yy shape component from.",
-                  dtype=str,
-                  default="iyy")
+    colYy = Field(
+        doc="The column name to get the yy shape component from.",
+        dtype=str,
+        default="iyy",
+    )
+
+    colXy = Field(
+        doc="The column name to get the xy shape component from.",
+        dtype=str,
+        default="ixy",
+        optional=True,
+    )
+
+    ellipticityType = ChoiceField(
+        doc="The type of ellipticity to calculate",
+        dtype=str,
+        allowed={"chi": "Distortion, defined as (Ixx - Iyy)/(Ixx + Iyy)",
+                 "epsilon": ("Shear, defined as (Ixx - Iyy)/"
+                             "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"
+                             ),
+                 },
+        default="chi",
+    )
 
     @property
     def columns(self):
-        return (self.colXx, self.colYy)
+        if self.ellipticityType == "chi":
+            return (self.colXx, self.colYy)
+        else:
+            return (self.colXx, self.colYy, self.colXy)
 
     def __call__(self, df):
-        e1 = (df[self.colXx] - df[self.colYy])/(df[self.colXx] + df[self.colYy])
+        denom = df[self.colXx] + df[self.colYy]
+        if self.ellipticityType == "epsilon":
+            denom += 2*np.sqrt(df[self.colXx] * df[self.colYy] - df[self.colXy]**2)
+        e1 = (df[self.colXx] - df[self.colYy])/denom
 
         return e1
 
+    def validate(self):
+        super().validate()
+        if self.ellipticityType == "epsilon" and self.colXy is None:
+            raise ValueError("colXy is required for epsilon-type shear ellipticity")
+
 
 class CalcE2(MultiColumnAction):
-    """Calculate E2: 2ixy/(ixx+iyy)
+    """Calculate chi-type e2 = 2Ixy/(Ixx+Iyy) or
+    epsilon-type g2 = 2Ixy/(Ixx+Iyy+2sqrt(Ixx*Iyy - Ixy**2)).
+
+    See Also
+    --------
+    CalcE
+    CalcE1
+
+    Note
+    ----
     This is a shape measurement used for doing QA on the ellipticity
-    of the sources."""
+    of the sources.
+    """
 
-    colXx = Field(doc="The column name to get the xx shape component from.",
-                  dtype=str,
-                  default="ixx")
+    colXx = Field(
+        doc="The column name to get the xx shape component from.",
+        dtype=str,
+        default="ixx",
+    )
 
-    colYy = Field(doc="The column name to get the yy shape component from.",
-                  dtype=str,
-                  default="iyy")
+    colYy = Field(
+        doc="The column name to get the yy shape component from.",
+        dtype=str,
+        default="iyy",
+    )
 
-    colXy = Field(doc="The column name to get the xy shape component from.",
-                  dtype=str,
-                  default="ixy")
+    colXy = Field(
+        doc="The column name to get the xy shape component from.",
+        dtype=str,
+        default="ixy",
+    )
+
+    ellipticityType = ChoiceField(
+        doc="The type of ellipticity to calculate",
+        dtype=str,
+        allowed={"chi": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
+                 "epsilon": ("Shear, defined as 2*Ixy/"
+                             "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"
+                             ),
+                 },
+        default="chi",
+    )
 
     @property
     def columns(self):
         return (self.colXx, self.colYy, self.colXy)
 
     def __call__(self, df):
-        e2 = 2*df[self.colXy]/(df[self.colXx] + df[self.colYy])
+        denom = df[self.colXx] + df[self.colYy]
+        if self.ellipticityType == "epsilon":
+            denom += 2*np.sqrt(df[self.colXx] * df[self.colYy] - df[self.colXy]**2)
+        e2 = 2*df[self.colXy]/denom
         return e2
 
 
 class CalcShapeSize(MultiColumnAction):
-    """Calculate a size: (ixx*iyy - ixy**2)**0.25
+    """Calculate a size: (Ixx*Iyy - Ixy**2)**0.25 OR (0.5*(Ixx + Iyy))**0.5
 
     The square of size measure is typically expressed either as the arithmetic
     mean of the eigenvalues of the moment matrix (trace radius) or as the
-    geometric mean of the eigenvalues (determinant radius, computed here).
-    Both of these measures give the `sigma^2` parameter for a 2D Gaussian.
-    The determinant radius computed here is consistent with the measure
-    computed in GalSim:
-    http://github.com/GalSim-developers/GalSim/blob/ece3bd32c1ae6ed771f2b489c5ab1b25729e0ea4/galsim/hsm.py#L42
+    geometric mean of the eigenvalues (determinant radius), which can be
+    specified using the ``sizeType`` parameter. Both of these measures give the
+    `sigma^2` parameter for a 2D Gaussian.
 
+    Since lensing preserves surface brightness, the determinant radius relates
+    the magnification cleanly as it is derived from the area of isophotes, but
+    have a slightly higher chance of being NaNs for noisy moment estimates.
+
+    Note
+    ----
     This is a size measurement used for doing QA on the ellipticity
-    of the sources."""
+    of the sources.
+    """
 
-    colXx = Field(doc="The column name to get the xx shape component from.",
-                  dtype=str,
-                  default="ixx")
+    colXx = Field(
+        doc="The column name to get the xx shape component from.",
+        dtype=str,
+        default="ixx",
+    )
 
-    colYy = Field(doc="The column name to get the yy shape component from.",
-                  dtype=str,
-                  default="iyy")
+    colYy = Field(
+        doc="The column name to get the yy shape component from.",
+        dtype=str,
+        default="iyy",
+    )
 
-    colXy = Field(doc="The column name to get the xy shape component from.",
-                  dtype=str,
-                  default="ixy")
+    colXy = Field(
+        doc="The column name to get the xy shape component from.",
+        dtype=str,
+        default="ixy",
+        optional=True,
+    )
+
+    sizeType = ChoiceField(
+        doc="The type of size to calculate",
+        dtype=str,
+        default="determinant",
+        allowed={"trace": "trace radius",
+                 "determinant": "determinant radius",
+                 },
+    )
 
     @property
     def columns(self):
-        return (self.colXx, self.colYy, self.colXy)
+        if self.sizeType == "trace":
+            return (self.colXx, self.colYy,)
+        else:
+            return (self.colXx, self.colYy, self.colXy)
 
     def __call__(self, df):
-        size = np.power(df[self.colXx]*df[self.colYy] - df[self.colXy]**2, 0.25)
+        if self.sizeType == "trace":
+            size = np.power(0.5*(df[self.colXx] + df[self.colYy]), 0.5)
+        else:
+            size = np.power(df[self.colXx]*df[self.colYy] - df[self.colXy]**2, 0.25)
+
         return size
+
+    def validate(self):
+        super().validate()
+        if self.sizeType == "determinant" and self.colXy is None:
+            raise ValueError("colXy is required for determinant-type size")
 
 
 class ColorDiff(MultiColumnAction):

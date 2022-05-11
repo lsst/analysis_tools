@@ -1,3 +1,9 @@
+import numpy as np
+import scipy.odr as scipyODR
+
+__all__ = ["stellarLocusFit", "perpDistance"]
+
+
 def stellarLocusFit(xs, ys, paramDict):
     """Make a fit to the stellar locus
 
@@ -151,5 +157,3 @@ def perpDistance(p1, p2, points):
         dists.append(distToLine)
 
     return dists
-
-

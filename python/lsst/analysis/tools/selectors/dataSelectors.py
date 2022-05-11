@@ -381,3 +381,35 @@ class CoaddPlotFlagSelector(DataFrameAction):
         result &= (df["detect_isPatchInner"] == 1)
         result &= (df["detect_isDeblendedSource"] == 1)
         return result
+
+
+class selectFinite(DataFrameAction):
+    """Selects points that satisfy np.isfinite"""
+    columns = Field(doc="The columns to check that the sources are finite in.",
+                      dtype=float,
+                      default=[])
+
+    @property
+    def columns(self):
+        return self.columns
+
+    def __call__(self, df):
+        """Makes a mask of objects that have S/N greater than
+        self.threshold in self.fluxType
+
+        Parameters
+        ----------
+        df : `pandas.core.frame.DataFrame`
+
+        Returns
+        -------
+        result : `numpy.ndarray`
+            A mask of the objects that satisfy the given
+            S/N cut.
+        """
+
+        mask = np.ones(len(df), dtype=bool)
+        for col in self.columns:
+            mask &= np.isfinite(df[col].values)
+
+        return mask

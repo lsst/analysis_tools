@@ -1,0 +1,7 @@
+description: |
+  Test out if this runs using the middleware
+tasks:
+  objectTableTract:
+    class: lsst.analysis.tools.pipelineTasks.objectTableTractAnalysis.ObjectTableTractAnalysisTask
+    config:
+      bands: ['r', 'i']

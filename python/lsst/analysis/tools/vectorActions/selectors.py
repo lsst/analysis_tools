@@ -1,6 +1,13 @@
 from __future__ import annotations
 
-__all__ = ("FlagSelector", "CoaddPlotFlagSelector", "SnSelector")
+__all__ = ("FlagSelector",
+           "CoaddPlotFlagSelector",
+           "SnSelector",
+           "ExtendednessSelector",
+           "StellarSelector",
+           "GalacticSelector",
+           "UnknownSelector"
+           )
 
 
 from typing import Iterable, Optional, cast
@@ -23,7 +30,7 @@ class FlagSelector(VectorAction):
         doc="Names of the flag columns to select on when True", dtype=str, optional=False, default=[]
     )
 
-    def getColumns(self, **kwargs):
+    def getInputColumns(self, **kwargs):
         allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)
         return (col.format(**kwargs) for col in allCols)
 
@@ -71,9 +78,9 @@ class CoaddPlotFlagSelector(FlagSelector):
         default=["g", "r", "i", "z", "y"],
     )
 
-    def getColumns(self, **kwargs):
+    def getInputColumns(self, **kwargs):
         for band in self.bands or kwargs.get("bands"):  # type: ignore
-            yield from super().getColumns(band=band, **kwargs)
+            yield from super().getInputColumns(band=band, **kwargs)
 
     def __call__(self, table: Tabular, **kwargs) -> Vector:
         result: Optional[Vector] = None
@@ -109,7 +116,7 @@ class SnSelector(VectorAction):
         default=["i"],
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         if self.bands:
             bands = cast(Iterable[str], self.bands)
         else:
@@ -151,7 +158,7 @@ class ExtendednessSelector(VectorAction):
         doc="Key of the column which defines extendedness metric", dtype=str, default="{band}_extendedness_"
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         return (self.columnKey.format(**kwargs),)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Vector:

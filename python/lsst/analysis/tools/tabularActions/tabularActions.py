@@ -5,8 +5,7 @@ from typing import Iterable, Optional, cast
 import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
-from lsst.pipe.tasks.configurableActions import (ConfigurableActionField,
-                                                 ConfigurableActionStructField)
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ..interfaces import Tabular, TabularAction, Vector, VectorAction
 
@@ -14,7 +13,7 @@ from ..interfaces import Tabular, TabularAction, Vector, VectorAction
 class TabularSubsetAction(TabularAction):
     columnKeys = ListField(doc="Keys to extract from a table and return", dtype=str)  # type: ignore
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         return (column.format(**kwargs) for column in self.columnKeys)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
@@ -26,9 +25,9 @@ class ChainedTableActions(TabularAction):
         doc="Set of table actions to run, results will be concatenated into a final output table"
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         for action in self.tableActions:  # type: ignore
-            yield from action.getColumns(**kwargs)
+            yield from action.getInputColumns(**kwargs)
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
         result: Tabular = {}
@@ -55,11 +54,11 @@ class TableSelectorAction(TabularAction):
         doc="Selectors for selecting rows, will be AND together",
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
-        for key in self.tableAction.getColumns(**kwargs):  # type: ignore
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        for key in self.tableAction.getInputColumns(**kwargs):  # type: ignore
             yield key
         for action in self.selectors:  # type: ignore
-            yield from action.getColumns(**kwargs)
+            yield from action.getInputColumns(**kwargs)
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
         mask: Optional[np.ndarray] = None
@@ -82,8 +81,8 @@ class TableOfScalars(TabularAction):
         doc="Create a table with one row where columns correspond to individual ScalarActions"
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
-        return (action.getColumns(**kwargs) for action in self.scalarActions)  # type: ignore
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        return (action.getInputColumns(**kwargs) for action in self.scalarActions)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
         result: Tabular = {}

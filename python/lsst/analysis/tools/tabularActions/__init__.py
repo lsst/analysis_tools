@@ -1,2 +1,1 @@
-from calcShapeSize import CalcShapeSize
-from tabularActions import *
+from .tabularActions import *

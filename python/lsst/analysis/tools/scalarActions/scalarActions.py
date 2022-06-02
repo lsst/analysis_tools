@@ -12,7 +12,7 @@ from ..interfaces import NumberType, ScalarAction, Tabular
 class MedianAction(ScalarAction):
     key = Field("Key of column to median", dtype=str)
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         return self.key.format(**kwargs)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> NumberType:
@@ -23,7 +23,7 @@ class MedianAction(ScalarAction):
 class SigmaMadAction(ScalarAction):
     key = Field("Key of column to median", dtype=str)
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         return self.key.format(**kwargs)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> NumberType:
@@ -38,7 +38,7 @@ class SigmaMadAction(ScalarAction):
 class CountAction(ScalarAction):
     key = Field("Key of column to median", dtype=str)
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         return self.key.format(**kwargs)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> NumberType:

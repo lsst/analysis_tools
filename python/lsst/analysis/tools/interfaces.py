@@ -19,9 +19,8 @@ from numbers import Number
 from typing import Any, Iterable, Mapping, MutableMapping, NewType
 
 import numpy as np
-from lsst.pipe.tasks.configurableActions import (ConfigurableAction,
-                                                 ConfigurableActionField)
-from lsst.verify import Metric
+from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
+from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
@@ -32,7 +31,7 @@ Tabular = MutableMapping[str, Vector]
 
 class TabularAction(ConfigurableAction):
     @abstractmethod
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         raise NotImplementedError("This is not implemented on the base class")
 
     @abstractmethod
@@ -42,7 +41,7 @@ class TabularAction(ConfigurableAction):
 
 class VectorAction(ConfigurableAction):
     @abstractmethod
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         raise NotImplementedError("This is not implemented on the base class")
 
     @abstractmethod
@@ -52,7 +51,7 @@ class VectorAction(ConfigurableAction):
 
 class ScalarAction(ConfigurableAction):
     @abstractmethod
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         raise NotImplementedError("This is not implemented on the base class")
 
     @abstractmethod
@@ -70,7 +69,7 @@ CalculatorAction = TabularAction | ScalarAction | VectorAction
 
 class MetricAction(ConfigurableAction):
     @abstractmethod
-    def __call__(self, input: Tabular | NumberType, **kwargs) -> Mapping[str, Metric] | Metric:
+    def __call__(self, input: Tabular | NumberType, **kwargs) -> Mapping[str, Measurement] | Measurement:
         raise NotImplementedError("This is not implemented on the base class")
 
 

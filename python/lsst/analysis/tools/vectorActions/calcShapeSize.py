@@ -55,19 +55,27 @@ class CalcShapeSize(VectorAction):
         },
     )
 
-    def getColumns(self, **kwargs) -> Iterable[str]:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
         if self.sizeType == "trace":
             return (
                 self.colXx.format(**kwargs),  # type: ignore
                 self.colYy.format(**kwargs),  # type: ignore
             )
         else:
-            return (self.colXx.format(**kwargs), self.colYy.format(**kwargs), self.colXy.format(**kwargs))  # type: ignore
+            return (
+                self.colXx.format(**kwargs),  # type: ignore
+                self.colYy.format(**kwargs),  # type: ignore
+                self.colXy.format(**kwargs),  # type: ignore
+            )  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Vector:
         if self.sizeType == "trace":
             size = np.power(
-                0.5 * (table[self.colXx.format(**kwargs)] + table[self.colYy.format(**kwargs)]), 0.5  # type: ignore
+                0.5
+                * (
+                    table[self.colXx.format(**kwargs)] + table[self.colYy.format(**kwargs)]  # type: ignore
+                ),  # type: ignore
+                0.5,
             )
         else:
             size = np.power(

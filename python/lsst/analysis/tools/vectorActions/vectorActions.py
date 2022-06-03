@@ -4,7 +4,7 @@ from typing import cast, Iterable
 
 import numpy as np
 from lsst.pex.config import Field
-from lsst.pipe.tasks.configurableActions import ConfigurableAction
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
 from ..interfaces import Tabular, Vector, VectorAction
 
@@ -25,8 +25,8 @@ class MagColumnNanoJansky(VectorAction):
 class FractionalDifference(VectorAction):
     """Calculate (A-B)/B
     """
-    actionA = ConfigurableAction(doc="Action which supplies vector A", dtype=VectorAction)
-    actionB = ConfigurableAction(doc="Action which supplies vector B", dtype=VectorAction)
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
 
     def getInputColumns(self, **kwargs) -> Iterable[str]:
         yield from self.actionA.getInputColumns(**kwargs)  # type: ignore

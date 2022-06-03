@@ -4,6 +4,7 @@ import astropy.units as apu
 
 from typing import Iterable, cast, Mapping
 
+from lsst.pex.config import Field
 from lsst.pex.config.dictField import DictField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 from lsst.verify import Measurement
@@ -11,15 +12,18 @@ from lsst.verify import Measurement
 from ..interfaces import Tabular, TabularAction, VectorAction, MetricAction
 from ..scalarActions import CountAction, MedianAction, SigmaMadAction
 from ..tabularActions import AddComputedColumn, TableOfScalars, TableSelectorAction, TabularSubsetAction
-from ..vectorActions import (CalcShapeSize,
-                             CoaddPlotFlagSelector,
+from ..vectorActions import (CoaddPlotFlagSelector,
                              SnSelector,
                              StellarSelector,
                              FractionalDifference)
+from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
 class ShapeSizeFractionalPrep(TableSelectorAction):
     def setDefaults(self):
+        super().setDefaults()
+        # These columns must be in the output table to be used by the
+        # next process step
         columns = [
             "{band}_ixx",
             "{band}_iyy",
@@ -27,23 +31,33 @@ class ShapeSizeFractionalPrep(TableSelectorAction):
             "{band}_ixxPSF",
             "{band}_iyyPSF",
             "{band}_ixyPSF",
+            "{band}_psfFlux",
+            "{band}_psfFluxErr",
+            "{band}_extendedness"
         ]
         self.tableAction = TabularSubsetAction()
         self.tableAction.columnKeys = columns
         self.selectors.flagSelector = CoaddPlotFlagSelector()  # type: ignore
-        self.selectors.snSelector = SnSelector(fluxType="psfFlux", threshold=100)  # type: ignore
+        self.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)  # type: ignore
 
 
 class ShapeSizeFractionalScalars(TableOfScalars):
     selectors = ConfigurableActionStructField(
         doc="Selectors which determine which points go into scalar actions"
     )
+    columnKey = Field(doc="Column key to compute scalars", dtype=str)
+
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        yield from super().getInputColumns(**kwargs)
+        for action in self.selectors:  # type: ignore
+            yield from action.getInputColumns(**kwargs)
+        return super().getInputColumns(**kwargs)
 
     def setDefaults(self):
         super().setDefaults()
-        self.scalarActions.median = MedianAction()  # type: ignore
-        self.scalarActions.sigmaMad = SigmaMadAction()  # type: ignore
-        self.scalarActions.count = CountAction()  # type: ignore
+        self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
         self.selectors.snSelector = SnSelector()  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
@@ -61,7 +75,13 @@ class ShapeSizeFractionalScalars(TableOfScalars):
 class ShapeSizeFractionalProcessBase(TabularAction):
     shapeFracDif = ConfigurableActionField(
         doc="Action which adds shapes to the table",
-        default=AddComputedColumn(
+    )
+    calculatorActions = ConfigurableActionStructField(
+        doc="Actions which generate tables of scalars",
+    )
+
+    def setDefaults(self):
+        self.shapeFracDif = AddComputedColumn(
             columnName="{band}_derivedShape",
             action=FractionalDifference(
                 actionA=CalcShapeSize(),
@@ -71,33 +91,30 @@ class ShapeSizeFractionalProcessBase(TabularAction):
                     colXy="{band}_ixyPSF",
                 )
             )
-        ),
-    )
-    calculatorActions = ConfigurableActionStructField(
-        doc="Actions which generate tables of scalars",
-        default={
-            "highSNStars": ShapeSizeFractionalScalars(
-                selectors={
-                    "stellar": StellarSelector(),
-                    "snSelector": SnSelector(
-                        threshold=2700
-                    )
-                }
-            ),
-            "lowSNStars": ShapeSizeFractionalScalars(
-                selectors={
-                    "stellar": StellarSelector(),
-                    "snSelector": SnSelector(
-                        threshold=500
-                    )
-                }
+        )
+        self.calculatorActions.update = {
+            "highSNStars": ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName),
+            "lowSNStars": ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName)
+        }
+        for action in self.calculatorActions:
+            action.setDefaults()
+
+        self.calculatorActions.highSNStars.selectors.update = {
+            "stellar": StellarSelector(),
+            "snSelector": SnSelector(
+                threshold=2700
             )
-        },
-    )
+        }
+        self.calculatorActions.lowSNStars.selectors.update = {
+            "stellar": StellarSelector(),
+            "snSelector": SnSelector(
+                threshold=500
+            )
+        }
+        super().setDefaults()
 
     def getInputColumns(self, **kwargs) -> Iterable[str]:
-        for action in self.shapeCalculator:  # type: ignore
-            yield from action.getInputColumns(**kwargs)
+        yield from self.shapeFracDif.getInputColumns(**kwargs)  # type: ignore
         for action in self.calculatorActions:  # type: ignore
             yield from action.getInputColumns(**kwargs)
 
@@ -106,8 +123,8 @@ class ShapeSizeFractionalProcessMetric(ShapeSizeFractionalProcessBase):
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
         table = self.shapeFracDif(table, **kwargs)  # type: ignore
         results = {}
-        for name, action in self.calculatorActions:  # type: ignore
-            for key, value in action(table, **kwargs):
+        for name, action in self.calculatorActions.items():  # type: ignore
+            for key, value in action(table, **kwargs).items():
                 prefix = f'{band}_' if (band := kwargs.get('band')) else ''
                 newKey = f"{prefix}{name}_{key}"
                 results[newKey] = value

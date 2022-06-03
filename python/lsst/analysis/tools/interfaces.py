@@ -81,7 +81,7 @@ class PlotAction(ConfigurableAction):
 
 class AnalysisTool(ConfigurableAction):
     prep = ConfigurableActionField(doc="Action to run to prepare inputs", dtype=TabularAction)
-    process = ConfigurableActionField(doc="Action to process data into intended form", dtype=CalculatorAction)
+    process = ConfigurableActionField(doc="Action to process data into intended form", )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
     def __call__(self, table: Mapping, **kwargs) -> Any:

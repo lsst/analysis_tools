@@ -17,7 +17,7 @@ class TabularSubsetAction(TabularAction):
         return (column.format(**kwargs) for column in self.columnKeys)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
-        return {table[key] for key in self.columnKeys}  # type: ignore
+        return {key.format(**kwargs): table[key.format(**kwargs)] for key in self.columnKeys}  # type: ignore
 
 
 class ChainedTableActions(TabularAction):
@@ -40,6 +40,10 @@ class ChainedTableActions(TabularAction):
 class AddComputedColumn(TabularAction):
     action = ConfigurableActionField(doc="Action to use to compute column", dtype=VectorAction)
     columnName = Field(doc="Column name to insert into table", dtype=str)
+
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        yield from self.action.getInputColumns(**kwargs)  # type: ignore
+        yield self.columnName.format(**kwargs)  # type: ignore
 
     def __call__(self, table: Tabular, **kwargs) -> Tabular:
         table[self.columnName.format(**kwargs)] = self.action(table, **kwargs)  # type: ignore

@@ -79,13 +79,19 @@ class CoaddPlotFlagSelector(FlagSelector):
     )
 
     def getInputColumns(self, **kwargs):
-        for band in self.bands or kwargs.get("bands"):  # type: ignore
+        bands = self.bands or kwargs.pop("bands")
+        if (value := kwargs.pop('band')):
+            bands = (value,)
+        for band in bands:  # type: ignore
             yield from super().getInputColumns(band=band, **kwargs)
 
     def __call__(self, table: Tabular, **kwargs) -> Vector:
         result: Optional[Vector] = None
-        for band in self.bands or kwargs.get("bands"):  # type: ignore
-            temp = super.__call__(table, band=band, **kwargs)
+        bands = self.bands or kwargs.pop("bands")
+        if (value := kwargs.pop('band')):
+            bands = (value,)
+        for band in bands:  # type: ignore
+            temp = super().__call__(table, band=band, **kwargs)
             if result is not None:
                 result &= temp
             else:
@@ -105,7 +111,7 @@ class CoaddPlotFlagSelector(FlagSelector):
 class SnSelector(VectorAction):
     """Selects points that have S/N > threshold in the given flux type"""
 
-    fluxType = Field(doc="Flux type to calculate the S/N in.", dtype=str, default="psfFlux")
+    fluxType = Field(doc="Flux type to calculate the S/N in.", dtype=str, default="{band}_psfFlux")
     threshold = Field(doc="The S/N threshold to remove sources with.", dtype=float, default=500.0)
     uncertantySuffix = Field(
         doc="Suffix to add to fluxType to specify uncertainty column", dtype=str, default="Err"
@@ -117,13 +123,12 @@ class SnSelector(VectorAction):
     )
 
     def getInputColumns(self, **kwargs) -> Iterable[str]:
-        if self.bands:
-            bands = cast(Iterable[str], self.bands)
-        else:
-            bands = ("",)
-        for band in bands:
-            yield (fluxCol := cast(str, self.fluxType)).format(**kwargs, band=band)
-            yield f"{fluxCol}_{cast(str,self.uncertantySuffix).format(**kwargs)}"
+        bands = self.bands or kwargs.pop("bands")
+        if (value := kwargs.pop('band')):
+            bands = (value,)
+        for band in bands:  # type: ignore
+            yield (fluxCol := (cast(str, self.fluxType)).format(**kwargs, band=band))
+            yield f"{fluxCol}{cast(str,self.uncertantySuffix).format(**kwargs)}"
 
     def __call__(self, table, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
@@ -140,9 +145,11 @@ class SnSelector(VectorAction):
         mask: Optional[Vector] = None
         if not (bands := cast(Iterable[str], self.bands or kwargs.get("bands"))):
             bands = ("",)
+        if (value := kwargs.pop('band')):
+            bands = (value, )
         for band in bands:
             fluxCol = cast(str, self.fluxType).format(**kwargs, band=band)
-            errCol = f"{fluxCol}_{cast(str,self.uncertantySuffix).format(**kwargs)}"
+            errCol = f"{fluxCol}{cast(str,self.uncertantySuffix).format(**kwargs)}"
             temp = cast(Vector, (table[fluxCol] / table[errCol]) > cast(float, self.threshold))
             if mask is not None:
                 mask &= temp  # type: ignore
@@ -155,7 +162,7 @@ class SnSelector(VectorAction):
 
 class ExtendednessSelector(VectorAction):
     columnKey = Field(
-        doc="Key of the column which defines extendedness metric", dtype=str, default="{band}_extendedness_"
+        doc="Key of the column which defines extendedness metric", dtype=str, default="{band}_extendedness"
     )
 
     def getInputColumns(self, **kwargs) -> Iterable[str]:

@@ -35,7 +35,7 @@ class CalcShapeSize(VectorAction):
     colYy = Field(
         doc="The column name to get the yy shape component from.",
         dtype=str,
-        default="{band}iyy",
+        default="{band}_iyy",
     )
 
     colXy = Field(
@@ -80,7 +80,7 @@ class CalcShapeSize(VectorAction):
         else:
             size = np.power(
                 table[self.colXx.format(**kwargs)] * table[self.colYy.format(**kwargs)]  # type: ignore
-                - table[self.colXy] ** 2,
+                - table[self.colXy.format(**kwargs)] ** 2,
                 0.25,
             )
 

@@ -69,13 +69,21 @@ CalculatorAction = TabularAction | ScalarAction | VectorAction
 
 class MetricAction(ConfigurableAction):
     @abstractmethod
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        raise NotImplementedError("This is not implemented on the base class")
+
+    @abstractmethod
     def __call__(self, input: Tabular | NumberType, **kwargs) -> Mapping[str, Measurement] | Measurement:
         raise NotImplementedError("This is not implemented on the base class")
 
 
 class PlotAction(ConfigurableAction):
     @abstractmethod
-    def __call__(self, input: Tabular | NumberType, **kwargs) -> Mapping[str, Figure] | Figure:
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        raise NotImplementedError("This is not implemented on the base class")
+
+    @abstractmethod
+    def __call__(self, input: Tabular, **kwargs) -> Mapping[str, Figure] | Figure:
         raise NotImplementedError("This is not implemented on the base class")
 
 

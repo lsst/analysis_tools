@@ -19,6 +19,39 @@ from ..vectorActions import (CoaddPlotFlagSelector,
 from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
+class ShapeSizeFractionalScalars(TableOfScalars):
+    selectors = ConfigurableActionStructField(
+        doc="Selectors which determine which points go into scalar actions"
+    )
+    columnKey = Field(doc="Column key to compute scalars", dtype=str)
+
+    def getInputColumns(self, **kwargs) -> Iterable[str]:
+        yield from super().getInputColumns(**kwargs)
+        for action in self.selectors:  # type: ignore
+            yield from action.getInputColumns(**kwargs)
+        return super().getInputColumns(**kwargs)
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
+        self.selectors.snSelector = SnSelector()  # type: ignore
+        self.selectors.stellar = StellarSelector()  # type: ignore
+        self.scalarActions.medMag = MedianAction(colKey=self.selectors.snSelector.fluxType)  # type: ignore
+
+    def __call__(self, table: Tabular, **kwargs) -> Tabular:
+        mask = kwargs.get("mask")
+        for selector in cast(Iterable[VectorAction], self.selectors):  # type: ignore
+            temp = selector(table, **kwargs)
+            if mask is not None:
+                mask &= temp  # type: ignore
+            else:
+                mask = temp
+
+        return super().__call__(table, **kwargs | dict(mask=mask))
+
+
 class ShapeSizeFractionalPrep(TableSelectorAction):
     def setDefaults(self):
         super().setDefaults()
@@ -41,37 +74,6 @@ class ShapeSizeFractionalPrep(TableSelectorAction):
         self.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)  # type: ignore
 
 
-class ShapeSizeFractionalScalars(TableOfScalars):
-    selectors = ConfigurableActionStructField(
-        doc="Selectors which determine which points go into scalar actions"
-    )
-    columnKey = Field(doc="Column key to compute scalars", dtype=str)
-
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        yield from super().getInputColumns(**kwargs)
-        for action in self.selectors:  # type: ignore
-            yield from action.getInputColumns(**kwargs)
-        return super().getInputColumns(**kwargs)
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
-        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
-        self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
-        self.selectors.snSelector = SnSelector()  # type: ignore
-
-    def __call__(self, table: Tabular, **kwargs) -> Tabular:
-        mask = kwargs.get("mask")
-        for selector in cast(Iterable[VectorAction], self.selectors):  # type: ignore
-            temp = selector(table, **kwargs)
-            if mask is not None:
-                mask &= temp  # type: ignore
-            else:
-                mask = temp
-
-        return super().__call__(table, **kwargs | dict(mask=mask))
-
-
 class ShapeSizeFractionalProcessBase(TabularAction):
     shapeFracDif = ConfigurableActionField(
         doc="Action which adds shapes to the table",
@@ -81,31 +83,27 @@ class ShapeSizeFractionalProcessBase(TabularAction):
     )
 
     def setDefaults(self):
-        self.shapeFracDif = AddComputedColumn(
-            columnName="{band}_derivedShape",
-            action=FractionalDifference(
-                actionA=CalcShapeSize(),
-                actionB=CalcShapeSize(
-                    colXx="{band}_ixxPSF",
-                    colYy="{band}_iyyPSF",
-                    colXy="{band}_ixyPSF",
-                )
-            )
-        )
-        self.calculatorActions.update = {
-            "highSNStars": ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName),
-            "lowSNStars": ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName)
-        }
-        for action in self.calculatorActions:
+        self.shapeFracDif = AddComputedColumn()
+        self.shapeFracDif.columnName="{band}_derivedShape"
+        self.shapeFracDif.action=FractionalDifference()
+        self.shapeFracDif.action.actionA=CalcShapeSize()
+        self.shapeFracDif.action.actionB=CalcShapeSize()
+        self.shapeFracDif.action.actionB.colXx="{band}_ixxPSF"
+        self.shapeFracDif.action.actionB.colYy="{band}_iyyPSF"
+        self.shapeFracDif.action.actionB.colXy="{band}_ixyPSF"
+
+        self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName)
+        self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName)
+
+        self.calculatorActions.lowMag = ShapeSizeFractionalScalars()
+
+        for action in self.calculatorActions:  # type: ignore
             action.setDefaults()
 
-        self.calculatorActions.highSNStars.selectors.update = {
-            "stellar": StellarSelector(),
-            "snSelector": SnSelector(
-                threshold=2700
-            )
-        }
-        self.calculatorActions.lowSNStars.selectors.update = {
+        self.calculatorActions.highSNStars.selectors
+        self.calculatorActions.highSNStars.selectors.stellar = SnSelector(threshold=2700)
+
+        self.calculatorActions.lowSNStars.selectors.update = {  # type: ignore
             "stellar": StellarSelector(),
             "snSelector": SnSelector(
                 threshold=500

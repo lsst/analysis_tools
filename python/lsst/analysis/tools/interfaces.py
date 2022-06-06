@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 __all__ = (
-    "TabularAction",
+    "AnalysisAction",
+    "KeyedDataAction",
     "ScalarAction",
     "MetricAction",
     "PlotAction",
-    "NumberType",
-    "Tabular",
+    "Scalar",
+    "KeyedData",
+    "KeyedDataSchema",
     "Vector",
-    "CalculatorAction",
     "AnalysisTool",
     "AnalysisMetric",
     "AnalysisPlot",
@@ -16,7 +17,7 @@ __all__ = (
 
 from abc import abstractmethod
 from numbers import Number
-from typing import Any, Iterable, Mapping, MutableMapping, NewType
+from typing import Iterable, MutableMapping, NewType, Tuple, Type, Mapping, Any
 
 import numpy as np
 from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
@@ -24,38 +25,34 @@ from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
-NumberType = Number | np.number
+Scalar = Number | np.number
 Vector = NewType("Vector", NDArray)
-Tabular = MutableMapping[str, Vector]
+KeyedData = MutableMapping[str, Vector | Scalar]
+
+KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]
 
 
-class TabularAction(ConfigurableAction):
+class AnalysisAction(ConfigurableAction):
     @abstractmethod
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        raise NotImplementedError("This is not implemented on the base class")
-
-    @abstractmethod
-    def __call__(self, table: Tabular, **kwargs) -> Tabular:
-        raise NotImplementedError("This is not implemented on the base class")
-
-
-class VectorAction(ConfigurableAction):
-    @abstractmethod
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        raise NotImplementedError("This is not implemented on the base class")
-
-    @abstractmethod
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
 
 
-class ScalarAction(ConfigurableAction):
+class KeyedDataAction(AnalysisAction):
     @abstractmethod
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         raise NotImplementedError("This is not implemented on the base class")
 
+
+class VectorAction(AnalysisAction):
     @abstractmethod
-    def __call__(self, table: Tabular, **kwargs) -> NumberType:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        raise NotImplementedError("This is not implemented on the base class")
+
+
+class ScalarAction(AnalysisAction):
+    @abstractmethod
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         raise NotImplementedError("This is not implemented on the base class")
 
     def getMask(self, **kwargs) -> Vector | slice:
@@ -64,32 +61,23 @@ class ScalarAction(ConfigurableAction):
         return mask
 
 
-CalculatorAction = TabularAction | ScalarAction | VectorAction
-
-
-class MetricAction(ConfigurableAction):
+class MetricAction(AnalysisAction):
     @abstractmethod
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        raise NotImplementedError("This is not implemented on the base class")
-
-    @abstractmethod
-    def __call__(self, input: Tabular | NumberType, **kwargs) -> Mapping[str, Measurement] | Measurement:
+    def __call__(self, input: KeyedData | Scalar, **kwargs) -> Mapping[str, Measurement] | Measurement:
         raise NotImplementedError("This is not implemented on the base class")
 
 
-class PlotAction(ConfigurableAction):
+class PlotAction(AnalysisAction):
     @abstractmethod
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        raise NotImplementedError("This is not implemented on the base class")
-
-    @abstractmethod
-    def __call__(self, input: Tabular, **kwargs) -> Mapping[str, Figure] | Figure:
+    def __call__(self, input: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         raise NotImplementedError("This is not implemented on the base class")
 
 
 class AnalysisTool(ConfigurableAction):
-    prep = ConfigurableActionField(doc="Action to run to prepare inputs", dtype=TabularAction)
-    process = ConfigurableActionField(doc="Action to process data into intended form", )
+    prep = ConfigurableActionField(doc="Action to run to prepare inputs", dtype=KeyedDataAction)
+    process = ConfigurableActionField(
+        doc="Action to process data into intended form",
+    )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
     def __call__(self, table: Mapping, **kwargs) -> Any:

@@ -49,7 +49,7 @@ def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
 
     bandStr = ""
     for band in bands:
-        bandStr += (", " + band)
+        bandStr += ", " + band
     plotInfo["bands"] = bandStr[2:]
 
     if "tract" not in plotInfo.keys():
@@ -83,14 +83,14 @@ def generateSummaryStats(cat, colName, skymap, plotInfo):
     # For now also convert the gen 2 patchIds to gen 3
 
     patchInfoDict = {}
-    maxPatchNum = tractInfo.num_patches.x*tractInfo.num_patches.y
+    maxPatchNum = tractInfo.num_patches.x * tractInfo.num_patches.y
     patches = np.arange(0, maxPatchNum, 1)
     for patch in patches:
         if patch is None:
             continue
         # Once the objectTable_tract catalogues are using gen 3 patches
         # this will go away
-        onPatch = (cat["patch"] == patch)
+        onPatch = cat["patch"] == patch
         stat = np.nanmedian(cat[colName].values[onPatch])
         try:
             patchTuple = (int(patch.split(",")[0]), int(patch.split(",")[-1]))
@@ -132,10 +132,10 @@ def generateSummaryStatsVisit(cat, colName, visitSummaryTable, plotInfo):
     for ccd in cat.detector.unique():
         if ccd is None:
             continue
-        onCcd = (cat["detector"] == ccd)
+        onCcd = cat["detector"] == ccd
         stat = np.nanmedian(cat[colName].values[onCcd])
 
-        sumRow = (visitSummaryTable["id"] == ccd)
+        sumRow = visitSummaryTable["id"] == ccd
         corners = zip(visitSummaryTable["raCorners"][sumRow][0], visitSummaryTable["decCorners"][sumRow][0])
         cornersOut = []
         for (ra, dec) in corners:
@@ -177,7 +177,7 @@ def get_and_remove_axis_text(ax) -> Tuple[List[str], List[np.ndarray]]:
 
     for idx in range(len(ax.texts)):
         texts.append(ax.texts[idx].get_text())
-        ax.texts[idx].set_text('')
+        ax.texts[idx].set_text("")
 
     ax.xaxis.set_major_formatter(null_formatter)
     ax.xaxis.set_minor_formatter(null_formatter)
@@ -326,8 +326,12 @@ def stellarLocusFit(xs, ys, paramDict):
     """
 
     # Points to use for the fit
-    fitPoints = np.where((xs > paramDict["xMin"]) & (xs < paramDict["xMax"])
-                         & (ys > paramDict["yMin"]) & (ys < paramDict["yMax"]))[0]
+    fitPoints = np.where(
+        (xs > paramDict["xMin"])
+        & (xs < paramDict["xMax"])
+        & (ys > paramDict["yMin"])
+        & (ys < paramDict["yMax"])
+    )[0]
 
     linear = scipyODR.polynomial(1)
 
@@ -337,38 +341,45 @@ def stellarLocusFit(xs, ys, paramDict):
     mODR = float(params.beta[1])
     bODR = float(params.beta[0])
 
-    paramsOut = {"xMin": paramDict["xMin"], "xMax": paramDict["xMax"], "yMin": paramDict["yMin"],
-                 "yMax": paramDict["yMax"], "mHW": paramDict["mHW"], "bHW": paramDict["bHW"],
-                 "mODR": mODR, "bODR": bODR}
+    paramsOut = {
+        "xMin": paramDict["xMin"],
+        "xMax": paramDict["xMax"],
+        "yMin": paramDict["yMin"],
+        "yMax": paramDict["yMax"],
+        "mHW": paramDict["mHW"],
+        "bHW": paramDict["bHW"],
+        "mODR": mODR,
+        "bODR": bODR,
+    }
 
     # Having found the initial fit calculate perpendicular ends
-    mPerp = -1.0/mODR
+    mPerp = -1.0 / mODR
     # When the gradient is really steep we need to use
     # the y limits of the box rather than the x ones
 
     if np.abs(mODR) > 1:
         yBoxMin = paramDict["yMin"]
-        xBoxMin = (yBoxMin - bODR)/mODR
+        xBoxMin = (yBoxMin - bODR) / mODR
         yBoxMax = paramDict["yMax"]
-        xBoxMax = (yBoxMax - bODR)/mODR
+        xBoxMax = (yBoxMax - bODR) / mODR
     else:
-        yBoxMin = mODR*paramDict["xMin"] + bODR
+        yBoxMin = mODR * paramDict["xMin"] + bODR
         xBoxMin = paramDict["xMin"]
-        yBoxMax = mODR*paramDict["xMax"] + bODR
+        yBoxMax = mODR * paramDict["xMax"] + bODR
         xBoxMax = paramDict["xMax"]
 
-    bPerpMin = yBoxMin - mPerp*xBoxMin
+    bPerpMin = yBoxMin - mPerp * xBoxMin
 
     paramsOut["yBoxMin"] = yBoxMin
     paramsOut["bPerpMin"] = bPerpMin
 
-    bPerpMax = yBoxMax - mPerp*xBoxMax
+    bPerpMax = yBoxMax - mPerp * xBoxMax
 
     paramsOut["yBoxMax"] = yBoxMax
     paramsOut["bPerpMax"] = bPerpMax
 
     # Use these perpendicular lines to chose the data and refit
-    fitPoints = ((ys > mPerp*xs + bPerpMin) & (ys < mPerp*xs + bPerpMax))
+    fitPoints = (ys > mPerp * xs + bPerpMin) & (ys < mPerp * xs + bPerpMax)
     data = scipyODR.Data(xs[fitPoints], ys[fitPoints])
     odr = scipyODR.ODR(data, linear, beta0=[bODR, mODR])
     params = odr.run()
@@ -378,7 +389,7 @@ def stellarLocusFit(xs, ys, paramDict):
     paramsOut["mODR2"] = float(params.beta[1])
     paramsOut["bODR2"] = float(params.beta[0])
 
-    paramsOut["mPerp"] = -1.0/paramsOut["mODR2"]
+    paramsOut["mPerp"] = -1.0 / paramsOut["mODR2"]
 
     return paramsOut
 
@@ -402,7 +413,7 @@ def perpDistance(p1, p2, points):
     dists = []
     for point in points:
         point = np.array(point)
-        distToLine = np.cross(p2 - p1, point - p1)/np.linalg.norm(p2 - p1)
+        distToLine = np.cross(p2 - p1, point - p1) / np.linalg.norm(p2 - p1)
         dists.append(distToLine)
 
     return dists

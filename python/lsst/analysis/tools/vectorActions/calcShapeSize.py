@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Iterable, cast
+from typing import cast
 
 import numpy as np
 from lsst.pex.config import Field, FieldValidationError
 from lsst.pex.config.choiceField import ChoiceField
 
-from ..interfaces import Tabular, Vector, VectorAction
+from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class CalcShapeSize(VectorAction):
@@ -55,32 +55,32 @@ class CalcShapeSize(VectorAction):
         },
     )
 
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         if self.sizeType == "trace":
             return (
-                self.colXx.format(**kwargs),  # type: ignore
-                self.colYy.format(**kwargs),  # type: ignore
+                (self.colXx.format(**kwargs), Vector),  # type: ignore
+                (self.colYy.format(**kwargs), Vector),  # type: ignore
             )
         else:
             return (
-                self.colXx.format(**kwargs),  # type: ignore
-                self.colYy.format(**kwargs),  # type: ignore
-                self.colXy.format(**kwargs),  # type: ignore
+                (self.colXx.format(**kwargs), Vector),  # type: ignore
+                (self.colYy.format(**kwargs), Vector),  # type: ignore
+                (self.colXy.format(**kwargs), Vector),  # type: ignore
             )  # type: ignore
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
         if self.sizeType == "trace":
             size = np.power(
                 0.5
                 * (
-                    table[self.colXx.format(**kwargs)] + table[self.colYy.format(**kwargs)]  # type: ignore
+                    data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)]  # type: ignore
                 ),  # type: ignore
                 0.5,
             )
         else:
             size = np.power(
-                table[self.colXx.format(**kwargs)] * table[self.colYy.format(**kwargs)]  # type: ignore
-                - table[self.colXy.format(**kwargs)] ** 2,
+                data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]  # type: ignore
+                - data[self.colXy.format(**kwargs)] ** 2,  # type: ignore
                 0.25,
             )
 

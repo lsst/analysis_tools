@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-__all__ = ("FlagSelector",
-           "CoaddPlotFlagSelector",
-           "SnSelector",
-           "ExtendednessSelector",
-           "StellarSelector",
-           "GalacticSelector",
-           "UnknownSelector"
-           )
+__all__ = (
+    "FlagSelector",
+    "CoaddPlotFlagSelector",
+    "SnSelector",
+    "ExtendednessSelector",
+    "StellarSelector",
+    "GalacticSelector",
+    "UnknownSelector",
+)
 
 
 from typing import Iterable, Optional, cast
@@ -16,7 +17,7 @@ import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
-from ..interfaces import Tabular, Vector, VectorAction
+from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class FlagSelector(VectorAction):
@@ -30,11 +31,11 @@ class FlagSelector(VectorAction):
         doc="Names of the flag columns to select on when True", dtype=str, optional=False, default=[]
     )
 
-    def getInputColumns(self, **kwargs):
-        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)
-        return (col.format(**kwargs) for col in allCols)
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)  # type: ignore
+        return ((col.format(**kwargs), Vector) for col in allCols)
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
         Parameters
         ----------
@@ -55,14 +56,14 @@ class FlagSelector(VectorAction):
         results: Optional[Vector] = None
 
         for flag in self.selectWhenFalse:  # type: ignore
-            temp = cast(Vector, np.array(table[flag.format(**kwargs)] == 0))
+            temp = cast(Vector, np.array(data[flag.format(**kwargs)] == 0))
             if results is not None:
                 results &= temp  # type: ignore
             else:
                 results = temp
 
         for flag in self.selectWhenTrue:  # type: ignore
-            temp = cast(Vector, np.array(table[flag.format(**kwargs)] == 1))
+            temp = cast(Vector, np.array(data[flag.format(**kwargs)] == 1))
             if results is not None:
                 results &= temp  # type: ignore
             else:
@@ -78,22 +79,22 @@ class CoaddPlotFlagSelector(FlagSelector):
         default=["g", "r", "i", "z", "y"],
     )
 
-    def getInputColumns(self, **kwargs):
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         bands = self.bands or kwargs.pop("bands")
-        if (value := kwargs.pop('band')):
+        if value := kwargs.pop("band"):
             bands = (value,)
         for band in bands:  # type: ignore
-            yield from super().getInputColumns(band=band, **kwargs)
+            yield from super().getInputSchema(band=band, **kwargs)
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
         bands = self.bands or kwargs.pop("bands")
-        if (value := kwargs.pop('band')):
+        if value := kwargs.pop("band"):
             bands = (value,)
         for band in bands:  # type: ignore
-            temp = super().__call__(table, band=band, **kwargs)
+            temp = super().__call__(data, band=band, **kwargs)
             if result is not None:
-                result &= temp
+                result &= temp  # type: ignore
             else:
                 result = temp
         return cast(Vector, result)
@@ -113,7 +114,7 @@ class SnSelector(VectorAction):
 
     fluxType = Field(doc="Flux type to calculate the S/N in.", dtype=str, default="{band}_psfFlux")
     threshold = Field(doc="The S/N threshold to remove sources with.", dtype=float, default=500.0)
-    uncertantySuffix = Field(
+    uncertaintySuffix = Field(
         doc="Suffix to add to fluxType to specify uncertainty column", dtype=str, default="Err"
     )
     bands = ListField(
@@ -122,15 +123,15 @@ class SnSelector(VectorAction):
         default=["i"],
     )
 
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         bands = self.bands or kwargs.pop("bands")
-        if (value := kwargs.pop('band')):
+        if value := kwargs.pop("band"):
             bands = (value,)
         for band in bands:  # type: ignore
-            yield (fluxCol := (cast(str, self.fluxType)).format(**kwargs, band=band))
-            yield f"{fluxCol}{cast(str,self.uncertantySuffix).format(**kwargs)}"
+            yield (fluxCol := (cast(str, self.fluxType)).format(**kwargs, band=band)), Vector
+            yield f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}", Vector
 
-    def __call__(self, table, **kwargs) -> Vector:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
         self.threshold in self.fluxType
         Parameters
@@ -145,16 +146,16 @@ class SnSelector(VectorAction):
         mask: Optional[Vector] = None
         if not (bands := cast(Iterable[str], self.bands or kwargs.get("bands"))):
             bands = ("",)
-        if (value := kwargs.pop('band')):
-            bands = (value, )
+        if value := kwargs.pop("band"):
+            bands = (value,)
         for band in bands:
             fluxCol = cast(str, self.fluxType).format(**kwargs, band=band)
-            errCol = f"{fluxCol}{cast(str,self.uncertantySuffix).format(**kwargs)}"
-            temp = cast(Vector, (table[fluxCol] / table[errCol]) > cast(float, self.threshold))
+            errCol = f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}"
+            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > cast(float, self.threshold)
             if mask is not None:
                 mask &= temp  # type: ignore
             else:
-                mask = temp
+                mask = temp  # type: ignore
 
         # It should not be possible for mask to be a None now
         return cast(Vector, mask)
@@ -162,15 +163,15 @@ class SnSelector(VectorAction):
 
 class ExtendednessSelector(VectorAction):
     columnKey = Field(
-        doc="Key of the column which defines extendedness metric", dtype=str, default="{band}_extendedness"
+        doc="Key of the Vector which defines extendedness metric", dtype=str, default="{band}_extendedness"
     )
 
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        return (self.columnKey.format(**kwargs),)  # type: ignore
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        return ((self.columnKey.format(**kwargs), Vector),)  # type: ignore
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
         key = self.columnKey.format(**kwargs)  # type: ignore
-        return cast(Vector, table[key])
+        return cast(Vector, data[key])
 
 
 class StellarSelector(ExtendednessSelector):
@@ -178,9 +179,9 @@ class StellarSelector(ExtendednessSelector):
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
-        extendedness = super().__call__(table, **kwargs)
-        return (extendedness >= 0) & (extendedness < self.extendedness_maximum)
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        extendedness = super().__call__(data, **kwargs)
+        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))
 
 
 class GalacticSelector(ExtendednessSelector):
@@ -188,12 +189,12 @@ class GalacticSelector(ExtendednessSelector):
         doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5, dtype=float
     )
 
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
-        extendedness = super().__call__(table, **kwargs)
-        return (extendedness >= 0) & (extendedness < self.extendedness_minimum)
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        extendedness = super().__call__(data, **kwargs)
+        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_minimum))
 
 
 class UnknownSelector(ExtendednessSelector):
-    def __call__(self, table: Tabular, **kwargs) -> Vector:
-        extendedness = super().__call__(table, **kwargs)
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        extendedness = super().__call__(data, **kwargs)
         return extendedness == 9

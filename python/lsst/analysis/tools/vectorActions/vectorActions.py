@@ -23,8 +23,8 @@ class MagColumnNanoJansky(VectorAction):
 
 
 class FractionalDifference(VectorAction):
-    """Calculate (A-B)/B
-    """
+    """Calculate (A-B)/B"""
+
     actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
     actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
 
@@ -35,4 +35,4 @@ class FractionalDifference(VectorAction):
     def __call__(self, table: Tabular, **kwargs) -> Vector:
         vecA = self.actionA(table, **kwargs)
         vecB = self.actionB(table, **kwargs)
-        return (vecA-vecB)/vecB
+        return (vecA - vecB) / vecB

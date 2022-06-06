@@ -4,13 +4,17 @@ import numpy as np
 import scipy.stats as sps
 
 from functools import partial
-from typing import Mapping, Iterable, Optional
+from itertools import chain
+from typing import Mapping, Optional, NamedTuple, cast
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from matplotlib.path import Path
 from matplotlib.collections import PolyCollection
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.collections import PatchCollection
 
 
 from .plotUtils import mkColormap
@@ -18,14 +22,23 @@ from .plotUtils import mkColormap
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
-from ..interfaces import PlotAction, Tabular
+from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector
 
+cmapPatch = plt.cm.coolwarm.copy()
+cmapPatch.set_bad(color="none")
 
 sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
 
 
 def _validatePlotTypes(value):
     return value in ("stars", "galaxies", "unknown", "any", "mag")
+
+
+class _StatsContainer(NamedTuple):
+    median: Scalar
+    sigmaMad: Scalar
+    count: Scalar
+    aproxMag: Scalar
 
 
 class ScatterPlotWithTwoHists(PlotAction):
@@ -61,52 +74,66 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.stats = ("median", "sigmaMad", "count", "medMag")
+        self.stats = ("median", "sigmaMad", "count", "approxMag")
 
-    def getInputColumns(self, **kwargs) -> Iterable[str]:
-        base = ["{band}_lowMag", "{band}_highMap"]
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        base = []
         if "stars" in self.plotTypes:  # type: ignore
-            base.append("xsStars")
-            base.append("ysStars")
+            base.append(("xsStars", Vector))
+            base.append(("ysStars", Vector))
+            base.append(("starHighSNMask", Vector))
+            base.append(("starLowSNMask", Vector))
             # statistics
             for name in self.stats:
-                base.append(f"{{band}}_highSNStars_{name}".format(**kwargs))
-                base.append(f"{{band}}_lowSNStars_{name}".format(**kwargs))
+                base.append((f"{{band}}_highSNStars_{name}".format(**kwargs), Scalar))
+                base.append((f"{{band}}_lowSNStars_{name}".format(**kwargs), Scalar))
         if "galaxies" in self.plotTypes:  # type: ignore
-            base.append("xsGalaxies")
-            base.append("ysGalaxies")
+            base.append(("xsGalaxies", Vector))
+            base.append(("ysGalaxies", Vector))
+            base.append(("galaxyHighSNMask", Vector))
+            base.append(("galaxyLowSNMask", Vector))
             # statistics
             for name in self.stats:
-                base.append(f"{{band}}_highSNGalaxies_{name}".format(**kwargs))
-                base.append(f"{{band}}_lowSNGalaxies_{name}".format(**kwargs))
+                base.append((f"{{band}}_highSNGalaxies_{name}".format(**kwargs), Scalar))
+                base.append((f"{{band}}_lowSNGalaxies_{name}".format(**kwargs), Scalar))
         if "unknown" in self.plotTypes:  # type: ignore
-            base.append("xsUnknown")
-            base.append("ysUnknown")
+            base.append(("xsUnknown", Scalar))
+            base.append(("ysUnknown", Scalar))
+            base.append(("unknownHighSNMask", Vector))
+            base.append(("unknownLowSNMask", Vector))
             # statistics
             for name in self.stats:
                 base.append(f"{{band}}_highSNUnknown_{name}".format(**kwargs))
                 base.append(f"{{band}}_lowSNUnknown_{name}".format(**kwargs))
         if "any" in self.plotTypes:  # type: ignore
-            base.extend(("x", "y"))
+            base.extend((("x", Vector), ("y", Vector)))
+            base.append(("anyHighSNMask", Vector))
+            base.append(("anySNMask", Vector))
             # statistics
             for name in self.stats:
-                base.append(f"{{band}}_highSNAny_{name}".format(**kwargs))
-                base.append(f"{{band}}_lowSNAny_{name}".format(**kwargs))
+                base.append((f"{{band}}_highSNAny_{name}".format(**kwargs), Scalar))
+                base.append((f"{{band}}_lowSNAny_{name}".format(**kwargs), Scalar))
         return base
 
-    def __call__(self, table: Tabular, **kwargs) -> Mapping[str, Figure] | Figure:
-        self._validateInput(table.keys())
-        return self.makePlot(table, **kwargs)
+    def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
+        self._validateInput(data)
+        return self.makePlot(data, **kwargs)
         # table is a dict that needs: x, y, run, skymap, filter, tract,
 
-    def _validateInput(self, keys: Iterable[str], **kwargs) -> None:
-        needed = self.getInputColumns()
-        if remainder := set(needed) - set(keys):
+    def _validateInput(self, data: KeyedData, **kwargs) -> None:
+        needed = self.getInputSchema()
+        if remainder := {key.format(**kwargs) for key, _ in needed} - {
+            key.format(**kwargs) for key in data.keys()
+        }:
             raise ValueError(f"Task needs keys {remainder} but they were not found in input")
+        # Can't do this until Vector is converted to a proper protocol
+        # for name, typ in needed:
+        #     if not isinstance(colType := type(data[name.format(**kwargs)]), typ):
+        #         raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
     def _scatterPlot(
-        self, table: Tabular, fig: Figure, gs: gridspec.GridSpec, **kwargs
-    ) -> Optional[PolyCollection]:
+        self, data: KeyedData, fig: Figure, gs: gridspec.GridSpec, **kwargs
+    ) -> tuple[Axes, Optional[PolyCollection]]:
         # Main scatter plot
         ax = fig.add_subplot(gs[1:, :-1])
 
@@ -121,32 +148,94 @@ class ScatterPlotWithTwoHists(PlotAction):
         toPlotList = []
         histIm = None
         if "stars" in self.plotTypes:  # type: ignore
-            toPlotList.append((table["xsStars"], table["ysStars"], "midnightblue", newBlues, "Stars"))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            toPlotList.append((table["xsGalaxies"], table["ysGalaxies"], "firebrick", newReds, "Galaxies"))
-        if "unknown" in self.plotTypes:  # type: ignore
+            highArgs = {}
+            lowArgs = {}
+            for name in self.stats:
+                highArgs[name] = f"{{band}}_highSNStars_{name}".format(**kwargs)
+                lowArgs[name] = f"{{band}}_lowSNStars_{name}".format(**kwargs)
+            highStats = _StatsContainer(**highArgs)
+            lowStats = _StatsContainer(**lowArgs)
+
             toPlotList.append(
                 (
-                    table["xsUnknown"],
-                    table["ysUnknown"],
+                    data["xsStars"],
+                    data["ysStars"],
+                    data["starHighSNMask"],
+                    data["starLowSNMask"],
+                    "midnightblue",
+                    newBlues,
+                    highStats,
+                    lowStats,
+                )
+            )
+        if "galaxies" in self.plotTypes:  # type: ignore
+            highArgs = {}
+            lowArgs = {}
+            for name in self.stats:
+                highArgs[name] = f"{{band}}_highSNGalaxies_{name}".format(**kwargs)
+                lowArgs[name] = f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)
+            highStats = _StatsContainer(**highArgs)
+            lowStats = _StatsContainer(**lowArgs)
+
+            toPlotList.append(
+                (
+                    data["xsGalaxies"],
+                    data["ysGalaxies"],
+                    data["galaxyHighSNMask"],
+                    data["galaxyLowSNMask"],
+                    "firebrick",
+                    newReds,
+                    highStats,
+                    lowStats,
+                )
+            )
+        if "unknown" in self.plotTypes:  # type: ignore
+            highArgs = {}
+            lowArgs = {}
+            for name in self.stats:
+                highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
+                lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
+            highStats = _StatsContainer(**highArgs)
+            lowStats = _StatsContainer(**lowArgs)
+
+            toPlotList.append(
+                (
+                    data["xsUnknown"],
+                    data["ysUnknown"],
+                    data["unknownHighSNMask"],
+                    data["unknownLowSNMask"],
                     "green",
                     None,
-                    "Unknown",
+                    highStats,
+                    lowStats,
                 )
             )
         if "any" in self.plotTypes:  # type: ignore
+            highArgs = {}
+            lowArgs = {}
+            for name in self.stats:
+                highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
+                lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
+            highStats = _StatsContainer(**highArgs)
+            lowStats = _StatsContainer(**lowArgs)
+
             toPlotList.append(
                 (
-                    table["x"],
-                    table["y"],
+                    data["x"],
+                    data["y"],
+                    data["anyHighSNMask"],
+                    data["anyLowSNMask"],
                     "purple",
                     None,
-                    "Any",
+                    highStats,
+                    lowStats,
                 )
             )
 
+        highStats: _StatsContainer
+        lowStats: _StatsContainer
         xMin = None
-        for (j, (xs, ys, color, cmap, sourceType)) in enumerate(toPlotList):
+        for (j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats)) in enumerate(toPlotList):
             sigMadYs = sigmaMad(ys, nan_policy="omit")
             if len(xs) < 2:
                 (medLine,) = ax.plot(
@@ -251,14 +340,28 @@ class ScatterPlotWithTwoHists(PlotAction):
                 xPos = 0.65 - 0.4 * j
                 bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
                 highThresh = self.highThreshold
-                statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highMags[sourceType]})\n"
-                statText += highStats[sourceType]
+                statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highStats.aproxMag:0.3g})\n"
+                highStatsStr = (
+                    f"Median: {highStats.median:0.3g}    "
+                    + r"$\sigma_{MAD}$: "
+                    + f"{highStats.sigmaMad:0.3g}    "
+                    + r"N$_{points}$: "
+                    + f"{highStats.count}"
+                )
+                statText += highStatsStr
                 fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
                 lowThresh = self.lowThreshold
-                statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowMags[sourceType]})\n"
-                statText += lowStats[sourceType]
+                statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowStats.aproxMag:0.3g})\n"
+                lowStatsStr = (
+                    f"Median: {lowStats.median:0.3g}    "
+                    + r"$\sigma_{MAD}$: "
+                    + f"{lowStats.sigmaMad:0.3g}    "
+                    + r"N$_{points}$: "
+                    + f"{lowStats.count}"
+                )
+                statText += lowStatsStr
                 fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
@@ -269,10 +372,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 # plotting a line makes the statistics look wrong
                 # as the magnitude estimation is iffy for low
                 # numbers of sources.
-                sources = catPlot["sourceType"] == sourceType
-                statInfo = catPlot["useForStats"].loc[sources].values
-                highSn = statInfo == 1
-                lowSn = (statInfo == 2) | (statInfo == 2)
                 if np.sum(highSn) < 100 and np.sum(highSn) > 0:
                     ax.plot(xs[highSn], ys[highSn], marker="x", ms=4, mec="w", mew=2, ls="none")
                     (highSnLine,) = ax.plot(
@@ -281,7 +380,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     linesForLegend.append(highSnLine)
                     xMin = np.min(xs[highSn])
                 else:
-                    ax.axvline(float(highMags[sourceType]), color=color, ls="--")
+                    ax.axvline(highStats.aproxMag, color=color, ls="--")
 
                 if np.sum(lowSn) < 100 and np.sum(lowSn) > 0:
                     ax.plot(xs[lowSn], ys[lowSn], marker="+", ms=4, mec="w", mew=2, ls="none")
@@ -292,7 +391,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     if xMin is None or xMin > np.min(xs[lowSn]):
                         xMin = np.min(xs[lowSn])
                 else:
-                    ax.axvline(float(lowMags[sourceType]), color=color, ls=":")
+                    ax.axvline(lowStats.aproxMag, color=color, ls=":")
 
             else:
                 ax.plot(xs, ys, ".", ms=5, alpha=0.3, mfc=color, mec=color, zorder=-1)
@@ -313,14 +412,14 @@ class ScatterPlotWithTwoHists(PlotAction):
                 histIm = None
 
         # Set the scatter plot limits
-        if len(ysStars) > 0:
-            plotMed = np.nanmedian(ysStars)
+        if len(cast(Vector, data["ysStars"])) > 0:
+            plotMed = np.nanmedian(data["ysStars"])
         else:
-            plotMed = np.nanmedian(ysGalaxies)
+            plotMed = np.nanmedian(data["ysGalaxies"])
         if len(xs) < 2:
             meds = [np.median(ys)]
-        if yLims:
-            ax.set_ylim(yLims[0], yLims[1])
+        if self.yLims:
+            ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore
         else:
             numSig = 4
             yLimMin = plotMed - numSig * sigMadYs
@@ -333,8 +432,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             yLimMax = plotMed + numSig * sigMadYs
             ax.set_ylim(yLimMin, yLimMax)
 
-        if xLims:
-            ax.set_xlim(xLims[0], xLims[1])
+        if self.xLims:
+            ax.set_xlim(self.xLims[0], self.xLims[1])  # type: ignore
         elif len(xs) > 2:
             if xMin is None:
                 xMin = xs1 - 2 * xScale
@@ -356,9 +455,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax.set_ylabel(self.yAxisLabel, fontsize=10, labelpad=10)
         ax.set_xlabel(self.xAxisLabel, fontsize=10, labelpad=2)
 
-        return histIm
+        return ax, histIm
 
-    def makePlot(self, table: Tabular, catPlot, plotInfo, sumStats):
+    def makePlot(self, data: KeyedData, **kwargs):
         """Makes a generic plot with a 2D histogram and collapsed histograms of
         each axis.
         Parameters
@@ -395,7 +494,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         which points to use for the printed statistics.
         """
         if not self.plotTypes:
-            toPlotList = []
             noDataFig = plt.Figure()
             noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
             noDataFig = addPlotInfo(noDataFig, plotInfo)
@@ -404,132 +502,99 @@ class ScatterPlotWithTwoHists(PlotAction):
         fig = plt.figure(dpi=300)
         gs = gridspec.GridSpec(4, 4)
 
-        xCol = self.xAxisLabel
-        yCol = self.yAxisLabel
-        magCol = self.magLabel
+        # add the various plot elements
+        ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
+        self._makeTopHistogram(data, fig, gs, ax)
 
-        # For galaxies
-        if "xsGalaxies" in table:
-            xsGalaxies = table["xsGalaxies"]
-            ysGalaxies = table["ysGalaxies"]
-
-        # For stars
-        if "xsStars" in table:
-            xsStars = table["xsStars"]
-            ysStars = table["ysStars"]
-
-        highStats = {}
-        highMags = {}
-        lowStats = {}
-        lowMags = {}
-
-        # sourceTypes: 1 - stars, 2 - galaxies, 9 - unknowns
-        # 10 - all
-        sourceTypeList = [1, 2, 9, 10]
-        sourceTypeMapper = {"stars": 1, "galaxies": 2, "unknowns": 9, "all": 10}
-        # Calculate some statistics
-        for sourceType in sourceTypeList:
-            if np.any(catPlot["sourceType"] == sourceType):
-                sources = catPlot["sourceType"] == sourceType
-                highSn = (catPlot["useForStats"] == 1) & sources
-                highSnMed = np.nanmedian(catPlot.loc[highSn, yCol])
-                highSnMad = sigmaMad(catPlot.loc[highSn, yCol], nan_policy="omit")
-
-                lowSn = ((catPlot["useForStats"] == 1) | (catPlot["useForStats"] == 2)) & sources
-                lowSnMed = np.nanmedian(catPlot.loc[lowSn, yCol])
-                lowSnMad = sigmaMad(catPlot.loc[lowSn, yCol], nan_policy="omit")
-
-                highStatsStr = (
-                    f"Median: {highSnMed:0.3g}    "
-                    + r"$\sigma_{MAD}$: "
-                    + f"{highSnMad:0.3g}    "
-                    + r"N$_{points}$: "
-                    + f"{np.sum(highSn)}"
-                )
-                highStats[sourceType] = highStatsStr
-
-                lowStatsStr = (
-                    f"Median: {lowSnMed:0.3g}    "
-                    + r"$\sigma_{MAD}$: "
-                    + f"{lowSnMad:0.3g}    "
-                    + r"N$_{points}$: "
-                    + f"{np.sum(lowSn)}"
-                )
-                lowStats[sourceType] = lowStatsStr
-
-                if np.sum(highSn) > 0:
-                    sortedMags = np.sort(catPlot.loc[highSn, magCol])
-                    x = int(len(sortedMags) / 10)
-                    approxHighMag = np.nanmedian(sortedMags[-x:])
-                elif len(catPlot.loc[highSn, magCol]) < 10:
-                    approxHighMag = np.nanmedian(catPlot.loc[highSn, magCol])
-                else:
-                    approxHighMag = "-"
-                highMags[sourceType] = f"{approxHighMag:.3g}"
-
-                if np.sum(lowSn) > 0.0:
-                    sortedMags = np.sort(catPlot.loc[lowSn, magCol])
-                    x = int(len(sortedMags) / 10)
-                    approxLowMag = np.nanmedian(sortedMags[-x:])
-                elif len(catPlot.loc[lowSn, magCol]) < 10:
-                    approxLowMag = np.nanmedian(catPlot.loc[lowSn, magCol])
-                else:
-                    approxLowMag = "-"
-                lowMags[sourceType] = f"{approxLowMag:.3g}"
-
+    def _makeTopHistogram(
+        self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
+    ) -> None:
         # Top histogram
-        topHist = plt.gcf().add_subplot(gs[0, :-1], sharex=ax)
+        totalX = []
+        if "stars" in self.plotTypes:  # type: ignore
+            totalX.append(data["xsStars"])
+        if "galaxies" in self.plotTypes:  # type: ignore
+            totalX.append(data["xsGalaxies"])
+        if "unknown" in self.plotTypes:  # type: ignore
+            totalX.append(data["xsUknown"])
+        if "any" in self.plotTypes:  # type: ignore
+            totalX.append(data["x"])
+
+        # cheat to get the total count while iterating once
+        totalXChained = list(chain(totalX))
+
+        topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
         topHist.hist(
-            catPlot[xCol].values, bins=100, color="grey", alpha=0.3, log=True, label=f"All ({len(catPlot)})"
+            totalXChained, bins=100, color="grey", alpha=0.3, log=True, label=f"All ({len(totalXChained)})"
         )
-        if np.any(catPlot["sourceType"] == 2):
+        if "galaxies" in self.plotTypes:  # type: ignore
             topHist.hist(
-                xsGalaxies,
+                data["xsGalaxies"],
                 bins=100,
                 color="firebrick",
                 histtype="step",
                 log=True,
-                label=f"Galaxies ({len(np.where(galaxies)[0])})",
+                label=f"Galaxies ({len(cast(Vector, data['xsGalaxies']))})",
             )
-        if np.any(catPlot["sourceType"] == 1):
+        if "stars" in self.plotTypes:  # type: ignore
             topHist.hist(
-                xsStars,
+                data["xsStars"],
                 bins=100,
                 color="midnightblue",
                 histtype="step",
                 log=True,
-                label=f"Stars ({len(np.where(stars)[0])})",
+                label=f"Stars ({len(cast(Vector, data['xsStars']))})",
             )
         topHist.axes.get_xaxis().set_visible(False)
         topHist.set_ylabel("Number", fontsize=8)
         topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
 
         # Side histogram
-        sideHist = plt.gcf().add_subplot(gs[1:, -1], sharey=ax)
-        finiteObjs = np.isfinite(catPlot[yCol].values)
+
+    def _makeSideHistogram(
+        self,
+        data: KeyedData,
+        figure: Figure,
+        gs: gridspec.Gridspec,
+        ax: Axes,
+        histIm: Optional[PolyCollection],
+        **kwargs,
+    ) -> None:
+        sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
+
+        totalY = []
+        if "stars" in self.plotTypes:  # type: ignore
+            totalY.append(data["ysStars"])
+        if "galaxies" in self.plotTypes:  # type: ignore
+            totalY.append(data["ysGalaxies"])
+        if "unknown" in self.plotTypes:  # type: ignore
+            totalY.append(data["ysUknown"])
+        if "any" in self.plotTypes:  # type: ignore
+            totalY.append(data["y"])
+        totalYChained = [y for y in chain(totalY) if y == y]
+
+        # cheat to get the total count while iterating once
+        yLimMin, yLimMax = ax.get_ylim()
         bins = np.linspace(yLimMin, yLimMax)
         sideHist.hist(
-            catPlot[yCol].values[finiteObjs],
+            totalYChained,
             bins=bins,
             color="grey",
             alpha=0.3,
             orientation="horizontal",
             log=True,
         )
-        if np.any(catPlot["sourceType"] == sourceTypeMapper["galaxies"]):
+        if "galaxies" in self.plotTypes:  # type: ignore
             sideHist.hist(
-                ysGalaxies[np.isfinite(ysGalaxies)],
+                [g for g in cast(Vector, data["ysGalaxies"]) if g == g],
                 bins=bins,
                 color="firebrick",
                 histtype="step",
                 orientation="horizontal",
                 log=True,
             )
-            sources = catPlot["sourceType"].values == sourceTypeMapper["galaxies"]
-            highSn = catPlot["useForStats"].values == 1
-            lowSn = catPlot["useForStats"].values == 2
             sideHist.hist(
-                ysGalaxies[highSn[sources]],
+                cast(Vector, data["ysGalaxies"])[data["galaxyHighSNMask"]],
                 bins=bins,
                 color="firebrick",
                 histtype="step",
@@ -538,7 +603,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 ls="--",
             )
             sideHist.hist(
-                ysGalaxies[lowSn[sources]],
+                cast(Vector, data["ysGalaxies"])[data["galaxyLowSNMask"]],
                 bins=bins,
                 color="firebrick",
                 histtype="step",
@@ -547,20 +612,17 @@ class ScatterPlotWithTwoHists(PlotAction):
                 ls=":",
             )
 
-        if np.any(catPlot["sourceType"] == sourceTypeMapper["stars"]):
+        if "stars" in self.plotTypes:  # type: ignore
             sideHist.hist(
-                ysStars[np.isfinite(ysStars)],
+                [s for s in cast(Vector, data["ysStars"]) if s == s],
                 bins=bins,
                 color="midnightblue",
                 histtype="step",
                 orientation="horizontal",
                 log=True,
             )
-            sources = catPlot["sourceType"] == sourceTypeMapper["stars"]
-            highSn = catPlot["useForStats"] == 1
-            lowSn = catPlot["useForStats"] == 2
             sideHist.hist(
-                ysStars[highSn[sources]],
+                cast(Vector, data["ysStars"])[data["starHighSNMask"]],
                 bins=bins,
                 color="midnightblue",
                 histtype="step",
@@ -569,7 +631,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 ls="--",
             )
             sideHist.hist(
-                ysStars[lowSn[sources]],
+                cast(Vector, data["ysStars"])[data["starLowSNMask"]],
                 bins=bins,
                 color="midnightblue",
                 histtype="step",
@@ -580,7 +642,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         sideHist.axes.get_yaxis().set_visible(False)
         sideHist.set_xlabel("Number", fontsize=8)
-        if self.config.plot2DHist and histIm is not None:
+        if self.plot2DHist and histIm is not None:
             divider = make_axes_locatable(sideHist)
             cax = divider.append_axes("right", size="8%", pad=0)
             plt.colorbar(histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin")

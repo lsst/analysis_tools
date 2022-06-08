@@ -80,8 +80,8 @@ class AnalysisTool(ConfigurableAction):
     )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
-    def __call__(self, table: Mapping, **kwargs) -> Any:
-        prepped = self.prep(table, **kwargs)  # type: ignore
+    def __call__(self, data: KeyedData, **kwargs) -> Any:
+        prepped = self.prep(data, **kwargs)  # type: ignore
         processed = self.process(prepped, **kwargs)  # type: ignore
         finalized = self.post_process(processed, **kwargs)  # type: ignore
         return finalized

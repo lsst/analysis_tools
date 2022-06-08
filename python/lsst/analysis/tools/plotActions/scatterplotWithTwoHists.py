@@ -15,16 +15,17 @@ from matplotlib.path import Path
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.collections import PatchCollection
+from matplotlib.patches import Rectangle
 
 
-from .plotUtils import mkColormap
+from .plotUtils import mkColormap, addPlotInfo
 
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
 from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector
 
-cmapPatch = plt.cm.coolwarm.copy()
+cmapPatch = plt.cm.coolwarm.copy()  # type: ignore coolwarm is part of module
 cmapPatch.set_bad(color="none")
 
 sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
@@ -38,7 +39,7 @@ class _StatsContainer(NamedTuple):
     median: Scalar
     sigmaMad: Scalar
     count: Scalar
-    aproxMag: Scalar
+    approxMag: Scalar
 
 
 class ScatterPlotWithTwoHists(PlotAction):
@@ -74,7 +75,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.stats = ("median", "sigmaMad", "count", "approxMag")
+        object.__setattr__(self, 'stats', ("median", "sigmaMad", "count", "approxMag"))
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
@@ -116,20 +117,79 @@ class ScatterPlotWithTwoHists(PlotAction):
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
-        self._validateInput(data)
+        self._validateInput(data, **kwargs)
         return self.makePlot(data, **kwargs)
         # table is a dict that needs: x, y, run, skymap, filter, tract,
 
     def _validateInput(self, data: KeyedData, **kwargs) -> None:
-        needed = self.getInputSchema()
+        """ NOTE currently can only check that something is not a Scalar, not
+        check that the data is consistent with Vector
+        """
+        needed = self.getInputSchema(**kwargs)
         if remainder := {key.format(**kwargs) for key, _ in needed} - {
             key.format(**kwargs) for key in data.keys()
         }:
             raise ValueError(f"Task needs keys {remainder} but they were not found in input")
-        # Can't do this until Vector is converted to a proper protocol
-        # for name, typ in needed:
-        #     if not isinstance(colType := type(data[name.format(**kwargs)]), typ):
-        #         raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
+        for name, typ in needed:
+            isScalar = issubclass((colType := type(data[name.format(**kwargs)])), Scalar)
+            if isScalar and typ != Scalar:
+                raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
+
+    def makePlot(self, data: KeyedData, plotInfo: Mapping[str, str] = None, sumStats: Mapping = None, **kwargs) -> Figure:
+        """Makes a generic plot with a 2D histogram and collapsed histograms of
+        each axis.
+        Parameters
+        ----------
+        catPlot : `pandas.core.frame.DataFrame`
+            The catalog to plot the points from.
+        plotInfo : `dict`
+            A dictionary of information about the data being plotted with keys:
+                ``"run"``
+                    The output run for the plots (`str`).
+                ``"skymap"``
+                    The type of skymap used for the data (`str`).
+                ``"filter"``
+                    The filter used for this data (`str`).
+                ``"tract"``
+                    The tract that the data comes from (`str`).
+        sumStats : `dict`
+            A dictionary where the patchIds are the keys which store the R.A.
+            and dec of the corners of the patch, along with a summary
+            statistic for each patch.
+        Returns
+        -------
+        fig : `matplotlib.figure.Figure`
+            The resulting figure.
+        Notes
+        -----
+        Uses the axisLabels config options `x` and `y` and the axisAction
+        config options `xAction` and `yAction` to plot a scatter
+        plot of the values against each other. A histogram of the points
+        collapsed onto each axis is also plotted. A summary panel showing the
+        median of the y value in each patch is shown in the upper right corner
+        of the resultant plot. The code uses the selectorActions to decide
+        which points to plot and the statisticSelector actions to determine
+        which points to use for the printed statistics.
+        """
+        if not self.plotTypes:
+            noDataFig = Figure()
+            noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
+            noDataFig = addPlotInfo(noDataFig, plotInfo)
+            return noDataFig
+
+        fig = plt.figure(dpi=300)
+        gs = gridspec.GridSpec(4, 4)
+
+        # add the various plot elements
+        ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
+        self._makeTopHistogram(data, fig, gs, ax, **kwargs)
+        self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
+        #self._cornerPlot(data, fig, gs, sumStats=sumStats, **kwargs)
+
+        plt.draw()
+        plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
+        fig = addPlotInfo(fig, plotInfo)
+        return fig
 
     def _scatterPlot(
         self, data: KeyedData, fig: Figure, gs: gridspec.GridSpec, **kwargs
@@ -236,6 +296,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         lowStats: _StatsContainer
         xMin = None
         for (j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats)) in enumerate(toPlotList):
+            # ensure the columns are actually array
+            xs = np.array(xs)
+            ys = np.array(ys)
             sigMadYs = sigmaMad(ys, nan_policy="omit")
             if len(xs) < 2:
                 (medLine,) = ax.plot(
@@ -340,11 +403,11 @@ class ScatterPlotWithTwoHists(PlotAction):
                 xPos = 0.65 - 0.4 * j
                 bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
                 highThresh = self.highThreshold
-                statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highStats.aproxMag:0.3g})\n"
+                statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highStats.approxMag})\n"
                 highStatsStr = (
-                    f"Median: {highStats.median:0.3g}    "
+                    f"Median: {highStats.median}    "
                     + r"$\sigma_{MAD}$: "
-                    + f"{highStats.sigmaMad:0.3g}    "
+                    + f"{highStats.sigmaMad}    "
                     + r"N$_{points}$: "
                     + f"{highStats.count}"
                 )
@@ -353,11 +416,11 @@ class ScatterPlotWithTwoHists(PlotAction):
 
                 bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
                 lowThresh = self.lowThreshold
-                statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowStats.aproxMag:0.3g})\n"
+                statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowStats.approxMag})\n"
                 lowStatsStr = (
-                    f"Median: {lowStats.median:0.3g}    "
+                    f"Median: {lowStats.median}    "
                     + r"$\sigma_{MAD}$: "
-                    + f"{lowStats.sigmaMad:0.3g}    "
+                    + f"{lowStats.sigmaMad}    "
                     + r"N$_{points}$: "
                     + f"{lowStats.count}"
                 )
@@ -457,55 +520,6 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         return ax, histIm
 
-    def makePlot(self, data: KeyedData, **kwargs):
-        """Makes a generic plot with a 2D histogram and collapsed histograms of
-        each axis.
-        Parameters
-        ----------
-        catPlot : `pandas.core.frame.DataFrame`
-            The catalog to plot the points from.
-        plotInfo : `dict`
-            A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
-        sumStats : `dict`
-            A dictionary where the patchIds are the keys which store the R.A.
-            and dec of the corners of the patch, along with a summary
-            statistic for each patch.
-        Returns
-        -------
-        fig : `matplotlib.figure.Figure`
-            The resulting figure.
-        Notes
-        -----
-        Uses the axisLabels config options `x` and `y` and the axisAction
-        config options `xAction` and `yAction` to plot a scatter
-        plot of the values against each other. A histogram of the points
-        collapsed onto each axis is also plotted. A summary panel showing the
-        median of the y value in each patch is shown in the upper right corner
-        of the resultant plot. The code uses the selectorActions to decide
-        which points to plot and the statisticSelector actions to determine
-        which points to use for the printed statistics.
-        """
-        if not self.plotTypes:
-            noDataFig = plt.Figure()
-            noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
-            noDataFig = addPlotInfo(noDataFig, plotInfo)
-            return noDataFig
-
-        fig = plt.figure(dpi=300)
-        gs = gridspec.GridSpec(4, 4)
-
-        # add the various plot elements
-        ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
-        self._makeTopHistogram(data, fig, gs, ax)
-
     def _makeTopHistogram(
         self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
     ) -> None:
@@ -520,8 +534,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "any" in self.plotTypes:  # type: ignore
             totalX.append(data["x"])
 
-        # cheat to get the total count while iterating once
-        totalXChained = list(chain(totalX))
+        totalXChained = [x for x in chain.from_iterable(totalX) if x == x]
 
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
         topHist.hist(
@@ -571,7 +584,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             totalY.append(data["ysUknown"])
         if "any" in self.plotTypes:  # type: ignore
             totalY.append(data["y"])
-        totalYChained = [y for y in chain(totalY) if y == y]
+        totalYChained = [y for y in chain.from_iterable(totalY) if y == y]
 
         # cheat to get the total count while iterating once
         yLimMin, yLimMax = ax.get_ylim()
@@ -647,8 +660,9 @@ class ScatterPlotWithTwoHists(PlotAction):
             cax = divider.append_axes("right", size="8%", pad=0)
             plt.colorbar(histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin")
 
+    def _cornerPlot(self, data: KeyedData, figure: Figure, gs: gridspec.Gridspec, sumStats: Mapping = None, **kwargs) -> None:
         # Corner plot of patches showing summary stat in each
-        axCorner = plt.gcf().add_subplot(gs[0, -1])
+        axCorner = figure.add_subplot(gs[0, -1])
         axCorner.yaxis.tick_right()
         axCorner.yaxis.set_label_position("right")
         axCorner.xaxis.tick_top()
@@ -657,8 +671,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         patches = []
         colors = []
-        for dataId in sumStats.keys():
-            (corners, stat) = sumStats[dataId]
+        for dataId, (corners, stat) in sumStats.items():
             ra = corners[0][0].asDegrees()
             dec = corners[0][1].asDegrees()
             xy = (ra, dec)
@@ -687,7 +700,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         # Add a colorbar
         pos = axCorner.get_position()
-        cax = fig.add_axes([pos.x0, pos.y0 + 0.23, pos.x1 - pos.x0, 0.025])
+        cax = figure.add_axes([pos.x0, pos.y0 + 0.23, pos.x1 - pos.x0, 0.025])
         plt.colorbar(collection, cax=cax, orientation="horizontal")
         cax.text(
             0.5,
@@ -703,10 +716,3 @@ class ScatterPlotWithTwoHists(PlotAction):
         cax.tick_params(
             axis="x", labelsize=6, labeltop=True, labelbottom=False, bottom=False, top=True, pad=0.5, length=2
         )
-
-        plt.draw()
-        plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
-        fig = plt.gcf()
-        fig = addPlotInfo(fig, plotInfo)
-
-        return fig

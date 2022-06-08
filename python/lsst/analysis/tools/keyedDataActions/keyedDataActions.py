@@ -44,10 +44,9 @@ class AddComputedVector(KeyedDataAction):
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         yield from self.action.getInputSchema(**kwargs)  # type: ignore
-        yield self.keyName.format(**kwargs)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        data[self.keyName.format(**kwargs)] = self.action(KeyedData, **kwargs)  # type: ignore
+        data[self.keyName.format(**kwargs)] = self.action(data, **kwargs)  # type: ignore
         return data
 
 
@@ -91,10 +90,11 @@ class KeyedScalars(KeyedDataAction):
     scalarActions = ConfigurableActionStructField(doc="Create a KeyedData of individual ScalarActions")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return (action.getInputSchema(**kwargs) for action in self.scalarActions)  # type: ignore
+        for action in self.scalarActions:  # type: ignore
+            yield from action.getInputSchema(**kwargs)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        result: KeyedData = {}
+        result: KeyedData = {}  # type: ignore
         for name, action in self.scalarActions.items():  # type: ignore
             result[name] = action(data, **kwargs)
         return result

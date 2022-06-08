@@ -198,3 +198,16 @@ class UnknownSelector(ExtendednessSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
         return extendedness == 9
+
+
+class VectorSelector(VectorAction):
+    vectorKey = Field(
+        doc="Key corresponding to boolean vector to use as a selection mask",
+        dtype=str
+    )
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        return ((cast(str, self.vectorKey).format(**kwargs), Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])

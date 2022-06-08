@@ -3,7 +3,10 @@ from __future__ import annotations
 import astropy.units as apu
 import numpy as np
 
-from typing import Iterable, cast, Mapping, Tuple, Any
+from typing import cast, Mapping
+from lsst.analysis.tools.plotActions.scatterplotWithTwoHists import ScatterPlotWithTwoHists
+from lsst.analysis.tools.vectorActions.selectors import VectorSelector
+from lsst.analysis.tools.vectorActions.vectorActions import LoadVector, MagColumnNanoJansky
 
 from lsst.pex.config import Field
 from lsst.pex.config.dictField import DictField
@@ -40,36 +43,31 @@ class _AproxMedian(ScalarAction):
 
 
 class ShapeSizeFractionalScalars(KeyedScalars):
-    selectors = ConfigurableActionStructField(
-        doc="Selectors which determine which points go into scalar actions"
-    )
     columnKey = Field(doc="Column key to compute scalars", dtype=str)
+
+    snFluxType = Field(doc="column key for the flux type used in SN selection", dtype=str)
+
+    selector = ConfigurableActionField(doc="Selector to use before computing Scalars", dtype=VectorAction)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         yield from super().getInputSchema(**kwargs)
-        for action in self.selectors:  # type: ignore
-            yield from action.getInputSchema(**kwargs)
 
     def setDefaults(self):
         super().setDefaults()
         self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
         self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
         self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
-        self.selectors.snSelector = SnSelector()  # type: ignore
-        self.selectors.stellar = StellarSelector()  # type: ignore
         self.scalarActions.approxMag = _AproxMedian(  # type: ignore
-            vectorKey=self.selectors.snSelector.fluxType  # type: ignore
+            vectorKey=self.snFluxType  # type: ignore
         )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask = kwargs.get("mask")
-        for selector in cast(Iterable[VectorAction], self.selectors):  # type: ignore
-            temp = selector(data, **kwargs)
-            if mask is not None:
-                mask &= temp  # type: ignore
-            else:
-                mask = temp
-
+        selection = self.selector(data, **kwargs)  # type: ignore
+        if mask is not None:
+            mask &= selection
+        else:
+            mask = selection
         return super().__call__(data, **kwargs | dict(mask=mask))
 
 
@@ -89,74 +87,139 @@ class ShapeSizeFractionalPrep(KeyedDataSelectorAction):
             "{band}_psfFluxErr",
             "{band}_extendedness",
         ]
-        self.tableAction = KeyedDataSubsetAction()
-        self.tableAction.columnKeys = columns
+        self.keyedDataAction = KeyedDataSubsetAction()
+        self.keyedDataAction.columnKeys = columns
         self.selectors.flagSelector = CoaddPlotFlagSelector()  # type: ignore
         self.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)  # type: ignore
 
 
-class ShapeSizeFractionalProcessBase(KeyedDataAction):
+class ShapeSizeFractionalProcess(KeyedDataAction):
+    psfFluxShape = ConfigurableActionField(
+        doc="Action to calculate the PSF Shape",
+    )
     shapeFracDif = ConfigurableActionField(
         doc="Action which adds shapes to the KeyedData",
+    )
+    objectSelector = ConfigurableActionField(doc="Action to select which objects should be considered")
+    highSNRSelector = ConfigurableActionField(
+        doc="Selector action add high SNR stars vector to output",
+    )
+    lowSNRSelector = ConfigurableActionField(
+        doc="Selector action add low SNR stars vector to output",
     )
     calculatorActions = ConfigurableActionStructField(
         doc="Actions which generate KeyedData of scalars",
     )
+    magAction = ConfigurableActionField(
+        doc="Action to generate the magnitude column"
+    )
 
     def setDefaults(self):
+        # compute the PSF Shape
+        psfShapeName = "{band}_psfShape"
+        self.psfFluxShape = AddComputedVector()
+        self.psfFluxShape.keyName = psfShapeName
+        self.psfFluxShape.action = CalcShapeSize()
+        self.psfFluxShape.action.colXx = "{band}_ixxPSF"
+        self.psfFluxShape.action.colYy = "{band}_iyyPSF"
+        self.psfFluxShape.action.colXy = "{band}_ixyPSF"
+
+        # compute the Difference of shapes
         self.shapeFracDif = AddComputedVector()
         self.shapeFracDif.keyName = "{band}_derivedShape"
         self.shapeFracDif.action = FractionalDifference()
         self.shapeFracDif.action.actionA = CalcShapeSize()
-        self.shapeFracDif.action.actionB = CalcShapeSize()
-        self.shapeFracDif.action.actionB.colXx = "{band}_ixxPSF"
-        self.shapeFracDif.action.actionB.colYy = "{band}_iyyPSF"
-        self.shapeFracDif.action.actionB.colXy = "{band}_ixyPSF"
+        self.shapeFracDif.action.actionB = LoadVector()
+        self.shapeFracDif.action.actionB.vectorKey = psfShapeName
 
-        self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(
-            columnKey=self.shapeFracDif.columnName
+        # Default mag action action
+        self.magAction = MagColumnNanoJansky(columnKey="{band}_psfFlux")
+
+        # Setup the selectors
+        self.objectSelector = StellarSelector()
+        self.highSNRSelector = SnSelector(threshold=2700)
+        self.lowSNRSelector = SnSelector(threshold=500)
+
+        self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(  # type: ignore
+            columnKey=self.shapeFracDif.keyName, snFluxType=self.highSNRSelector.fluxType
         )
-        self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(columnKey=self.shapeFracDif.columnName)
+        self.calculatorActions.highSNStars.selector = VectorSelector(vectorKey='starHighSNMask')  # type: ignore
+        self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(  # type: ignore
+            columnKey=self.shapeFracDif.keyName, snFluxType=self.lowSNRSelector.fluxType
+        )
+        self.calculatorActions.lowSNStars.selector = VectorSelector(vectorKey='starLowSNMask')  # type: ignore
 
         for action in self.calculatorActions:  # type: ignore
             action.setDefaults()
 
-        self.calculatorActions.highSNStars.selectors
-        self.calculatorActions.highSNStars.selectors.stellar = SnSelector(threshold=2700)
-
-        self.calculatorActions.lowSNStars.selectors.update = {  # type: ignore
-            "stellar": StellarSelector(),
-            "snSelector": SnSelector(threshold=500),
-        }
         super().setDefaults()
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        yield from self.psfFluxShape.getInputSchema(**kwargs)  # type: ignore
+        yield from self.objectSelector.getInputSchema(**kwargs)  # type: ignore
+        yield from self.highSNRSelector.getInputSchema(**kwargs)  # type: ignore
+        yield from self.lowSNRSelector.getInputSchema(**kwargs)  # type: ignore
         yield from self.shapeFracDif.getInputSchema(**kwargs)  # type: ignore
         for action in self.calculatorActions:  # type: ignore
             yield from action.getInputSchema(**kwargs)
 
-
-class ShapeSizeFractionalProcessMetric(ShapeSizeFractionalProcessBase):
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        table = self.shapeFracDif(data, **kwargs)  # type: ignore
         results = {}
+        data = self.psfFluxShape(data, **kwargs)  # type: ignore
+        data = self.shapeFracDif(data, **kwargs)  # type: ignore
+
+        objectMask = self.objectSelector(data, **kwargs)  # type: ignore
+        highSNRMask = self.highSNRSelector(data, **(kwargs | {"mask": objectMask}))  # type: ignore
+        lowSNRMask = self.lowSNRSelector(data, **kwargs | {"mask": objectMask})  # type: ignore
+
+        data['starHighSNMask'] = highSNRMask
+        data['starLowSNMask'] = lowSNRMask
+
+        mags = self.magAction(data, **kwargs)  # type: ignore
+
         for name, action in self.calculatorActions.items():  # type: ignore
-            for key, value in action(table, **kwargs).items():
+            for key, value in action(data, **kwargs).items():
                 prefix = f"{band}_" if (band := kwargs.get("band")) else ""
                 newKey = f"{prefix}{name}_{key}"
                 results[newKey] = value
+
+        results["starHighSNMask"] = highSNRMask[objectMask]
+        results["starLowSNMask"] = lowSNRMask[objectMask]
+        results['xsStars'] = mags[objectMask]
+        shapeDiff = cast(Vector, data[cast(str, self.shapeFracDif.keyName.format(**kwargs))])  # type: ignore
+        results["ysStars"] = shapeDiff[objectMask]
         return results
+
+
+class ShapeSizeFractionalPostProcessPlot(ScatterPlotWithTwoHists):
+    def setDefaults(self):
+        self.plotTypes = ["stars"]
+        self.xAxisLabel = "PSF Magnitude (mag)"
+        self.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
+        self.magLabel = "PSF Magnitude (mag)"
+        self.highThreshold = 2700
+        self.lowThreshold = 500
 
 
 class ShapeSizeFractionalPostProcessMetric(MetricAction):
     units = DictField(
-        doc="Mapping of column name fragment to astropy unit string",
+        doc="Mapping of scalar key to astropy unit string",
         keytype=str,
         itemtype=str,
         default={
-            "highSNStars": "pixel",
-            "lowSNStars": "pixel",
+            "{band}_highSNStars_median": "pixel",
+            "{band}_highSNStars_sigmaMad": "pixel",
+            "{band}_highSNStars_count": "count",
+            "{band}_lowSNStars_median": "pixel",
+            "{band}_lowSNStars_sigmaMad": "pixel",
+            "{band}_lowSNStars_count": "count",
         },
+    )
+    newNames = DictField(
+        doc="Mapping of key to new name if needed prior to creating metric",
+        keytype=str,
+        itemtype=str,
+        default={},
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -164,12 +227,14 @@ class ShapeSizeFractionalPostProcessMetric(MetricAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Measurement]:
         results = {}
-        for name, value in data.items():
-            # find the unit
-            for fragment, unit in self.units.items():  # type:ignore
-                if fragment in name:
-                    break
-            else:
-                raise ValueError(f"Units could not be found for column {name}")
-            results[name] = Measurement(name, value * apu.Unit(unit))
+        for key, unit in self.units.items():  # type: ignore
+            formattedKey = key.format(**kwargs)
+            if formattedKey not in data:
+                raise ValueError(f"Key: {formattedKey} could not be found input data")
+            value = data[formattedKey]
+            if not isinstance(value, Scalar):
+                raise ValueError(f"Data for key {key} is not a Scalar type")
+            if newName := self.newNames.get(key):  # type: ignore
+                formattedKey = newName.format(**kwargs)
+            results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit))
         return results

@@ -17,7 +17,7 @@ __all__ = (
 
 from abc import abstractmethod
 from numbers import Number
-from typing import Iterable, MutableMapping, NewType, Tuple, Type, Mapping, Any
+from typing import Iterable, MutableMapping, Tuple, Type, Mapping, Any
 
 import numpy as np
 from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
@@ -26,7 +26,7 @@ from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
 Scalar = Number | np.number
-Vector = NewType("Vector", NDArray)
+Vector = NDArray
 KeyedData = MutableMapping[str, Vector | Scalar]
 
 KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]

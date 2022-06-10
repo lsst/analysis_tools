@@ -73,9 +73,7 @@ class ScatterPlotWithTwoHists(PlotAction):
     highThreshold = Field(doc="The Value used as high threshold in statistics", dtype=float, optional=False)
     lowThreshold = Field(doc="The Value used as low threshold in statistics", dtype=float, optional=False)
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        object.__setattr__(self, 'stats', ("median", "sigmaMad", "count", "approxMag"))
+    _stats = ("median", "sigmaMad", "count", "approxMag")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
@@ -85,7 +83,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             base.append(("starHighSNMask", Vector))
             base.append(("starLowSNMask", Vector))
             # statistics
-            for name in self.stats:
+            for name in self._stats:
                 base.append((f"{{band}}_highSNStars_{name}".format(**kwargs), Scalar))
                 base.append((f"{{band}}_lowSNStars_{name}".format(**kwargs), Scalar))
         if "galaxies" in self.plotTypes:  # type: ignore
@@ -94,7 +92,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             base.append(("galaxyHighSNMask", Vector))
             base.append(("galaxyLowSNMask", Vector))
             # statistics
-            for name in self.stats:
+            for name in self._stats:
                 base.append((f"{{band}}_highSNGalaxies_{name}".format(**kwargs), Scalar))
                 base.append((f"{{band}}_lowSNGalaxies_{name}".format(**kwargs), Scalar))
         if "unknown" in self.plotTypes:  # type: ignore
@@ -103,7 +101,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             base.append(("unknownHighSNMask", Vector))
             base.append(("unknownLowSNMask", Vector))
             # statistics
-            for name in self.stats:
+            for name in self._stats:
                 base.append(f"{{band}}_highSNUnknown_{name}".format(**kwargs))
                 base.append(f"{{band}}_lowSNUnknown_{name}".format(**kwargs))
         if "any" in self.plotTypes:  # type: ignore
@@ -111,7 +109,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             base.append(("anyHighSNMask", Vector))
             base.append(("anySNMask", Vector))
             # statistics
-            for name in self.stats:
+            for name in self._stats:
                 base.append((f"{{band}}_highSNAny_{name}".format(**kwargs), Scalar))
                 base.append((f"{{band}}_lowSNAny_{name}".format(**kwargs), Scalar))
         return base
@@ -210,7 +208,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "stars" in self.plotTypes:  # type: ignore
             highArgs = {}
             lowArgs = {}
-            for name in self.stats:
+            for name in self._stats:
                 highArgs[name] = f"{{band}}_highSNStars_{name}".format(**kwargs)
                 lowArgs[name] = f"{{band}}_lowSNStars_{name}".format(**kwargs)
             highStats = _StatsContainer(**highArgs)
@@ -231,7 +229,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "galaxies" in self.plotTypes:  # type: ignore
             highArgs = {}
             lowArgs = {}
-            for name in self.stats:
+            for name in self._stats:
                 highArgs[name] = f"{{band}}_highSNGalaxies_{name}".format(**kwargs)
                 lowArgs[name] = f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)
             highStats = _StatsContainer(**highArgs)
@@ -252,7 +250,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "unknown" in self.plotTypes:  # type: ignore
             highArgs = {}
             lowArgs = {}
-            for name in self.stats:
+            for name in self._stats:
                 highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
                 lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
             highStats = _StatsContainer(**highArgs)
@@ -273,7 +271,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "any" in self.plotTypes:  # type: ignore
             highArgs = {}
             lowArgs = {}
-            for name in self.stats:
+            for name in self._stats:
                 highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
                 lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
             highStats = _StatsContainer(**highArgs)

@@ -193,6 +193,7 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
 
 class ShapeSizeFractionalPostProcessPlot(ScatterPlotWithTwoHists):
     def setDefaults(self):
+        super().setDefaults()
         self.plotTypes = ["stars"]
         self.xAxisLabel = "PSF Magnitude (mag)"
         self.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"

@@ -33,8 +33,15 @@ KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]
 
 
 class AnalysisAction(ConfigurableAction):
+    def __init_subclass__(cls, **kwargs):
+        try:
+            cls.getInputSchema()
+        except NotImplementedError:
+            raise NotImplementedError(f"Class {cls} must implement method getInputSchema")
+
     @abstractmethod
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    @classmethod
+    def getInputSchema(cls, **kwargs) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
 
 
@@ -85,6 +92,10 @@ class AnalysisTool(ConfigurableAction):
         processed = self.process(prepped, **kwargs)  # type: ignore
         finalized = self.post_process(processed, **kwargs)  # type: ignore
         return finalized
+
+    def setDefaults(self):
+        if hasattr(self.prep, 'columns'):
+            self.prep.columns = [col for col, _ in self.process.getInputSchema()]
 
     @classmethod
     @abstractmethod

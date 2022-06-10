@@ -94,6 +94,10 @@ class AnalysisTool(ConfigurableAction):
         return finalized
 
     def setDefaults(self):
+        super().setDefaults()
+        # imported here to avoid circular imports
+        from .analysisParts.base import BasePrep
+        self.prep = BasePrep
         if hasattr(self.prep, 'columns'):
             self.prep.columns = [col for col, _ in self.process.getInputSchema()]
 
@@ -105,6 +109,10 @@ class AnalysisTool(ConfigurableAction):
 
 class AnalysisMetric(AnalysisTool):
     post_process = ConfigurableActionField(doc="Action which returns a calculated Metric", dtype=MetricAction)
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.post_process 
 
 
 class AnalysisPlot(AnalysisTool):

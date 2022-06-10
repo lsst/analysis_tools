@@ -2,9 +2,20 @@ from lsst.analysis.tools.interfaces import KeyedDataAction
 
 from __future__ import annotations
 
+from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
 from ..interfaces import KeyedDataAction, KeyedDataSchema, KeyedData
+from ..keyedDataActions import KeyedDataSelectorAction, KeyedDataSubsetAction
+
+
+class BasePrep(KeyedDataSelectorAction):
+    columnKeys = ListField(doc="columns to load", dtype=str)
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.keyedDataAction = KeyedDataSubsetAction()
+        self.keyedDataAction.columnKeys = self.columnKeys
 
 
 class BaseProcess(KeyedDataAction):

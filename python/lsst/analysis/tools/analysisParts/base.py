@@ -1,37 +1,77 @@
 from __future__ import annotations
 
-from lsst.pex.config.listField import ListField
+from itertools import chain
+from typing import cast, Mapping, Type
+
+import astropy.units as apu
+
 from lsst.pex.config.dictField import DictField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.verify import Measurement
 
-from ..interfaces import KeyedDataAction, KeyedDataSchema, KeyedData, MetricAction, KeyedDataAction
-from ..keyedDataActions import KeyedDataSelectorAction, KeyedDataSubsetAction
+from ..interfaces import KeyedDataAction, KeyedDataSchema, KeyedData, MetricAction, Scalar, Vector
+from ..keyedDataActions import KeyedDataSelectorAction
 
 
 class BasePrep(KeyedDataSelectorAction):
-    columnKeys = ListField(doc="columns to load", dtype=str)
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.keyedDataAction = KeyedDataSubsetAction()
-        self.keyedDataAction.columnKeys = self.columnKeys
+    pass
 
 
 class BaseProcess(KeyedDataAction):
-    metricProcess = ConfigurableActionField(doc="Does any work required to prep for metrics")
-    plotProcess = ConfigurableActionField(doc="Does any work required to prep for plotting")
+    buildActions = ConfigurableActionStructField(
+        doc="Actions which compute a Vector which will be added to results"
+    )
+    filterActions = ConfigurableActionStructField(
+        doc="Actions which filter one or more input or build Vectors into shorter vectors"
+    )
+    calculateActions = ConfigurableActionStructField(
+        doc="Actions which compute quantities from the input or built data"
+    )
 
-    @classmethod
-    def getInputSchema(cls, **kwargs) -> KeyedDataSchema:
-        yield from cls.plotProcess.getInputSchema(**kwargs)
-        yield from cls.metricProcess.getInputSchema(**kwargs)
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        buildSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
+        filterSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
+        calculateSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
+        for id, action in self.buildActions.items():  # type: ignore
+            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+                buildSchema[name] = typ
+        for id, action in self.filterActions.items():  # type: ignore
+            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+                if name not in buildSchema:
+                    filterSchema[name] = typ
+        for id, action in self.calculateActions.items():  # type: ignore
+            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+                if name not in buildSchema and name not in filterSchema:
+                    calculateSchema[name] = typ
+        return ((name, typ) for name, typ in chain(buildSchema.items(), calculateSchema.items()))
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        results = dict(self.metricProcess(data, **kwargs))
+        results = {}
+        data = dict(data)
+        for name, action in self.buildActions.items():  # type: ignore
+            match action:
+                case Mapping(item):
+                    for key, result in item(data, **(kwargs | {'identifier': name})):
+                        results[key] = result
+                case item:
+                    results[name] = item(data, **kwargs)
+        view1 = data | results
+        for name, action in self.buildActions.items():  # type: ignore
+            match action:
+                case Mapping(item):
+                    for key, result in item(view1, **(kwargs | {'identifier': name})):
+                        results[key] = result
+                case item:
+                    results[name] = item(view1, **kwargs)
 
-        if self.plotProcess:
-            results.update(self.plotProcess(dict(data) | results, **kwargs))
+        view2 = data | results
+        for name, action in self.calculateActions.items():  # type: ignore
+            match action:
+                case Mapping(item):
+                    for key, result in item(view2, **(kwargs | {'identifier': name})):
+                        results[key] = result
+                case item:
+                    results[name] = item(view2, **kwargs)
         return results
 
 

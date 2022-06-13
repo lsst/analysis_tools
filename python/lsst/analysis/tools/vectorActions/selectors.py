@@ -33,7 +33,7 @@ class FlagSelector(VectorAction):
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)  # type: ignore
-        return ((col.format(**kwargs), Vector) for col in allCols)
+        return ((col.format_map(kwargs), Vector) for col in allCols)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
@@ -128,8 +128,8 @@ class SnSelector(VectorAction):
         if value := kwargs.pop("band"):
             bands = (value,)
         for band in bands:  # type: ignore
-            yield (fluxCol := (cast(str, self.fluxType)).format(**kwargs, band=band)), Vector
-            yield f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}", Vector
+            yield (fluxCol := (cast(str, self.fluxType)).format_map(kwargs | {"band":band})), Vector
+            yield f"{fluxCol}{cast(str,self.uncertaintySuffix).format_map(kwargs)}", Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
@@ -151,7 +151,7 @@ class SnSelector(VectorAction):
         for band in bands:
             fluxCol = cast(str, self.fluxType).format(**kwargs, band=band)
             errCol = f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}"
-            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > cast(float, self.threshold)
+            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > cast(float, self.threshold)  # type: ignore
             if mask is not None:
                 mask &= temp  # type: ignore
             else:
@@ -167,7 +167,7 @@ class ExtendednessSelector(VectorAction):
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.columnKey.format(**kwargs), Vector),)  # type: ignore
+        return ((self.columnKey.format_map(kwargs), Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         key = self.columnKey.format(**kwargs)  # type: ignore
@@ -207,7 +207,7 @@ class VectorSelector(VectorAction):
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((cast(str, self.vectorKey).format(**kwargs), Vector),)
+        return ((cast(str, self.vectorKey).format_map(kwargs), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])

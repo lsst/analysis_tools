@@ -34,14 +34,11 @@ KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]
 
 class AnalysisAction(ConfigurableAction):
     def __init_subclass__(cls, **kwargs):
-        try:
-            cls.getInputSchema()
-        except NotImplementedError:
+        if 'getInputSchema' not in dir(cls):
             raise NotImplementedError(f"Class {cls} must implement method getInputSchema")
 
     @abstractmethod
-    @classmethod
-    def getInputSchema(cls, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
 
 
@@ -80,7 +77,7 @@ class PlotAction(AnalysisAction):
         raise NotImplementedError("This is not implemented on the base class")
 
 
-class AnalysisTool(ConfigurableAction):
+class AnalysisTool(AnalysisAction):
     prep = ConfigurableActionField(doc="Action to run to prepare inputs", dtype=KeyedDataAction)
     process = ConfigurableActionField(
         doc="Action to process data into intended form",
@@ -96,10 +93,17 @@ class AnalysisTool(ConfigurableAction):
     def setDefaults(self):
         super().setDefaults()
         # imported here to avoid circular imports
+        from .analysisParts.base import BasePrep, BaseProcess
+        self.prep = BasePrep()
+        self.process = BaseProcess()
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        # imported here to avoid circular imports
         from .analysisParts.base import BasePrep
-        self.prep = BasePrep
-        if hasattr(self.prep, 'columns'):
-            self.prep.columns = [col for col, _ in self.process.getInputSchema()]
+        if isinstance(self.prep, BasePrep) and self.prep.columnKeys is None:
+            self.prep.columnKeys = [col for col, _ in self.process.getInputSchema(**kwargs)]  # type: ignore
+
+        return self.prep.getInputSchema(**kwargs)  # type: ignore
 
     @classmethod
     @abstractmethod
@@ -112,7 +116,9 @@ class AnalysisMetric(AnalysisTool):
 
     def setDefaults(self):
         super().setDefaults()
-        self.post_process 
+        # imported here to avoid circular imports
+        from .analysisParts.base import BaseMetricAction
+        self.post_process = BaseMetricAction
 
 
 class AnalysisPlot(AnalysisTool):

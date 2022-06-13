@@ -11,7 +11,7 @@ class MedianAction(ScalarAction):
     colKey = Field("Key of Vector to median", dtype=str)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.colKey.format(**kwargs), Vector),)  # type: ignore
+        return ((self.colKey.format_map(kwargs), Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
@@ -22,7 +22,7 @@ class SigmaMadAction(ScalarAction):
     colKey = Field("Key of Vector to median", dtype=str)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.colKey.format(**kwargs), Vector),)  # type: ignore
+        return ((self.colKey.format_map(kwargs), Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
@@ -37,7 +37,7 @@ class CountAction(ScalarAction):
     colKey = Field("Key of Vector to median", dtype=str)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.colKey.format(**kwargs), Vector),)  # type: ignore
+        return ((self.colKey.format_map(kwargs), Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)

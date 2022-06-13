@@ -17,18 +17,110 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
+from lsst.analysis.tools.scalarActions.scalarActions import CountAction, MedianAction, SigmaMadAction
+
 
 from .plotUtils import mkColormap, addPlotInfo
 
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
-from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+
+from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector, KeyedDataAction, ScalarAction
+from ..vectorActions import SnSelector, VectorAction
+from ..keyedDataActions import KeyedScalars
 
 cmapPatch = plt.cm.coolwarm.copy()  # type: ignore coolwarm is part of module
 cmapPatch.set_bad(color="none")
 
 sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
+
+
+class _AproxMedian(ScalarAction):
+    vectorKey = Field(doc="Key for the vector to perform action on", dtype=str, optional=False)
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        return ((self.vectorKey.format(**kwargs), Vector),)  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
+        x = int(len(value) / 10)
+        return np.nanmedian(value[-x:])
+
+
+class _StatsImpl(KeyedScalars):
+    columnKey = Field(doc="Column key to compute scalars", dtype=str)
+
+    snFluxType = Field(doc="column key for the flux type used in SN selection", dtype=str)
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        yield from super().getInputSchema(**kwargs)
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.approxMag = _AproxMedian(  # type: ignore
+            vectorKey=self.snFluxType  # type: ignore
+        )
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask = kwargs.get("mask")
+        return super().__call__(data, **kwargs | dict(mask=mask))
+
+
+class ScatterPlotStatsAction(KeyedDataAction):
+    vectorKey = Field(
+        doc="Vector on which to compute statistics",
+        dtype=str
+    )
+    highThreshold = Field(
+        doc="SN threshold considered high",
+        dtype=float,
+        default=2700
+    )
+    lowThreshold = Field(
+        doc="SN threshold considered low",
+        dtype=float,
+        default=500
+    )
+    fluxType = Field(
+        doc="Vector key to use to compute signal to noise ratio",
+        dtype=str,
+        default="{band}_psfFlux"
+    )
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        yield (cast(str, self.vectorKey).format(**kwargs), Vector)
+        yield (cast(str, self.fluxType).format(**kwargs), Vector)
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        results = {}
+        highSelector = SnSelector(
+            threshold=self.highThreshold,
+            fluxType=self.fluxType
+        )
+        highMaskKey = '{identifier}HighSNMask'.format(**kwargs)
+        results[highMaskKey] = highSelector(data, **kwargs)
+
+        lowSelector = SnSelector(
+            threshold=self.highThreshold,
+            fluxType=self.fluxType
+        )
+        lowMaskKey = '{identifier}LowSNMask'.format(**kwargs)
+        results[lowMaskKey] = lowSelector(data, **kwargs)
+
+        prefix = f"{band}_" if (band := kwargs.get("band")) else ""
+
+        stats = _StatsImpl(columnKey=self.vectorKey, snFluxType=self.fluxType)
+        for maskKey, typ in ((lowMaskKey, "low"), (highMaskKey, "high")):
+            for name, value in stats(data, **(kwargs | {"mask": results[maskKey]})).items():
+                tmpKey = f"{prefix}_{typ}SN{{identifier}}_{name}".format(**kwargs)
+                results[tmpKey] = value
+        return results
 
 
 def _validatePlotTypes(value):

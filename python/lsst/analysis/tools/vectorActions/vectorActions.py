@@ -3,20 +3,41 @@ from __future__ import annotations
 from typing import cast
 
 from astropy import units as u
+import logging
 import numpy as np
+
 from lsst.pex.config import Field, DictField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField,
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
 from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from .selectors import VectorSelector
 
 
 _LOG = logging.getLogger(__name__)
+
+
+class DownselectVector(VectorAction):
+    vectorKey = Field(doc="column key to load from KeyedData", dtype=str)
+
+    selector = ConfigurableActionField(
+        doc="Action which returns a selection mask",
+        default=VectorSelector
+    )
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        yield (cast(str, self.vectorKey).format_map(kwargs), Vector)
+        yield from cast(VectorAction, self.selector).getInputSchema(**kwargs)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = cast(VectorAction, self.selector)(data, **kwargs)
+        return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])[mask]
+
 
 class MagColumnNanoJansky(VectorAction):
     columnKey = Field(doc="column key to use for this transformation", dtype=str)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.columnKey.format(**kwargs), Vector),)  # type: ignore
+        return ((self.columnKey.format_map(kwargs), Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         with np.warnings.catch_warnings():  # type: ignore
@@ -47,7 +68,7 @@ class LoadVector(VectorAction):
     vectorKey = Field(doc="Key of vector which should be loaded", dtype=str)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((cast(str, self.vectorKey).format(**kwargs), Vector),)
+        return ((cast(str, self.vectorKey).format_map(kwargs), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])
@@ -78,7 +99,7 @@ class MagDiff(VectorAction):
     returnMillimags = Field(doc="Use millimags or not?", dtype=bool, default=True)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.col1.format(**kwargs), Vector), (self.col2.format(**kwargs), Vector))
+        return ((self.col1.format_map(kwargs), Vector), (self.col2.format_map(kwargs), Vector))
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         flux1 = data[self.col1.format(**kwargs)] * u.Unit(self.fluxUnits1)

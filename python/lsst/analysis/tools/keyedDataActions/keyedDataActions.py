@@ -14,10 +14,10 @@ class KeyedDataSubsetAction(KeyedDataAction):
     columnKeys = ListField(doc="Keys to extract from KeyedData and return", dtype=str)  # type: ignore
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((column.format(**kwargs), Vector | Scalar) for column in self.columnKeys)  # type: ignore
+        return ((column.format_map(kwargs), Vector | Scalar) for column in self.columnKeys)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        return {key.format(**kwargs): data[key.format(**kwargs)] for key in self.columnKeys}  # type: ignore
+        return {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}  # type: ignore
 
 
 class ChainedKeyedDataActions(KeyedDataAction):
@@ -31,7 +31,7 @@ class ChainedKeyedDataActions(KeyedDataAction):
             yield from action.getInputSchema(**kwargs)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        result: KeyedData = {}
+        result: KeyedData = {}  # type: ignore
         for action in self.tableActions:  # type: ignore
             for column, values in action(data, **kwargs):
                 result[column] = values
@@ -57,16 +57,14 @@ class KeyedDataSelectorAction(KeyedDataAction):
     expected schema.
     """
 
-    keyedDataAction = ConfigurableActionField(
-        doc="TabularAction to run prior to down selecting rows", default=ChainedKeyedDataActions
-    )
+    columnKeys = ListField(doc="Keys to extract from KeyedData and return", dtype=str)  # type: ignore
+
     selectors = ConfigurableActionStructField(
         doc="Selectors for selecting rows, will be AND together",
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        for key in self.keyedDataAction.getInputSchema(**kwargs):  # type: ignore
-            yield key
+        yield from ((column.format_map(kwargs), Vector | Scalar) for column in self.columnKeys)  # type: ignore
         for action in self.selectors:  # type: ignore
             yield from action.getInputSchema(**kwargs)
 
@@ -79,7 +77,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
             else:
                 mask *= subMask
 
-        result: KeyedData = self.keyedDataAction(data, **kwargs)  # type: ignore
+        result = {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}  # type: ignore
         if mask is not None:
             return {key: cast(Vector, col)[mask] for key, col in result.items()}
         else:

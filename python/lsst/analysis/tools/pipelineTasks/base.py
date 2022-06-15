@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Mapping
+from collections import abc
+from typing import cast, Iterable
 
 from lsst.pipe.base import PipelineTask, Struct, PipelineTaskConnections, PipelineTaskConfig
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
+from lsst.pex.config import ListField
 
 
 from ..interfaces import KeyedData
+from ..analysisMetrics.metricActionMapping import MetricActionMapping
 
 
 class AnalysisBaseConnections(PipelineTaskConnections, dimensions={}):
@@ -34,13 +37,19 @@ class AnalysisBaseConfig(PipelineTaskConnections, connections=AnalysisBaseConnec
     plots = ConfigurableActionStructField(doc="AnalysisPlots to run with this Task")
     metrics = ConfigurableActionStructField(doc="AnalysisMetrics to run with this Task")
 
+    bands = ListField(
+        doc="Filter bands on which to run all of the actions",
+        dtype=str,
+        default=["g", "r", "i", "z", "y"]
+    )
+
 
 class AnalysisPipelineTask(PipelineTask):
     def runPlots(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
-        for name, action in self.config.analysisPlots:  # type: ignore
+        for name, action in self.config.analysisPlots.items():  # type: ignore
             match action(data, **kwargs):
-                case Mapping(val):
+                case abc.Mapping() as val:
                     for n, v in val.items():
                         setattr(results, n, v)
                 case value:
@@ -48,4 +57,22 @@ class AnalysisPipelineTask(PipelineTask):
         return results
 
     def runMetrics(self, data: KeyedData, **kwargs) -> Struct:
-        return Struct()
+        metricsMapping = MetricActionMapping()
+        for name, action in self.config.metrics.items():  # type: ignore
+            match action(data, **kwargs):
+                case abc.Mapping() as val:
+                    results = list(val.values())
+                case val:
+                    results = [val]
+            metricsMapping[name] = results
+        return Struct(metrics=metricsMapping) 
+
+    def run(self, data: KeyedData, **kwargs) -> Struct:
+        results = Struct()
+
+        for band in cast(Iterable[str], self.config.bands):  # type: ignore
+            kwargs['band'] = band
+            results.mergeItems(self.runPlots(data, **kwargs))
+            results.mergeItems(self.runMetrics(data, **kwargs))
+
+        return results

@@ -121,6 +121,9 @@ class ScatterPlotStatsAction(KeyedDataAction):
             for name, value in stats(data, **(kwargs | {"mask": results[maskKey]})).items():
                 tmpKey = f"{prefix}{typ}SN{{identifier}}_{name}".format(**kwargs)
                 results[tmpKey] = value
+        results["highThreshold"] = self.highSnSelector.threshold
+        results["lowThreshold"] = self.lowSnSelector.threshold
+
         return results
 
 
@@ -163,8 +166,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         optional=False,
         itemCheck=_validatePlotTypes,
     )
-    highThreshold = Field(doc="The Value used as high threshold in statistics", dtype=float, optional=False)
-    lowThreshold = Field(doc="The Value used as low threshold in statistics", dtype=float, optional=False)
 
     _stats = ("median", "sigmaMad", "count", "approxMag")
 
@@ -205,6 +206,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             for name in self._stats:
                 base.append((f"{{band}}_highSNAny_{name}".format(**kwargs), Scalar))
                 base.append((f"{{band}}_lowSNAny_{name}".format(**kwargs), Scalar))
+        base.append(("lowSnThreshold", Scalar))
+        base.append(("highSnThreshold", Scalar))
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
@@ -493,7 +496,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 # Add some stats text
                 xPos = 0.65 - 0.4 * j
                 bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
-                highThresh = self.highThreshold
+                highThresh = data["highSnThreshold"]
                 statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highStats.approxMag})\n"
                 highStatsStr = (
                     f"Median: {highStats.median}    "
@@ -506,7 +509,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
-                lowThresh = self.lowThreshold
+                lowThresh = data["lowSnThreshold"]
                 statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowStats.approxMag})\n"
                 lowStatsStr = (
                     f"Median: {lowStats.median}    "

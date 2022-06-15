@@ -33,10 +33,10 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
         # selector could be calculated and applied twice in the filter stage
         self.process.buildActions.starSelector = StellarSelector()  # type: ignore
 
-        self.process.filterActions.xsStars = DownselectVector(  # type: ignore
+        self.process.filterActions.xStars = DownselectVector(  # type: ignore
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
         )
-        self.process.filterActions.ysStars = DownselectVector(  # type: ignore
+        self.process.filterActions.yStars = DownselectVector(  # type: ignore
             vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
         )
 

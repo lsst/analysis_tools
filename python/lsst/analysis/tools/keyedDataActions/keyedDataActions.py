@@ -13,8 +13,8 @@ from ..interfaces import KeyedData, KeyedDataSchema, KeyedDataAction, Vector, Ve
 class KeyedDataSubsetAction(KeyedDataAction):
     columnKeys = ListField(doc="Keys to extract from KeyedData and return", dtype=str)  # type: ignore
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((column.format_map(kwargs), Vector | Scalar) for column in self.columnKeys)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         return {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}  # type: ignore
@@ -26,9 +26,9 @@ class ChainedKeyedDataActions(KeyedDataAction):
         "object"
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         for action in self.tableActions:  # type: ignore
-            yield from action.getInputSchema(**kwargs)
+            yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result: KeyedData = {}  # type: ignore
@@ -42,8 +42,8 @@ class AddComputedVector(KeyedDataAction):
     action = ConfigurableActionField(doc="Action to use to compute Vector", dtype=VectorAction)
     keyName = Field(doc="Key name to add to KeyedData", dtype=str)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from self.action.getInputSchema(**kwargs)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.action.getInputSchema()  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         data[self.keyName.format(**kwargs)] = self.action(data, **kwargs)  # type: ignore
@@ -63,10 +63,10 @@ class KeyedDataSelectorAction(KeyedDataAction):
         doc="Selectors for selecting rows, will be AND together",
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from ((column.format_map(kwargs), Vector | Scalar) for column in self.columnKeys)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
         for action in self.selectors:  # type: ignore
-            yield from action.getInputSchema(**kwargs)
+            yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask: Optional[np.ndarray] = None
@@ -87,9 +87,9 @@ class KeyedDataSelectorAction(KeyedDataAction):
 class KeyedScalars(KeyedDataAction):
     scalarActions = ConfigurableActionStructField(doc="Create a KeyedData of individual ScalarActions")
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         for action in self.scalarActions:  # type: ignore
-            yield from action.getInputSchema(**kwargs)
+            yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result: KeyedData = {}  # type: ignore

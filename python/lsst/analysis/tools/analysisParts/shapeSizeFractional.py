@@ -27,8 +27,8 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 class _AproxMedian(ScalarAction):
     vectorKey = Field(doc="Key for the vector to perform action on", dtype=str, optional=False)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.vectorKey.format(**kwargs), Vector),)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
@@ -44,8 +44,8 @@ class ShapeSizeFractionalScalars(KeyedScalars):
 
     selector = ConfigurableActionField(doc="Selector to use before computing Scalars", dtype=VectorAction)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from super().getInputSchema(**kwargs)
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
 
     def setDefaults(self):
         super().setDefaults()
@@ -126,14 +126,14 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
 
         super().setDefaults()
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from self.psfFluxShape.getInputSchema(**kwargs)  # type: ignore
-        yield from self.objectSelector.getInputSchema(**kwargs)  # type: ignore
-        yield from self.highSNRSelector.getInputSchema(**kwargs)  # type: ignore
-        yield from self.lowSNRSelector.getInputSchema(**kwargs)  # type: ignore
-        yield from self.shapeFracDif.getInputSchema(**kwargs)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.psfFluxShape.getInputSchema()  # type: ignore
+        yield from self.objectSelector.getInputSchema()  # type: ignore
+        yield from self.highSNRSelector.getInputSchema()  # type: ignore
+        yield from self.lowSNRSelector.getInputSchema()  # type: ignore
+        yield from self.shapeFracDif.getInputSchema()  # type: ignore
         for action in self.calculatorActions:  # type: ignore
-            yield from action.getInputSchema(**kwargs)
+            yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}

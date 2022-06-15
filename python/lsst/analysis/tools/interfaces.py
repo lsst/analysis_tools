@@ -17,7 +17,8 @@ __all__ = (
 
 from abc import abstractmethod
 from numbers import Number
-from typing import Iterable, MutableMapping, Tuple, Type, Mapping, Any
+from typing import Iterable, MutableMapping, Tuple, Type, Mapping, Any, cast
+import warnings
 
 import numpy as np
 from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
@@ -34,12 +35,23 @@ KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]
 
 class AnalysisAction(ConfigurableAction):
     def __init_subclass__(cls, **kwargs):
-        if 'getInputSchema' not in dir(cls):
+        if "getInputSchema" not in dir(cls):
             raise NotImplementedError(f"Class {cls} must implement method getInputSchema")
 
     @abstractmethod
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
+
+    def getFormattedInputSchema(self, **kwargs):
+        for key, typ in self.getInputSchema():
+            yield key.format_map(kwargs), typ
+
+    def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
+        warnings.warn(
+            f"{type(self)} does not implement adding input schemas, call will do nothing, "
+            "this may be expected",
+            RuntimeWarning
+        )
 
 
 class KeyedDataAction(AnalysisAction):
@@ -85,6 +97,7 @@ class AnalysisTool(AnalysisAction):
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
     def __call__(self, data: KeyedData, **kwargs) -> Any:
+        self.populatePrepFromProcess()
         prepped = self.prep(data, **kwargs)  # type: ignore
         processed = self.process(prepped, **kwargs)  # type: ignore
         finalized = self.post_process(processed, **kwargs)  # type: ignore
@@ -94,16 +107,16 @@ class AnalysisTool(AnalysisAction):
         super().setDefaults()
         # imported here to avoid circular imports
         from .analysisParts.base import BasePrep, BaseProcess
+
         self.prep = BasePrep()
         self.process = BaseProcess()
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        # imported here to avoid circular imports
-        from .analysisParts.base import BasePrep
-        if isinstance(self.prep, BasePrep) and self.prep.columnKeys is None:
-            self.prep.columnKeys = [col for col, _ in self.process.getInputSchema(**kwargs)]  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        self.populatePrepFromProcess()
+        return self.prep.getInputSchema()  # type: ignore
 
-        return self.prep.getInputSchema(**kwargs)  # type: ignore
+    def populatePrepFromProcess(self):
+        cast(AnalysisAction, self.prep).addInputSchema(cast(AnalysisAction, self.process).getInputSchema())
 
     @classmethod
     @abstractmethod
@@ -118,6 +131,7 @@ class AnalysisMetric(AnalysisTool):
         super().setDefaults()
         # imported here to avoid circular imports
         from .analysisParts.base import BaseMetricAction
+
         self.post_process = BaseMetricAction
 
 

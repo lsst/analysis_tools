@@ -24,9 +24,9 @@ class DownselectVector(VectorAction):
         default=VectorSelector
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield (cast(str, self.vectorKey).format_map(kwargs), Vector)
-        yield from cast(VectorAction, self.selector).getInputSchema(**kwargs)
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (cast(str, self.vectorKey), Vector)
+        yield from cast(VectorAction, self.selector).getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         mask = cast(VectorAction, self.selector)(data, **kwargs)
@@ -36,8 +36,8 @@ class DownselectVector(VectorAction):
 class MagColumnNanoJansky(VectorAction):
     columnKey = Field(doc="column key to use for this transformation", dtype=str)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.columnKey.format_map(kwargs), Vector),)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.columnKey, Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         with np.warnings.catch_warnings():  # type: ignore
@@ -53,9 +53,9 @@ class FractionalDifference(VectorAction):
     actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
     actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema(**kwargs)  # type: ignore
-        yield from self.actionB.getInputSchema(**kwargs)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         vecA = self.actionA(data, **kwargs)  # type: ignore
@@ -67,8 +67,8 @@ class LoadVector(VectorAction):
     """Load and return a Vector from KeyedData"""
     vectorKey = Field(doc="Key of vector which should be loaded", dtype=str)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((cast(str, self.vectorKey).format_map(kwargs), Vector),)
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((cast(str, self.vectorKey), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])
@@ -98,8 +98,8 @@ class MagDiff(VectorAction):
     fluxUnits2 = Field(doc="Units for col2", dtype=str, default="nanojansky")
     returnMillimags = Field(doc="Use millimags or not?", dtype=bool, default=True)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.col1.format_map(kwargs), Vector), (self.col2.format_map(kwargs), Vector))
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((cast(str, self.col1), Vector), (cast(str, self.col2), Vector))
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         flux1 = data[self.col1.format(**kwargs)] * u.Unit(self.fluxUnits1)
@@ -139,12 +139,8 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         keytype=str, itemtype=float, optional=True,
         default=None)
 
-    @property
-    def columns(self):
-        return self.magDiff.columns + (self.ebvCol,)
-
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return self.magDiff.getInputSchema(**kwargs) + ((self.ebvCol.format(**kwargs), Vector), )
+        return self.magDiff.getInputSchema() + ((self.ebvCol, Vector), )
 
     def __call__(self, df):
         diff = self.magDiff(df)

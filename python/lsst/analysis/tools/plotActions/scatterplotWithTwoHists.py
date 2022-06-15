@@ -28,7 +28,7 @@ from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
 from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector, KeyedDataAction, ScalarAction
-from ..vectorActions import SnSelector, VectorAction
+from ..vectorActions import SnSelector
 from ..keyedDataActions import KeyedScalars
 
 cmapPatch = plt.cm.coolwarm.copy()  # type: ignore coolwarm is part of module
@@ -55,8 +55,8 @@ class _StatsImpl(KeyedScalars):
 
     snFluxType = Field(doc="column key for the flux type used in SN selection", dtype=str)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield from super().getInputSchema(**kwargs)
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
 
     def setDefaults(self):
         super().setDefaults()
@@ -77,15 +77,17 @@ class ScatterPlotStatsAction(KeyedDataAction):
         doc="Vector on which to compute statistics",
         dtype=str
     )
-    highThreshold = Field(
-        doc="SN threshold considered high",
-        dtype=float,
-        default=2700
+    highSNSelector = ConfigurableActionField(
+        doc="Selector used to determine high SN Objects",
+        default=SnSelector(
+            threshold=2700
+        )
     )
-    lowThreshold = Field(
-        doc="SN threshold considered low",
-        dtype=float,
-        default=500
+    lowSNSelector = ConfigurableActionField(
+        doc="Selector used to determine low SN Objects",
+        default=SnSelector(
+            threshold=500
+        )
     )
     fluxType = Field(
         doc="Vector key to use to compute signal to noise ratio",
@@ -94,31 +96,30 @@ class ScatterPlotStatsAction(KeyedDataAction):
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        yield (cast(str, self.vectorKey).format(**kwargs), Vector)
-        yield (cast(str, self.fluxType).format(**kwargs), Vector)
+        yield (cast(str, self.vectorKey), Vector)
+        yield (cast(str, self.fluxType), Vector)
+        yield from self.highSNSelector.getInputSchema()  # type: ignore
+        yield from self.lowSNSelector.getInputSchema()  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        highSelector = SnSelector(
-            threshold=self.highThreshold,
-            fluxType=self.fluxType
-        )
         highMaskKey = '{identifier}HighSNMask'.format(**kwargs)
-        results[highMaskKey] = highSelector(data, **kwargs)
+        results[highMaskKey] = self.highSNSelector(data, **kwargs)  # type: ignore
 
-        lowSelector = SnSelector(
-            threshold=self.highThreshold,
-            fluxType=self.fluxType
-        )
         lowMaskKey = '{identifier}LowSNMask'.format(**kwargs)
-        results[lowMaskKey] = lowSelector(data, **kwargs)
+        results[lowMaskKey] = self.lowSNSelector(data, **kwargs)  # type: ignore
 
         prefix = f"{band}_" if (band := kwargs.get("band")) else ""
 
         stats = _StatsImpl(columnKey=self.vectorKey, snFluxType=self.fluxType)
+        # this is sad, but pex_config seems to have broken behavior that
+        # is dangerous to fix
+        stats.setDefaults()
+        # ensure the identifier is capitalized
+        kwargs['identifier'] = kwargs['identifier'].capitalize()
         for maskKey, typ in ((lowMaskKey, "low"), (highMaskKey, "high")):
             for name, value in stats(data, **(kwargs | {"mask": results[maskKey]})).items():
-                tmpKey = f"{prefix}_{typ}SN{{identifier}}_{name}".format(**kwargs)
+                tmpKey = f"{prefix}{typ}SN{{identifier}}_{name}".format(**kwargs)
                 results[tmpKey] = value
         return results
 

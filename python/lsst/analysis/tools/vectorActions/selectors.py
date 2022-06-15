@@ -8,8 +8,8 @@ __all__ = (
     "StellarSelector",
     "GalacticSelector",
     "UnknownSelector",
+    "VectorSelector"
 )
-
 
 from typing import Iterable, Optional, cast
 
@@ -31,9 +31,9 @@ class FlagSelector(VectorAction):
         doc="Names of the flag columns to select on when True", dtype=str, optional=False, default=[]
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)  # type: ignore
-        return ((col.format_map(kwargs), Vector) for col in allCols)
+        return ((col, Vector) for col in allCols)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
@@ -79,12 +79,8 @@ class CoaddPlotFlagSelector(FlagSelector):
         default=["g", "r", "i", "z", "y"],
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        bands = self.bands or kwargs.pop("bands")
-        if value := kwargs.pop("band"):
-            bands = (value,)
-        for band in bands:  # type: ignore
-            yield from super().getInputSchema(band=band, **kwargs)
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
@@ -123,13 +119,9 @@ class SnSelector(VectorAction):
         default=["i"],
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        bands = self.bands or kwargs.pop("bands")
-        if value := kwargs.pop("band"):
-            bands = (value,)
-        for band in bands:  # type: ignore
-            yield (fluxCol := (cast(str, self.fluxType)).format_map(kwargs | {"band":band})), Vector
-            yield f"{fluxCol}{cast(str,self.uncertaintySuffix).format_map(kwargs)}", Vector
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (fluxCol := (cast(str, self.fluxType))), Vector
+        yield f"{fluxCol}{cast(str,self.uncertaintySuffix)}", Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
@@ -166,8 +158,8 @@ class ExtendednessSelector(VectorAction):
         doc="Key of the Vector which defines extendedness metric", dtype=str, default="{band}_extendedness"
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.columnKey.format_map(kwargs), Vector),)  # type: ignore
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.columnKey, Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         key = self.columnKey.format(**kwargs)  # type: ignore
@@ -181,7 +173,7 @@ class StellarSelector(ExtendednessSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
-        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))
+        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))  # type: ignore
 
 
 class GalacticSelector(ExtendednessSelector):
@@ -191,7 +183,7 @@ class GalacticSelector(ExtendednessSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
-        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_minimum))
+        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_minimum))  # type: ignore
 
 
 class UnknownSelector(ExtendednessSelector):
@@ -201,13 +193,10 @@ class UnknownSelector(ExtendednessSelector):
 
 
 class VectorSelector(VectorAction):
-    vectorKey = Field(
-        doc="Key corresponding to boolean vector to use as a selection mask",
-        dtype=str
-    )
+    vectorKey = Field(doc="Key corresponding to boolean vector to use as a selection mask", dtype=str)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((cast(str, self.vectorKey).format_map(kwargs), Vector),)
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((cast(str, self.vectorKey), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])

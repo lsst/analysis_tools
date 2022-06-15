@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+__all__ = ("BasePrep", "BaseProcess", "BaseMetricAction")
+
+from collections import abc
 from itertools import chain
 from typing import cast, Mapping, Type
 
@@ -13,8 +16,14 @@ from ..interfaces import KeyedDataAction, KeyedDataSchema, KeyedData, MetricActi
 from ..keyedDataActions import KeyedDataSelectorAction
 
 
+class _PartialFormatDict(dict):
+    def __missing__(self, key: str) -> str:
+        return "{"+key+"}"
+
+
 class BasePrep(KeyedDataSelectorAction):
-    pass
+    def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
+        self.columnKeys = [name for name, _ in inputSchema]
 
 
 class BaseProcess(KeyedDataAction):
@@ -28,19 +37,22 @@ class BaseProcess(KeyedDataAction):
         doc="Actions which compute quantities from the input or built data"
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         buildSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
         filterSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
         calculateSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
         for id, action in self.buildActions.items():  # type: ignore
-            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+            for name, typ in action.getInputSchema():
+                name = name.format_map(_PartialFormatDict(identifier=id))
                 buildSchema[name] = typ
         for id, action in self.filterActions.items():  # type: ignore
-            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+            for name, typ in action.getInputSchema():
+                name = name.format_map(_PartialFormatDict(identifier=id))
                 if name not in buildSchema:
                     filterSchema[name] = typ
         for id, action in self.calculateActions.items():  # type: ignore
-            for name, typ in action.getInputSchema(**(kwargs | {'identifier': id})):
+            for name, typ in action.getInputSchema():
+                name = name.format_map(_PartialFormatDict(identifier=id))
                 if name not in buildSchema and name not in filterSchema:
                     calculateSchema[name] = typ
         return ((name, typ) for name, typ in chain(buildSchema.items(), calculateSchema.items()))
@@ -49,29 +61,29 @@ class BaseProcess(KeyedDataAction):
         results = {}
         data = dict(data)
         for name, action in self.buildActions.items():  # type: ignore
-            match action:
-                case Mapping(item):
-                    for key, result in item(data, **(kwargs | {'identifier': name})):
+            match action(data, **(kwargs | {'identifier': name})):
+                case abc.Mapping() as item:
+                    for key, result in item.items():
                         results[key] = result
                 case item:
-                    results[name] = item(data, **kwargs)
+                    results[name] = item
         view1 = data | results
-        for name, action in self.buildActions.items():  # type: ignore
-            match action:
-                case Mapping(item):
-                    for key, result in item(view1, **(kwargs | {'identifier': name})):
+        for name, action in self.filterActions.items():  # type: ignore
+            match action(view1, **(kwargs | {'identifier': name})):
+                case abc.Mapping() as item:
+                    for key, result in item.items():
                         results[key] = result
                 case item:
-                    results[name] = item(view1, **kwargs)
+                    results[name] = item
 
         view2 = data | results
         for name, action in self.calculateActions.items():  # type: ignore
-            match action:
-                case Mapping(item):
-                    for key, result in item(view2, **(kwargs | {'identifier': name})):
+            match action(view2, **(kwargs | {'identifier': name})):
+                case abc.Mapping() as item:
+                    for key, result in item.items():
                         results[key] = result
                 case item:
-                    results[name] = item(view2, **kwargs)
+                    results[name] = item
         return results
 
 
@@ -88,7 +100,7 @@ class BaseMetricAction(MetricAction):
         default={},
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         return [(cast(str, key), Scalar) for key in self.units]  # type: ignore Trouble with transitive union
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Measurement]:

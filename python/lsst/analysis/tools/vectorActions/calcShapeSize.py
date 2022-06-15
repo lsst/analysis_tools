@@ -55,17 +55,17 @@ class CalcShapeSize(VectorAction):
         },
     )
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         if self.sizeType == "trace":
             return (
-                (self.colXx.format_map(kwargs), Vector),  # type: ignore
-                (self.colYy.format_map(kwargs), Vector),  # type: ignore
+                (self.colXx, Vector),  # type: ignore
+                (self.colYy, Vector),  # type: ignore
             )
         else:
             return (
-                (self.colXx.format_map(kwargs), Vector),  # type: ignore
-                (self.colYy.format_map(kwargs), Vector),  # type: ignore
-                (self.colXy.format_map(kwargs), Vector),  # type: ignore
+                (self.colXx, Vector),  # type: ignore
+                (self.colYy, Vector),  # type: ignore
+                (self.colXy, Vector),  # type: ignore
             )  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:

@@ -139,11 +139,11 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         keytype=str, itemtype=float, optional=True,
         default=None)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getInputSchema(self) -> KeyedDataSchema:
         return self.magDiff.getInputSchema() + ((self.ebvCol, Vector), )
 
-    def __call__(self, df):
-        diff = self.magDiff(df)
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        diff = self.magDiff(data, **kwargs)
         if not self.extinctionCoeffs:
             _LOG.warning("No extinction Coefficients. Not applying extinction correction")
             return diff
@@ -151,7 +151,8 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         col1Band = self.band1 if self.band1 else self.magDiff.col1.split('_')[0]
         col2Band = self.band2 if self.band2 else self.magDiff.col2.split('_')[0]
 
-        for band in (col1Band, col1Band):
+        # Return plain MagDiff with warning if either coeff not found
+        for band in (col1Band, col2Band):
             if band not in self.extinctionCoeffs:
                 _LOG.warning("%s band not found in coefficients dictionary: %s"
                              " Not applying extinction correction", band, self.extinctionCoeffs)
@@ -160,7 +161,7 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         av1 = self.extinctionCoeffs[col1Band]
         av2 = self.extinctionCoeffs[col2Band]
 
-        ebv = df[self.ebvCol].values
+        ebv = data[self.ebvCol]
         correction = (av1 - av2) * ebv * u.mag
 
         if self.magDiff.returnMillimags:

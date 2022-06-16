@@ -100,10 +100,10 @@ class AnalysisTool(AnalysisAction):
     def __call__(
         self, data: KeyedData, **kwargs
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
-        if (bands := kwargs.pop("bands")) is None:
+        if (bands := kwargs.pop("bands", None)) is None:
             return self._call_single(data, **kwargs)
         results = {}
-        if (identity := kwargs.pop('identity')) is None:
+        if (identity := kwargs.pop('identity', None)) is None:
             value_key = "{band}"
         else:
             value_key = f"{{band}}_{identity}"

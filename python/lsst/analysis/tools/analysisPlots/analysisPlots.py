@@ -9,10 +9,13 @@ from ..analysisParts.shapeSizeFractional import (
 from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector
 from ..plotActions.scatterplotWithTwoHists import ScatterPlotWithTwoHists
 from ..plotActions.colorColorFitPlot import ColorColorFitPlot
-from ..vectorActions.vectorActions import ExtinctionCorrectedMagDiff
+from ..vectorActions.vectorActions import ExtinctionCorrectedMagDiff, MagColumnNanoJansky
+from ..scalarActions.scalarActions import ApproxFloor
 from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
 
-from ..interfaces import AnalysisPlot
+from ..interfaces import AnalysisPlot, KeyedData
+
+from typing import Any
 
 
 class ShapeSizeFractionalDiffScatter(AnalysisPlot):
@@ -32,6 +35,7 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.post_process.highThreshold = self.process.highSNRSelector.threshold  # type: ignore
         self.post_process.lowThreshold = self.process.lowSNRSelector.threshold  # type: ignore
 
+
 class WPerpPSFPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
@@ -39,11 +43,12 @@ class WPerpPSFPlot(AnalysisPlot):
         self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
 
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["r"]
 
         self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector.columnKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
@@ -53,11 +58,17 @@ class WPerpPSFPlot(AnalysisPlot):
         self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
         self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
         self.process.buildActions.y.magDiff.returnMillimags = False
+        self.process.buildActions.mags = MagColumnNanoJansky(columnKey="r_psfFlux")
 
-        self.process.calculateActions.wPerp = StellarLocusFitAction()
-        self.process.calculateActions.wPerp.stellarLocusFitDict = {"xMin": 0.1, "xMax": 0.2,
-                                                                   "yMin": 0.1, "yMax": 0.2,
-                                                                   "mHW": 0.5, "bHW": 0.0}
+        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mags")
+        self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
+        self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {"xMin": 0.1, "xMax": 0.2,
+                                                                           "yMin": 0.1, "yMax": 0.2,
+                                                                           "mHW": 0.5, "bHW": 0.0}
 
-        self.process = ColorColorFitPlot()
+        self.post_process = ColorColorFitPlot()
+        self.post_process.plotName = "wPerp_psfFlux"
 
+    def __call__(self, data: KeyedData, **kwargs) -> Any:
+        kwargs.pop("bands", None)
+        return super().__call__(data, **kwargs)

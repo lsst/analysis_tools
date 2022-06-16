@@ -102,10 +102,10 @@ class MagDiff(VectorAction):
         return ((cast(str, self.col1), Vector), (cast(str, self.col2), Vector))
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        flux1 = data[self.col1.format(**kwargs)] * u.Unit(self.fluxUnits1)
+        flux1 = np.array(data[self.col1.format(**kwargs)]) * u.Unit(self.fluxUnits1)
         mag1 = flux1.to(u.ABmag)
 
-        flux2 = data[self.col2.format(**kwargs)] * u.Unit(self.fluxUnits2)
+        flux2 = np.array(data[self.col2.format(**kwargs)]) * u.Unit(self.fluxUnits2)
         mag2 = flux2.to(u.ABmag)
 
         magDiff = mag1 - mag2
@@ -113,7 +113,7 @@ class MagDiff(VectorAction):
         if self.returnMillimags:
             magDiff = magDiff.to(u.mmag)
 
-        return magDiff
+        return magDiff.value
 
 
 class ExtinctionCorrectedMagDiff(VectorAction):
@@ -167,4 +167,4 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         if self.magDiff.returnMillimags:
             correction = correction.to(u.mmag)
 
-        return diff - correction
+        return diff - correction.value

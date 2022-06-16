@@ -1,19 +1,17 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import median_absolute_deviation as sigmaMad
-import pandas as pd
 from sklearn.neighbors import KernelDensity
 from matplotlib.patches import Rectangle
 import matplotlib.patheffects as pathEffects
 from matplotlib.figure import Figure
 from typing import Mapping, Optional
 
-import lsst.pipe.base as pipeBase
 from lsst.pex.config import Field, ListField, DictField
 
-from .plotUtils import parsePlotInfo, addPlotInfo, stellarLocusFit, perpDistance, mkColormap
+from .plotUtils import addPlotInfo, perpDistance, mkColormap
 from lsst.analysis.tools import PlotAction
-from ..interfaces import KeyedDataSchema, KeyedData
+from ..interfaces import KeyedDataSchema, KeyedData, Vector, Scalar
 
 
 class ColorColorFitPlot(PlotAction):
@@ -40,18 +38,18 @@ class ColorColorFitPlot(PlotAction):
         default={"xMin": 0.1, "xMax": 0.2, "yMin": 0.1, "yMax": 0.2, "mHW": 0.5, "bHW": 0.0}
     )
 
+    plotName = Field(doc="The name for the plot.", dtype=str, optional=False)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
         base.append(("x", Vector))
         base.append(("y", Vector))
         base.append(("mag", Vector))
-        base.append(("snThreshold", Scalar))
-        base.append(("snFlux", Vector))
-        base.append(("sigmaMAD", Scalar))
-        base.append(("median", Scalar))
-        base.append(("hardwired_sigmaMAD", Scalar))
-        base.append(("hardwired_median", Scalar))
+        base.append(("approxMagDepth", Scalar))
+        base.append((f"{self.plotName}_sigmaMAD", Scalar))
+        base.append((f"{self.plotName}_median", Scalar))
+        base.append((f"{self.plotName}_hardwired_sigmaMAD", Scalar))
+        base.append((f"{self.plotName}_hardwired_median", Scalar))
 
         return base
 
@@ -162,13 +160,6 @@ class ColorColorFitPlot(PlotAction):
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
         medMag = np.median(mags)
 
-        try:
-            ids = (data["fluxSn"] < data["snThreshold"]*1.1)
-            medMag = np.nanmedian(mags[ids])
-        except AttributeError:
-            SN = "NA"
-            medMag = "NA"
-
         infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(data["x"]), SN)
         infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(medMag)
         ax.text(0.05, 0.78, infoText, color="k", transform=ax.transAxes,
@@ -276,7 +267,7 @@ class ColorColorFitPlot(PlotAction):
                                  label="sigma MAD: {:0.3f}".format(madDists))
         axHist.axvline(medDists - madDists, color="k", ls="--")
 
-        linesForLegend = [lineHW, lineInit, lineRefit, fitScatter, lineMedian, lineMad, lineMean, lineRms]
+        linesForLegend = [lineHW, lineInit, lineRefit, fitScatter, lineMedian, lineMad]
         fig.legend(handles=linesForLegend, fontsize=8, bbox_to_anchor=(1.0, 0.99),
                    bbox_transform=fig.transFigure, ncol=2)
 

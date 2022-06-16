@@ -84,9 +84,9 @@ class StellarLocusFitAction(KeyedDataAction):
             xs = np.array([fitParams["xMax"] - 0.2, fitParams["xMax"], fitParams["xMax"] + 0.2])
             ys = xs*fitParams["mPerp"] + fitParams["bPerpMax"]
 
-        result["{identity}_sigmaMAD".format(**kwargs)] = sigmaMad(dists)
-        result["{identity}_median".format(**kwargs)] = np.median(dists)
-        result["{identity}_hardwired_sigmaMAD".format(**kwargs)] = sigmaMad(distsHW)
-        result["{identity}_hardwired_median".format(**kwargs)] = np.median(distsHW)
+        result["{identifier}_sigmaMAD".format(**kwargs)] = sigmaMad(dists)
+        result["{identifier}_median".format(**kwargs)] = np.median(dists)
+        result["{identifier}_hardwired_sigmaMAD".format(**kwargs)] = sigmaMad(distsHW)
+        result["{identifier}_hardwired_median".format(**kwargs)] = np.median(distsHW)
 
         return result

@@ -89,6 +89,7 @@ class WPerpPSFMetric(AnalysisMetric):
         kwargs.pop("bands")
         return super().__call__()
 
+
 class XPerpMetric(AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()

@@ -5,15 +5,15 @@ import pandas as pd
 from sklearn.neighbors import KernelDensity
 from matplotlib.patches import Rectangle
 import matplotlib.patheffects as pathEffects
+from matplotlib.figure import Figure
+from typing import Mapping, Optional
 
 import lsst.pipe.base as pipeBase
-from lsst.pex.config.pexConfig import Field, ListField, DictField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
-from lsst.pipe.tasks.dataFrameActions import MagColumnNanoJansky
+from lsst.pex.config import Field, ListField, DictField
 
-from .calcFunctors import ExtinctionCorrectedMagDiff
-from . import dataSelectors as dataSelectors
 from .plotUtils import parsePlotInfo, addPlotInfo, stellarLocusFit, perpDistance, mkColormap
+from lsst.analysis.tools import PlotAction
+from ..interfaces import KeyedDataSchema, KeyedData
 
 
 class ColorColorFitPlot(PlotAction):
@@ -27,7 +27,7 @@ class ColorColorFitPlot(PlotAction):
             " stars, galaxies, unknown, mag, any.",
         dtype=str,
         optional=False,
-        itemCheck=_validatePlotTypes,
+        #itemCheck=_validateInputs,
     )
 
     stellarLocusFitDict = DictField(
@@ -48,7 +48,10 @@ class ColorColorFitPlot(PlotAction):
         base.append(("mag", Vector))
         base.append(("snThreshold", Scalar))
         base.append(("snFlux", Vector))
-        base.append((""))
+        base.append(("sigmaMAD", Scalar))
+        base.append(("median", Scalar))
+        base.append(("hardwired_sigmaMAD", Scalar))
+        base.append(("hardwired_median", Scalar))
 
         return base
 
@@ -70,7 +73,7 @@ class ColorColorFitPlot(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
-    def makePlot(self, data: keyedData, plotInfo: Optional[Mapping[str, str]] = None,
+    def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None,
                  fitParams: Optional[Mapping[str, float]] = None, **kwargs) -> Figure:
         """Make stellar locus plots using pre fitted values.
 
@@ -267,16 +270,11 @@ class ColorColorFitPlot(PlotAction):
         madDists = sigmaMad(dists)
         meanDists = np.mean(dists)
 
-        rmsDists = np.sqrt(np.mean(np.array(dists)**2))
-        axHist.set_xlim(meanDists - 2.0*rmsDists, meanDists + 2.0*rmsDists)
+        axHist.set_xlim(meanDists - 2.0*madDists, meanDists + 2.0*madDists)
         lineMedian = axHist.axvline(medDists, color="k", label="Median: {:0.3f}".format(medDists))
         lineMad = axHist.axvline(medDists + madDists, color="k", ls="--",
                                  label="sigma MAD: {:0.3f}".format(madDists))
         axHist.axvline(medDists - madDists, color="k", ls="--")
-        lineMean = axHist.axvline(meanDists, color="C0", label="Mean: {:0.3f}".format(meanDists))
-        lineRms = axHist.axvline(meanDists + rmsDists, color="C0", ls="--",
-                                 label="RMS: {:0.3f}".format(rmsDists))
-        axHist.axvline(meanDists - rmsDists, color="C0", ls="--")
 
         linesForLegend = [lineHW, lineInit, lineRefit, fitScatter, lineMedian, lineMad, lineMean, lineRms]
         fig.legend(handles=linesForLegend, fontsize=8, bbox_to_anchor=(1.0, 0.99),

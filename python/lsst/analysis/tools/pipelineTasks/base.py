@@ -13,11 +13,26 @@ from ..interfaces import KeyedData
 from ..analysisMetrics.metricActionMapping import MetricActionMapping
 
 
-class AnalysisBaseConnections(PipelineTaskConnections, dimensions={}):
+class AnalysisBaseConnections(
+        PipelineTaskConnections,
+        dimensions={},
+        defalutTemplates={"inputName": "Placeholder"}
+        ):
+
+    metrics = ct.Output(
+        doc="Metrics calculated on input dataset type",
+        name="{inputName}_metrics",
+        storageClass=""
+    )
+
+
     def __init__(self, *, config: PipelineTaskConfig = None):  # type: ignore
+        if (inputName := config.connections.inputName) == "Placeholder":  # type: ignore
+            raise RuntimeError("Subclasses must specify an alternative value for the defaultTemplate `inputName`")
         super().__init__(config=config)
         existingNames = set(dir(self))
         for name in config.plots.fieldNames():  # type: ignore
+            name = f"{inputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
                     f"Plot with name {name} conflicts with existing connection"
@@ -70,9 +85,8 @@ class AnalysisPipelineTask(PipelineTask):
     def run(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
 
-        for band in cast(Iterable[str], self.config.bands):  # type: ignore
-            kwargs['band'] = band
-            results.mergeItems(self.runPlots(data, **kwargs))
-            results.mergeItems(self.runMetrics(data, **kwargs))
+        kwargs['bands'] = cast(Iterable[str], self.config.bands):  # type: ignore
+        results.mergeItems(self.runPlots(data, **kwargs))
+        results.mergeItems(self.runMetrics(data, **kwargs))
 
         return results

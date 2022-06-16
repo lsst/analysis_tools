@@ -74,9 +74,9 @@ class FlagSelector(VectorAction):
 
 class CoaddPlotFlagSelector(FlagSelector):
     bands = ListField(
-        doc="The bands to apply the flags in, takes precedence if bands supplied in kwargs",
+        doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
         dtype=str,
-        default=["g", "r", "i", "z", "y"],
+        default=[],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -84,9 +84,7 @@ class CoaddPlotFlagSelector(FlagSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
-        bands = self.bands or kwargs.pop("bands")
-        if value := kwargs.pop("band"):
-            bands = (value,)
+        bands = self.bands or (kwargs.pop("band"),)
         for band in bands:  # type: ignore
             temp = super().__call__(data, band=band, **kwargs)
             if result is not None:
@@ -136,10 +134,8 @@ class SnSelector(VectorAction):
             S/N cut.
         """
         mask: Optional[Vector] = None
-        if not (bands := cast(Iterable[str], self.bands or kwargs.get("bands"))):
+        if not (bands := cast(Iterable[str], self.bands or (kwargs.get("bands"),))):
             bands = ("",)
-        if value := kwargs.pop("band"):
-            bands = (value,)
         for band in bands:
             fluxCol = cast(str, self.fluxType).format(**kwargs, band=band)
             errCol = f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}"

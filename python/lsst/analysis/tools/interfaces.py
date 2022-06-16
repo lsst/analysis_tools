@@ -17,8 +17,9 @@ __all__ = (
 
 from abc import abstractmethod
 from numbers import Number
-from typing import Iterable, MutableMapping, Tuple, Type, Mapping, Any, cast
+from typing import Iterable, MutableMapping, Tuple, Type, Mapping, cast
 import warnings
+from collections import abc
 
 import numpy as np
 from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
@@ -50,7 +51,7 @@ class AnalysisAction(ConfigurableAction):
         warnings.warn(
             f"{type(self)} does not implement adding input schemas, call will do nothing, "
             "this may be expected",
-            RuntimeWarning
+            RuntimeWarning,
         )
 
 
@@ -96,7 +97,28 @@ class AnalysisTool(AnalysisAction):
     )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
-    def __call__(self, data: KeyedData, **kwargs) -> Any:
+    def __call__(
+        self, data: KeyedData, **kwargs
+    ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
+        if (bands := kwargs.pop("bands")) is None:
+            return self._call_single(data, **kwargs)
+        results = {}
+        if (identity := kwargs.pop('identity')) is None:
+            value_key = "{band}"
+        else:
+            value_key = f"{{band}}_{identity}"
+        for band in bands:
+            kwargs["band"] = band
+            match self._call_single(data, **kwargs):
+                case abc.Mapping() as mapping:
+                    results.update(mapping.items())
+                case value:
+                    results[value_key.format(band=band)] = value
+        return results
+
+    def _call_single(
+        self, data: KeyedData, **kwargs
+    ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
         self.populatePrepFromProcess()
         prepped = self.prep(data, **kwargs)  # type: ignore
         processed = self.process(prepped, **kwargs)  # type: ignore
@@ -137,26 +159,3 @@ class AnalysisMetric(AnalysisTool):
 
 class AnalysisPlot(AnalysisTool):
     post_process = ConfigurableActionField(doc="Action which returns a plot", dtype=PlotAction)
-
-
-# For Demo Example #
-
-
-# class AnalysisBaseConfig(Config):
-#     analysisActions = ConfigurableActionStructField(doc="AnalysisActions to run with this Task")
-#
-#     def setDefaults(self):
-#         self.analysisActions.te1 = TE1
-#
-#
-# class AnalysisPipelineTask(PipelineTask):
-#     def run(self, table, **kwargs) -> Struct:
-#         results = Struct()
-#         for name, action in self.config.analysisActions:  # type: ignore
-#             match action(table, **kwargs):
-#                 case Mapping(val):
-#                     for n, v in val.items():
-#                         setattr(results, n, v)
-#                 case value:
-#                     setattr(results, name, value)
-#         return results

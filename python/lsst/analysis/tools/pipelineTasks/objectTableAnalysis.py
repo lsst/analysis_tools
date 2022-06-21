@@ -13,10 +13,6 @@ class ObjectTableTractAnalysisConnections(AnalysisBaseConnections):
         storageClass="DataFrame",
         deferLoad=True
     )
-    metrics = ct.Output(
-        doc="Metrics calculated on tract based object table",
-        name="objectTableTract_metrics"
-    )
 
 
 class ObjectTableTractAnalysisConfig(AnalysisBaseConfig):

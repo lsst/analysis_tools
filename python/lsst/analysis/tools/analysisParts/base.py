@@ -12,13 +12,8 @@ from lsst.pex.config.dictField import DictField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.verify import Measurement
 
-from ..interfaces import KeyedDataAction, KeyedDataSchema, KeyedData, MetricAction, Scalar, Vector
+from ..interfaces import AnalysisAction, KeyedDataAction, KeyedDataSchema, KeyedData, MetricAction, Scalar, Vector
 from ..keyedDataActions import KeyedDataSelectorAction
-
-
-class _PartialFormatDict(dict):
-    def __missing__(self, key: str) -> str:
-        return "{"+key+"}"
 
 
 class BasePrep(KeyedDataSelectorAction):
@@ -27,7 +22,7 @@ class BasePrep(KeyedDataSelectorAction):
 
 
 class BaseProcess(KeyedDataAction):
-    buildActions = ConfigurableActionStructField(
+    buildActions = ConfigurableActionStructField[AnalysisAction](
         doc="Actions which compute a Vector which will be added to results"
     )
     filterActions = ConfigurableActionStructField(
@@ -41,27 +36,29 @@ class BaseProcess(KeyedDataAction):
         buildSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
         filterSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
         calculateSchema: dict[str, Type[Vector] | Type[Scalar]] = {}
-        for id, action in self.buildActions.items():  # type: ignore
+        for action in self.buildActions:
             for name, typ in action.getInputSchema():
-                name = name.format_map(_PartialFormatDict(identifier=id))
                 buildSchema[name] = typ
-        for id, action in self.filterActions.items():  # type: ignore
+        for action in self.filterActions:  # type: ignore
             for name, typ in action.getInputSchema():
-                name = name.format_map(_PartialFormatDict(identifier=id))
                 if name not in buildSchema:
                     filterSchema[name] = typ
-        for id, action in self.calculateActions.items():  # type: ignore
+        for action in self.calculateActions:  # type: ignore
             for name, typ in action.getInputSchema():
-                name = name.format_map(_PartialFormatDict(identifier=id))
                 if name not in buildSchema and name not in filterSchema:
                     calculateSchema[name] = typ
         return ((name, typ) for name, typ in chain(buildSchema.items(), calculateSchema.items()))
+
+    def getOutputSchema(self) -> KeyedDataSchema:
+        for action in self.buildActions:
+            if isinstance(action, KeyedDataAction):
+                yield from action.getOutputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
         data = dict(data)
         for name, action in self.buildActions.items():  # type: ignore
-            match action(data, **(kwargs | {'identifier': name})):
+            match action(data, **kwargs):
                 case abc.Mapping() as item:
                     for key, result in item.items():
                         results[key] = result
@@ -69,7 +66,7 @@ class BaseProcess(KeyedDataAction):
                     results[name] = item
         view1 = data | results
         for name, action in self.filterActions.items():  # type: ignore
-            match action(view1, **(kwargs | {'identifier': name})):
+            match action(view1, **kwargs):
                 case abc.Mapping() as item:
                     for key, result in item.items():
                         results[key] = result
@@ -78,7 +75,7 @@ class BaseProcess(KeyedDataAction):
 
         view2 = data | results
         for name, action in self.calculateActions.items():  # type: ignore
-            match action(view2, **(kwargs | {'identifier': name})):
+            match action(view2, **kwargs):
                 case abc.Mapping() as item:
                     for key, result in item.items():
                         results[key] = result
@@ -101,9 +98,9 @@ class BaseMetricAction(MetricAction):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return [(cast(str, key), Scalar) for key in self.units]  # type: ignore Trouble with transitive union
+        return [(cast(str, key), Scalar) for key in self.units]  # type: ignore
 
-    def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Measurement]:
+    def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Measurement] | Measurement:
         results = {}
         for key, unit in self.units.items():  # type: ignore
             formattedKey = key.format(**kwargs)
@@ -111,6 +108,7 @@ class BaseMetricAction(MetricAction):
                 raise ValueError(f"Key: {formattedKey} could not be found input data")
             value = data[formattedKey]
             if not isinstance(value, Scalar):
+                import ipdb;ipdb.set_trace()
                 raise ValueError(f"Data for key {key} is not a Scalar type")
             if newName := self.newNames.get(key):  # type: ignore
                 formattedKey = newName.format(**kwargs)

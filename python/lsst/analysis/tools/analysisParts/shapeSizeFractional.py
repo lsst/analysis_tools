@@ -10,6 +10,7 @@ from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ..interfaces import (
+    AnalysisAction,
     KeyedData,
     KeyedDataAction,
     Scalar,
@@ -25,7 +26,7 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
 class _AproxMedian(ScalarAction):
-    vectorKey = Field(doc="Key for the vector to perform action on", dtype=str, optional=False)
+    vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((self.vectorKey, Vector),)  # type: ignore
@@ -38,14 +39,11 @@ class _AproxMedian(ScalarAction):
 
 
 class ShapeSizeFractionalScalars(KeyedScalars):
-    columnKey = Field(doc="Column key to compute scalars", dtype=str)
+    columnKey = Field[str](doc="Column key to compute scalars")
 
-    snFluxType = Field(doc="column key for the flux type used in SN selection", dtype=str)
+    snFluxType = Field[str](doc="column key for the flux type used in SN selection")
 
-    selector = ConfigurableActionField(doc="Selector to use before computing Scalars", dtype=VectorAction)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from super().getInputSchema()
+    selector = ConfigurableActionField[VectorAction](doc="Selector to use before computing Scalars")
 
     def setDefaults(self):
         super().setDefaults()
@@ -53,12 +51,12 @@ class ShapeSizeFractionalScalars(KeyedScalars):
         self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
         self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
         self.scalarActions.approxMag = _AproxMedian(  # type: ignore
-            vectorKey=self.snFluxType  # type: ignore
+            vectorKey=self.snFluxType
         )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask = kwargs.get("mask")
-        selection = self.selector(data, **kwargs)  # type: ignore
+        selection = self.selector(data, **kwargs)
         if mask is not None:
             mask &= selection
         else:
@@ -67,20 +65,22 @@ class ShapeSizeFractionalScalars(KeyedScalars):
 
 
 class ShapeSizeFractionalProcess(KeyedDataAction):
-    psfFluxShape = ConfigurableActionField(
+    psfFluxShape = ConfigurableActionField[AnalysisAction](
         doc="Action to calculate the PSF Shape",
     )
-    shapeFracDif = ConfigurableActionField(
+    shapeFracDif = ConfigurableActionField[AnalysisAction](
         doc="Action which adds shapes to the KeyedData",
     )
-    objectSelector = ConfigurableActionField(doc="Action to select which objects should be considered")
-    highSNRSelector = ConfigurableActionField(
+    objectSelector = ConfigurableActionField[AnalysisAction](
+        doc="Action to select which objects should be considered"
+    )
+    highSNRSelector = ConfigurableActionField[AnalysisAction](
         doc="Selector action add high SNR stars vector to output",
     )
-    lowSNRSelector = ConfigurableActionField(
+    lowSNRSelector = ConfigurableActionField[AnalysisAction](
         doc="Selector action add low SNR stars vector to output",
     )
-    calculatorActions = ConfigurableActionStructField(
+    calculatorActions = ConfigurableActionStructField[KeyedDataAction](
         doc="Actions which generate KeyedData of scalars",
     )
     magAction = ConfigurableActionField(doc="Action to generate the magnitude column")
@@ -111,38 +111,50 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         self.highSNRSelector = SnSelector(threshold=2700)
         self.lowSNRSelector = SnSelector(threshold=500)
 
-        self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(  # type: ignore
+        self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(
             columnKey=self.shapeFracDif.keyName, snFluxType=self.highSNRSelector.fluxType
         )
         highSNSelector = VectorSelector(vectorKey="starHighSNMask")
-        self.calculatorActions.highSNStars.selector = highSNSelector  # type: ignore
-        self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(  # type: ignore
+        self.calculatorActions.highSNStars.selector = highSNSelector
+        self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(
             columnKey=self.shapeFracDif.keyName, snFluxType=self.lowSNRSelector.fluxType
         )
-        self.calculatorActions.lowSNStars.selector = VectorSelector(vectorKey="starLowSNMask")  # type: ignore
+        self.calculatorActions.lowSNStars.selector = VectorSelector(vectorKey="starLowSNMask")
 
-        for action in self.calculatorActions:  # type: ignore
+        for action in self.calculatorActions:
             action.setDefaults()
 
         super().setDefaults()
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.psfFluxShape.getInputSchema()  # type: ignore
-        yield from self.objectSelector.getInputSchema()  # type: ignore
-        yield from self.highSNRSelector.getInputSchema()  # type: ignore
-        yield from self.lowSNRSelector.getInputSchema()  # type: ignore
-        yield from self.shapeFracDif.getInputSchema()  # type: ignore
-        for action in self.calculatorActions:  # type: ignore
+        yield from self.psfFluxShape.getInputSchema()
+        yield from self.objectSelector.getInputSchema()
+        yield from self.highSNRSelector.getInputSchema()
+        yield from self.lowSNRSelector.getInputSchema()
+        yield from self.shapeFracDif.getInputSchema()
+        for action in self.calculatorActions:
             yield from action.getInputSchema()
+
+    def getOutputSchema(self) -> KeyedDataSchema:
+        results = (
+            ("starHighSNMask", Vector),
+            ("starLowSNMask", Vector),
+            ("xsStars", Vector),
+            ("ysStars", Vector),
+        )
+        for action in self.calculatorActions:
+            if isinstance(action, KeyedDataAction):
+                yield from action.getOutputSchema()
+        yield from results
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        data = self.psfFluxShape(data, **kwargs)  # type: ignore
-        data = self.shapeFracDif(data, **kwargs)  # type: ignore
+        data = self.psfFluxShape(data, **kwargs)
+        data = self.shapeFracDif(data, **kwargs)
 
-        objectMask = self.objectSelector(data, **kwargs)  # type: ignore
-        highSNRMask = self.highSNRSelector(data, **(kwargs | {"mask": objectMask}))  # type: ignore
-        lowSNRMask = self.lowSNRSelector(data, **kwargs | {"mask": objectMask})  # type: ignore
+        objectMask = self.objectSelector(data, **kwargs)
+        highSNRMask = self.highSNRSelector(data, **(kwargs | {"mask": objectMask}))
+        lowSNRMask = self.lowSNRSelector(data, **kwargs | {"mask": objectMask})
 
         data["starHighSNMask"] = highSNRMask
         data["starLowSNMask"] = lowSNRMask

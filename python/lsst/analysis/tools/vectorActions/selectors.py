@@ -137,7 +137,7 @@ class SnSelector(VectorAction):
         if not (bands := cast(Iterable[str], self.bands or (kwargs.get("bands"),))):
             bands = ("",)
         for band in bands:
-            fluxCol = cast(str, self.fluxType).format(**kwargs, band=band)
+            fluxCol = cast(str, self.fluxType).format(**(kwargs | dict(band=band)))
             errCol = f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}"
             temp = (cast(Vector, data[fluxCol]) / data[errCol]) > cast(float, self.threshold)  # type: ignore
             if mask is not None:

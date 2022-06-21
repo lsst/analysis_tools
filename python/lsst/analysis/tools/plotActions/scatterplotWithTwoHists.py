@@ -27,7 +27,16 @@ from lsst.pex.config.listField import ListField
 
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
-from ..interfaces import PlotAction, KeyedDataSchema, KeyedData, Scalar, Vector, KeyedDataAction, ScalarAction
+from ..interfaces import (
+    PlotAction,
+    KeyedDataSchema,
+    KeyedData,
+    Scalar,
+    Vector,
+    KeyedDataAction,
+    ScalarAction,
+    VectorAction,
+)
 from ..vectorActions import SnSelector
 from ..keyedDataActions import KeyedScalars
 
@@ -55,9 +64,6 @@ class _StatsImpl(KeyedScalars):
 
     snFluxType = Field(doc="column key for the flux type used in SN selection", dtype=str)
 
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from super().getInputSchema()
-
     def setDefaults(self):
         super().setDefaults()
         self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
@@ -73,41 +79,44 @@ class _StatsImpl(KeyedScalars):
 
 
 class ScatterPlotStatsAction(KeyedDataAction):
-    vectorKey = Field(
-        doc="Vector on which to compute statistics",
-        dtype=str
+    vectorKey = Field[str](doc="Vector on which to compute statistics")
+    highSNSelector = ConfigurableActionField[VectorAction](
+        doc="Selector used to determine high SN Objects", default=SnSelector(threshold=2700)
     )
-    highSNSelector = ConfigurableActionField(
-        doc="Selector used to determine high SN Objects",
-        default=SnSelector(
-            threshold=2700
-        )
+    lowSNSelector = ConfigurableActionField[VectorAction](
+        doc="Selector used to determine low SN Objects", default=SnSelector(threshold=500)
     )
-    lowSNSelector = ConfigurableActionField(
-        doc="Selector used to determine low SN Objects",
-        default=SnSelector(
-            threshold=500
-        )
-    )
-    fluxType = Field(
-        doc="Vector key to use to compute signal to noise ratio",
-        dtype=str,
-        default="{band}_psfFlux"
-    )
+    fluxType = Field[str](doc="Vector key to use to compute signal to noise ratio", default="{band}_psfFlux")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         yield (cast(str, self.vectorKey), Vector)
         yield (cast(str, self.fluxType), Vector)
-        yield from self.highSNSelector.getInputSchema()  # type: ignore
-        yield from self.lowSNSelector.getInputSchema()  # type: ignore
+        yield from self.highSNSelector.getInputSchema()
+        yield from self.lowSNSelector.getInputSchema()
+
+    def getOutputSchema(self) -> KeyedDataSchema:
+        return (
+            (f'{self.identity or ""}HighSNMask', Vector),
+            (f'{self.identity or ""}LowSNMask', Vector),
+            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_median", Scalar),
+            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_sigmaMad", Scalar),
+            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_count", Scalar),
+            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_approxMag", Scalar),
+            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_median", Scalar),
+            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_sigmaMad", Scalar),
+            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_count", Scalar),
+            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_approxMag", Scalar),
+            ("highThreshold", Scalar),
+            ("lowThreshold", Scalar)
+        )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        highMaskKey = '{identifier}HighSNMask'.format(**kwargs)
-        results[highMaskKey] = self.highSNSelector(data, **kwargs)  # type: ignore
+        highMaskKey = f'{self.identity or ""}HighSNMask'
+        results[highMaskKey] = self.highSNSelector(data, **kwargs)
 
-        lowMaskKey = '{identifier}LowSNMask'.format(**kwargs)
-        results[lowMaskKey] = self.lowSNSelector(data, **kwargs)  # type: ignore
+        lowMaskKey = f'{self.identity or ""}LowSNMask'
+        results[lowMaskKey] = self.lowSNSelector(data, **kwargs)
 
         prefix = f"{band}_" if (band := kwargs.get("band")) else ""
 
@@ -115,14 +124,16 @@ class ScatterPlotStatsAction(KeyedDataAction):
         # this is sad, but pex_config seems to have broken behavior that
         # is dangerous to fix
         stats.setDefaults()
-        # ensure the identifier is capitalized
-        kwargs['identifier'] = kwargs['identifier'].capitalize()
         for maskKey, typ in ((lowMaskKey, "low"), (highMaskKey, "high")):
             for name, value in stats(data, **(kwargs | {"mask": results[maskKey]})).items():
-                tmpKey = f"{prefix}{typ}SN{{identifier}}_{name}".format(**kwargs)
+                tmpKey = (
+                    f"{prefix}{typ}SN{self.identity.capitalize() if self.identity else '' }_{name}".format(
+                        **kwargs
+                    )
+                )
                 results[tmpKey] = value
-        results["highThreshold"] = self.highSnSelector.threshold
-        results["lowThreshold"] = self.lowSnSelector.threshold
+        results["highThreshold"] = self.highSNSelector.threshold  # type: ignore
+        results["lowThreshold"] = self.lowSNSelector.threshold  # type: ignore
 
         return results
 
@@ -216,7 +227,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         # table is a dict that needs: x, y, run, skymap, filter, tract,
 
     def _validateInput(self, data: KeyedData, **kwargs) -> None:
-        """ NOTE currently can only check that something is not a Scalar, not
+        """NOTE currently can only check that something is not a Scalar, not
         check that the data is consistent with Vector
         """
         needed = self.getInputSchema(**kwargs)
@@ -229,7 +240,9 @@ class ScatterPlotWithTwoHists(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
-    def makePlot(self, data: KeyedData, plotInfo: Mapping[str, str] = None, sumStats: Mapping = None, **kwargs) -> Figure:
+    def makePlot(
+        self, data: KeyedData, plotInfo: Mapping[str, str] = None, sumStats: Mapping = None, **kwargs
+    ) -> Figure:
         """Makes a generic plot with a 2D histogram and collapsed histograms of
         each axis.
         Parameters
@@ -278,7 +291,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
-        #self._cornerPlot(data, fig, gs, sumStats=sumStats, **kwargs)
+        # self._cornerPlot(data, fig, gs, sumStats=sumStats, **kwargs)
 
         plt.draw()
         plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
@@ -754,7 +767,9 @@ class ScatterPlotWithTwoHists(PlotAction):
             cax = divider.append_axes("right", size="8%", pad=0)
             plt.colorbar(histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin")
 
-    def _cornerPlot(self, data: KeyedData, figure: Figure, gs: gridspec.Gridspec, sumStats: Mapping = None, **kwargs) -> None:
+    def _cornerPlot(
+        self, data: KeyedData, figure: Figure, gs: gridspec.Gridspec, sumStats: Mapping = None, **kwargs
+    ) -> None:
         # Corner plot of patches showing summary stat in each
         axCorner = figure.add_subplot(gs[0, -1])
         axCorner.yaxis.tick_right()

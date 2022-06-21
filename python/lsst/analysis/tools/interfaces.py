@@ -15,9 +15,9 @@ __all__ = (
     "AnalysisPlot",
 )
 
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 from numbers import Number
-from typing import Iterable, MutableMapping, Tuple, Type, Mapping, cast
+from typing import Iterable, MutableMapping, Tuple, Type, Mapping, cast, Any
 import warnings
 from collections import abc
 
@@ -27,11 +27,21 @@ from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
-Scalar = Number | np.number
+
+class ScalarMeta(ABCMeta):
+    def __instancecheck__(cls: ABCMeta, instance: Any) -> Any:
+        return isinstance(instance, tuple(cls.mro()[1:]))
+
+
+class Scalar(Number, np.number, metaclass=ScalarMeta):
+    def __init__(self) -> None:
+        raise NotImplementedError("Scalar is only an interface and should not be directly instantiated")
+
+
 Vector = NDArray
 KeyedData = MutableMapping[str, Vector | Scalar]
 
-KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Scalar]]]
+KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Number] | type[np.number]]]
 
 
 class AnalysisAction(ConfigurableAction):
@@ -56,8 +66,16 @@ class AnalysisAction(ConfigurableAction):
 
 
 class KeyedDataAction(AnalysisAction):
+    def __init_subclass__(cls, **kwargs):
+        if "getOutputSchema" not in dir(cls):
+            raise NotImplementedError(f"Class {cls} must implement method getOutputSchema")
+
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        raise NotImplementedError("This is not implemented on the base class")
+
+    @abstractmethod
+    def getOutputSchema(self) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
 
 
@@ -80,13 +98,13 @@ class ScalarAction(AnalysisAction):
 
 class MetricAction(AnalysisAction):
     @abstractmethod
-    def __call__(self, input: KeyedData | Scalar, **kwargs) -> Mapping[str, Measurement] | Measurement:
+    def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Measurement] | Measurement:
         raise NotImplementedError("This is not implemented on the base class")
 
 
 class PlotAction(AnalysisAction):
     @abstractmethod
-    def __call__(self, input: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
+    def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         raise NotImplementedError("This is not implemented on the base class")
 
 
@@ -102,11 +120,11 @@ class AnalysisTool(AnalysisAction):
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
         if (bands := kwargs.pop("bands", None)) is None:
             return self._call_single(data, **kwargs)
-        results = {}
-        if (identity := kwargs.pop('identity', None)) is None:
-            value_key = "{band}"
+        results: dict[str, Any] = {}
+        if self.identity is not None:
+            value_key = f"{{band}}_{self.identity}"
         else:
-            value_key = f"{{band}}_{identity}"
+            value_key = "{band}"
         for band in bands:
             kwargs["band"] = band
             match self._call_single(data, **kwargs):
@@ -120,9 +138,10 @@ class AnalysisTool(AnalysisAction):
         self, data: KeyedData, **kwargs
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
         self.populatePrepFromProcess()
-        prepped = self.prep(data, **kwargs)  # type: ignore
-        processed = self.process(prepped, **kwargs)  # type: ignore
-        finalized = self.post_process(processed, **kwargs)  # type: ignore
+        prepped: KeyedData = self.prep(data, **kwargs)  # type: ignore
+        processed: KeyedData = self.process(prepped, **kwargs)  # type: ignore
+        finalized: Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement =\
+            self.post_process(processed, **kwargs)  # type: ignore
         return finalized
 
     def setDefaults(self):

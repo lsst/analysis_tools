@@ -5,7 +5,7 @@ __all__ = (
     "ChainedKeyedDataActions",
     "AddComputedVector",
     "KeyedDataSelectorAction",
-    "KeyedScalars"
+    "KeyedScalars",
 )
 
 from typing import Optional, cast
@@ -15,13 +15,24 @@ from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
-from ..interfaces import KeyedData, KeyedDataSchema, KeyedDataAction, Vector, VectorAction, Scalar
+from ..interfaces import (
+    KeyedData,
+    KeyedDataSchema,
+    KeyedDataAction,
+    ScalarAction,
+    Vector,
+    VectorAction,
+    Scalar,
+)
 
 
 class KeyedDataSubsetAction(KeyedDataAction):
-    columnKeys = ListField(doc="Keys to extract from KeyedData and return", dtype=str)  # type: ignore
+    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return")
 
     def getInputSchema(self) -> KeyedDataSchema:
+        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
+
+    def getOutputSchema(self) -> KeyedDataSchema:
         return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
@@ -29,32 +40,39 @@ class KeyedDataSubsetAction(KeyedDataAction):
 
 
 class ChainedKeyedDataActions(KeyedDataAction):
-    keyedDataActions = ConfigurableActionStructField(
+    keyedDataActions = ConfigurableActionStructField[KeyedDataAction](
         doc="Set of KeyedData actions to run, results will be concatenated into a final output KeyedData"
         "object"
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        for action in self.tableActions:  # type: ignore
+        for action in self.keyedDataActions:
             yield from action.getInputSchema()
 
+    def getOutputSchema(self) -> KeyedDataSchema:
+        for action in self.keyedDataActions:
+            yield from action.getOutputSchema()
+
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        result: KeyedData = {}  # type: ignore
-        for action in self.tableActions:  # type: ignore
-            for column, values in action(data, **kwargs):
+        result: KeyedData = {}  # type:ignore
+        for action in self.keyedDataActions:
+            for column, values in action(data, **kwargs).items():
                 result[column] = values
         return result
 
 
 class AddComputedVector(KeyedDataAction):
-    action = ConfigurableActionField(doc="Action to use to compute Vector", dtype=VectorAction)
-    keyName = Field(doc="Key name to add to KeyedData", dtype=str)
+    action = ConfigurableActionField[VectorAction](doc="Action to use to compute Vector")
+    keyName = Field[str](doc="Key name to add to KeyedData")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.action.getInputSchema()  # type: ignore
+        yield from self.action.getInputSchema()
+
+    def getOutputSchema(self) -> KeyedDataSchema:
+        return ((self.keyName, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        data[self.keyName.format(**kwargs)] = self.action(data, **kwargs)  # type: ignore
+        data[self.keyName.format(**kwargs)] = self.action(data, **kwargs)
         return data
 
 
@@ -76,6 +94,9 @@ class KeyedDataSelectorAction(KeyedDataAction):
         for action in self.selectors:  # type: ignore
             yield from action.getInputSchema()
 
+    def getOutputSchema(self) -> KeyedDataSchema:
+        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
+
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask: Optional[np.ndarray] = None
         for selector in self.selectors:  # type: ignore
@@ -93,14 +114,20 @@ class KeyedDataSelectorAction(KeyedDataAction):
 
 
 class KeyedScalars(KeyedDataAction):
-    scalarActions = ConfigurableActionStructField(doc="Create a KeyedData of individual ScalarActions")
+    scalarActions = ConfigurableActionStructField[ScalarAction](
+        doc="Create a KeyedData of individual ScalarActions"
+    )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        for action in self.scalarActions:  # type: ignore
+        for action in self.scalarActions:
             yield from action.getInputSchema()
+
+    def getOutputSchema(self) -> KeyedDataSchema:
+        for name in self.scalarActions.fieldNames:
+            yield (name, Scalar)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result: KeyedData = {}  # type: ignore
-        for name, action in self.scalarActions.items():  # type: ignore
+        for name, action in self.scalarActions.items():
             result[name] = action(data, **kwargs)
         return result

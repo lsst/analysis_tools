@@ -95,10 +95,6 @@ class XPerpMetric(AnalysisMetric):
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
-    def __call__(self, data: KeyedData, **kwargs) -> Any:
-        kwargs.pop("bands")
-        return super().__call__(data, **kwargs)
-
 
 class WPerpPSFMetric(XPerpMetric):
     pass

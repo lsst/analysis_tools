@@ -11,7 +11,7 @@ __all__ = (
     "VectorSelector"
 )
 
-from typing import Iterable, Optional, cast
+from typing import Optional, cast
 
 import numpy as np
 from lsst.pex.config import Field
@@ -23,16 +23,16 @@ from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 class FlagSelector(VectorAction):
     """The base flag selector to use to select valid sources for QA"""
 
-    selectWhenFalse = ListField(
-        doc="Names of the flag columns to select on when False", dtype=str, optional=False, default=[]
+    selectWhenFalse = ListField[str](
+        doc="Names of the flag columns to select on when False", optional=False, default=[]
     )
 
-    selectWhenTrue = ListField(
-        doc="Names of the flag columns to select on when True", dtype=str, optional=False, default=[]
+    selectWhenTrue = ListField[str](
+        doc="Names of the flag columns to select on when True", optional=False, default=[]
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)  # type: ignore
+        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)
         return ((col, Vector) for col in allCols)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
@@ -62,7 +62,7 @@ class FlagSelector(VectorAction):
             else:
                 results = temp
 
-        for flag in self.selectWhenTrue:  # type: ignore
+        for flag in self.selectWhenTrue:
             temp = cast(Vector, np.array(data[flag.format(**kwargs)] == 1))
             if results is not None:
                 results &= temp  # type: ignore
@@ -73,9 +73,8 @@ class FlagSelector(VectorAction):
 
 
 class CoaddPlotFlagSelector(FlagSelector):
-    bands = ListField(
+    bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
-        dtype=str,
         default=[],
     )
 
@@ -84,9 +83,17 @@ class CoaddPlotFlagSelector(FlagSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
-        bands = self.bands or (kwargs.pop("band"),)
-        for band in bands:  # type: ignore
-            temp = super().__call__(data, band=band, **kwargs)
+        match kwargs:
+            case {"band": band}:
+                bands = (band,)
+            case {"bands": bands} if not self.bands:
+                bands = bands
+            case _ if self.bands:
+                bands = list(self.bands)
+            case _:
+                bands = ("",)
+        for band in bands:
+            temp = super().__call__(data, **(kwargs | dict(band=band)))
             if result is not None:
                 result &= temp  # type: ignore
             else:
@@ -106,15 +113,13 @@ class CoaddPlotFlagSelector(FlagSelector):
 class SnSelector(VectorAction):
     """Selects points that have S/N > threshold in the given flux type"""
 
-    fluxType = Field(doc="Flux type to calculate the S/N in.", dtype=str, default="{band}_psfFlux")
-    threshold = Field(doc="The S/N threshold to remove sources with.", dtype=float, default=500.0)
-    uncertaintySuffix = Field(
-        doc="Suffix to add to fluxType to specify uncertainty column", dtype=str, default="Err"
+    fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
+    threshold = Field[float](doc="The S/N threshold to remove sources with.", default=500.0)
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
     )
-    bands = ListField(
+    bands = ListField[str](
         doc="The bands to apply the signal to noise cut in." "Takes precedence if bands passed to call",
-        dtype=str,
-        default=["i"],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -134,36 +139,43 @@ class SnSelector(VectorAction):
             S/N cut.
         """
         mask: Optional[Vector] = None
-        if not (bands := cast(Iterable[str], self.bands or (kwargs.get("bands"),))):
-            bands = ("",)
+        match kwargs:
+            case {"band": band}:
+                bands = (band,)
+            case {"bands": bands} if not self.bands:
+                bands = bands
+            case _ if self.bands:
+                bands = list(self.bands)
+            case _:
+                bands = ("",)
         for band in bands:
             fluxCol = cast(str, self.fluxType).format(**(kwargs | dict(band=band)))
             errCol = f"{fluxCol}{cast(str,self.uncertaintySuffix).format(**kwargs)}"
-            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > cast(float, self.threshold)  # type: ignore
+            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > self.threshold  # type: ignore
             if mask is not None:
                 mask &= temp  # type: ignore
             else:
-                mask = temp  # type: ignore
+                mask = temp
 
         # It should not be possible for mask to be a None now
         return cast(Vector, mask)
 
 
 class ExtendednessSelector(VectorAction):
-    columnKey = Field(
-        doc="Key of the Vector which defines extendedness metric", dtype=str, default="{band}_extendedness"
+    columnKey = Field[str](
+        doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.columnKey, Vector),)  # type: ignore
+        return ((self.columnKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        key = self.columnKey.format(**kwargs)  # type: ignore
+        key = self.columnKey.format(**kwargs)
         return cast(Vector, data[key])
 
 
 class StellarSelector(ExtendednessSelector):
-    extendedness_maximum = Field(
+    extendedness_maximum = Field[float](
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )
 
@@ -173,8 +185,8 @@ class StellarSelector(ExtendednessSelector):
 
 
 class GalacticSelector(ExtendednessSelector):
-    extendedness_minimum = Field(
-        doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5, dtype=float
+    extendedness_minimum = Field[float](
+        doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
@@ -189,7 +201,7 @@ class UnknownSelector(ExtendednessSelector):
 
 
 class VectorSelector(VectorAction):
-    vectorKey = Field(doc="Key corresponding to boolean vector to use as a selection mask", dtype=str)
+    vectorKey = Field[str](doc="Key corresponding to boolean vector to use as a selection mask")
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((cast(str, self.vectorKey), Vector),)

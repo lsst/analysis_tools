@@ -1,37 +1,40 @@
 from __future__ import annotations
 
 from collections import abc
-from typing import cast, Iterable
-
 from lsst.pipe.base import PipelineTask, Struct, PipelineTaskConnections, PipelineTaskConfig
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pex.config import ListField
 
 
-from ..interfaces import KeyedData
+from ..interfaces import KeyedData, AnalysisPlot
 from ..analysisMetrics.metricActionMapping import MetricActionMapping
 
 
 class AnalysisBaseConnections(
-        PipelineTaskConnections,
-        dimensions={},
-        defalutTemplates={"inputName": "Placeholder"}
-        ):
+    PipelineTaskConnections, dimensions={}, defaultTemplates={"inputName": "Placeholder"}
+):
 
     metrics = ct.Output(
-        doc="Metrics calculated on input dataset type",
-        name="{inputName}_metrics",
-        storageClass=""
+        doc="Metrics calculated on input dataset type", name="{inputName}_metrics", storageClass=""
     )
-
 
     def __init__(self, *, config: PipelineTaskConfig = None):  # type: ignore
         if (inputName := config.connections.inputName) == "Placeholder":  # type: ignore
-            raise RuntimeError("Subclasses must specify an alternative value for the defaultTemplate `inputName`")
+            raise RuntimeError(
+                "Subclasses must specify an alternative value for the defaultTemplate `inputName`"
+            )
         super().__init__(config=config)
         existingNames = set(dir(self))
-        for name in config.plots.fieldNames():  # type: ignore
+        plotAction: AnalysisPlot
+        names = []
+        for plotAction in config.plots:  # type: ignore
+            if plotAction.multiband:
+                for band in config.bands:
+                    names.extend(name.format(band=band) for name in plotAction.getOutputNames())
+            else:
+                names.extend(plotAction.getOutputNames())
+        for name in names:
             name = f"{inputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
@@ -48,21 +51,31 @@ class AnalysisBaseConnections(
             self.outputs.add(name)
 
 
-class AnalysisBaseConfig(PipelineTaskConnections, connections=AnalysisBaseConnections):
+class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseConnections):
     plots = ConfigurableActionStructField(doc="AnalysisPlots to run with this Task")
     metrics = ConfigurableActionStructField(doc="AnalysisMetrics to run with this Task")
 
-    bands = ListField(
-        doc="Filter bands on which to run all of the actions",
-        dtype=str,
-        default=["g", "r", "i", "z", "y"]
+    bands = ListField[str](
+        doc="Filter bands on which to run all of the actions", default=["g", "r", "i", "z", "y"]
     )
 
 
+class StandinPlotInfo(dict):
+    def __missing__(self, key):
+        return ""
+
+
 class AnalysisPipelineTask(PipelineTask):
+    # Typing config because type checkers dont know about our Task magic
+    config: AnalysisBaseConfig
+    ConfigClass = AnalysisBaseConfig
+
     def runPlots(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
-        for name, action in self.config.analysisPlots.items():  # type: ignore
+        # allow not sending in plot info
+        if 'plotInfo' not in kwargs:
+            kwargs['plotInfo'] = StandinPlotInfo()
+        for name, action in self.config.plots.items():
             match action(data, **kwargs):
                 case abc.Mapping() as val:
                     for n, v in val.items():
@@ -73,20 +86,23 @@ class AnalysisPipelineTask(PipelineTask):
 
     def runMetrics(self, data: KeyedData, **kwargs) -> Struct:
         metricsMapping = MetricActionMapping()
-        for name, action in self.config.metrics.items():  # type: ignore
+        for name, action in self.config.metrics.items():
             match action(data, **kwargs):
                 case abc.Mapping() as val:
                     results = list(val.values())
                 case val:
                     results = [val]
             metricsMapping[name] = results
-        return Struct(metrics=metricsMapping) 
+        return Struct(metrics=metricsMapping)
 
     def run(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
 
-        kwargs['bands'] = cast(Iterable[str], self.config.bands):  # type: ignore
-        results.mergeItems(self.runPlots(data, **kwargs))
-        results.mergeItems(self.runMetrics(data, **kwargs))
+        if "bands" not in kwargs:
+            kwargs["bands"] = list(self.config.bands)
+        for name, value in self.runPlots(data, **kwargs).getDict().items():
+            setattr(results, name, value)
+        for name, value in self.runMetrics(data, **kwargs).getDict().items():
+            setattr(results, name, value)
 
         return results

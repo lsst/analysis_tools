@@ -16,8 +16,6 @@ class StellarLocusFitAction(KeyedDataAction):
         "not useful for any of the fits. The dict needs to contain xMin/xMax/yMin/yMax which are the "
         "limits of the initial box for fitting the stellar locus, mHW and bHW are the initial "
         "intercept and gradient for the fitting.",
-        keytype=str,
-        itemtype=float,
         default={"xMin": 0.1, "xMax": 0.2, "yMin": 0.1, "yMax": 0.2, "mHW": 0.5, "bHW": 0.0},
     )
 

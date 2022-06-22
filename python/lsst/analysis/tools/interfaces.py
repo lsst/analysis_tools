@@ -8,6 +8,7 @@ __all__ = (
     "PlotAction",
     "Scalar",
     "KeyedData",
+    "KeyedDataTypes",
     "KeyedDataSchema",
     "Vector",
     "AnalysisTool",
@@ -40,8 +41,8 @@ class Scalar(Number, np.number, metaclass=ScalarMeta):
 
 Vector = NDArray
 KeyedData = MutableMapping[str, Vector | Scalar]
-
-KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Number] | type[np.number]]]
+KeyedDataTypes = MutableMapping[str, Type[Vector] | Type[Number] | Type[np.number]]
+KeyedDataSchema = Iterable[Tuple[str, Type[Vector] | Type[Number] | Type[np.number]]]
 
 
 class AnalysisAction(ConfigurableAction):
@@ -52,6 +53,9 @@ class AnalysisAction(ConfigurableAction):
     @abstractmethod
     def getInputSchema(self) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
+
+    def getOutputSchema(self) -> KeyedDataSchema | None:
+        return None
 
     def getFormattedInputSchema(self, **kwargs):
         for key, typ in self.getInputSchema():
@@ -66,16 +70,8 @@ class AnalysisAction(ConfigurableAction):
 
 
 class KeyedDataAction(AnalysisAction):
-    def __init_subclass__(cls, **kwargs):
-        if "getOutputSchema" not in dir(cls):
-            raise NotImplementedError(f"Class {cls} must implement method getOutputSchema")
-
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        raise NotImplementedError("This is not implemented on the base class")
-
-    @abstractmethod
-    def getOutputSchema(self) -> KeyedDataSchema:
         raise NotImplementedError("This is not implemented on the base class")
 
 
@@ -103,6 +99,12 @@ class MetricAction(AnalysisAction):
 
 
 class PlotAction(AnalysisAction):
+    def getOutputNames(self) -> Iterable[str]:
+        """Returns a list of names that will be used as keys if this action's
+        call method returns a mapping. Otherwise return an empty Iterable
+        """
+        return tuple()
+
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         raise NotImplementedError("This is not implemented on the base class")
@@ -115,10 +117,13 @@ class AnalysisTool(AnalysisAction):
     )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
 
+    multiband: bool = True
+
     def __call__(
         self, data: KeyedData, **kwargs
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
-        if (bands := kwargs.pop("bands", None)) is None:
+        bands = kwargs.pop("bands", None)
+        if not self.multiband or bands is None:
             return self._call_single(data, **kwargs)
         results: dict[str, Any] = {}
         if self.identity is not None:
@@ -159,11 +164,6 @@ class AnalysisTool(AnalysisAction):
     def populatePrepFromProcess(self):
         cast(AnalysisAction, self.prep).addInputSchema(cast(AnalysisAction, self.process).getInputSchema())
 
-    @classmethod
-    @abstractmethod
-    def getOutputDSNames(cls, **kwargs) -> Iterable[str]:
-        raise NotImplementedError("This is not implemented on the base class")
-
 
 class AnalysisMetric(AnalysisTool):
     post_process = ConfigurableActionField(doc="Action which returns a calculated Metric", dtype=MetricAction)
@@ -177,4 +177,11 @@ class AnalysisMetric(AnalysisTool):
 
 
 class AnalysisPlot(AnalysisTool):
-    post_process = ConfigurableActionField(doc="Action which returns a plot", dtype=PlotAction)
+    post_process = ConfigurableActionField[PlotAction](doc="Action which returns a plot")
+
+    def getOutputNames(self) -> Iterable[str]:
+        outNames = tuple(self.post_process.getOutputNames())
+        if outNames:
+            return outNames
+        else:
+            return (f"{{band}}_{self.identity or ''}",)

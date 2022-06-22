@@ -83,15 +83,15 @@ class KeyedDataSelectorAction(KeyedDataAction):
     expected schema.
     """
 
-    columnKeys = ListField(doc="Keys to extract from KeyedData and return", dtype=str)  # type: ignore
+    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return")
 
-    selectors = ConfigurableActionStructField(
+    selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
-        for action in self.selectors:  # type: ignore
+        for action in self.selectors:
             yield from action.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
@@ -99,12 +99,12 @@ class KeyedDataSelectorAction(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask: Optional[np.ndarray] = None
-        for selector in self.selectors:  # type: ignore
+        for selector in self.selectors:
             subMask = selector(data, **kwargs)
             if mask is None:
                 mask = subMask
             else:
-                mask *= subMask
+                mask *= subMask  # type: ignore
 
         result = {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}  # type: ignore
         if mask is not None:

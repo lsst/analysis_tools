@@ -1,12 +1,12 @@
 from __future__ import annotations
-from lsst.analysis.tools.vectorActions.calcShapeSize import CalcShapeSize
 
-from lsst.analysis.tools.vectorActions.vectorActions import (
+from ..vectorActions.vectorActions import (
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     MagColumnNanoJansky,
 )
+from ..vectorActions.calcShapeSize import CalcShapeSize
 
 from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector, VectorSelector
 
@@ -39,10 +39,21 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
         self.process.filterActions.yStars = DownselectVector(  # type: ignore
             vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
         )
+        # downselect the psfFlux as well
+        self.process.filterActions.psfFlux = DownselectVector(
+            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.process.filterActions.psfFluxErr = DownselectVector(
+            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
+        )
 
         self.process.calculateActions.stars = ScatterPlotStatsAction(  # type: ignore
-            vectorKey="fracDiff",
+            vectorKey="yStars",
         )
+        # use the downselected psfFlux
+        self.process.calculateActions.stars.highSNSelector.fluxType = 'psfFlux'
+        self.process.calculateActions.stars.lowSNSelector.fluxType = 'psfFlux'
+        self.process.calculateActions.stars.fluxType = 'psfFlux'
 
         self.post_process.units = {  # type: ignore
             "{band}_highSNStars_median": "pixel",
@@ -52,42 +63,6 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
             "{band}_lowSNStars_sigmaMad": "pixel",
             "{band}_lowSNStars_count": "count",
         }
-
-
-class WPerpPSFMetric(AnalysisMetric):
-    # Use this as the Base Class for now StellarLocusBaseMetric
-    def setDefaults(self):
-        super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
-        self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["r"]
-
-        self.prep.selectors.starSelector = StellarSelector()
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-
-        self.process.calculateActions.wPerp = StellarLocusFitAction()
-        self.process.calculateActions.wPerp.stellarLocusFitDict = {"xMin": 0.1, "xMax": 0.2,
-                                                                   "yMin": 0.1, "yMax": 0.2,
-                                                                   "mHW": 0.5, "bHW": 0.0}
-        self.post_process.units = {  # type: ignore
-            "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
-        }
-
-    def __call__(self, data: KeyedData, **kwargs) -> Any:
-        kwargs.pop("bands")
-        return super().__call__()
 
 
 class XPerpMetric(AnalysisMetric):
@@ -118,8 +93,12 @@ class XPerpMetric(AnalysisMetric):
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
+    def __call__(self, data: KeyedData, **kwargs) -> Any:
+        kwargs.pop("bands")
+        return super().__call__(data, **kwargs)
 
-class WPerpPSFMetric(WPerpPSFMetric):
+
+class WPerpPSFMetric(XPerpMetric):
     pass
 
 

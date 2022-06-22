@@ -67,12 +67,6 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.post_process.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
         self.post_process.magLabel = "PSF Magnitude (mag)"
 
-    def getOutputNames(self) -> Iterable[str]:
-        outNames = self.post_process.getOutputNames()
-        if outNames:
-            return outNames
-        else:
-            return (f"{{band}}_{self.identity or ''}",)
 
 
 class WPerpPSFPlot(AnalysisPlot):

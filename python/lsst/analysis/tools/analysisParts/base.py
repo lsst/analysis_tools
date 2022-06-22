@@ -27,7 +27,9 @@ from ..keyedDataActions import KeyedDataSelectorAction
 
 class BasePrep(KeyedDataSelectorAction):
     def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
+        self._frozen = False
         self.columnKeys = [name for name, _ in inputSchema]
+        self._frozen = True
 
 
 class BaseProcess(KeyedDataAction):

@@ -14,11 +14,11 @@ class ObjectTableTractAnalysisConnections(
     dimensions=("skymap", "tract"),
     defaultTemplates={"inputName": "objectTable_tract"},
 ):
-    objectTable = ct.Input(
+    data = ct.Input(
         doc="Tract based object table to load from the butler",
         name="objectTable_tract",
         storageClass="DataFrame",
-        deferLoad=True,
+        #deferLoad=True,
         dimensions=("skymap", "tract"),
     )
 

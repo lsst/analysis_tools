@@ -120,6 +120,7 @@ class SnSelector(VectorAction):
     )
     bands = ListField[str](
         doc="The bands to apply the signal to noise cut in." "Takes precedence if bands passed to call",
+        default=[]
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

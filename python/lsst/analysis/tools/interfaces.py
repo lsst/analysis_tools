@@ -18,7 +18,7 @@ __all__ = (
 
 from abc import abstractmethod, ABCMeta
 from numbers import Number
-from typing import Iterable, MutableMapping, Tuple, Type, Mapping, cast, Any
+from typing import Iterable, MutableMapping, Tuple, Type, Mapping, Any
 import warnings
 from collections import abc
 
@@ -111,8 +111,8 @@ class PlotAction(AnalysisAction):
 
 
 class AnalysisTool(AnalysisAction):
-    prep = ConfigurableActionField(doc="Action to run to prepare inputs", dtype=KeyedDataAction)
-    process = ConfigurableActionField(
+    prep = ConfigurableActionField[KeyedDataAction](doc="Action to run to prepare inputs")
+    process = ConfigurableActionField[AnalysisAction](
         doc="Action to process data into intended form",
     )
     post_process = ConfigurableActionField(doc="Action to perform any finalization steps")
@@ -162,7 +162,7 @@ class AnalysisTool(AnalysisAction):
         return self.prep.getInputSchema()  # type: ignore
 
     def populatePrepFromProcess(self):
-        cast(AnalysisAction, self.prep).addInputSchema(cast(AnalysisAction, self.process).getInputSchema())
+        self.prep.addInputSchema(self.process.getInputSchema())
 
 
 class AnalysisMetric(AnalysisTool):

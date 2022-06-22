@@ -2,6 +2,8 @@ from __future__ import annotations
 
 __all__ = ("MetricActionMapping",)
 
+import json
+
 from collections import UserDict
 
 from lsst.verify import Measurement
@@ -22,11 +24,11 @@ class MetricActionMapping(UserDict[str, list[Measurement]]):
         result = {}
         for key, value in self.items():
             result[key] = [meas.json for meas in value]
-        return result
+        return json.dumps(result)
 
     @classmethod
     def parse_obj(cls, data):
         inst = cls()
-        for key, value in data:
+        for key, value in data.items():
             inst[key] = [Measurement.deserialize(**element) for element in value]
         return inst

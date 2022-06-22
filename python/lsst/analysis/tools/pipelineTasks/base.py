@@ -7,7 +7,7 @@ from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pex.config import ListField
 
 
-from ..interfaces import KeyedData, AnalysisPlot
+from ..interfaces import KeyedData, AnalysisPlot, AnalysisMetric
 from ..analysisMetrics.metricActionMapping import MetricActionMapping
 
 
@@ -16,19 +16,31 @@ class AnalysisBaseConnections(
 ):
 
     metrics = ct.Output(
-        doc="Metrics calculated on input dataset type", name="{inputName}_metrics", storageClass=""
+        doc="Metrics calculated on input dataset type",
+        name="{inputName}_metrics",
+        storageClass="AnalysisMetricStack"
     )
 
-    def __init__(self, *, config: PipelineTaskConfig = None):  # type: ignore
+    def __init__(self, *, config: "AnalysisBaseConfig" = None):  # type: ignore
         if (inputName := config.connections.inputName) == "Placeholder":  # type: ignore
             raise RuntimeError(
                 "Subclasses must specify an alternative value for the defaultTemplate `inputName`"
             )
         super().__init__(config=config)
+
+        # Set the dimensions for the metric
+        self.metrics = ct.Output(
+            name=self.metrics.name,
+            doc=self.metrics.doc,
+            storageClass=self.metrics.storageClass,
+            dimensions=self.dimensions,
+            multiple=False,
+            isCalibration=False
+        )
+
         existingNames = set(dir(self))
-        plotAction: AnalysisPlot
         names = []
-        for plotAction in config.plots:  # type: ignore
+        for plotAction in config.plots:
             if plotAction.multiband:
                 for band in config.bands:
                     names.extend(name.format(band=band) for name in plotAction.getOutputNames())
@@ -52,8 +64,8 @@ class AnalysisBaseConnections(
 
 
 class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseConnections):
-    plots = ConfigurableActionStructField(doc="AnalysisPlots to run with this Task")
-    metrics = ConfigurableActionStructField(doc="AnalysisMetrics to run with this Task")
+    plots = ConfigurableActionStructField[AnalysisPlot](doc="AnalysisPlots to run with this Task")
+    metrics = ConfigurableActionStructField[AnalysisMetric](doc="AnalysisMetrics to run with this Task")
 
     bands = ListField[str](
         doc="Filter bands on which to run all of the actions", default=["g", "r", "i", "z", "y"]
@@ -92,16 +104,16 @@ class AnalysisPipelineTask(PipelineTask):
                     results = list(val.values())
                 case val:
                     results = [val]
-            metricsMapping[name] = results
+            metricsMapping[name] = results  # type: ignore
         return Struct(metrics=metricsMapping)
 
     def run(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
-
+        plotKey = f"{self.config.connections.inputName}_{{name}}"  # type: ignore
         if "bands" not in kwargs:
             kwargs["bands"] = list(self.config.bands)
         for name, value in self.runPlots(data, **kwargs).getDict().items():
-            setattr(results, name, value)
+            setattr(results, plotKey.format(name=name), value)
         for name, value in self.runMetrics(data, **kwargs).getDict().items():
             setattr(results, name, value)
 

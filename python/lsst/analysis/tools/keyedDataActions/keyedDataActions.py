@@ -83,7 +83,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
     expected schema.
     """
 
-    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return")
+    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
 
     selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",

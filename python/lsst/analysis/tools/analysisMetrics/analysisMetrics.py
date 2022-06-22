@@ -40,10 +40,10 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
             vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
         )
         # downselect the psfFlux as well
-        self.process.filterActions.psfFlux = DownselectVector(
+        self.process.filterActions.psfFlux = DownselectVector(  # type: ignore
             vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
         )
-        self.process.filterActions.psfFluxErr = DownselectVector(
+        self.process.filterActions.psfFluxErr = DownselectVector(  # type: ignore
             vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
         )
 
@@ -51,9 +51,9 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
             vectorKey="yStars",
         )
         # use the downselected psfFlux
-        self.process.calculateActions.stars.highSNSelector.fluxType = 'psfFlux'
-        self.process.calculateActions.stars.lowSNSelector.fluxType = 'psfFlux'
-        self.process.calculateActions.stars.fluxType = 'psfFlux'
+        self.process.calculateActions.stars.highSNSelector.fluxType = 'psfFlux'  # type: ignore
+        self.process.calculateActions.stars.lowSNSelector.fluxType = 'psfFlux'  # type: ignore
+        self.process.calculateActions.stars.fluxType = 'psfFlux'  # type: ignore
 
         self.post_process.units = {  # type: ignore
             "{band}_highSNStars_median": "pixel",
@@ -66,6 +66,8 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
 
 
 class XPerpMetric(AnalysisMetric):
+    multiband: bool = False
+
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()

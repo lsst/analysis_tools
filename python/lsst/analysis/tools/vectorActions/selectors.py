@@ -75,7 +75,7 @@ class FlagSelector(VectorAction):
 class CoaddPlotFlagSelector(FlagSelector):
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
-        default=[],
+        default=["i"],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

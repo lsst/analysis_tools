@@ -51,7 +51,9 @@ class ChainedKeyedDataActions(KeyedDataAction):
 
     def getOutputSchema(self) -> KeyedDataSchema:
         for action in self.keyedDataActions:
-            yield from action.getOutputSchema()
+            output = action.getOutputSchema()
+            if output is not None:
+                yield from output
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result: KeyedData = {}  # type:ignore

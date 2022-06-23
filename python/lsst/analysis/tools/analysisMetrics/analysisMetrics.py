@@ -11,10 +11,9 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector, VectorSelector
 
 # from ..analysisParts.wPerp import WPerpProcess, WPerpPostProcessMetric
-from ..interfaces import AnalysisMetric, KeyedData
+from ..interfaces import AnalysisMetric
 from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
-from typing import Any
 
 
 class ShapeSizeFractionalMetric(AnalysisMetric):

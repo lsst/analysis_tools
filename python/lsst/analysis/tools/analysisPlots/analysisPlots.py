@@ -17,19 +17,17 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 from ..scalarActions.scalarActions import ApproxFloor
 from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
 
-from ..interfaces import AnalysisPlot, KeyedData
-
-from typing import Any, Iterable
+from ..interfaces import AnalysisPlot
 
 
 class ShapeSizeFractionalDiffScatter(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()  # type: ignore
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
         self.process.buildActions.mags = MagColumnNanoJansky(columnKey="{band}_psfFlux")
-        self.process.buildActions.fracDiff = FractionalDifference(  # type: ignore
+        self.process.buildActions.fracDiff = FractionalDifference(
             actionA=CalcShapeSize(),
             actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
         )
@@ -66,7 +64,6 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.post_process.xAxisLabel = "PSF Magnitude (mag)"
         self.post_process.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
         self.post_process.magLabel = "PSF Magnitude (mag)"
-
 
 
 class WPerpPSFPlot(AnalysisPlot):

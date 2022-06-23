@@ -170,10 +170,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         default=True,
         dtype=bool,
     )
-    plotTypes = ListField(
+    plotTypes = ListField[str](
         doc="Selection of types of objects to plot. Can take any combination of"
         " stars, galaxies, unknown, mag, any",
-        dtype=str,
         optional=False,
         itemCheck=_validatePlotTypes,
     )

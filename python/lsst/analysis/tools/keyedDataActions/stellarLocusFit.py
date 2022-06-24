@@ -2,6 +2,8 @@ from __future__ import annotations
 
 __all__ = ("StellarLocusFitAction",)
 
+from typing import cast
+
 import numpy as np
 from scipy.stats import median_absolute_deviation as sigmaMad
 
@@ -32,16 +34,15 @@ class StellarLocusFitAction(KeyedDataAction):
         return value
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        result = {}
-
-        xs = data["x"]
-        ys = data["y"]
+        xs = cast(Vector, data["x"])
+        ys = cast(Vector, data["y"])
         fitParams = stellarLocusFit(xs, ys, self.stellarLocusFitDict)
         fitPoints = np.where(
-            (xs > fitParams["xMin"])
-            & (xs < fitParams["xMax"])
-            & (ys > fitParams["yMin"])
-            & (ys < fitParams["yMax"])
+            (xs > fitParams["xMin"])  # type: ignore
+            & (xs < fitParams["xMax"])  # type: ignore
+            & (ys > fitParams["yMin"])  # type: ignore
+            & (ys < fitParams["yMax"])  # type: ignore
+
         )[0]
 
         if np.fabs(fitParams["mHW"]) > 1:
@@ -102,4 +103,4 @@ class StellarLocusFitAction(KeyedDataAction):
         fitParams[f"{self.identity or ''}_hardwired_sigmaMAD"] = sigmaMad(distsHW)
         fitParams[f"{self.identity or ''}_hardwired_median"] = np.median(distsHW)
 
-        return fitParams
+        return fitParams  # type: ignore

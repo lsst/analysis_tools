@@ -44,7 +44,7 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[cast(str, self.columnKey).format(**kwargs)])
-            return -2.5 * np.log10((vec * 1e-9) / 3631.0)  # type: ignore
+            return np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
 
 
 class FractionalDifference(VectorAction):
@@ -113,7 +113,7 @@ class MagDiff(VectorAction):
         if self.returnMillimags:
             magDiff = magDiff.to(u.mmag)
 
-        return magDiff.value
+        return np.array(magDiff.value)
 
 
 class ExtinctionCorrectedMagDiff(VectorAction):
@@ -167,4 +167,4 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         if self.magDiff.returnMillimags:
             correction = correction.to(u.mmag)
 
-        return diff - correction.value
+        return np.array(diff - correction.value)

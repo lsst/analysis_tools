@@ -96,12 +96,12 @@ class WPerpPSFPlot(AnalysisPlot):
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
-            "xMin": 0.1,
-            "xMax": 0.2,
-            "yMin": 0.1,
-            "yMax": 0.2,
-            "mHW": 0.5,
-            "bHW": 0.0,
+            "xMin": 0.28,
+            "xMax": 1.0,
+            "yMin": 0.02,
+            "yMax": 0.48,
+            "mHW": 0.52,
+            "bHW": -0.08,
         }
 
         self.post_process = ColorColorFitPlot()

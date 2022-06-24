@@ -581,6 +581,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 histIm = None
 
         # Set the scatter plot limits
+        # TODO: Make this not work by accident
         if len(cast(Vector, data["yStars"])) > 0:
             plotMed = np.nanmedian(data["yStars"])
         else:

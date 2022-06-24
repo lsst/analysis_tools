@@ -142,6 +142,8 @@ class ColorColorFitPlot(PlotAction):
         xs = data["x"]
         ys = data["y"]
         mags = data["mag"]
+        # TODO: FIX THIS
+        fitParams = data
 
         # TODO: Make a no data fig function and use here
         if len(xs) == 0 or len(ys) == 0:
@@ -160,6 +162,8 @@ class ColorColorFitPlot(PlotAction):
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
         medMag = np.median(mags)
 
+        # TODO: GET THE SN FROM THE EARLIER PREP STEP
+        SN = "-"
         infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(data["x"]), SN)
         infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(medMag)
         ax.text(0.05, 0.78, infoText, color="k", transform=ax.transAxes,

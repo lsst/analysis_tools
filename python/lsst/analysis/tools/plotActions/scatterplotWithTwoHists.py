@@ -20,7 +20,7 @@ from matplotlib.patches import Rectangle
 from lsst.analysis.tools.scalarActions.scalarActions import CountAction, MedianAction, SigmaMadAction
 
 
-from .plotUtils import mkColormap, addPlotInfo
+from .plotUtils import mkColormap, addPlotInfo, addSummaryPlot, generateSummaryStats
 
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
@@ -290,7 +290,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
-        # self._cornerPlot(data, fig, gs, sumStats=sumStats, **kwargs)
+        sumStats = generateSummaryStats(data, key)
+        fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         plt.draw()
         plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
@@ -766,62 +767,3 @@ class ScatterPlotWithTwoHists(PlotAction):
             divider = make_axes_locatable(sideHist)
             cax = divider.append_axes("right", size="8%", pad=0)
             plt.colorbar(histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin")
-
-    def _cornerPlot(
-        self, data: KeyedData, figure: Figure, gs: gridspec.Gridspec, sumStats: Mapping = None, **kwargs
-    ) -> None:
-        # Corner plot of patches showing summary stat in each
-        axCorner = figure.add_subplot(gs[0, -1])
-        axCorner.yaxis.tick_right()
-        axCorner.yaxis.set_label_position("right")
-        axCorner.xaxis.tick_top()
-        axCorner.xaxis.set_label_position("top")
-        axCorner.set_aspect("equal")
-
-        patches = []
-        colors = []
-        for dataId, (corners, stat) in sumStats.items():
-            ra = corners[0][0].asDegrees()
-            dec = corners[0][1].asDegrees()
-            xy = (ra, dec)
-            width = corners[2][0].asDegrees() - ra
-            height = corners[2][1].asDegrees() - dec
-            patches.append(Rectangle(xy, width, height))
-            colors.append(stat)
-            ras = [ra.asDegrees() for (ra, dec) in corners]
-            decs = [dec.asDegrees() for (ra, dec) in corners]
-            axCorner.plot(ras + [ras[0]], decs + [decs[0]], "k", lw=0.5)
-            cenX = ra + width / 2
-            cenY = dec + height / 2
-            if dataId != "tract":
-                axCorner.annotate(dataId, (cenX, cenY), color="k", fontsize=4, ha="center", va="center")
-
-        # Set the bad color to transparent and make a masked array
-        colors = np.ma.array(colors, mask=np.isnan(colors))
-        collection = PatchCollection(patches, cmap=cmapPatch)
-        collection.set_array(colors)
-        axCorner.add_collection(collection)
-
-        axCorner.set_xlabel("R.A. (deg)", fontsize=7)
-        axCorner.set_ylabel("Dec. (deg)", fontsize=7)
-        axCorner.tick_params(axis="both", labelsize=6, length=0, pad=1.5)
-        axCorner.invert_xaxis()
-
-        # Add a colorbar
-        pos = axCorner.get_position()
-        cax = figure.add_axes([pos.x0, pos.y0 + 0.23, pos.x1 - pos.x0, 0.025])
-        plt.colorbar(collection, cax=cax, orientation="horizontal")
-        cax.text(
-            0.5,
-            0.5,
-            "Median Value",
-            color="k",
-            transform=cax.transAxes,
-            rotation="horizontal",
-            horizontalalignment="center",
-            verticalalignment="center",
-            fontsize=6,
-        )
-        cax.tick_params(
-            axis="x", labelsize=6, labeltop=True, labelbottom=False, bottom=False, top=True, pad=0.5, length=2
-        )

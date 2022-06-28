@@ -12,7 +12,7 @@ from lsst.pipe.tasks.dataFrameActions import CoordColumn, SingleColumnAction
 from lsst.skymap import BaseSkyMap
 
 from .plotUtils import generateSummaryStats, parsePlotInfo, addPlotInfo, mkColormap, extremaSort
-from ..interfaces import PlotAction, KeyedDataAction, KeyedDataSchema, KeyedData
+from ..interfaces import PlotAction, KeyedDataAction, KeyedDataSchema, KeyedData, Vector, Scalar
 from typing import Mapping, Optional
 
 import pandas as pd
@@ -97,21 +97,21 @@ class SkyPlot(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
-    def sortAllArrays(arrToSort, otherArrsToSort):
+    def sortAllArrays(self, arrsToSort):
         """Sort one array and then return all the others in
         the associated order.
         """
-        ids = extremaSort(arrToSort)
-        for (i, arr) in enumerate(otherArrsToSort):
-            otherArrsToSort[i] = arr[ids]
-        return arrToSort[ids] + otherArrsToSort
+        ids = extremaSort(arrsToSort[0])
+        for (i, arr) in enumerate(arrsToSort):
+            arrsToSort[i] = arr[ids]
+        return arrsToSort
 
-    def statsAndText(arr, mask=False):
+    def statsAndText(self, arr, mask=None):
         """Calculate some stats from an array and return them
         and some text.
         """
         numPoints = len(arr)
-        if mask:
+        if mask is not None:
             arr = arr[mask]
         med = np.nanmedian(arr)
         sigMad = sigmaMad(arr, nan_policy="omit")
@@ -122,8 +122,8 @@ class SkyPlot(PlotAction):
 
         return med, sigMad, statsText
 
-    def run(self, data: KeyedData, plotInfo: Mapping[str, str] = None,
-            sumStats: Mapping = None, **kwargs) -> Figure:
+    def makePlot(self, data: KeyedData, plotInfo: Mapping[str, str] = None,
+            sumStats: Mapping = {}, **kwargs) -> Figure:
         """Prep the catalogue and then make a skyPlot of the given column.
 
         Parameters
@@ -205,15 +205,15 @@ class SkyPlot(PlotAction):
         redPurple = mkColormap(["indigo", "lemonchiffon", "firebrick"])
         orangeBlue = mkColormap(["darkOrange", "thistle", "midnightblue"])
 
-        xCol = self.xAxisLabels
-        yCol = self.yAxisLabels
-        zCol = self.zAxisLabels
+        xCol = self.xAxisLabel
+        yCol = self.yAxisLabel
+        zCol = self.zAxisLabel
 
         toPlotList = []
         # For galaxies
         if "galaxies" in self.plotTypes:
-            sortedArrs = sortAllArrays(data["zGalaxies"],
-                                       [data["xGalaxies"], data["yGalaxies"], data["galaxyStatMask"]])
+            sortedArrs = sortAllArrays([data["zGalaxies"], data["xGalaxies"], data["yGalaxies"],
+                                        data["galaxyStatMask"]])
             [colorValsGalaxies, xsGalaxies, ysGalaxies, statGalaxies] = sortedArrs
             statGalMed, statGalMad, galStatsText = statsAndText(colorValsGalaxies, mask=statGals)
             # Add statistics
@@ -230,10 +230,10 @@ class SkyPlot(PlotAction):
 
         # For stars
         if "stars" in self.plotTypes:
-            sortedArrs = sortAllArrays(data["zStars"],
-                                       [data["xStars"], data["yStars"], data["starStatMask"]])
+            sortedArrs = self.sortAllArrays([data["zStars"], data["xStars"], data["yStars"],
+                                             data["starStatMask"]])
             [colorValsStars, xsStars, ysStars, statStars] = sortedArrs
-            statStarMed, statStarMad, starStatsText = statsAndText(colorValsStars, mask=statStars)
+            statStarMed, statStarMad, starStatsText = self.statsAndText(colorValsStars, mask=statStars)
             # Add statistics
             bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
             ax.text(0.8, 0.91, starStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
@@ -241,26 +241,25 @@ class SkyPlot(PlotAction):
 
         # For unknowns
         if "unknown" in self.plotTypes:
-            sortedArrs = sortAllArrays(data["zUnknowns"],
-                                       [data["xUnknowns"], data["yUnknowns"], data["unknownStatMask"]])
+            sortedArrs = self.sortAllArrays([data["zUnknowns"], data["xUnknowns"], data["yUnknowns"],
+                                             data["unknownStatMask"]])
             [colorValsUnknowns, xsUnknowns, ysUnknowns, statUnknowns] = sortedArrs
-            statUnknownMed, statUnknownMad, unknownStatsText = statsAndText(colorValsUnknowns,
+            statUnknownMed, statUnknownMad, unknownStatsText = self.statsAndText(colorValsUnknowns,
                                                                             mask=statUnknowns)
             bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
             ax.text(0.8, 0.91, unknownStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
             toPlotList.append((xsUnknowns, ysUnknowns, colorValsUnknowns, "viridis", "Unknown"))
 
         if "any" in self.plotTypes:
-            sortedArrs = sortAllArrays(data["z"],
-                                       [data["x"], data["y"], data["statMask"]])
+            sortedArrs = self.sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
             [colorVals, xs, ys, stats] = sortedArrs
-            statAnyMed, statAnyMad, anyStatsText = statsAndText(colorValsAny, mask=statAny)
+            statAnyMed, statAnyMad, anyStatsText = self.statsAndText(colorValsAny, mask=statAny)
             bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
             ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
             toPlotList.append((xs, ys, colorVals, orangeBlue, "All"))
 
         # Corner plot of patches showing summary stat in each
-        if self.config.plotOutlines:
+        if self.plotOutlines:
             patches = []
             for dataId in sumStats.keys():
                 (corners, _) = sumStats[dataId]
@@ -285,7 +284,7 @@ class SkyPlot(PlotAction):
                                 path_effects=[pathEffects.withStroke(linewidth=2, foreground="w")])
 
         for (i, (xs, ys, colorVals, cmap, label)) in enumerate(toPlotList):
-            if "tract" not in sumStats.keys() or not self.config.plotOutlines:
+            if not self.plotOutlines or "tract" not in sumStats.keys():
                 minRa = np.min(xs)
                 maxRa = np.max(xs)
                 minDec = np.min(ys)
@@ -299,7 +298,7 @@ class SkyPlot(PlotAction):
             mad = sigmaMad(colorVals)
             vmin = med - 2*mad
             vmax = med + 2*mad
-            if self.config.fixAroundZero:
+            if self.fixAroundZero:
                 scaleEnd = np.max([np.abs(vmin), np.abs(vmax)])
                 vmin = -1*scaleEnd
                 vmax = scaleEnd
@@ -328,7 +327,7 @@ class SkyPlot(PlotAction):
 
             cax = fig.add_axes([0.87 + i*0.04, 0.11, 0.04, 0.77])
             plt.colorbar(plotOut, cax=cax, extend="both")
-            colorBarLabel = "{}: {}".format(self.config.axisLabels["z"], label)
+            colorBarLabel = "{}: {}".format(self.zAxisLabel, label)
             text = cax.text(0.5, 0.5, colorBarLabel, color="k", rotation="vertical", transform=cax.transAxes,
                             ha="center", va="center", fontsize=10)
             text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])

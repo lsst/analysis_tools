@@ -159,7 +159,7 @@ class SnSelector(VectorAction):
                 mask = temp
 
         # It should not be possible for mask to be a None now
-        return cast(Vector, mask)
+        return np.array(cast(Vector, mask))
 
 
 class ExtendednessSelector(VectorAction):

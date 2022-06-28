@@ -71,7 +71,7 @@ class LoadVector(VectorAction):
         return ((cast(str, self.vectorKey), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])
+        return np.array(cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)]))
 
 
 class MagDiff(VectorAction):

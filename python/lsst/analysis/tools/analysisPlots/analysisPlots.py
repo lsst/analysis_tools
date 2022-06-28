@@ -12,6 +12,7 @@ from ..vectorActions.vectorActions import (
     DownselectVector,
     VectorSelector,
     FractionalDifference,
+    LoadVector,
 )
 from ..vectorActions.calcShapeSize import CalcShapeSize
 
@@ -77,9 +78,9 @@ class WPerpPSFPlot(AnalysisPlot):
         self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
 
         self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.bands = ["r"]
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["r"]
 
         self.prep.selectors.starSelector = StellarSelector()
         self.prep.selectors.starSelector.columnKey = "r_extendedness"
@@ -109,22 +110,34 @@ class WPerpPSFPlot(AnalysisPlot):
         self.post_process.plotName = "wPerp_psfFlux"
 
 class Ap12_PSF_skyPlot(AnalysisPlot):
+    band: str = "{band}"
 
     def setDefaults(self):
         super().setDefaults()
+        print(f"self.band")
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["{band}"]
+        self.prep.selectors.flagSelector.bands = [f"{self.band}"]
 
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.fluxType = f"{self.band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
         self.prep.selectors.starSelector = StellarSelector()
-        self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
+        self.prep.selectors.starSelector.columnKey = f"{self.band}_extendedness"
 
-        self.process.buildActions.z = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.z.magDiff.col1 = "{band}_ap12Flux"
-        self.process.buildActions.z.magDiff.col2 = "{band}_psfFlux"
+        # TODO: Can we make these defaults somewhere?
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec"
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = f"{self.band}_psfFlux"
+
+        self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
+        self.process.buildActions.zStars.magDiff.col1 = f"{self.band}_ap12Flux"
+        self.process.buildActions.zStars.magDiff.col2 = f"{self.band}_psfFlux"
 
         self.post_process = SkyPlot()
-        self.post_process.plotName = "ap12-psf_{band}"
+        self.post_process.plotTypes = ["stars"]
+        self.post_process.plotName = f"ap12-psf_{self.band}"
+        self.post_process.plotOutlines = False

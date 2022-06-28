@@ -462,3 +462,84 @@ def extremaSort(xs):
     dists = np.abs(xs - med)
     ids = np.argsort(dists)
     return ids
+
+
+def addSummaryPlot(fig, loc, sumStats, label):
+    """Add a summary subplot to the figure.
+
+    Parameters
+    ----------
+    fig : `matplotlib.figure.Figure`
+        The figure that the summary plot is to be added to.
+    loc : `matplotlib.gridspec.SubplotSpec` or `int` or `(int, int, index`
+        Describes the location in the figure to put the summary plot,
+        can be a gridspec SubplotSpec, a 3 digit integer where the first
+        digit is the number of rows, the second is the number of columns
+        and the third is the index. This is the same for the tuple
+        of int, int, index.
+    sumStats : `dict`
+        A dictionary where the patchIds are the keys which store the R.A.
+        and the dec of the corners of the patch, along with a summary
+        statistic for each patch.
+
+    Returns
+    -------
+    fig : `matplotlib.figure.Figure`
+    """
+
+    # Add the subplot to the relevant place in the figure
+    # and sort the axis out
+    axCorner = fig.add_subplot(loc)
+    axCorner.yaxis.tick_right()
+    axCorner.yaxis.set_label_position("right")
+    axCorner.xaxis.tick_top()
+    axCorner.xaxis.set_label_position("top")
+    axCorner.set_aspect("equal")
+
+    # Plot the corners of the patches and make the color
+    # coded rectangles for each patch, the colors show
+    # the median of the given value in the patch
+    patches = []
+    colors = []
+    for dataId in sumStats.keys():
+        (corners, stat) = sumStats[dataId]
+        ra = corners[0][0].asDegrees()
+        dec = corners[0][1].asDegrees()
+        xy = (ra, dec)
+        width = corners[2][0].asDegrees() - ra
+        height = corners[2][1].asDegrees() - dec
+        patches.append(Rectangle(xy, width, height))
+        colors.append(stat)
+        ras = [ra.asDegrees() for (ra, dec) in corners]
+        decs = [dec.asDegrees() for (ra, dec) in corners]
+        axCorner.plot(ras + [ras[0]], decs + [decs[0]], "k", lw=0.5)
+        cenX = ra + width / 2
+        cenY = dec + height / 2
+        if dataId != "tract":
+            axCorner.annotate(dataId, (cenX, cenY), color="k", fontsize=4, ha="center", va="center")
+
+    # Set the bad color to transparent and make a masked array
+    cmapPatch = plt.cm.coolwarm.copy()
+    cmapPatch.set_bad(color="none")
+    colors = np.ma.array(colors, mask=np.isnan(colors))
+    collection = PatchCollection(patches, cmap=cmapPatch)
+    collection.set_array(colors)
+    axCorner.add_collection(collection)
+
+    # Add some labels
+    axCorner.set_xlabel("R.A. (deg)", fontsize=7)
+    axCorner.set_ylabel("Dec. (deg)", fontsize=7)
+    axCorner.tick_params(axis="both", labelsize=6, length=0, pad=1.5)
+    axCorner.invert_xaxis()
+
+    # Add a colorbar
+    pos = axCorner.get_position()
+    yOffset = (pos.y1 - pos.y0)/3
+    cax = fig.add_axes([pos.x0, pos.y1 + yOffset, pos.x1 - pos.x0, 0.025])
+    plt.colorbar(collection, cax=cax, orientation="horizontal")
+    cax.text(0.5, 0.48, label, color="k", transform=cax.transAxes, rotation="horizontal",
+             horizontalalignment="center", verticalalignment="center", fontsize=6)
+    cax.tick_params(axis="x", labelsize=6, labeltop=True, labelbottom=False, bottom=False, top=True,
+                    pad=0.5, length=2)
+
+    return fig

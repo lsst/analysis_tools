@@ -5,6 +5,7 @@ __all__ = ("ShapeSizeFractionalDiffScatter",)
 from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector
 from ..plotActions.scatterplotWithTwoHists import ScatterPlotWithTwoHists, ScatterPlotStatsAction
 from ..plotActions.colorColorFitPlot import ColorColorFitPlot
+from ..plotActions.skyPlot import SkyPlot
 from ..vectorActions.vectorActions import (
     ExtinctionCorrectedMagDiff,
     MagColumnNanoJansky,
@@ -106,3 +107,24 @@ class WPerpPSFPlot(AnalysisPlot):
 
         self.post_process = ColorColorFitPlot()
         self.post_process.plotName = "wPerp_psfFlux"
+
+class Ap12_PSF_skyPlot(AnalysisPlot):
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.flagSelector.bands = ["{band}"]
+
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.threshold = 300
+
+        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
+
+        self.process.buildActions.z = ExtinctionCorrectedMagDiff()
+        self.process.buildActions.z.magDiff.col1 = "{band}_ap12Flux"
+        self.process.buildActions.z.magDiff.col2 = "{band}_psfFlux"
+
+        self.post_process = SkyPlot()
+        self.post_process.plotName = "ap12-psf_{band}"

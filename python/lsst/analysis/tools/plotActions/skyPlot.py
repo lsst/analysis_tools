@@ -1,17 +1,19 @@
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 from scipy.stats import median_absolute_deviation as sigmaMad
 from scipy.stats import binned_statistic_2d
 from matplotlib.patches import Rectangle
 import matplotlib.patheffects as pathEffects
 import lsst.pipe.base as pipeBase
-from lsst.pex.config.pexConfig import Field
+from lsst.pex.config import Field, ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.dataFrameActions import CoordColumn, SingleColumnAction
 from lsst.skymap import BaseSkyMap
 
-from . import dataSelectors as dataSelectors
 from .plotUtils import generateSummaryStats, parsePlotInfo, addPlotInfo, mkColormap, extremaSort
+from ..interfaces import PlotAction, KeyedDataAction, KeyedDataSchema, KeyedData
+from typing import Mapping, Optional
 
 import pandas as pd
 
@@ -34,7 +36,7 @@ class SkyPlot(PlotAction):
         dtype=bool,
     )
 
-    plotOutlines = pexConfig.Field(
+    plotOutlines = Field(
         doc="Plot the outlines of the ccds/patches?",
         default=True,
         dtype=bool,
@@ -45,7 +47,14 @@ class SkyPlot(PlotAction):
             " stars, galaxies, unknown, mag, any.",
         dtype=str,
         optional=False,
-        itemCheck=_validatePlotTypes,
+        #itemCheck=_validatePlotTypes,
+    )
+
+    plotName = Field(doc="The name for the plot.", dtype=str, optional=False)
+
+    fixAroundZero = Field(doc="Fix the colorbar to be symmetric around zero.",
+                          dtype=bool,
+                          default=False,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -88,6 +97,30 @@ class SkyPlot(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
+    def sortAllArrays(arrToSort, otherArrsToSort):
+        """Sort one array and then return all the others in
+        the associated order.
+        """
+        ids = extremaSort(arrToSort)
+        for (i, arr) in enumerate(otherArrsToSort):
+            otherArrsToSort[i] = arr[ids]
+        return arrToSort[ids] + otherArrsToSort
+
+    def statsAndText(arr, mask=False):
+        """Calculate some stats from an array and return them
+        and some text.
+        """
+        numPoints = len(arr)
+        if mask:
+            arr = arr[mask]
+        med = np.nanmedian(arr)
+        sigMad = sigmaMad(arr, nan_policy="omit")
+
+        statsText = ("Median: {:0.2f}\n".format(med) + r"$\sigma_{MAD}$: "
+                     + "{:0.2f}\n".format(sigMad) + r"n$_{points}$: "
+                     + "{}".format(numPoints))
+
+        return med, sigMad, statsText
 
     def run(self, data: KeyedData, plotInfo: Mapping[str, str] = None,
             sumStats: Mapping = None, **kwargs) -> Figure:
@@ -176,90 +209,55 @@ class SkyPlot(PlotAction):
         yCol = self.yAxisLabels
         zCol = self.zAxisLabels
 
+        toPlotList = []
         # For galaxies
         if "galaxies" in self.plotTypes:
-            colorValsGalaxies = data["zGalaxies"]
-            ids = extremaSort(colorValsGalaxies)
-            xsGalaxies = data["xGalaxies"][ids]
-            ysGalaxies = data["yGalaxies"][ids]
-            colorValsGalaxies = colorValsGalaxies[ids]
-
-        # For stars
-        if "stars" in self.plotTypes:
-            colorValsStars = data["zStars"]
-            ids = extremaSort(colorValsStars)
-            xsStars = data["xStars"][ids]
-            ysStars = data["yStars"][ids]
-            colorValsStars = colorValsStars[ids]
-
-        # Calculate some statistics
-        if "galaxies" in self.plotTypes:
-            statGals = (catPlot["useForStats"] == 1)
-            statGalMed = np.nanmedian(catPlot.loc[statGals, zCol])
-            statGalMad = sigmaMad(catPlot.loc[statGals, zCol], nan_policy="omit")
-
-            galStatsText = ("Median: {:0.2f}\n".format(statGalMed) + r"$\sigma_{MAD}$: "
-                            + "{:0.2f}\n".format(statGalMad) + r"n$_{points}$: "
-                            + "{}".format(len(xsGalaxies)))
+            sortedArrs = sortAllArrays(data["zGalaxies"],
+                                       [data["xGalaxies"], data["yGalaxies"], data["galaxyStatMask"]])
+            [colorValsGalaxies, xsGalaxies, ysGalaxies, statGalaxies] = sortedArrs
+            statGalMed, statGalMad, galStatsText = statsAndText(colorValsGalaxies, mask=statGals)
             # Add statistics
             bbox = dict(facecolor="lemonchiffon", alpha=0.5, edgecolor="none")
             # Check if plotting stars and galaxies, if so move the
             # text box so that both can be seen. Needs to be
             # > 2 becuase not being plotted points are assigned 0
-            if len(list(set(catPlot["sourceType"].values))) > 2:
+            if len(self.plotTypes) > 2:
                 boxLoc = 0.63
             else:
                 boxLoc = 0.8
             ax.text(boxLoc, 0.91, galStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            toPlotList.append((xsGalaxies, ysGalaxies, colorValsGalaxies, redPurple, "Galaxies"))
 
-        if np.any(catPlot["sourceType"] == 1):
-
-            statStars = ((catPlot["useForStats"] == 1) & stars)
-            statStarMed = np.nanmedian(catPlot.loc[statStars, zCol])
-            statStarMad = sigmaMad(catPlot.loc[statStars, zCol], nan_policy="omit")
-
-            starStatsText = ("Median: {:0.2f}\n".format(statStarMed) + r"$\sigma_{MAD}$: "
-                             + "{:0.2f}\n".format(statStarMad) + r"n$_{points}$: "
-                             + "{}".format(len(xsStars)))
+        # For stars
+        if "stars" in self.plotTypes:
+            sortedArrs = sortAllArrays(data["zStars"],
+                                       [data["xStars"], data["yStars"], data["starStatMask"]])
+            [colorValsStars, xsStars, ysStars, statStars] = sortedArrs
+            statStarMed, statStarMad, starStatsText = statsAndText(colorValsStars, mask=statStars)
             # Add statistics
             bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
             ax.text(0.8, 0.91, starStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-
-        if np.any(catPlot["sourceType"] == 10):
-
-            statAll = (catPlot["useForStats"] == 1)
-            statAllMed = np.nanmedian(catPlot.loc[statAll, zCol])
-            statAllMad = sigmaMad(catPlot.loc[statAll, zCol], nan_policy="omit")
-
-            allStatsText = ("Median: {:0.2f}\n".format(statAllMed) + r"$\sigma_{MAD}$: "
-                            + "{:0.2f}\n".format(statAllMad) + r"n$_{points}$: "
-                            + "{}".format(len(catPlot)))
-            bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
-            ax.text(0.8, 0.91, allStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-
-        if np.any(catPlot["sourceType"] == 9):
-
-            statAll = (catPlot["useForStats"] == 1)
-            statAllMed = np.nanmedian(catPlot.loc[statAll, zCol])
-            statAllMad = sigmaMad(catPlot.loc[statAll, zCol], nan_policy="omit")
-
-            allStatsText = ("Median: {:0.2f}\n".format(statAllMed) + r"$\sigma_{MAD}$: "
-                            + "{:0.2f}\n".format(statAllMad) + r"n$_{points}$: "
-                            + "{}".format(len(catPlot)))
-            bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
-            ax.text(0.8, 0.91, allStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-
-        toPlotList = []
-        if np.any(catPlot["sourceType"] == 1):
             toPlotList.append((xsStars, ysStars, colorValsStars, blueGreen, "Stars"))
-        if np.any(catPlot["sourceType"] == 2):
-            toPlotList.append((xsGalaxies, ysGalaxies, colorValsGalaxies, redPurple, "Galaxies"))
-        if np.any(catPlot["sourceType"] == 10):
-            ids = extremaSort(catPlot[zCol].values)
-            toPlotList.append((catPlot[xCol].values[ids], catPlot[yCol].values[ids],
-                               catPlot[zCol].values[ids], orangeBlue, "All"))
-        if np.any(catPlot["sourceType"] == 9):
-            toPlotList.append((catPlot[xCol], catPlot[yCol], catPlot[zCol], "viridis", "Unknown"))
+
+        # For unknowns
+        if "unknown" in self.plotTypes:
+            sortedArrs = sortAllArrays(data["zUnknowns"],
+                                       [data["xUnknowns"], data["yUnknowns"], data["unknownStatMask"]])
+            [colorValsUnknowns, xsUnknowns, ysUnknowns, statUnknowns] = sortedArrs
+            statUnknownMed, statUnknownMad, unknownStatsText = statsAndText(colorValsUnknowns,
+                                                                            mask=statUnknowns)
+            bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
+            ax.text(0.8, 0.91, unknownStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            toPlotList.append((xsUnknowns, ysUnknowns, colorValsUnknowns, "viridis", "Unknown"))
+
+        if "any" in self.plotTypes:
+            sortedArrs = sortAllArrays(data["z"],
+                                       [data["x"], data["y"], data["statMask"]])
+            [colorVals, xs, ys, stats] = sortedArrs
+            statAnyMed, statAnyMad, anyStatsText = statsAndText(colorValsAny, mask=statAny)
+            bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
+            ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            toPlotList.append((xs, ys, colorVals, orangeBlue, "All"))
 
         # Corner plot of patches showing summary stat in each
         if self.config.plotOutlines:

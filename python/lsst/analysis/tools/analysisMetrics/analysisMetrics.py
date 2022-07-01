@@ -12,7 +12,7 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 from ..vectorActions.selectors import (
     CoaddPlotFlagSelector, SnSelector,
     StellarSelector, VectorSelector,
-    FlagSelector,
+    FlagSelector, SkyObjectSelector,
 )
 
 # from ..analysisParts.wPerp import WPerpProcess, WPerpPostProcessMetric
@@ -275,9 +275,13 @@ class FluxStatisticMetric(AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
 
-        self.prep.selectors.flagSelector = FlagSelector
-        self.prep.selectors.flagSelector.selectWhenTrue = ["sky_object"]
-        self.prep.selectors.flagSelector.selectWhenFalse = ["{band}_pixelFlags_edge"]
+        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
+
+        # Original selection before implementing SkyObjectSelector:
+        # self.prep.selectors.flagSelector = FlagSelector
+        # self.prep.selectors.flagSelector.selectWhenTrue = ["sky_object"]
+        # self.prep.selectors.flagSelector.selectWhenFalse = ["{band}_pixelFlags_edge"]
 
         self.process.calculateActions.medianSky = MedianAction(colKey=f"{{band}}_{self.fluxType}")
         self.process.calculateActions.meanSky = MeanAction(colKey=f"{{band}}_{self.fluxType}")

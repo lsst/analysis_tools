@@ -162,6 +162,41 @@ class SnSelector(VectorAction):
         return np.array(cast(Vector, mask))
 
 
+class SkyObjectSelector(FlagSelector):
+    bands = ListField[str](
+        doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
+        default=["i"],
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result: Optional[Vector] = None
+        match kwargs:
+            case {"band": band}:
+                bands = (band,)
+            case {"bands": bands} if not self.bands:
+                bands = bands
+            case _ if self.bands:
+                bands = list(self.bands)
+            case _:
+                bands = ("",)
+        for band in bands:
+            temp = super().__call__(data, **(kwargs | dict(band=band)))
+            if result is not None:
+                result &= temp  # type: ignore
+            else:
+                result = temp
+        return cast(Vector, result)
+
+    def setDefaults(self):
+        self.selectWhenFalse = [
+            "{band}_pixelFlags_edge",
+        ]
+        self.selectWhenTrue = ["sky_object"]
+
+
 class ExtendednessSelector(VectorAction):
     columnKey = Field[str](
         doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"

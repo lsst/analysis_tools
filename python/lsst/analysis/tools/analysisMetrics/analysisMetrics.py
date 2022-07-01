@@ -1,4 +1,5 @@
 from __future__ import annotations
+# from msilib.schema import Media
 
 from ..vectorActions.vectorActions import (
     DownselectVector,
@@ -8,13 +9,21 @@ from ..vectorActions.vectorActions import (
 )
 from ..vectorActions.calcShapeSize import CalcShapeSize
 
-from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector, VectorSelector
+from ..vectorActions.selectors import (
+    CoaddPlotFlagSelector, SnSelector,
+    StellarSelector, VectorSelector,
+    FlagSelector,
+)
 
 # from ..analysisParts.wPerp import WPerpProcess, WPerpPostProcessMetric
 from ..interfaces import AnalysisMetric
 from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
 from lsst.pex.config import Field
+from ..scalarActions.scalarActions import (
+    ApproxFloor, MedianAction, MeanAction, SigmaMadAction,
+    StdevAction,
+)
 
 
 class ShapeSizeFractionalMetric(AnalysisMetric):
@@ -110,11 +119,12 @@ class GRIStellarPSFMetric(AnalysisMetric):
         self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
 
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = self.fluxType
+        self.prep.selectors.snSelector.fluxType = "{band}_" + self.fluxType
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["r"]
 
         self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector.columnKey = 'r_extendedness'
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = f"g_{self.fluxType}"
@@ -124,19 +134,26 @@ class GRIStellarPSFMetric(AnalysisMetric):
         self.process.buildActions.y.magDiff.col1 = f"r_{self.fluxType}"
         self.process.buildActions.y.magDiff.col2 = f"i_{self.fluxType}"
         self.process.buildActions.y.magDiff.returnMillimags = False
+        self.process.buildActions.mag = MagColumnNanoJansky(columnKey="r_psfFlux")
 
-        self.process.calculateActions.wPerp = StellarLocusFitAction()
-        self.process.calculateActions.wPerp.stellarLocusFitDict = {"xMin": 0.28, "xMax": 1.0,
-                                                                   "yMin": 0.02, "yMax": 0.48,
-                                                                   "mHW": 0.52, "bHW": -0.08}
+        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
+        self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
+        self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
+            "xMin": 0.28,
+            "xMax": 1.0,
+            "yMin": 0.02,
+            "yMax": 0.48,
+            "mHW": 0.52,
+            "bHW": -0.08,
+        }
 
-        self.process.calculateActions.xPerp = StellarLocusFitAction()
-        self.process.calculateActions.xPerp.stellarLocusFitDict = {}
+        # self.process.calculateActions.xPerp = StellarLocusFitAction()
+        # self.process.calculateActions.xPerp.stellarLocusFitDict = {}
 
         self.post_process.units = {  # type: ignore
-            "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
-            "xPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+            "wPerp_psfFlux_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
+#            "xPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
 
 
 class GRIStellarCModelMetric(GRIStellarPSFMetric):
@@ -246,4 +263,30 @@ class XPerpPSFMetric(AnalysisMetric):
 
         self.post_process.units = {  # type: ignore
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+        }
+
+
+class FluxStatisticMetric(AnalysisMetric):
+    multiband: bool = True
+    # fluxType: str = "ap09Flux"
+    fluxType = Field(doc="Key of flux vector to operate on",
+                     dtype=str, default='ap09Flux')
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.flagSelector = FlagSelector
+        self.prep.selectors.flagSelector.selectWhenTrue = ["sky_object"]
+        self.prep.selectors.flagSelector.selectWhenFalse = ["{band}_pixelFlags_edge"]
+
+        self.process.calculateActions.medianSky = MedianAction(colKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.meanSky = MeanAction(colKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.stdevSky = StdevAction(colKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{{band}}_{self.fluxType}")
+
+        self.post_process.units = {  # type: ignore
+            "medianSky": "nJy",
+            "meanSky": "nJy",
+            "stdevSky": "nJy",
+            "sigmaMADSky": "nJy",
         }

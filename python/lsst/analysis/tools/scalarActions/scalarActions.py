@@ -18,6 +18,28 @@ class MedianAction(ScalarAction):
         return np.nanmedian(data[self.colKey.format(**kwargs)][mask])
 
 
+class MeanAction(ScalarAction):
+    colKey = Field("Key of Vector from which to calculate mean", dtype=str)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.colKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return np.nanmean(data[self.colKey.format(**kwargs)][mask])
+
+
+class StdevAction(ScalarAction):
+    colKey = Field("Key of Vector from which to calculate std deviation", dtype=str)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.colKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return np.nanstd(data[self.colKey.format(**kwargs)][mask])
+
+
 class SigmaMadAction(ScalarAction):
     colKey = Field("Key of Vector to median", dtype=str)
 

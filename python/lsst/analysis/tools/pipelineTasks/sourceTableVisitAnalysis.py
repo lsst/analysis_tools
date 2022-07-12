@@ -7,10 +7,11 @@ from .base import AnalysisBaseConnections, AnalysisBaseConfig, AnalysisPipelineT
 from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
 from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
 
+from ..vectorActions.selectors import VisitPlotFlagSelector
 
 class SourceTableVisitAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap", "visit", "band"),
+    dimensions=("visit", "band"),
     defaultTemplates={"inputName": "sourceTable_visit"},
 ):
 
@@ -18,7 +19,7 @@ class SourceTableVisitAnalysisConnections(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
         storageClass="DataFrame",
-        dimensions=("skymap", "visit", "band"),
+        dimensions=("visit", "band"),
     )
 
 
@@ -30,6 +31,7 @@ class SourceTableVisitAnalysisConfig(
         super().setDefaults()
         # set plots to run
         self.plots.shapeSizeFractionalDiffScatter = ShapeSizeFractionalDiffScatter()
+        self.plots.shapeSizeFractionalDiffScatter.flagSelector = VisitPlotFlagSelector()
 
         # set metrics to run
         self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()

@@ -290,8 +290,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
-        sumStats = generateSummaryStats(data, key)
-        fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
+        # Needs info from run quantum
+        # sumStats = generateSummaryStats(data, key)
+        # fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         plt.draw()
         plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)

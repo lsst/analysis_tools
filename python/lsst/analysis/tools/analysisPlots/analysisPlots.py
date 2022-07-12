@@ -114,7 +114,6 @@ class Ap12_PSF_skyPlot(AnalysisPlot):
 
     def setDefaults(self):
         super().setDefaults()
-        print(f"self.band")
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.flagSelector.bands = [f"{self.band}"]
 
@@ -140,4 +139,7 @@ class Ap12_PSF_skyPlot(AnalysisPlot):
         self.post_process = SkyPlot()
         self.post_process.plotTypes = ["stars"]
         self.post_process.plotName = f"ap12-psf_{self.band}"
+        self.post_process.xAxisLabel = "R.A."
+        self.post_process.yAxisLabel = "Declination"
+        self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
         self.post_process.plotOutlines = False

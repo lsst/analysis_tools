@@ -20,12 +20,6 @@ import pandas as pd
 
 class SkyPlot(PlotAction):
 
-    axisActions = ConfigurableActionStructField(
-        doc="The actions to use to calculate the values used on each axis. Used if <axis> in axisColNames "
-            "is set to 'Functor'.",
-        default={"xAction": CoordColumn, "yAction": CoordColumn, "zAction": SingleColumnAction},
-    )
-
     xAxisLabel = Field(doc="Label to use for the x axis.", dtype=str, optional=False)
     yAxisLabel = Field(doc="Label to use for the y axis.", dtype=str, optional=False)
     zAxisLabel = Field(doc="Label to use for the z axis.", dtype=str, optional=False)

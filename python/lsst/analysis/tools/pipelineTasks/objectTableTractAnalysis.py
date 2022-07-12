@@ -5,7 +5,7 @@ from lsst.pipe.base import connectionTypes as ct
 
 from .base import AnalysisBaseConnections, AnalysisBaseConfig, AnalysisPipelineTask
 
-from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
+from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter, Ap12_PSF_skyPlot
 from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
 
 
@@ -30,6 +30,7 @@ class ObjectTableTractAnalysisConfig(
         super().setDefaults()
         # set plots to run
         self.plots.shapeSizeFractionalDiffScatter = ShapeSizeFractionalDiffScatter()
+        self.plots.Ap12_PSF_skyPlot = Ap12_PSF_skyPlot()
 
         # set metrics to run
         self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()

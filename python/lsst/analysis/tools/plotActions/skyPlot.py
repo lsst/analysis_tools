@@ -206,10 +206,10 @@ class SkyPlot(PlotAction):
         toPlotList = []
         # For galaxies
         if "galaxies" in self.plotTypes:
-            sortedArrs = sortAllArrays([data["zGalaxies"], data["xGalaxies"], data["yGalaxies"],
-                                        data["galaxyStatMask"]])
+            sortedArrs = self.sortAllArrays([data["zGalaxies"], data["xGalaxies"], data["yGalaxies"],
+                                             data["galaxyStatMask"]])
             [colorValsGalaxies, xsGalaxies, ysGalaxies, statGalaxies] = sortedArrs
-            statGalMed, statGalMad, galStatsText = statsAndText(colorValsGalaxies, mask=statGals)
+            statGalMed, statGalMad, galStatsText = self.statsAndText(colorValsGalaxies, mask=statGalaxies)
             # Add statistics
             bbox = dict(facecolor="lemonchiffon", alpha=0.5, edgecolor="none")
             # Check if plotting stars and galaxies, if so move the
@@ -239,18 +239,18 @@ class SkyPlot(PlotAction):
                                              data["unknownStatMask"]])
             [colorValsUnknowns, xsUnknowns, ysUnknowns, statUnknowns] = sortedArrs
             statUnknownMed, statUnknownMad, unknownStatsText = self.statsAndText(colorValsUnknowns,
-                                                                            mask=statUnknowns)
+                                                                                 mask=statUnknowns)
             bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
             ax.text(0.8, 0.91, unknownStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
             toPlotList.append((xsUnknowns, ysUnknowns, colorValsUnknowns, "viridis", "Unknown"))
 
         if "any" in self.plotTypes:
             sortedArrs = self.sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
-            [colorVals, xs, ys, stats] = sortedArrs
+            [colorValsAny, xs, ys, statAny] = sortedArrs
             statAnyMed, statAnyMad, anyStatsText = self.statsAndText(colorValsAny, mask=statAny)
             bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
             ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xs, ys, colorVals, orangeBlue, "All"))
+            toPlotList.append((xs, ys, colorValsAny, orangeBlue, "All"))
 
         # Corner plot of patches showing summary stat in each
         if self.plotOutlines:

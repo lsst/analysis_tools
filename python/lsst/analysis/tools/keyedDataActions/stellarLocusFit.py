@@ -13,6 +13,8 @@ from ..interfaces import KeyedData, KeyedDataSchema, KeyedDataAction, Vector, Sc
 
 
 class StellarLocusFitAction(KeyedDataAction):
+    """Determine Stellar Locus fit parameters from given input `Vector`\ s.
+    """
     stellarLocusFitDict = DictField[str, float](
         doc="The parameters to use for the stellar locus fit. The default parameters are examples and are "
         "not useful for any of the fits. The dict needs to contain xMin/xMax/yMin/yMax which are the "

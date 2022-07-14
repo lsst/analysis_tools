@@ -12,14 +12,13 @@ from ..vectorActions.calcShapeSize import CalcShapeSize
 from ..vectorActions.selectors import (
     CoaddPlotFlagSelector, SnSelector,
     StellarSelector, VectorSelector,
-    FlagSelector, SkyObjectSelector,
+    SkyObjectSelector,
 )
 
 # from ..analysisParts.wPerp import WPerpProcess, WPerpPostProcessMetric
 from ..interfaces import AnalysisMetric
 from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
-from lsst.pex.config import Field
 from ..scalarActions.scalarActions import (
     ApproxFloor, MedianAction, MeanAction, SigmaMadAction,
     StdevAction,
@@ -32,7 +31,7 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
-        self.process.buildActions.mags = MagColumnNanoJansky(columnKey="{band}_psfFlux")
+        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
         self.process.buildActions.fracDiff = FractionalDifference(
             actionA=CalcShapeSize(),
             actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
@@ -76,7 +75,7 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
 
 class StellarLocusBaseMetric(AnalysisMetric):
     # Use this as the Base Class for now StellarLocusBaseMetric
-    multiband: bool = False
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -110,7 +109,7 @@ class StellarLocusBaseMetric(AnalysisMetric):
 
 class GRIStellarPSFMetric(AnalysisMetric):
     # Use this as the Base Class for now StellarLocusBaseMetric
-    multiband: bool = False
+    parameterizedBand: bool = False
     fluxType: str = "psfFlux"
 
     def setDefaults(self):
@@ -170,7 +169,7 @@ class GRIStellarCModelMetric(GRIStellarPSFMetric):
 
 class RIZStellarPSFMetric(AnalysisMetric):
     # Use this as the Base Class for now StellarLocusBaseMetric
-    multiband: bool = False
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -203,7 +202,7 @@ class RIZStellarPSFMetric(AnalysisMetric):
 
 class WPerpPSFMetric(AnalysisMetric):
     # Use this as the Base Class for now StellarLocusBaseMetric
-    multiband: bool = False
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -236,7 +235,7 @@ class WPerpPSFMetric(AnalysisMetric):
 
 
 class XPerpPSFMetric(AnalysisMetric):
-    multiband: bool = False
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -267,7 +266,7 @@ class XPerpPSFMetric(AnalysisMetric):
 
 
 class SkyFluxStatisticMetric(AnalysisMetric):
-    multiband: bool = True
+    parameterizedBand: bool = True
     fluxType: str = "ap09Flux"
 
     def setDefaults(self):

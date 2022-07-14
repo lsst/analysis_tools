@@ -83,13 +83,14 @@ class CoaddPlotFlagSelector(FlagSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
+        bands: tuple[str, ...]
         match kwargs:
             case {"band": band}:
                 bands = (band,)
             case {"bands": bands} if not self.bands:
                 bands = bands
             case _ if self.bands:
-                bands = list(self.bands)
+                bands = tuple(self.bands)
             case _:
                 bands = ("",)
         for band in bands:
@@ -140,13 +141,14 @@ class SnSelector(VectorAction):
             S/N cut.
         """
         mask: Optional[Vector] = None
+        bands: tuple[str, ...]
         match kwargs:
             case {"band": band}:
                 bands = (band,)
             case {"bands": bands} if not self.bands:
                 bands = bands
             case _ if self.bands:
-                bands = list(self.bands)
+                bands = tuple(self.bands)
             case _:
                 bands = ("",)
         for band in bands:
@@ -173,13 +175,14 @@ class SkyObjectSelector(FlagSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
+        bands: tuple[str, ...]
         match kwargs:
             case {"band": band}:
                 bands = (band,)
             case {"bands": bands} if not self.bands:
                 bands = bands
             case _ if self.bands:
-                bands = list(self.bands)
+                bands = tuple(self.bands)
             case _:
                 bands = ("",)
         for band in bands:
@@ -237,10 +240,12 @@ class UnknownSelector(ExtendednessSelector):
 
 
 class VectorSelector(VectorAction):
+    """Load a boolean vector from KeyedData and return it for use as a selector
+    """
     vectorKey = Field[str](doc="Key corresponding to boolean vector to use as a selection mask")
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((cast(str, self.vectorKey), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])
+        return cast(Vector, data[self.vectorKey.format(**kwargs)])

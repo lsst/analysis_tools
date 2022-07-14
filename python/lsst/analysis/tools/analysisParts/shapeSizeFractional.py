@@ -104,7 +104,7 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         self.shapeFracDif.action.actionB.vectorKey = psfShapeName
 
         # Default mag action action
-        self.magAction = MagColumnNanoJansky(columnKey="{band}_psfFlux")
+        self.magAction = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
 
         # Setup the selectors
         self.objectSelector = StellarSelector()
@@ -144,7 +144,9 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         )
         for action in self.calculatorActions:
             if isinstance(action, KeyedDataAction):
-                yield from action.getOutputSchema()
+                outputs = action.getOutputSchema()
+                if outputs is not None:
+                    yield from outputs
         yield from results
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:

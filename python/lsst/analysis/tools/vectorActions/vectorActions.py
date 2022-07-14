@@ -17,6 +17,9 @@ _LOG = logging.getLogger(__name__)
 
 
 class DownselectVector(VectorAction):
+    """Get a vector from KeyedData, apply specified selector, return the
+    shorter Vector.
+    """
     vectorKey = Field(doc="column key to load from KeyedData", dtype=str)
 
     selector = ConfigurableActionField(
@@ -34,16 +37,16 @@ class DownselectVector(VectorAction):
 
 
 class MagColumnNanoJansky(VectorAction):
-    columnKey = Field(doc="column key to use for this transformation", dtype=str)
+    vectorKey = Field(doc="column key to use for this transformation", dtype=str)
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.columnKey, Vector),)  # type: ignore
+        return ((self.vectorKey, Vector),)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         with np.warnings.catch_warnings():  # type: ignore
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
-            vec = cast(Vector, data[cast(str, self.columnKey).format(**kwargs)])
+            vec = cast(Vector, data[cast(str, self.vectorKey).format(**kwargs)])
             return np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
 
 

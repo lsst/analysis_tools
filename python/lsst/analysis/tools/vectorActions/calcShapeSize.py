@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ("CalcShapeSize",)
+
 from typing import cast
 
 import numpy as np
@@ -26,21 +28,18 @@ class CalcShapeSize(VectorAction):
     of the sources.
     """
 
-    colXx = Field(
+    colXx = Field[str](
         doc="The column name to get the xx shape component from.",
-        dtype=str,
         default="{band}_ixx",
     )
 
-    colYy = Field(
+    colYy = Field[str](
         doc="The column name to get the yy shape component from.",
-        dtype=str,
         default="{band}_iyy",
     )
 
-    colXy = Field(
+    colXy = Field[str](
         doc="The column name to get the xy shape component from.",
-        dtype=str,
         default="{band}_ixy",
         optional=True,
     )
@@ -58,14 +57,14 @@ class CalcShapeSize(VectorAction):
     def getInputSchema(self) -> KeyedDataSchema:
         if self.sizeType == "trace":
             return (
-                (self.colXx, Vector),  # type: ignore
-                (self.colYy, Vector),  # type: ignore
+                (self.colXx, Vector),
+                (self.colYy, Vector),
             )
         else:
             return (
-                (self.colXx, Vector),  # type: ignore
-                (self.colYy, Vector),  # type: ignore
-                (self.colXy, Vector),  # type: ignore
+                (self.colXx, Vector),
+                (self.colYy, Vector),
+                (self.colXy, Vector),
             )  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:

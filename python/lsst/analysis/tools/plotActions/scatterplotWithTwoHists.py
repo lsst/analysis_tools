@@ -40,7 +40,8 @@ from ..interfaces import (
 from ..vectorActions import SnSelector
 from ..keyedDataActions import KeyedScalars
 
-cmapPatch = plt.cm.coolwarm.copy()  # type: ignore coolwarm is part of module
+# ignore because coolwarm is actually part of module
+cmapPatch = plt.cm.coolwarm.copy()  # type: ignore 
 cmapPatch.set_bad(color="none")
 
 sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
@@ -142,10 +143,11 @@ def _validatePlotTypes(value):
     return value in ("stars", "galaxies", "unknown", "any", "mag")
 
 
+# ignore type because of conflicting name on tuple baseclass
 class _StatsContainer(NamedTuple):
     median: Scalar
     sigmaMad: Scalar
-    count: Scalar
+    count: Scalar  # type: ignore
     approxMag: Scalar
 
 
@@ -180,7 +182,7 @@ class ScatterPlotWithTwoHists(PlotAction):
     _stats = ("median", "sigmaMad", "count", "approxMag")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        base = []
+        base: list[tuple[str, type[Vector] | type[Scalar]]] = []
         if "stars" in self.plotTypes:  # type: ignore
             base.append(("xStars", Vector))
             base.append(("yStars", Vector))
@@ -206,8 +208,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             base.append(("unknownLowSNMask", Vector))
             # statistics
             for name in self._stats:
-                base.append(f"{{band}}_highSNUnknown_{name}")
-                base.append(f"{{band}}_lowSNUnknown_{name}")
+                base.append((f"{{band}}_highSNUnknown_{name}", Scalar))
+                base.append((f"{{band}}_lowSNUnknown_{name}", Scalar))
         if "any" in self.plotTypes:  # type: ignore
             base.extend((("x", Vector), ("y", Vector)))
             base.append(("anyHighSNMask", Vector))
@@ -315,12 +317,14 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         toPlotList = []
         histIm = None
+        highStats: _StatsContainer
+        lowStats: _StatsContainer
         if "stars" in self.plotTypes:  # type: ignore
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = f"{{band}}_highSNStars_{name}".format(**kwargs)
-                lowArgs[name] = f"{{band}}_lowSNStars_{name}".format(**kwargs)
+                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNStars_{name}".format(**kwargs)])
+                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNStars_{name}".format(**kwargs)])
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
@@ -340,8 +344,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = f"{{band}}_highSNGalaxies_{name}".format(**kwargs)
-                lowArgs[name] = f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)
+                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNGalaxies_{name}".format(**kwargs)])
+                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)])
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
@@ -361,8 +365,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
-                lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
+                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
+                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
@@ -382,8 +386,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = f"{{band}}_highSNUnknown_{name}".format(**kwargs)
-                lowArgs[name] = f"{{band}}_lowSNUnknown_{name}".format(**kwargs)
+                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
+                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
@@ -400,8 +404,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 )
             )
 
-        highStats: _StatsContainer
-        lowStats: _StatsContainer
         xMin = None
         for (j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats)) in enumerate(toPlotList):
             # ensure the columns are actually array
@@ -551,7 +553,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     linesForLegend.append(highSnLine)
                     xMin = np.min(xs[highSn])
                 else:
-                    ax.axvline(highStats.aproxMag, color=color, ls="--")
+                    ax.axvline(highStats.approxMag, color=color, ls="--")
 
                 if np.sum(lowSn) < 100 and np.sum(lowSn) > 0:
                     ax.plot(xs[lowSn], ys[lowSn], marker="+", ms=4, mec="w", mew=2, ls="none")
@@ -562,7 +564,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     if xMin is None or xMin > np.min(xs[lowSn]):
                         xMin = np.min(xs[lowSn])
                 else:
-                    ax.axvline(lowStats.aproxMag, color=color, ls=":")
+                    ax.axvline(lowStats.approxMag, color=color, ls=":")
 
             else:
                 ax.plot(xs, ys, ".", ms=5, alpha=0.3, mfc=color, mec=color, zorder=-1)
@@ -588,28 +590,29 @@ class ScatterPlotWithTwoHists(PlotAction):
             plotMed = np.nanmedian(data["yStars"])
         else:
             plotMed = np.nanmedian(data["yGalaxies"])
-        if len(xs) < 2:
-            meds = [np.median(ys)]
+        # Ignore types below pending making this not working my accident
+        if len(xs) < 2:  # type: ignore
+            meds = [np.median(ys)]  # type: ignore
         if self.yLims:
             ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore
         else:
             numSig = 4
-            yLimMin = plotMed - numSig * sigMadYs
-            yLimMax = plotMed + numSig * sigMadYs
-            while (yLimMax < np.max(meds) or yLimMin > np.min(meds)) and numSig < 10:
+            yLimMin = plotMed - numSig * sigMadYs  # type: ignore
+            yLimMax = plotMed + numSig * sigMadYs  # type: ignore
+            while (yLimMax < np.max(meds) or yLimMin > np.min(meds)) and numSig < 10:  # type: ignore
                 numSig += 1
 
             numSig += 1
-            yLimMin = plotMed - numSig * sigMadYs
-            yLimMax = plotMed + numSig * sigMadYs
+            yLimMin = plotMed - numSig * sigMadYs  # type: ignore
+            yLimMax = plotMed + numSig * sigMadYs  # type: ignore
             ax.set_ylim(yLimMin, yLimMax)
 
         if self.xLims:
             ax.set_xlim(self.xLims[0], self.xLims[1])  # type: ignore
-        elif len(xs) > 2:
+        elif len(xs) > 2:  # type: ignore
             if xMin is None:
-                xMin = xs1 - 2 * xScale
-            ax.set_xlim(xMin, xs97 + 2 * xScale)
+                xMin = xs1 - 2 * xScale  # type: ignore
+            ax.set_xlim(xMin, xs97 + 2 * xScale)  # type: ignore
 
         # Add a line legend
         ax.legend(
@@ -633,15 +636,15 @@ class ScatterPlotWithTwoHists(PlotAction):
         self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
     ) -> None:
         # Top histogram
-        totalX = []
+        totalX: list[Vector] = []
         if "stars" in self.plotTypes:  # type: ignore
-            totalX.append(data["xStars"])
+            totalX.append(cast(Vector, data["xStars"]))
         if "galaxies" in self.plotTypes:  # type: ignore
-            totalX.append(data["xGalaxies"])
+            totalX.append(cast(Vector, data["xGalaxies"]))
         if "unknown" in self.plotTypes:  # type: ignore
-            totalX.append(data["xUknown"])
+            totalX.append(cast(Vector, data["xUknown"]))
         if "any" in self.plotTypes:  # type: ignore
-            totalX.append(data["x"])
+            totalX.append(cast(Vector, data["x"]))
 
         totalXChained = [x for x in chain.from_iterable(totalX) if x == x]
 
@@ -684,15 +687,15 @@ class ScatterPlotWithTwoHists(PlotAction):
     ) -> None:
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
 
-        totalY = []
+        totalY: list[Vector] = []
         if "stars" in self.plotTypes:  # type: ignore
-            totalY.append(data["yStars"])
+            totalY.append(cast(Vector, data["yStars"]))
         if "galaxies" in self.plotTypes:  # type: ignore
-            totalY.append(data["yGalaxies"])
+            totalY.append(cast(Vector, data["yGalaxies"]))
         if "unknown" in self.plotTypes:  # type: ignore
-            totalY.append(data["yUknown"])
+            totalY.append(cast(Vector, data["yUknown"]))
         if "any" in self.plotTypes:  # type: ignore
-            totalY.append(data["y"])
+            totalY.append(cast(Vector, data["y"]))
         totalYChained = [y for y in chain.from_iterable(totalY) if y == y]
 
         # cheat to get the total count while iterating once

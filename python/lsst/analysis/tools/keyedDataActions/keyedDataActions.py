@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 __all__ = (
-    "KeyedDataSubsetAction",
     "ChainedKeyedDataActions",
     "AddComputedVector",
     "KeyedDataSelectorAction",
@@ -26,20 +25,10 @@ from ..interfaces import (
 )
 
 
-class KeyedDataSubsetAction(KeyedDataAction):
-    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
-
-    def getOutputSchema(self) -> KeyedDataSchema:
-        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        return {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}  # type: ignore
-
-
 class ChainedKeyedDataActions(KeyedDataAction):
+    """Run a series of `KeyedDataAction`\ s and accumulated their output into
+    one KeyedData result.
+    """
     keyedDataActions = ConfigurableActionStructField[KeyedDataAction](
         doc="Set of KeyedData actions to run, results will be concatenated into a final output KeyedData"
         "object"
@@ -64,6 +53,9 @@ class ChainedKeyedDataActions(KeyedDataAction):
 
 
 class AddComputedVector(KeyedDataAction):
+    """Compute a `Vector` from the specified `VectorAction` and add it to a copy
+    of the KeyedData, returning the result.
+    """
     action = ConfigurableActionField[VectorAction](doc="Action to use to compute Vector")
     keyName = Field[str](doc="Key name to add to KeyedData")
 
@@ -74,12 +66,14 @@ class AddComputedVector(KeyedDataAction):
         return ((self.keyName, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        data[self.keyName.format(**kwargs)] = self.action(data, **kwargs)
-        return data
+        result = dict(data)
+        result[self.keyName.format(**kwargs)] = self.action(data, **kwargs)
+        return result
 
 
 class KeyedDataSelectorAction(KeyedDataAction):
-    """Down-selects rows from KeyedData of the form key: Vector
+    """Extract Vector specified by ``columnKeys`` from input KeyedData and
+    optionally apply selectors to down select extracted vectors.
 
     Note this action will not work with keyed scalars, see `getInputSchema` for
     expected schema.
@@ -116,6 +110,10 @@ class KeyedDataSelectorAction(KeyedDataAction):
 
 
 class KeyedScalars(KeyedDataAction):
+    """Creates an output of type KeyedData, where the keys are given byt the
+    identifiers in `scalarActions` and the values are the results of the
+    corresponding `ScalarAction`.
+    """
     scalarActions = ConfigurableActionStructField[ScalarAction](
         doc="Create a KeyedData of individual ScalarActions"
     )

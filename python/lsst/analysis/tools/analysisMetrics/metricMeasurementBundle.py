@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__all__ = ("MetricActionMapping",)
+__all__ = ("MetricMeasurementBundle",)
 
 import json
 
@@ -9,12 +9,12 @@ from collections import UserDict
 from lsst.verify import Measurement
 
 
-class MetricActionMapping(UserDict[str, list[Measurement]]):
+class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
     """A specialized dict for storing outputs from multiple `AnalysisMetric`
     actions.
 
     Keys correspond to the identifier of the action that produced the
-    corresponding values. Each value is a list of `lsst.verift.Measurement`
+    corresponding values. Each value is a list of `~lsst.verift.Measurement`
     objects produced by that `AnalysisMetric` action.
 
     This object also supports the pydandic interface for serializing to and

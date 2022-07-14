@@ -28,7 +28,7 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
-        self.process.buildActions.mags = MagColumnNanoJansky(columnKey="{band}_psfFlux")
+        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
         self.process.buildActions.fracDiff = FractionalDifference(
             actionA=CalcShapeSize(),
             actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
@@ -93,7 +93,7 @@ class WPerpPSFPlot(AnalysisPlot):
         self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
         self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
         self.process.buildActions.y.magDiff.returnMillimags = False
-        self.process.buildActions.mag = MagColumnNanoJansky(columnKey="r_psfFlux")
+        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()

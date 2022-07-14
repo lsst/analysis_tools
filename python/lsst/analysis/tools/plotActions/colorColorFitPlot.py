@@ -1,3 +1,4 @@
+from tkinter import W
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import median_absolute_deviation as sigmaMad
@@ -13,6 +14,8 @@ from .plotUtils import addPlotInfo, perpDistance, mkColormap
 from lsst.analysis.tools import PlotAction
 from ..interfaces import KeyedDataSchema, KeyedData, Vector, Scalar
 
+from typing import cast
+
 
 class ColorColorFitPlot(PlotAction):
 
@@ -25,7 +28,6 @@ class ColorColorFitPlot(PlotAction):
             " stars, galaxies, unknown, mag, any.",
         dtype=str,
         optional=False,
-        #itemCheck=_validateInputs,
     )
 
     stellarLocusFitDict = DictField(
@@ -41,7 +43,7 @@ class ColorColorFitPlot(PlotAction):
     plotName = Field(doc="The name for the plot.", dtype=str, optional=False)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        base = []
+        base: list[tuple[str, type[Vector] | type[Scalar]]] = []
         base.append(("x", Vector))
         base.append(("y", Vector))
         base.append(("mag", Vector))
@@ -72,7 +74,7 @@ class ColorColorFitPlot(PlotAction):
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
     def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None,
-                 fitParams: Optional[Mapping[str, float]] = None, **kwargs) -> Figure:
+                 fitParams: Optional[Mapping[str, Scalar]] = None, **kwargs) -> Figure:
         """Make stellar locus plots using pre fitted values.
 
         Parameters
@@ -139,19 +141,20 @@ class ColorColorFitPlot(PlotAction):
         ax = fig.add_axes([0.12, 0.25, 0.43, 0.60])
         axContour = fig.add_axes([0.65, 0.11, 0.3, 0.31])
         axHist = fig. add_axes([0.65, 0.51, 0.3, 0.31])
-        xs = data["x"]
-        ys = data["y"]
+        xs = cast(Vector, data["x"])
+        ys = cast(Vector, data["y"])
         mags = data["mag"]
         # TODO: FIX THIS
-        fitParams = data
+        fitParams = {key: cast(Scalar, data[key]) for key in ("xMin", "xMax", "yMin", "yMax")}
 
         # TODO: Make a no data fig function and use here
         if len(xs) == 0 or len(ys) == 0:
             return fig
 
         # Points to use for the fit
-        fitPoints = np.where((xs > fitParams["xMin"]) & (xs < fitParams["xMax"])
-                             & (ys > fitParams["yMin"]) & (ys < fitParams["yMax"]))[0]
+        # type ignore because Vector needs a prototype interface
+        fitPoints = np.where((xs > fitParams["xMin"]) & (xs < fitParams["xMax"])  # type: ignore
+                             & (ys > fitParams["yMin"]) & (ys < fitParams["yMax"]))[0]  # type: ignore
 
         # Plot the initial fit box
         ax.plot([fitParams["xMin"], fitParams["xMax"], fitParams["xMax"], fitParams["xMin"],
@@ -164,7 +167,7 @@ class ColorColorFitPlot(PlotAction):
 
         # TODO: GET THE SN FROM THE EARLIER PREP STEP
         SN = "-"
-        infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(data["x"]), SN)
+        infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(xs), SN)
         infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(medMag)
         ax.text(0.05, 0.78, infoText, color="k", transform=ax.transAxes,
                 fontsize=8, bbox=bbox)
@@ -210,11 +213,11 @@ class ColorColorFitPlot(PlotAction):
             xsFitLineHW = np.array([fitParams["xMin"], fitParams["xMax"]])
             ysFitLineHW = fitParams["mHW"]*xsFitLineHW + fitParams["bHW"]
             xsFitLine = [fitParams["xMin"], fitParams["xMax"]]
-            ysFitLine = [fitParams["mODR"]*xsFitLine[0] + fitParams["bODR"],
-                         fitParams["mODR"]*xsFitLine[1] + fitParams["bODR"]]
+            ysFitLine = np.array([fitParams["mODR"]*xsFitLine[0] + fitParams["bODR"],
+                                  fitParams["mODR"]*xsFitLine[1] + fitParams["bODR"]])
             xsFitLine2 = [fitParams["xMin"], fitParams["xMax"]]
-            ysFitLine2 = [fitParams["mODR2"]*xsFitLine2[0] + fitParams["bODR2"],
-                          fitParams["mODR2"]*xsFitLine2[1] + fitParams["bODR2"]]
+            ysFitLine2 = np.array([fitParams["mODR2"]*xsFitLine2[0] + fitParams["bODR2"],
+                                   fitParams["mODR2"]*xsFitLine2[1] + fitParams["bODR2"]])
 
         ax.plot(xsFitLineHW, ysFitLineHW, "w", lw=2)
         lineHW, = ax.plot(xsFitLineHW, ysFitLineHW, "g", lw=1, ls="--", label="Hardwired")

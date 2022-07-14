@@ -21,7 +21,7 @@ class AssociatedSourcesTractAnalysisConnections(
         storageClass="DataFrame",
         #deferLoad=True,
         dimensions=("visit", "band"),
-        mutliple=True,
+        multiple=True,
     )
 
     associated_sources = ct.Input(
@@ -29,7 +29,7 @@ class AssociatedSourcesTractAnalysisConnections(
         name="{associatedSourcesInputName}",
         storageClass="DataFrame",
         #deferLoad=True,
-        dimentions=("skymap", "tract"),
+        dimensions=("skymap", "tract"),
     )
 
 class AssociatedSourcesTractAnalysisConfig(

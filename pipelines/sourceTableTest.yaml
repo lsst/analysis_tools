@@ -3,5 +3,3 @@ description: |
 tasks:
   sourceTableVisit:
     class: lsst.analysis.tools.pipelineTasks.sourceTableVisitAnalysis.sourceTableVisitAnalysisTask
-    config:
-      bands: ['r', 'i']

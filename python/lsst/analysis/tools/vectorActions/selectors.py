@@ -111,6 +111,25 @@ class CoaddPlotFlagSelector(FlagSelector):
         self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
 
 
+class VisitPlotFlagSelector(FlagSelector):
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result: Optional[Vector] = None
+        temp = super().__call__(data, **kwargs)
+        if result is not None:
+            result &= temp # type: ignore
+        else:
+            result = temp
+
+        return cast(Vector, result)
+
+    def setDefaults(self):
+        self.selectWhenFalse = ["psfFlux_flag", "pixelFlags_saturatedCenter",
+                                "extendedness_flag", "centroid_flag"]
+
 class SnSelector(VectorAction):
     """Selects points that have S/N > threshold in the given flux type"""
 

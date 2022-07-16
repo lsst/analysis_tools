@@ -4,8 +4,7 @@ from lsst.pipe.base import connectionTypes as ct
 
 from .base import AnalysisBaseConnections, AnalysisBaseConfig, AnalysisPipelineTask
 
-from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
-from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
+from ..analysisPlots.analysisVisitPlots import Ap12_PSF_skyPlot
 
 from ..vectorActions.selectors import VisitPlotFlagSelector
 
@@ -30,11 +29,8 @@ class SourceTableVisitAnalysisConfig(
     def setDefaults(self):
         super().setDefaults()
         # set plots to run
-        self.plots.shapeSizeFractionalDiffScatter = ShapeSizeFractionalDiffScatter()
-        self.plots.shapeSizeFractionalDiffScatter.flagSelector = VisitPlotFlagSelector()
+        self.plots.Ap12_PSF_skyPlot = Ap12_PSF_skyPlot()
 
-        # set metrics to run
-        self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
 
 
 class sourceTableVisitAnalysisTask(AnalysisPipelineTask):

@@ -1,0 +1,7 @@
+description: |
+  Test out if this runs using the middleware
+tasks:
+  sourceTableVisit:
+    class: lsst.analysis.tools.pipelineTasks.sourceTableVisitAnalysis.sourceTableVisitAnalysisTask
+    config:
+      bands: ['r', 'i']

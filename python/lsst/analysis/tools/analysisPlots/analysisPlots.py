@@ -78,12 +78,12 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
         self.process.calculateActions.stars.fluxType = "psfFlux"
 
-        self.post_process = ScatterPlotWithTwoHists()
+        self.produce = ScatterPlotWithTwoHists()
 
-        self.post_process.plotTypes = ["stars"]
-        self.post_process.xAxisLabel = "PSF Magnitude (mag)"
-        self.post_process.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
-        self.post_process.magLabel = "PSF Magnitude (mag)"
+        self.produce.plotTypes = ["stars"]
+        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
+        self.produce.magLabel = "PSF Magnitude (mag)"
 
 
 class WPerpPSFPlot(AnalysisPlot):
@@ -124,8 +124,8 @@ class WPerpPSFPlot(AnalysisPlot):
             "bHW": -0.08,
         }
 
-        self.post_process = ColorColorFitPlot()
-        self.post_process.plotName = "wPerp_psfFlux"
+        self.produce = ColorColorFitPlot()
+        self.produce.plotName = "wPerp_psfFlux"
 
 
 class Ap12PsfSkyPlot(AnalysisPlot):
@@ -153,10 +153,10 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
-        self.post_process = SkyPlot()
-        self.post_process.plotTypes = ["stars"]
-        self.post_process.plotName = "ap12-psf_{band}"
-        self.post_process.xAxisLabel = "R.A. (degrees)"
-        self.post_process.yAxisLabel = "Dec. (degrees)"
-        self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
-        self.post_process.plotOutlines = False
+        self.produce = SkyPlot()
+        self.produce.plotTypes = ["stars"]
+        self.produce.plotName = "ap12-psf_{band}"
+        self.produce.xAxisLabel = "R.A. (degrees)"
+        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
+        self.produce.plotOutlines = False

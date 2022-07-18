@@ -80,7 +80,7 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
         self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
         self.process.calculateActions.stars.fluxType = "psfFlux"
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "{band}_highSNStars_median": "pixel",
             "{band}_highSNStars_sigmaMad": "pixel",
             "{band}_highSNStars_count": "count",
@@ -151,7 +151,7 @@ class GRIStellarPSFMetric(AnalysisMetric):
         # self.process.calculateActions.xPerp = StellarLocusFitAction()
         # self.process.calculateActions.xPerp.stellarLocusFitDict = {}
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "wPerp_psfFlux_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
@@ -165,7 +165,7 @@ class GRIStellarCModelMetric(GRIStellarPSFMetric):
     def setDefaults(self):
         super().setDefaults()
 
-        self.post_process.newNames = {
+        self.produce.newNames = {
             "wPerp_sigmaMAD": "wCmodelPerp_sigmaMAD",  # TODO need to return mmag from wPerp
             "xPerp_sigmaMAD": "xCmodelPerp_sigmaMAD",  # TODO need to return mmag from wPerp
         }
@@ -199,7 +199,7 @@ class RIZStellarPSFMetric(AnalysisMetric):
         self.process.calculateActions.yPerp = StellarLocusFitAction()
         self.process.calculateActions.yerp.stellarLocusFitDict = {}
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "yPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
@@ -238,7 +238,7 @@ class WPerpPSFMetric(AnalysisMetric):
             "mHW": 0.52,
             "bHW": -0.08,
         }
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
@@ -269,7 +269,7 @@ class XPerpPSFMetric(AnalysisMetric):
 
         self.process.calculateActions.xPerp = StellarLocusFitAction()
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
         }
 
@@ -289,7 +289,7 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         self.process.calculateActions.stdevSky = StdevAction(colKey=f"{{band}}_{self.fluxType}")
         self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{{band}}_{self.fluxType}")
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "medianSky": "nJy",
             "meanSky": "nJy",
             "stdevSky": "nJy",

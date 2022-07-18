@@ -153,7 +153,7 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     def validate(self):
         super().validate()
         # Validate that the required connections template is set.
-        if self.connnections.inputName == "Placeholder":  # type: ignore
+        if self.connections.inputName == "Placeholder":  # type: ignore
             raise RuntimeError("Connections class 'inputName' must have a config explicitly set")
 
 

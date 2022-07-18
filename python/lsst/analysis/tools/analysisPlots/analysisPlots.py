@@ -129,19 +129,17 @@ class WPerpPSFPlot(AnalysisPlot):
 
 
 class Ap12_PSF_skyPlot(AnalysisPlot):
-    band: str = "{band}"
-
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = [f"{self.band}"]
+        self.prep.selectors.flagSelector.bands = ["{band}"]
 
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = f"{self.band}_psfFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
         self.prep.selectors.starSelector = StellarSelector()
-        self.prep.selectors.starSelector.columnKey = f"{self.band}_extendedness"
+        self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.xStars = LoadVector()
@@ -149,16 +147,16 @@ class Ap12_PSF_skyPlot(AnalysisPlot):
         self.process.buildActions.yStars = LoadVector()
         self.process.buildActions.yStars.vectorKey = "coord_dec"
         self.process.buildActions.starStatMask = SnSelector()
-        self.process.buildActions.starStatMask.fluxType = f"{self.band}_psfFlux"
+        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
 
         self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.zStars.magDiff.col1 = f"{self.band}_ap12Flux"
-        self.process.buildActions.zStars.magDiff.col2 = f"{self.band}_psfFlux"
+        self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
+        self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
         self.post_process = SkyPlot()
         self.post_process.plotTypes = ["stars"]
-        self.post_process.plotName = f"ap12-psf_{self.band}"
-        self.post_process.xAxisLabel = "R.A."
-        self.post_process.yAxisLabel = "Declination"
+        self.post_process.plotName = "ap12-psf_{band}"
+        self.post_process.xAxisLabel = "R.A. (degrees)"
+        self.post_process.yAxisLabel = "Dec. (degrees)"
         self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
         self.post_process.plotOutlines = False

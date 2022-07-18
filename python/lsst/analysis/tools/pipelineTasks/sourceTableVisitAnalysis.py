@@ -37,6 +37,6 @@ class SourceTableVisitAnalysisConfig(
         self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
 
 
-class sourceTableVisitAnalysisTask(AnalysisPipelineTask):
+class SourceTableVisitAnalysisTask(AnalysisPipelineTask):
     ConfigClass = SourceTableVisitAnalysisConfig
     _DefaultName = "sourceTableVisitAnalysisTask"

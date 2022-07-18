@@ -128,7 +128,7 @@ class WPerpPSFPlot(AnalysisPlot):
         self.post_process.plotName = "wPerp_psfFlux"
 
 
-class Ap12_PSF_skyPlot(AnalysisPlot):
+class Ap12PsfSkyPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()

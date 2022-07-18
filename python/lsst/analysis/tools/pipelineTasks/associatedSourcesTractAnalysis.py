@@ -26,7 +26,7 @@ from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineT
 
 # These need to be updated for this analysis context
 # from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
-# from ..analysisPlots.analysisPlots import Ap12_PSF_skyPlot
+# from ..analysisPlots.analysisPlots import Ap12PsfSkyPlot
 # from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
 
 
@@ -73,7 +73,7 @@ class AssociatedSourcesTractAnalysisConfig(
         # update for this analysis context
         # self.plots.shapeSizeFractionalDiffScatter = \
         #     ShapeSizeFractionalDiffScatter()
-        # self.plots.Ap12_PSF_skyPlot = Ap12_PSF_skyPlot()
+        # self.plots.Ap12PsfSkyPlot = Ap12PsfSkyPlot()
 
         # set metrics to run
         # update for this analysis context

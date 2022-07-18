@@ -26,7 +26,7 @@ __all__ = (
     "SnSelector",
     "ExtendednessSelector",
     "StellarSelector",
-    "GalacticSelector",
+    "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
 )
@@ -243,14 +243,14 @@ class StellarSelector(ExtendednessSelector):
         return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))  # type: ignore
 
 
-class GalacticSelector(ExtendednessSelector):
+class GalaxySelector(ExtendednessSelector):
     extendedness_minimum = Field[float](
         doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
-        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_minimum))  # type: ignore
+        return cast(Vector, extendedness > self.extendedness_minimum)  # type: ignore
 
 
 class UnknownSelector(ExtendednessSelector):

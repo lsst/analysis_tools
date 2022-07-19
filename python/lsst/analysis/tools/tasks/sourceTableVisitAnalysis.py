@@ -20,6 +20,7 @@ class SourceTableVisitAnalysisConnections(
         name="sourceTable_visit",
         storageClass="DataFrame",
         dimensions=("visit", "band"),
+        deferLoad=True,
     )
 
 

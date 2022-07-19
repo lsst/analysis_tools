@@ -20,7 +20,7 @@ from ..interfaces import (
 )
 from ..keyedDataActions import AddComputedVector, KeyedScalars
 from ..scalarActions import CountAction, MedianAction, SigmaMadAction
-from ..vectorActions import FractionalDifference, SnSelector, StellarSelector
+from ..vectorActions import FractionalDifference, SnSelector, StarSelector
 from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
@@ -104,7 +104,7 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         self.magAction = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
 
         # Setup the selectors
-        self.objectSelector = StellarSelector()
+        self.objectSelector = StarSelector()
         self.highSNRSelector = SnSelector(threshold=2700)
         self.lowSNRSelector = SnSelector(threshold=500)
 

@@ -25,7 +25,7 @@ __all__ = (
     "CoaddPlotFlagSelector",
     "SnSelector",
     "ExtendednessSelector",
-    "StellarSelector",
+    "StarSelector",
     "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
@@ -233,7 +233,7 @@ class ExtendednessSelector(VectorAction):
         return cast(Vector, data[key])
 
 
-class StellarSelector(ExtendednessSelector):
+class StarSelector(ExtendednessSelector):
     extendedness_maximum = Field[float](
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )

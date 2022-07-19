@@ -29,7 +29,7 @@ from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction, Scatte
 from ..plotActions.skyPlot import SkyPlot
 from ..scalarActions.scalarActions import ApproxFloor
 from ..vectorActions.calcShapeSize import CalcShapeSize
-from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector
+from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StarSelector
 from ..vectorActions.vectorActions import (
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -54,7 +54,7 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
         # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StellarSelector()
+        self.process.buildActions.starSelector = StarSelector()
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
@@ -100,7 +100,7 @@ class WPerpPSFPlot(AnalysisPlot):
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.columnKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
@@ -138,7 +138,7 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
 
         # TODO: Can we make these defaults somewhere?

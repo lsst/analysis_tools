@@ -29,7 +29,7 @@ from ..vectorActions.selectors import (
     CoaddPlotFlagSelector,
     SkyObjectSelector,
     SnSelector,
-    StellarSelector,
+    StarSelector,
     VectorSelector,
 )
 from ..vectorActions.vectorActions import (
@@ -56,7 +56,7 @@ class ShapeSizeFractionalMetric(AnalysisMetric):
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
         # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StellarSelector()
+        self.process.buildActions.starSelector = StarSelector()
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
@@ -101,7 +101,7 @@ class StellarLocusBaseMetric(AnalysisMetric):
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.returnMillimags = False
@@ -124,7 +124,7 @@ class GRIStellarPSFMetric(AnalysisMetric):
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["r"]
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.columnKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
@@ -185,7 +185,7 @@ class RIZStellarPSFMetric(AnalysisMetric):
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["i"]
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = "r_psfFlux"
@@ -218,7 +218,7 @@ class WPerpPSFMetric(AnalysisMetric):
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["r"]
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
@@ -256,7 +256,7 @@ class XPerpPSFMetric(AnalysisMetric):
         self.prep.selectors.snSelector.threshold = 300
         self.prep.selectors.snSelector.bands = ["r"]
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"

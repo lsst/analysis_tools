@@ -25,6 +25,7 @@ __all__ = (
     "CoaddPlotFlagSelector",
     "SnSelector",
     "ExtendednessSelector",
+    "SkyObjectSelector",
     "StarSelector",
     "GalaxySelector",
     "UnknownSelector",
@@ -37,7 +38,7 @@ import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
-from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class FlagSelector(VectorAction):

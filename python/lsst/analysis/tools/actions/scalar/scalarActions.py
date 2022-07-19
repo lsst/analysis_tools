@@ -6,7 +6,7 @@ import numpy as np
 import scipy.stats as sps
 from lsst.pex.config import Field
 
-from ..interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
 
 
 class MedianAction(ScalarAction):

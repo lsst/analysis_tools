@@ -28,7 +28,7 @@ from astropy import units as u
 from lsst.pex.config import DictField, Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 
-from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)

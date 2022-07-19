@@ -27,7 +27,7 @@ from typing import Mapping, NamedTuple, Optional, cast
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sps
-from lsst.analysis.tools.scalarActions.scalarActions import CountAction, MedianAction, SigmaMadAction
+from lsst.analysis.tools.actions.scalar.scalarActions import CountAction, MedianAction, SigmaMadAction
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
@@ -38,7 +38,7 @@ from matplotlib.figure import Figure
 from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ..interfaces import (
+from ...interfaces import (
     KeyedData,
     KeyedDataAction,
     KeyedDataSchema,
@@ -48,8 +48,8 @@ from ..interfaces import (
     Vector,
     VectorAction,
 )
-from ..keyedDataActions import KeyedScalars
-from ..vectorActions import SnSelector
+from ..keyedData import KeyedScalars
+from ..vector import SnSelector
 from .plotUtils import addPlotInfo, mkColormap
 
 # from .plotUtils import addSummaryPlot, generateSummaryStats

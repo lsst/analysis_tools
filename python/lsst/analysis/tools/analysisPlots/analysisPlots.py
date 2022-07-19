@@ -20,24 +20,26 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ShapeSizeFractionalDiffScatter",)
+__all__ = ("ShapeSizeFractionalDiffScatter", "WPerpPSFPlot", "Ap12PsfSkyPlot")
 
-from ..interfaces import AnalysisPlot
-from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
-from ..plotActions.colorColorFitPlot import ColorColorFitPlot
-from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
-from ..plotActions.skyPlot import SkyPlot
-from ..scalarActions.scalarActions import ApproxFloor
-from ..vectorActions.calcShapeSize import CalcShapeSize
-from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StarSelector
-from ..vectorActions.vectorActions import (
+from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
+from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
+from ..actions.plot.skyPlot import SkyPlot
+from ..actions.scalar import ApproxFloor
+from ..actions.vector import (
+    CalcShapeSize,
+    CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
+    SnSelector,
+    StarSelector,
     VectorSelector,
 )
+from ..interfaces import AnalysisPlot
 
 
 class ShapeSizeFractionalDiffScatter(AnalysisPlot):

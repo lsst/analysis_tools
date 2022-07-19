@@ -30,6 +30,7 @@ from lsst.pex.config.dictField import DictField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.verify import Measurement
 
+from ..actions.keyedData import KeyedDataSelectorAction
 from ..interfaces import (
     AnalysisAction,
     KeyedData,
@@ -41,7 +42,6 @@ from ..interfaces import (
     Vector,
     VectorAction,
 )
-from ..keyedDataActions import KeyedDataSelectorAction
 
 
 class BasePrep(KeyedDataSelectorAction):

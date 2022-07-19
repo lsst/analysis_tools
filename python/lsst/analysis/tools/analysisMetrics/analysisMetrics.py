@@ -20,26 +20,22 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from ..interfaces import AnalysisMetric
-from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
-from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction
-from ..scalarActions.scalarActions import ApproxFloor, MeanAction, MedianAction, SigmaMadAction, StdevAction
-from ..vectorActions.calcShapeSize import CalcShapeSize
-from ..vectorActions.selectors import (
+from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
+from ..actions.scalar.scalarActions import ApproxFloor, MeanAction, MedianAction, SigmaMadAction, StdevAction
+from ..actions.vector import (
+    CalcShapeSize,
     CoaddPlotFlagSelector,
+    DownselectVector,
+    ExtinctionCorrectedMagDiff,
+    FractionalDifference,
+    MagColumnNanoJansky,
     SkyObjectSelector,
     SnSelector,
     StarSelector,
     VectorSelector,
 )
-from ..vectorActions.vectorActions import (
-    DownselectVector,
-    ExtinctionCorrectedMagDiff,
-    FractionalDifference,
-    MagColumnNanoJansky,
-)
-
-# from msilib.schema import Media
+from ..interfaces import AnalysisMetric
 
 
 class ShapeSizeFractionalMetric(AnalysisMetric):

@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-from lsst.analysis.tools.vectorActions.selectors import VectorSelector
-from lsst.analysis.tools.vectorActions.vectorActions import LoadVector, MagColumnNanoJansky
+from lsst.analysis.tools.actions.vector import LoadVector, MagColumnNanoJansky, VectorSelector
 from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
+from ..actions.keyedData import AddComputedVector, KeyedScalars
+from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
+from ..actions.vector import CalcShapeSize, FractionalDifference, SnSelector, StarSelector
 from ..interfaces import (
     AnalysisAction,
     KeyedData,
@@ -18,10 +20,6 @@ from ..interfaces import (
     Vector,
     VectorAction,
 )
-from ..keyedDataActions import AddComputedVector, KeyedScalars
-from ..scalarActions import CountAction, MedianAction, SigmaMadAction
-from ..vectorActions import FractionalDifference, SnSelector, StarSelector
-from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
 class _ApproxMedian(ScalarAction):

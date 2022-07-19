@@ -34,7 +34,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
-from ..interfaces import (
+from ...interfaces import (
     KeyedData,
     KeyedDataAction,
     KeyedDataSchema,

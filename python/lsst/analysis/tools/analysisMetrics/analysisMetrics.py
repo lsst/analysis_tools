@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
-from ..actions.scalar.scalarActions import ApproxFloor, MeanAction, MedianAction, SigmaMadAction, StdevAction
+from ..actions.scalar.scalarActions import ApproxFloor
 from ..actions.vector import (
     CalcShapeSize,
     CoaddPlotFlagSelector,
@@ -30,7 +30,6 @@ from ..actions.vector import (
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     MagColumnNanoJansky,
-    SkyObjectSelector,
     SnSelector,
     StarSelector,
     VectorSelector,
@@ -267,27 +266,4 @@ class XPerpPSFMetric(AnalysisMetric):
 
         self.produce.units = {  # type: ignore
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
-        }
-
-
-class SkyFluxStatisticMetric(AnalysisMetric):
-    parameterizedBand: bool = True
-    fluxType: str = "ap09Flux"
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
-        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
-
-        self.process.calculateActions.medianSky = MedianAction(vectorKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.meanSky = MeanAction(vectorKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.stdevSky = StdevAction(vectorKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.sigmaMADSky = SigmaMadAction(vectorKey=f"{{band}}_{self.fluxType}")
-
-        self.produce.units = {  # type: ignore
-            "medianSky": "nJy",
-            "meanSky": "nJy",
-            "stdevSky": "nJy",
-            "sigmaMADSky": "nJy",
         }

@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
-from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
-
-# from ..vectorActions.selectors import VisitPlotFlagSelector
+from ..analysisMetrics.limitingMagnitudeMetric import FiveSigmaPointSourceDepthMetric
+from ..analysisMetrics.skyFluxStatisticMetrics import SkyFluxVisitStatisticMetric
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -30,12 +28,10 @@ class SourceTableVisitAnalysisConfig(
     def setDefaults(self):
         super().setDefaults()
         # set plots to run
-        self.plots.shapeSizeFractionalDiffScatter = ShapeSizeFractionalDiffScatter()
-        # self.plots.shapeSizeFractionalDiffScatter.flagSelector = \
-        # VisitPlotFlagSelector()
 
         # set metrics to run
-        self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
+        self.metrics.fiveSigmaPointSourceDepthMetric = FiveSigmaPointSourceDepthMetric()
+        self.metrics.skyFluxVisitStatisticMetric = SkyFluxVisitStatisticMetric()
 
 
 class SourceTableVisitAnalysisTask(AnalysisPipelineTask):

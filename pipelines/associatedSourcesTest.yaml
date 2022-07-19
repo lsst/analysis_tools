@@ -2,4 +2,4 @@ description: |
   Test out if this runs using the middleware
 tasks:
   associatedSources:
-    class: lsst.analysis.tools.pipelineTasks.associatedSourcesTractAnalysis.AssociatedSourcesTractAnalysisTask
+    class: lsst.analysis.tools.tasks.associatedSourcesTractAnalysis.AssociatedSourcesTractAnalysisTask

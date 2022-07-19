@@ -25,8 +25,9 @@ __all__ = (
     "CoaddPlotFlagSelector",
     "SnSelector",
     "ExtendednessSelector",
-    "StellarSelector",
-    "GalacticSelector",
+    "SkyObjectSelector",
+    "StarSelector",
+    "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
 )
@@ -37,7 +38,7 @@ import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
-from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class FlagSelector(VectorAction):
@@ -233,7 +234,7 @@ class ExtendednessSelector(VectorAction):
         return cast(Vector, data[key])
 
 
-class StellarSelector(ExtendednessSelector):
+class StarSelector(ExtendednessSelector):
     extendedness_maximum = Field[float](
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )
@@ -243,14 +244,14 @@ class StellarSelector(ExtendednessSelector):
         return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))  # type: ignore
 
 
-class GalacticSelector(ExtendednessSelector):
+class GalaxySelector(ExtendednessSelector):
     extendedness_minimum = Field[float](
         doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
-        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_minimum))  # type: ignore
+        return cast(Vector, extendedness > self.extendedness_minimum)  # type: ignore
 
 
 class UnknownSelector(ExtendednessSelector):

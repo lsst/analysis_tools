@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-from lsst.analysis.tools.vectorActions.selectors import VectorSelector
-from lsst.analysis.tools.vectorActions.vectorActions import LoadVector, MagColumnNanoJansky
+from lsst.analysis.tools.actions.vector import LoadVector, MagColumnNanoJansky, VectorSelector
 from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
+from ..actions.keyedData import AddComputedVector, KeyedScalars
+from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
+from ..actions.vector import CalcShapeSize, FractionalDifference, SnSelector, StarSelector
 from ..interfaces import (
     AnalysisAction,
     KeyedData,
@@ -18,10 +20,6 @@ from ..interfaces import (
     Vector,
     VectorAction,
 )
-from ..keyedDataActions import AddComputedVector, KeyedScalars
-from ..scalarActions import CountAction, MedianAction, SigmaMadAction
-from ..vectorActions import FractionalDifference, SnSelector, StellarSelector
-from ..vectorActions.calcShapeSize import CalcShapeSize
 
 
 class _ApproxMedian(ScalarAction):
@@ -104,7 +102,7 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         self.magAction = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
 
         # Setup the selectors
-        self.objectSelector = StellarSelector()
+        self.objectSelector = StarSelector()
         self.highSNRSelector = SnSelector(threshold=2700)
         self.lowSNRSelector = SnSelector(threshold=500)
 

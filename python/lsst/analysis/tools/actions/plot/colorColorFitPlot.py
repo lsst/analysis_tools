@@ -32,7 +32,7 @@ from matplotlib.patches import Rectangle
 from scipy.stats import median_absolute_deviation as sigmaMad
 from sklearn.neighbors import KernelDensity
 
-from ..interfaces import KeyedData, KeyedDataSchema, Scalar, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, Scalar, Vector
 from .plotUtils import addPlotInfo, mkColormap, perpDistance
 
 

@@ -8,8 +8,8 @@ import numpy as np
 from lsst.pex.config import DictField
 from scipy.stats import median_absolute_deviation as sigmaMad
 
-from ..interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
-from ..plotActions.plotUtils import perpDistance, stellarLocusFit
+from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
+from ..plot.plotUtils import perpDistance, stellarLocusFit
 
 
 class StellarLocusFitAction(KeyedDataAction):

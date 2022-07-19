@@ -248,7 +248,7 @@ class AnalysisTool(AnalysisAction):
     Although `AnalysisTool`\ s are considered a single type of analysis, the
     classes themselves can be thought of as a container. `AnalysisTool`\ s
     are aggregations of `AnalysisAction`\ s to form prep, process, and
-    post_process stages. These stages allow better reuse of individual
+    produce stages. These stages allow better reuse of individual
     `AnalysisActions` and easier introspection in contexts such as a notebook
     or interprepter.
 
@@ -262,7 +262,7 @@ class AnalysisTool(AnalysisAction):
     process = ConfigurableActionField[AnalysisAction](
         doc="Action to process data into intended form",
     )
-    post_process = ConfigurableActionField[AnalysisAction](doc="Action to perform any finalization steps")
+    produce = ConfigurableActionField[AnalysisAction](doc="Action to perform any finalization steps")
 
     parameterizedBand: bool = True
     """Specifies if an `AnalysisTool` may parameterize a band within any field
@@ -297,9 +297,7 @@ class AnalysisTool(AnalysisAction):
         self.populatePrepFromProcess()
         prepped: KeyedData = self.prep(data, **kwargs)  # type: ignore
         processed: KeyedData = self.process(prepped, **kwargs)  # type: ignore
-        finalized: Mapping[str, Figure] | Figure | Mapping[
-            str, Measurement
-        ] | Measurement = self.post_process(
+        finalized: Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement = self.produce(
             processed, **kwargs
         )  # type: ignore
         return finalized
@@ -332,29 +330,29 @@ class AnalysisTool(AnalysisAction):
 class AnalysisMetric(AnalysisTool):
     """Specialized `AnalysisTool` for computing metrics.
 
-    The post_process stage of `AnalysisMetric` has been specialized such that
+    The produce stage of `AnalysisMetric` has been specialized such that
     it expects to be assigned to a `MetricAction`, and has a default (set in
     setDefaults) to be `BaseMetricAction`.
     """
 
-    post_process = ConfigurableActionField[MetricAction](doc="Action which returns a calculated Metric")
+    produce = ConfigurableActionField[MetricAction](doc="Action which returns a calculated Metric")
 
     def setDefaults(self):
         super().setDefaults()
         # imported here to avoid circular imports
         from .analysisParts.base import BaseMetricAction
 
-        self.post_process = BaseMetricAction
+        self.produce = BaseMetricAction
 
 
 class AnalysisPlot(AnalysisTool):
     """Specialized `AnalysisTool` for producing plots.
 
-    The post_process stage of `AnalysisMetric` has been specialized such that
+    The produce stage of `AnalysisMetric` has been specialized such that
     it expects to be assigned to a `PlotAction`.
     """
 
-    post_process = ConfigurableActionField[PlotAction](doc="Action which returns a plot")
+    produce = ConfigurableActionField[PlotAction](doc="Action which returns a plot")
 
     def getOutputNames(self) -> Iterable[str]:
         """Return the names of the plots produced by this action.
@@ -368,7 +366,7 @@ class AnalysisPlot(AnalysisTool):
         result : `tuple` of `str`
             Names for each plot produced by this action.
         """
-        outNames = tuple(self.post_process.getOutputNames())
+        outNames = tuple(self.produce.getOutputNames())
         if outNames:
             return outNames
         else:

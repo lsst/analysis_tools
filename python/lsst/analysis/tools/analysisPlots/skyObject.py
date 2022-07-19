@@ -22,10 +22,10 @@ from __future__ import annotations
 
 __all__ = ("SkyObjectSkyPlot",)
 
+from ..actions.plot.skyPlot import SkyPlot
+from ..actions.vector import LoadVector
+from ..actions.vector.selectors import FlagSelector, SnSelector
 from ..interfaces import AnalysisPlot
-from ..plotActions.skyPlot import SkyPlot
-from ..vectorActions.selectors import FlagSelector, SnSelector
-from ..vectorActions.vectorActions import LoadVector
 
 
 class SkyObjectSkyPlot(AnalysisPlot):

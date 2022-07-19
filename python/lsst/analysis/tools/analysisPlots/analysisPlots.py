@@ -20,24 +20,26 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ShapeSizeFractionalDiffScatter",)
+__all__ = ("ShapeSizeFractionalDiffScatter", "WPerpPSFPlot", "Ap12PsfSkyPlot")
 
-from ..interfaces import AnalysisPlot
-from ..keyedDataActions.stellarLocusFit import StellarLocusFitAction
-from ..plotActions.colorColorFitPlot import ColorColorFitPlot
-from ..plotActions.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
-from ..plotActions.skyPlot import SkyPlot
-from ..scalarActions.scalarActions import ApproxFloor
-from ..vectorActions.calcShapeSize import CalcShapeSize
-from ..vectorActions.selectors import CoaddPlotFlagSelector, SnSelector, StellarSelector
-from ..vectorActions.vectorActions import (
+from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
+from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
+from ..actions.plot.skyPlot import SkyPlot
+from ..actions.scalar import ApproxFloor
+from ..actions.vector import (
+    CalcShapeSize,
+    CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
+    SnSelector,
+    StarSelector,
     VectorSelector,
 )
+from ..interfaces import AnalysisPlot
 
 
 class ShapeSizeFractionalDiffScatter(AnalysisPlot):
@@ -54,7 +56,7 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
         # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StellarSelector()
+        self.process.buildActions.starSelector = StarSelector()
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
@@ -78,12 +80,12 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
         self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
         self.process.calculateActions.stars.fluxType = "psfFlux"
 
-        self.post_process = ScatterPlotWithTwoHists()
+        self.produce = ScatterPlotWithTwoHists()
 
-        self.post_process.plotTypes = ["stars"]
-        self.post_process.xAxisLabel = "PSF Magnitude (mag)"
-        self.post_process.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
-        self.post_process.magLabel = "PSF Magnitude (mag)"
+        self.produce.plotTypes = ["stars"]
+        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
+        self.produce.magLabel = "PSF Magnitude (mag)"
 
 
 class WPerpPSFPlot(AnalysisPlot):
@@ -100,7 +102,7 @@ class WPerpPSFPlot(AnalysisPlot):
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.columnKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
@@ -124,11 +126,11 @@ class WPerpPSFPlot(AnalysisPlot):
             "bHW": -0.08,
         }
 
-        self.post_process = ColorColorFitPlot()
-        self.post_process.plotName = "wPerp_psfFlux"
+        self.produce = ColorColorFitPlot()
+        self.produce.plotName = "wPerp_psfFlux"
 
 
-class Ap12_PSF_skyPlot(AnalysisPlot):
+class Ap12PsfSkyPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
@@ -138,7 +140,7 @@ class Ap12_PSF_skyPlot(AnalysisPlot):
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StellarSelector()
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
 
         # TODO: Can we make these defaults somewhere?
@@ -153,10 +155,10 @@ class Ap12_PSF_skyPlot(AnalysisPlot):
         self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
-        self.post_process = SkyPlot()
-        self.post_process.plotTypes = ["stars"]
-        self.post_process.plotName = "ap12-psf_{band}"
-        self.post_process.xAxisLabel = "R.A. (degrees)"
-        self.post_process.yAxisLabel = "Dec. (degrees)"
-        self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
-        self.post_process.plotOutlines = False
+        self.produce = SkyPlot()
+        self.produce.plotTypes = ["stars"]
+        self.produce.plotName = "ap12-psf_{band}"
+        self.produce.xAxisLabel = "R.A. (degrees)"
+        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
+        self.produce.plotOutlines = False

@@ -26,7 +26,7 @@ import numpy as np
 from lsst.pex.config import Field, FieldValidationError
 from lsst.pex.config.choiceField import ChoiceField
 
-from ..interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class CalcShapeSize(VectorAction):

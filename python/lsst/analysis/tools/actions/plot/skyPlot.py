@@ -31,7 +31,7 @@ from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
 from scipy.stats import median_absolute_deviation as sigmaMad
 
-from ..interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from .plotUtils import addPlotInfo, extremaSort, mkColormap
 
 # from .plotUtils import generateSummaryStats, parsePlotInfo

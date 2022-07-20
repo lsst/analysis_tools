@@ -30,6 +30,7 @@ __all__ = (
     "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
+    "VisitPlotFlagSelector",
 )
 
 from typing import Optional, cast

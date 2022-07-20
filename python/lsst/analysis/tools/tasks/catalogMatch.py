@@ -1,35 +1,57 @@
-import numpy as np
-from astropy.time import Time
-from astropy.coordinates import SkyCoord
-import astropy.units as u
-import pandas as pd
+# This file is part of analysis_tools.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import lsst.pipe.base as pipeBase
-import lsst.pex.config as pexConfig
+import astropy.units as u
 import lsst.geom
-from lsst.meas.algorithms import ReferenceObjectLoader, LoadReferenceObjectsTask
+import lsst.pex.config as pexConfig
+import lsst.pipe.base as pipeBase
+import numpy as np
+import pandas as pd
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+from lsst.meas.algorithms import ReferenceObjectLoader
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.skymap import BaseSkyMap
 
-from ..vectorActions.selectors import (CoaddPlotFlagSelector,
-                                       StellarSelector,
-                                       SnSelector,
-                                       GalacticSelector)
+from ..actions.vector import (
+    CoaddPlotFlagSelector,
+    GalaxySelector,
+    SnSelector,
+    StarSelector,
+    VisitPlotFlagSelector,
+)
 
 __all__ = ["CatalogMatchConfig", "CatalogMatchTask", "AstropyMatchConfig", "AstropyMatchTask"]
 
 
 class AstropyMatchConfig(pexConfig.Config):
 
-    maxDistance = pexConfig.Field(
+    maxDistance = pexConfig.Field[float](
         doc="Max distance between matches in arcsec",
-        dtype=float,
         default=1.0,
     )
 
 
 class AstropyMatchTask(pipeBase.Task):
-    """ A task for running the astropy matcher `match_to_catalog_sky` on
+    """A task for running the astropy matcher `match_to_catalog_sky` on
     between target and reference catalogs."""
 
     ConfigClass = AstropyMatchConfig
@@ -54,11 +76,11 @@ class AstropyMatchTask(pipeBase.Task):
             separations: `astropy.coordinates.angles.Angle`
                 Array of angle separations between matched objects
         """
-        refCat_ap = SkyCoord(ra=refCatalog['coord_ra'] * u.degree,
-                             dec=refCatalog['coord_dec'] * u.degree)
+        refCat_ap = SkyCoord(ra=refCatalog["coord_ra"] * u.degree, dec=refCatalog["coord_dec"] * u.degree)
 
-        sourceCat_ap = SkyCoord(ra=targetCatalog['coord_ra'] * u.degree,
-                                dec=targetCatalog['coord_dec'] * u.degree)
+        sourceCat_ap = SkyCoord(
+            ra=targetCatalog["coord_ra"] * u.degree, dec=targetCatalog["coord_dec"] * u.degree
+        )
 
         id, d2d, d3d = refCat_ap.match_to_catalog_sky(sourceCat_ap)
 
@@ -69,21 +91,23 @@ class AstropyMatchTask(pipeBase.Task):
 
         separations = d2d[goodMatches].arcsec
 
-        return pipeBase.Struct(refMatchIndices=refMatchIndices,
-                               targetMatchIndices=targetMatchIndices,
-                               separations=separations)
+        return pipeBase.Struct(
+            refMatchIndices=refMatchIndices, targetMatchIndices=targetMatchIndices, separations=separations
+        )
 
 
-class CatalogMatchConnections(pipeBase.PipelineTaskConnections, dimensions=("tract", "skymap"),
-                              defaultTemplates={"targetCatalog": "objectTable_tract",
-                                                "refCatalog": "astrometryRefCat"}):
+class CatalogMatchConnections(
+    pipeBase.PipelineTaskConnections,
+    dimensions=("tract", "skymap"),
+    defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "astrometryRefCat"},
+):
 
     catalog = pipeBase.connectionTypes.Input(
         doc="The tract-wide catalog to make plots from.",
         storageClass="DataFrame",
         name="{targetCatalog}",
         dimensions=("tract", "skymap"),
-        deferLoad=True
+        deferLoad=True,
     )
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
@@ -92,46 +116,34 @@ class CatalogMatchConnections(pipeBase.PipelineTaskConnections, dimensions=("tra
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,
-        multiple=True
+        multiple=True,
     )
 
     skymap = pipeBase.connectionTypes.Input(
         doc="The skymap for the tract",
         storageClass="SkyMap",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
-        dimensions=("skymap",)
+        dimensions=("skymap",),
     )
 
     matchCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
         name="{targetCatalog}_{refCatalog}_match",
         storageClass="DataFrame",
-        dimensions=("tract", "skymap")
+        dimensions=("tract", "skymap"),
     )
 
 
 class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=CatalogMatchConnections):
 
-    astrometryRefObjLoader = pexConfig.ConfigurableField(
-        target=LoadReferenceObjectsTask,
-        doc="Reference object loader for astrometric fit",
+    matcher = pexConfig.ConfigurableField[pipeBase.Task](
+        target=AstropyMatchTask, doc="Task for matching refCat and SourceCatalog"
     )
 
-    matcher = pexConfig.ConfigurableField(
-        target=AstropyMatchTask,
-        doc="Task for matching refCat and SourceCatalog"
-    )
+    epoch = pexConfig.Field[float](doc="Epoch to which reference objects are shifted", default=2015.0)
 
-    epoch = pexConfig.Field(
-        doc="Epoch to which reference objects are shifted",
-        dtype=float,
-        default=2015.0
-    )
-
-    selectorBand = pexConfig.Field(
-        doc="Band to use when selecting objects, primarily for extendedness",
-        dtype=str,
-        default='i'
+    selectorBand = pexConfig.Field[str](
+        doc="Band to use when selecting objects, primarily for extendedness", default="i"
     )
 
     selectorActions = ConfigurableActionStructField(
@@ -141,30 +153,32 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     sourceSelectorActions = ConfigurableActionStructField(
         doc="What types of sources to use.",
-        default={"sourceSelector": StellarSelector},
+        default={"sourceSelector": StarSelector},
     )
 
     extraColumnSelectors = ConfigurableActionStructField(
-        doc="Other selectors that are not used in this task, but whose columns"
-            "may be needed downstream",
-        default={"selector1": SnSelector,
-                 "selector2": GalacticSelector}
+        doc="Other selectors that are not used in this task, but whose columns" "may be needed downstream",
+        default={"selector1": SnSelector, "selector2": GalaxySelector},
     )
 
-    extraColumns = pexConfig.ListField(
+    extraColumns = pexConfig.ListField[str](
         doc="Other catalog columns to persist to downstream tasks",
-        dtype=str,
-        default=['i_cModelFlux', 'x', 'y']
+        default=["i_cModelFlux", "x", "y"],
     )
 
-    def setDefaults(self):
-        self.astrometryRefObjLoader.requireProperMotion = False
-        self.astrometryRefObjLoader.anyFilterMapsToThis = 'phot_g_mean'
+    requireProperMotion = pexConfig.Field[bool](
+        doc="Only use reference catalog objects with proper motion information",
+        default=False,
+    )
+
+    anyFilterMapsToThis = pexConfig.Field[str](
+        doc="Any filter for the reference catalog maps to this",
+        default="phot_g_mean",
+    )
 
 
 class CatalogMatchTask(pipeBase.PipelineTask):
-    """Match a tract-level catalog to a reference catalog
-    """
+    """Match a tract-level catalog to a reference catalog"""
 
     ConfigClass = CatalogMatchConfig
     _DefaultName = "catalogMatch"
@@ -178,26 +192,31 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         inputs = butlerQC.get(inputRefs)
 
-        columns = ['coord_ra', 'coord_dec', 'patch'] + self.config.extraColumns.list()
-        for selectorAction in [self.config.selectorActions, self.config.sourceSelectorActions,
-                               self.config.extraColumnSelectors]:
+        columns = ["coord_ra", "coord_dec", "patch"] + self.config.extraColumns.list()
+        for selectorAction in [
+            self.config.selectorActions,
+            self.config.sourceSelectorActions,
+            self.config.extraColumnSelectors,
+        ]:
             for selector in selectorAction:
                 for band in ["g", "r", "i", "z", "y"]:
                     selectorSchema = selector.getFormattedInputSchema(band=band)
                     columns += [s[0] for s in selectorSchema]
 
         dataFrame = inputs["catalog"].get(parameters={"columns": columns})
-        inputs['catalog'] = dataFrame
+        inputs["catalog"] = dataFrame
 
-        tract = butlerQC.quantum.dataId['tract']
+        tract = butlerQC.quantum.dataId["tract"]
 
-        self.refObjLoader = ReferenceObjectLoader(dataIds=[ref.datasetRef.dataId
-                                                           for ref in inputRefs.refCat],
-                                                  refCats=inputs.pop('refCat'),
-                                                  config=self.config.astrometryRefObjLoader,
-                                                  log=self.log)
+        self.refObjLoader = ReferenceObjectLoader(
+            dataIds=[ref.datasetRef.dataId for ref in inputRefs.refCat],
+            refCats=inputs.pop("refCat"),
+            log=self.log,
+        )
+        self.refObjLoader.config.requireProperMotion = self.config.requireProperMotion
+        self.refObjLoader.config.anyFilterMapsToThis = self.config.anyFilterMapsToThis
 
-        self.setRefCat(inputs.pop('skymap'), tract)
+        self.setRefCat(inputs.pop("skymap"), tract)
 
         outputs = self.run(**inputs)
 
@@ -231,9 +250,9 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         targetCatalog = targetCatalog.reset_index()
 
         if (len(targetCatalog) == 0) or (len(self.refCat) == 0):
-            matches = pipeBase.Struct(refMatchIndices=np.array([]),
-                                      targetMatchIndices=np.array([]),
-                                      separations=np.array([]))
+            matches = pipeBase.Struct(
+                refMatchIndices=np.array([]), targetMatchIndices=np.array([]), separations=np.array([])
+            )
         else:
             # Run the matcher
             matches = self.matcher.run(self.refCat, targetCatalog)
@@ -241,7 +260,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         # Join the catalogs for the matched catalogs
         refMatches = self.refCat.iloc[matches.refMatchIndices].reset_index()
         sourceMatches = targetCatalog.iloc[matches.targetMatchIndices].reset_index()
-        matchedCat = sourceMatches.join(refMatches, lsuffix='_target', rsuffix='_ref')
+        matchedCat = sourceMatches.join(refMatches, lsuffix="_target", rsuffix="_ref")
 
         separations = pd.Series(matches.separations).rename("separation")
         matchedCat = matchedCat.join(separations)
@@ -266,29 +285,28 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         epoch = Time(self.config.epoch, format="decimalyear")
 
-        skyCircle = self.refObjLoader.loadSkyCircle(center,
-                                                    radius,
-                                                    'i',
-                                                    epoch=epoch)
+        skyCircle = self.refObjLoader.loadSkyCircle(center, radius, "i", epoch=epoch)
         refCat = skyCircle.refCat
 
         # Convert the coordinates to RA/Dec and convert the catalog to a
         # dataframe
-        refCat['coord_ra'] = (refCat['coord_ra'] * u.radian).to(u.degree).to_value()
-        refCat['coord_dec'] = (refCat['coord_dec'] * u.radian).to(u.degree).to_value()
+        refCat["coord_ra"] = (refCat["coord_ra"] * u.radian).to(u.degree).to_value()
+        refCat["coord_dec"] = (refCat["coord_dec"] * u.radian).to(u.degree).to_value()
         self.refCat = refCat.asAstropy().to_pandas()
 
 
-class CatalogMatchVisitConnections(pipeBase.PipelineTaskConnections, dimensions=("visit", "skymap"),
-                                   defaultTemplates={"targetCatalog": "sourceTable_visit",
-                                                     "refCatalog": "astrometryRefCat"}):
+class CatalogMatchVisitConnections(
+    pipeBase.PipelineTaskConnections,
+    dimensions=("visit", "skymap"),
+    defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "astrometryRefCat"},
+):
 
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="DataFrame",
         name="sourceTable_visit",
         dimensions=("visit",),
-        deferLoad=True
+        deferLoad=True,
     )
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
@@ -297,51 +315,46 @@ class CatalogMatchVisitConnections(pipeBase.PipelineTaskConnections, dimensions=
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,
-        multiple=True
+        multiple=True,
     )
 
     visitSummaryTable = pipeBase.connectionTypes.Input(
         doc="A summary table of the ccds in the visit",
         storageClass="ExposureCatalog",
         name="visitSummary",
-        dimensions=("visit",)
+        dimensions=("visit",),
     )
 
     matchCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
         name="{targetCatalog}_{refCatalog}_match",
         storageClass="DataFrame",
-        dimensions=("visit",)
+        dimensions=("visit",),
     )
 
 
-class CatalogMatchVisitConfig(CatalogMatchTask.ConfigClass,
-                              pipelineConnections=CatalogMatchVisitConnections):
+class CatalogMatchVisitConfig(CatalogMatchConfig, pipelineConnections=CatalogMatchVisitConnections):
     selectorActions = ConfigurableActionStructField(
         doc="Which selectors to use to narrow down the data for QA plotting.",
-        default={},
+        default={"flagSelector": VisitPlotFlagSelector},
     )
 
-    extraColumns = pexConfig.ListField(
+    extraColumns = pexConfig.ListField[str](
         doc="Other catalog columns to persist to downstream tasks",
-        dtype=str,
-        default=["psfFlux", "psfFluxErr"]
+        default=["psfFlux", "psfFluxErr"],
     )
 
     def setDefaults(self):
-        self.astrometryRefObjLoader.requireProperMotion = False
-        self.astrometryRefObjLoader.anyFilterMapsToThis = 'phot_g_mean'
         # sourceSelectorActions.sourceSelector is StarSelector
-        self.sourceSelectorActions.sourceSelector.columnKey = 'extendedness'
+        self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         # extraColumnSelectors.selector1 is SnSelector
-        self.extraColumnSelectors.selector1.fluxType = 'psfFlux'
+        self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         # extraColumnSelectors.selector2 is GalaxySelector
-        self.extraColumnSelectors.selector2.columnKey = 'extendedness'
+        self.extraColumnSelectors.selector2.vectorKey = "extendedness"
 
 
 class CatalogMatchVisitTask(CatalogMatchTask):
-    """Match a visit-level catalog to a reference catalog
-    """
+    """Match a visit-level catalog to a reference catalog"""
 
     ConfigClass = CatalogMatchVisitConfig
     _DefaultName = "catalogMatchVisit"
@@ -351,23 +364,28 @@ class CatalogMatchVisitTask(CatalogMatchTask):
 
         inputs = butlerQC.get(inputRefs)
 
-        columns = ['coord_ra', 'coord_dec', 'detector'] + self.config.extraColumns.list()
-        for selectorAction in [self.config.selectorActions, self.config.sourceSelectorActions,
-                               self.config.extraColumnSelectors]:
+        columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()
+        for selectorAction in [
+            self.config.selectorActions,
+            self.config.sourceSelectorActions,
+            self.config.extraColumnSelectors,
+        ]:
             for selector in selectorAction:
                 selectorSchema = selector.getFormattedInputSchema()
                 columns += [s[0] for s in selectorSchema]
 
         dataFrame = inputs["catalog"].get(parameters={"columns": columns})
-        inputs['catalog'] = dataFrame
+        inputs["catalog"] = dataFrame
 
-        self.refObjLoader = ReferenceObjectLoader(dataIds=[ref.datasetRef.dataId
-                                                           for ref in inputRefs.refCat],
-                                                  refCats=inputs.pop('refCat'),
-                                                  config=self.config.astrometryRefObjLoader,
-                                                  log=self.log)
+        self.refObjLoader = ReferenceObjectLoader(
+            dataIds=[ref.datasetRef.dataId for ref in inputRefs.refCat],
+            refCats=inputs.pop("refCat"),
+            log=self.log,
+        )
+        self.refObjLoader.config.requireProperMotion = self.config.requireProperMotion
+        self.refObjLoader.config.anyFilterMapsToThis = self.config.anyFilterMapsToThis
 
-        self.setRefCat(inputs.pop('visitSummaryTable'))
+        self.setRefCat(inputs.pop("visitSummaryTable"))
 
         outputs = self.run(**inputs)
 
@@ -384,7 +402,7 @@ class CatalogMatchVisitTask(CatalogMatchTask):
         # Get convex hull around the detectors, then get its center and radius
         corners = []
         for visSum in visitSummaryTable:
-            for (ra, dec) in zip(visSum['raCorners'], visSum['decCorners']):
+            for (ra, dec) in zip(visSum["raCorners"], visSum["decCorners"]):
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
@@ -397,12 +415,9 @@ class CatalogMatchVisitTask(CatalogMatchTask):
         # Load the reference catalog in the skyCircle of the detectors, then
         # convert the coordinates to degrees and convert the catalog to a
         # dataframe
-        skyCircle = self.refObjLoader.loadSkyCircle(center,
-                                                    radius,
-                                                    'i',
-                                                    epoch=epoch)
+        skyCircle = self.refObjLoader.loadSkyCircle(center, radius, "i", epoch=epoch)
         refCat = skyCircle.refCat
 
-        refCat['coord_ra'] = (refCat['coord_ra'] * u.radian).to(u.degree).to_value()
-        refCat['coord_dec'] = (refCat['coord_dec'] * u.radian).to(u.degree).to_value()
+        refCat["coord_ra"] = (refCat["coord_ra"] * u.radian).to(u.degree).to_value()
+        refCat["coord_dec"] = (refCat["coord_dec"] * u.radian).to(u.degree).to_value()
         self.refCat = refCat.asAstropy().to_pandas()

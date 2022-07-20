@@ -1,0 +1,7 @@
+description: |
+  Tier2 plots and metrics to assess visit quality
+tasks:
+  catalogMatchVisit:
+    class: lsst.analysis.tools.tasks.catalogMatch.CatalogMatchVisitTask
+  refCatSourceVisit:
+    class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask

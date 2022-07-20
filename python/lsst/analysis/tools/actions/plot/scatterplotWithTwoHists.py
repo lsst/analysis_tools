@@ -20,15 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from functools import partial
+__all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
+
 from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
-import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as sps
-from lsst.analysis.tools.actions.scalar.scalarActions import CountAction, MedianAction, SigmaMadAction
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
@@ -40,68 +38,23 @@ from matplotlib.figure import Figure
 from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ...interfaces import (
-    KeyedData,
-    KeyedDataAction,
-    KeyedDataSchema,
-    PlotAction,
-    Scalar,
-    ScalarAction,
-    Vector,
-    VectorAction,
-)
-from ..keyedData import KeyedScalars
-from ..vector import SnSelector
+from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, Vector
+from ..keyedData.summaryStatistics import SummaryStatisticAction, sigmaMad
+from ..scalar import MedianAction
+from ..vector import MagColumnNanoJansky, SnSelector
 from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
 
 # ignore because coolwarm is actually part of module
 cmapPatch = plt.cm.coolwarm.copy()  # type: ignore
 cmapPatch.set_bad(color="none")
 
-sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
-
-
-class _ApproxMedian(ScalarAction):
-    vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
-    inputUnit = Field[str](doc="Input unit of the vector", default="nJy")
-    outputUnit = Field[str](doc="Output unit of the vector", default="mag(AB)")
-
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.vectorKey.format(**kwargs), Vector),)
-
-    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
-        mask = self.getMask(**kwargs)
-        value = np.sort(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
-        x = int(len(value) / 10)
-        median = np.nanmedian(value[-x:])
-        if self.inputUnit != self.outputUnit:
-            median = (median * u.Unit(self.inputUnit)).to(u.Unit(self.outputUnit)).value
-        return median
-
-
-class _StatsImpl(KeyedScalars):
-    vectorKey = Field[str](doc="Column key to compute scalars")
-
-    snFluxType = Field[str](doc="column key for the flux type used in SN selection")
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)
-        self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)
-        self.scalarActions.count = CountAction(vectorKey=self.vectorKey)
-        self.scalarActions.approxMag = _ApproxMedian(vectorKey=self.snFluxType)
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask = kwargs.get("mask")
-        return super().__call__(data, **(kwargs | dict(mask=mask)))
-
 
 class ScatterPlotStatsAction(KeyedDataAction):
     vectorKey = Field[str](doc="Vector on which to compute statistics")
-    highSNSelector = ConfigurableActionField[VectorAction](
+    highSNSelector = ConfigurableActionField[SnSelector](
         doc="Selector used to determine high SN Objects", default=SnSelector(threshold=2700)
     )
-    lowSNSelector = ConfigurableActionField[VectorAction](
+    lowSNSelector = ConfigurableActionField[SnSelector](
         doc="Selector used to determine low SN Objects", default=SnSelector(threshold=500)
     )
     fluxType = Field[str](doc="Vector key to use to compute signal to noise ratio", default="{band}_psfFlux")
@@ -130,25 +83,35 @@ class ScatterPlotStatsAction(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        highMaskKey = f'{self.identity or ""}HighSNMask'
+        highMaskKey = f'{self.identity.lower() or ""}HighSNMask'
         results[highMaskKey] = self.highSNSelector(data, **kwargs)
 
-        lowMaskKey = f'{self.identity or ""}LowSNMask'
+        lowMaskKey = f'{self.identity.lower() or ""}LowSNMask'
         results[lowMaskKey] = self.lowSNSelector(data, **kwargs)
 
         prefix = f"{band}_" if (band := kwargs.get("band")) else ""
+        fluxes = data[self.fluxType.format(band=band)] if band is not None else None
 
-        stats = _StatsImpl(vectorKey=self.vectorKey, snFluxType=self.fluxType)
+        statAction = SummaryStatisticAction(vectorKey=self.vectorKey)
+
         # this is sad, but pex_config seems to have broken behavior that
         # is dangerous to fix
-        stats.setDefaults()
-        for maskKey, typ in ((lowMaskKey, "low"), (highMaskKey, "high")):
-            for name, value in stats(data, **(kwargs | {"mask": results[maskKey]})).items():
-                tmpKey = (
-                    f"{prefix}{typ}SN{self.identity.capitalize() if self.identity else '' }_{name}".format(
-                        **kwargs
-                    )
-                )
+        statAction.setDefaults()
+
+        medianAction = MedianAction(vectorKey="mag")
+        magAction = MagColumnNanoJansky(vectorKey="flux")
+
+        for maskKey, binName in ((lowMaskKey, "low"), (highMaskKey, "high")):
+            name = f"{prefix}{binName}SN{self.identity.capitalize() if self.identity else ''}"
+            # set the approxMag to the median mag in the SN selection
+            results[f"{name}_approxMag".format(**kwargs)] = (
+                medianAction({"mag": magAction({"flux": fluxes[results[maskKey]]})})
+                if band is not None
+                else np.nan
+            )
+            stats = statAction(data, **(kwargs | {"mask": results[maskKey]})).items()
+            for suffix, value in stats:
+                tmpKey = f"{name}_{suffix}".format(**kwargs)
                 results[tmpKey] = value
         results["highSnThreshold"] = self.highSNSelector.threshold  # type: ignore
         results["lowSnThreshold"] = self.lowSNSelector.threshold  # type: ignore

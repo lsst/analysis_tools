@@ -34,6 +34,8 @@ from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, Scatt
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
+    AstromDiff,
+    CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -44,6 +46,7 @@ from ..actions.vector import (
     VectorSelector,
 )
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
+from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
 from ..interfaces import AnalysisPlot
 
 
@@ -192,10 +195,68 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
-        self.produce = SkyPlot()
+        self.post_process = SkyPlot()
+        self.post_process.plotTypes = ["stars"]
+        self.post_process.plotName = f"ap12-psf_{self.band}"
+        self.post_process.xAxisLabel = "R.A."
+        self.post_process.yAxisLabel = "Declination"
+        self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
+        self.post_process.plotOutlines = False
+
+
+class TargetRefCatDelta(AnalysisPlot):
+    """Plot the difference in milliseconds between a target catalog and a
+    reference catalog for the coordinate set in `setDefaults`.
+    """
+
+    def coaddContext(self) -> None:
+        self.prep = CoaddPrep()
+        self.process.buildActions.starSelector.vectorKey = "{band}_extendedness"
+        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
+
+    def visitContext(self) -> None:
+        self.prep = VisitPrep()
+        self.process.buildActions.starSelector.vectorKey = "extendedness"
+        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
+        self.process.calculateActions.stars.fluxType = "psfFlux"
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+
+    def setDefaults(self, coordinate):
+        super().setDefaults()
+
+        self.process.buildActions.starSelector = StarSelector()
+
+        self.process.filterActions.xStars = DownselectVector(
+            vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
+        )
+        coordStr = coordinate.lower()
+        self.process.buildActions.yStars = AstromDiff(
+            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        )
+        self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="yStars")
+
+        self.produce = ScatterPlotWithTwoHists()
+
         self.produce.plotTypes = ["stars"]
-        self.produce.plotName = "ap12-psf_{band}"
-        self.produce.xAxisLabel = "R.A. (degrees)"
-        self.produce.yAxisLabel = "Dec. (degrees)"
-        self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
-        self.produce.plotOutlines = False
+        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.yAxisLabel = f"${coordinate}_{{target}} - {coordinate}_{{ref}}$ (marcsec)"
+        self.produce.magLabel = "PSF Magnitude (mag)"
+
+
+class TargetRefCatDeltaRAScatterPlot(TargetRefCatDelta):
+    """Plot the difference in milliseconds between the RA of a target catalog
+    and a reference catalog
+    """
+
+    def setDefaults(self):
+        super().setDefaults(coordinate="RA")
+
+
+class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
+    """Plot the difference in milliseconds between the Dec of a target catalog
+    and a reference catalog
+    """
+
+    def setDefaults(self):
+        super().setDefaults(coordinate="Dec")

@@ -5,5 +5,3 @@ tasks:
     class: lsst.analysis.tools.tasks.objectTableTractAnalysis.ObjectTableTractAnalysisTask
     config:
       bands: ['r', 'i']
-  catalogMatchTract:
-    class: lsst.analysis.tools.pipelineTasks.catalogMatch.CatalogMatchTask

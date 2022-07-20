@@ -220,3 +220,45 @@ class ExtinctionCorrectedMagDiff(VectorAction):
             correction = correction.to(u.mmag)
 
         return np.array(diff - correction.value)
+
+
+class AstromDiff(VectorAction):
+    """Calculate the difference between two columns, assuming their units
+    are degrees, and convert the difference to arcseconds.
+    Parameters
+    ----------
+    df : `pandas.core.frame.DataFrame`
+        The catalog to calculate the position difference from.
+    Returns
+    -------
+    The difference.
+    Notes
+    -----
+    The columns need to be in units (specifiable in
+    the radecUnits1 and 2 config options) that can be converted
+    to arcseconds. This action doesn't have any calibration
+    information and assumes that the positions are already
+    calibrated.
+    """
+
+    col1 = Field[str](doc="Column to subtract from", dtype=str)
+    radecUnits1 = Field[str](doc="Units for col1", dtype=str, default="degree")
+    col2 = Field[str](doc="Column to subtract", dtype=str)
+    radecUnits2 = Field[str](doc="Units for col2", dtype=str, default="degree")
+    returnMilliArcsecs = Field[bool](doc="Use marcseconds or not?", dtype=bool, default=True)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.col1, Vector), (self.col2, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        angle1 = np.array(data[self.col1.format(**kwargs)]) * u.Unit(self.radecUnits1)
+
+        angle2 = np.array(data[self.col2.format(**kwargs)]) * u.Unit(self.radecUnits2)
+
+        angleDiff = angle1 - angle2
+
+        if self.returnMilliArcsecs:
+            angleDiffValue = angleDiff.to(u.arcsec).value * 1000
+        else:
+            angleDiffValue = angleDiff.value
+        return angleDiffValue

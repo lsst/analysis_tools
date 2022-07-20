@@ -5,5 +5,3 @@ tasks:
     class: lsst.analysis.tools.tasks.sourceTableVisitAnalysis.SourceTableVisitAnalysisTask
     config:
       bands: ['r', 'i']
-  catalogMatchVisit:
-    class: lsst.analysis.tools.pipelineTasks.catalogMatch.CatalogMatchVisitTask

@@ -37,6 +37,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     CoaddPlotFlagSelector,
     FlagSelector,
     GalaxySelector,
+    RangeSelector,
     SkyObjectSelector,
     SnSelector,
     StarSelector,
@@ -339,6 +340,13 @@ class TestVectorSelectors(unittest.TestCase):
         truth = np.ones(self.size, dtype=bool)
         for bit in (1, 11):
             truth[bit] = 0
+        np.testing.assert_array_equal(result, truth)
+
+    def testRangeSelector(self):
+        selector = RangeSelector(column="r_psfFlux", minimum=np.nextafter(20, 30), maximum=50)
+        self._checkSchema(selector, ["r_psfFlux"])
+        result = self.data["r_psfFlux"][selector(self.data)]
+        truth = [30, 40]
         np.testing.assert_array_equal(result, truth)
 
     def testSnSelector(self):

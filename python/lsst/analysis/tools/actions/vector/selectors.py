@@ -182,7 +182,7 @@ class SnSelector(VectorAction):
         self.threshold in self.fluxType
         Parameters
         ----------
-        df : `Tabular`
+        data : `KeyedData`
         Returns
         -------
         result : `Vector`

@@ -37,6 +37,7 @@ from .selectors import RangeSelector
 class CalcBinnedStatsAction(KeyedDataAction):
     key_vector = Field[str](doc="Vector on which to compute statistics")
     name_prefix = Field[str](doc="Field name to append stat names to")
+    name_suffix = Field[str](doc="Field name to append to stat names")
     selector_range = ConfigurableActionField[RangeSelector](doc="Range selector")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -58,31 +59,31 @@ class CalcBinnedStatsAction(KeyedDataAction):
 
     @cached_property
     def name_count(self):
-        return f"{self.name_prefix}_count"
+        return f"{self.name_prefix}count{self.name_suffix}"
 
     @cached_property
     def name_mask(self):
-        return f"{self.name_prefix}_mask"
+        return f"{self.name_prefix}mask{self.name_suffix}"
 
     @cached_property
     def name_median(self):
-        return f"{self.name_prefix}_median"
+        return f"{self.name_prefix}median{self.name_suffix}"
 
     @cached_property
     def name_select_maximum(self):
-        return f"{self.name_prefix}_select_maximum"
+        return f"{self.name_prefix}select_maximum{self.name_suffix}"
 
     @cached_property
     def name_select_median(self):
-        return f"{self.name_prefix}_select_median"
+        return f"{self.name_prefix}select_median{self.name_suffix}"
 
     @cached_property
     def name_select_minimum(self):
-        return f"{self.name_prefix}_select_minimum"
+        return f"{self.name_prefix}select_minimum{self.name_suffix}"
 
     @cached_property
     def name_sigmaMad(self):
-        return f"{self.name_prefix}_sigmaMad"
+        return f"{self.name_prefix}sigmaMad{self.name_suffix}"
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
@@ -98,10 +99,11 @@ class CalcBinnedStatsAction(KeyedDataAction):
         for name, value in action(data, **kwargs).items():
             results[getattr(self, f"name_{name}")] = value
 
-        values = cast(Vector, data[self.selector_range.column][mask])  # type: ignore
-        results[self.name_select_maximum] = cast(Scalar, float(np.nanmax(values)))
-        results[self.name_select_median] = cast(Scalar, float(np.nanmedian(values)))
-        results[self.name_select_minimum] = cast(Scalar, float(np.nanmin(values)))
+        values = cast(Vector, data[self.selector_range.key][mask])  # type: ignore
+        valid = np.sum(np.isfinite(values)) > 0
+        results[self.name_select_maximum] = cast(Scalar, float(np.nanmax(values)) if valid else np.nan)
+        results[self.name_select_median] = cast(Scalar, float(np.nanmedian(values)) if valid else np.nan)
+        results[self.name_select_minimum] = cast(Scalar, float(np.nanmin(values)) if valid else np.nan)
         results["range_maximum"] = self.selector_range.maximum
         results["range_minimum"] = self.selector_range.minimum
 

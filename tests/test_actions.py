@@ -253,7 +253,7 @@ class TestVectorActions(unittest.TestCase):
         np.testing.assert_array_almost_equal(result, truth.value)
 
     def testCalcBinnedStats(self):
-        selector = RangeSelector(column="r_vector", minimum=0, maximum=self.size + 1)
+        selector = RangeSelector(key="r_vector", minimum=0, maximum=self.size + 1)
         prefix = "a_"
         stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
         result = stats(self.data)
@@ -401,7 +401,7 @@ class TestVectorSelectors(unittest.TestCase):
         np.testing.assert_array_equal(result, truth)
 
     def testRangeSelector(self):
-        selector = RangeSelector(column="r_psfFlux", minimum=np.nextafter(20, 30), maximum=50)
+        selector = RangeSelector(key="r_psfFlux", minimum=np.nextafter(20, 30), maximum=50)
         self._checkSchema(selector, ["r_psfFlux"])
         result = self.data["r_psfFlux"][selector(self.data)]
         truth = [30, 40]

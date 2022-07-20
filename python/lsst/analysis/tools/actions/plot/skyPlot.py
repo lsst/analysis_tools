@@ -72,18 +72,22 @@ class SkyPlot(PlotAction):
         if "stars" in self.plotTypes:  # type: ignore
             base.append(("xStars", Vector))
             base.append(("yStars", Vector))
+            base.append(("zStars", Vector))
             base.append(("starStatMask", Vector))
         if "galaxies" in self.plotTypes:  # type: ignore
             base.append(("xGalaxies", Vector))
             base.append(("yGalaxies", Vector))
+            base.append(("zGalaxies", Vector))
             base.append(("galaxyStatMask", Vector))
         if "unknown" in self.plotTypes:  # type: ignore
             base.append(("xUnknowns", Vector))
             base.append(("yUnknowns", Vector))
+            base.append(("zUnknowns", Vector))
             base.append(("unknownStatMask", Vector))
         if "any" in self.plotTypes:  # type: ignore
             base.append(("x", Vector))
             base.append(("y", Vector))
+            base.append(("z", Vector))
             base.append(("statMask", Vector))
 
         return base

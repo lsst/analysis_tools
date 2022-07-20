@@ -1,0 +1,12 @@
+description: |
+  Tier 1 plots and metrics to assess visit quality
+tasks:
+  analyzeSourceTableCore:
+    class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
+    config:
+      # Add plots and metrics that work when we have some
+      # plots.label = APlotClass
+      # metrics.name = AMetricsClass
+      python: |
+        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.analysisMetrics import *

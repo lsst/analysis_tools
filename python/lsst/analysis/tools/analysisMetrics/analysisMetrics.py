@@ -20,6 +20,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+__all__ = ["ShapeSizeFractionalMetric", "StellarLocusBaseMetric", "WPerpPSFMetric"]
+
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..actions.scalar.scalarActions import ApproxFloor

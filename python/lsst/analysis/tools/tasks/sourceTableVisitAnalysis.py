@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisMetrics.limitingMagnitudeMetric import FiveSigmaPointSourceDepthMetric
-from ..analysisMetrics.skyFluxStatisticMetrics import SkyFluxStatisticMetric
-from ..contexts import VisitContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -26,16 +23,9 @@ class SourceTableVisitAnalysisConnections(
 class SourceTableVisitAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=SourceTableVisitAnalysisConnections
 ):
-    def setDefaults(self):
-        super().setDefaults()
-        # set plots to run
-
-        # set metrics to run
-        self.metrics.fiveSigmaPointSourceDepthMetric = FiveSigmaPointSourceDepthMetric()
-        self.metrics.skyFluxVisitStatisticMetric = SkyFluxStatisticMetric()
-        self.metrics.skyFluxVisitStatisticMetric.applyContext(VisitContext)
+    pass
 
 
 class SourceTableVisitAnalysisTask(AnalysisPipelineTask):
     ConfigClass = SourceTableVisitAnalysisConfig
-    _DefaultName = "sourceTableVisitAnalysisTask"
+    _DefaultName = "sourceTableVisitAnalysis"

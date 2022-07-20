@@ -20,12 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+__all__ = [
+    "ObjectTableTractAnalysisTask",
+]
+
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
-from ..analysisMetrics.skyFluxStatisticMetrics import SkyFluxStatisticMetric
-from ..analysisPlots.analysisPlots import Ap12PsfSkyPlot, ShapeSizeFractionalDiffScatter
-from ..contexts import CoaddContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -46,18 +46,9 @@ class ObjectTableTractAnalysisConnections(
 class ObjectTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=ObjectTableTractAnalysisConnections
 ):
-    def setDefaults(self):
-        super().setDefaults()
-        # set plots to run
-        self.plots.shapeSizeFractionalDiffScatter = ShapeSizeFractionalDiffScatter()
-        self.plots.ap12PsfSkyPlot = Ap12PsfSkyPlot()
-
-        # set metrics to run
-        self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
-        self.metrics.skyFluxStatisticMetric = SkyFluxStatisticMetric()
-        self.metrics.skyFluxStatisticMetric.applyContext(CoaddContext)
+    pass
 
 
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = ObjectTableTractAnalysisConfig
-    _DefaultName = "objectTableTractAnalysisTask"
+    _DefaultName = "objectTableTractAnalysis"

@@ -1,0 +1,12 @@
+description: |
+  Tier1 plots and metrics to assess coadd quality
+tasks:
+  analyzeObjectTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      bands: ['u', 'g', 'r', 'i', 'z', 'y']
+      plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatter
+      metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
+      python: |
+        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.analysisMetrics import *

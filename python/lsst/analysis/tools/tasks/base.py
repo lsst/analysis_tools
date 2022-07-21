@@ -48,13 +48,13 @@ from ..interfaces import AnalysisMetric, AnalysisPlot, KeyedData
 
 
 class AnalysisBaseConnections(
-    PipelineTaskConnections, dimensions={}, defaultTemplates={"inputName": "Placeholder"}
+    PipelineTaskConnections, dimensions={}, defaultTemplates={"outputName": "Placeholder"}
 ):
     r"""Base class for Connections used for AnalysisTools PipelineTasks.
 
     This class has a pre-defined output connection for the
     MetricMeasurementMapping. The dataset type name for this connection is
-    determined by the template ``inputName``.
+    determined by the template ``outputName``.
 
     Output connections for plots created by `AnalysisPlot`\ s are created
     dynamically when an instance of the class is created. The init method
@@ -69,18 +69,18 @@ class AnalysisBaseConnections(
 
     metrics = ct.Output(
         doc="Metrics calculated on input dataset type",
-        name="{inputName}_metrics",
+        name="{outputName}_metrics",
         storageClass="MetricMeasurementBundle",
     )
 
     def __init__(self, *, config: AnalysisBaseConfig = None):  # type: ignore
-        # Validate that the inputName template has been set in config. This
+        # Validate that the outputName template has been set in config. This
         # should have been checked early with the configs validate method, but
         # it is possible for someone to manually create everything in a script
         # without running validate, so also check it late here.
-        if (inputName := config.connections.inputName) == "Placeholder":  # type: ignore
+        if (outputName := config.connections.outputName) == "Placeholder":  # type: ignore
             raise RuntimeError(
-                "Subclasses must specify an alternative value for the defaultTemplate `inputName`"
+                "Subclasses must specify an alternative value for the defaultTemplate `outputName`"
             )
         super().__init__(config=config)
 
@@ -117,7 +117,7 @@ class AnalysisBaseConnections(
 
         # For each of the names found, create output connections.
         for name in names:
-            name = f"{inputName}_{name}"
+            name = f"{outputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
                     f"Plot with name {name} conflicts with existing connection"
@@ -158,8 +158,8 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     def validate(self):
         super().validate()
         # Validate that the required connections template is set.
-        if self.connections.inputName == "Placeholder":  # type: ignore
-            raise RuntimeError("Connections class 'inputName' must have a config explicitly set")
+        if self.connections.outputName == "Placeholder":  # type: ignore
+            raise RuntimeError("Connections class 'outputName' must have a config explicitly set")
 
 
 class _StandinPlotInfo(dict):
@@ -242,7 +242,7 @@ class AnalysisPipelineTask(PipelineTask):
         if data is None:
             raise ValueError("data must not be none")
         results = Struct()
-        plotKey = f"{self.config.connections.inputName}_{{name}}"  # type: ignore
+        plotKey = f"{self.config.connections.outputName}_{{name}}"  # type: ignore
         if "bands" not in kwargs:
             kwargs["bands"] = list(self.config.bands)
         for name, value in self.runPlots(data, **kwargs).getDict().items():

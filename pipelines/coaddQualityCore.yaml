@@ -5,6 +5,7 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
       bands: ['u', 'g', 'r', 'i', 'z', 'y']
+      connections.outputName: objectTableCore
       plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatter
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
       python: |

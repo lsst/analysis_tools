@@ -32,7 +32,7 @@ from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineT
 class ObjectTableTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "objectTable_tract"},
+    defaultTemplates={"outputName": "objectTable_tract"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",

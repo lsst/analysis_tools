@@ -20,27 +20,78 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, Callable
 
-from lsst.daf.butler import Butler, DataId
 from lsst.pipe.base.connections import PipelineTaskConnections
 from lsst.pipe.base.connectionTypes import BaseConnection
 
 from .base import AnalysisBaseConfig
 
+if TYPE_CHECKING:
+    from lsst.daf.butler import Butler, DataId
+
 
 def reconstructAnalysisTools(
-    butler: Butler, collection: str, label: str, dataId: DataId
+    butler: Butler,
+    collection: str,
+    label: str,
+    dataId: DataId,
+    callback: Callable[[dict[str, Any], DataId], dict[str, Any]] | None,
 ) -> tuple[AnalysisBaseConfig, dict[str, Any]]:
+    """Reconstructs the analysis tools used to produce metrics and plots in a
+    task and all input data required.
+
+    Parameters
+    ----------
+    butler : `~lsst.daf.butler.Butler`
+        The butler where the data is stored.
+    collection : `str`
+        Collection within the butler associated with desired data.
+    label : `str`
+        The label from the `~lsst.pipe.base.Pipeline` associated with the task
+        who's tools are to be reconstructed.
+    dataId : `~lsst.daf.butler.DataId`
+        Identifier for which data to retrieve.
+    callback : `~typing.Callable` or None
+        An optional function which can transform the data after it has been
+        loaded from the butler. The function must take a dict of strings to
+        data products, and the DataId. The function must return a dict of
+        string to data products. The returned dict is what will be returned
+        by `reconstructAnalysisTools`
+
+    Returns
+    -------
+    config : `AnalysisBaseConfig`
+        The configuration of the task run to produce metrics and plots. This
+        config contains all the `AnalysisTools` as configured when the task
+        produced the data.
+    data : `dict` of `str` to `Any`
+        The data that went into producing metrics and plots.
+    """
     configDSType = f"{label}_config"
     config = butler.get(configDSType, collections=(collection,))
 
     connections: PipelineTaskConnections = config.connections.ConnectionsClass(config=config)
-    inputs = {}
+    inputs: dict[str, Any] = {}
 
     for name in connections.inputs:
         connection: BaseConnection = getattr(connections, name)
         dsName = connection.name
-        inputs[name] = butler.get(dsName, dataId=dataId, collections=(collection,))
+        # If this is a multiple connection, query the butler for all the
+        # inputs for this dataset type name
+        if connection.multiple:
+            container = []
+            for ref in set(
+                butler.registry.queryDatasets(
+                    dsName, dataId=dataId, findFirst=True, collections=(collection,)
+                )
+            ):
+                container.append(butler.get(ref, collections=(collection,)))
+            inputs[name] = container
+        else:
+            inputs[name] = butler.get(dsName, dataId=dataId, collections=(collection,))
+
+    if callback is not None:
+        inputs = callback(inputs, dataId)
 
     return (config, inputs)

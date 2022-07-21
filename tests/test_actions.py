@@ -45,12 +45,14 @@ from lsst.analysis.tools.actions.vector.selectors import (
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
+    DivideVector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
     MagDiff,
+    SubtractVector,
 )
 
 
@@ -152,6 +154,24 @@ class TestVectorActions(unittest.TestCase):
         actionB = LoadVector(vectorKey="{band2}_vector")
         truth = [0.0, -0.5, -0.6666666666666666, -0.75, -0.8]
         diff = FractionalDifference(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testSubtract(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
+        diff = SubtractVector(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testDivide(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = 1 / np.arange(1, 6)
+        diff = DivideVector(actionA=actionA, actionB=actionB)
         result = diff(self.data, band1="r", band2="i")
         self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
         np.testing.assert_array_almost_equal(result, truth)

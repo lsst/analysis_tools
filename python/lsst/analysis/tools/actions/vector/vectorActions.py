@@ -145,6 +145,38 @@ class Sn(VectorAction):
         return np.array(cast(Vector, result))
 
 
+class SubtractVector(VectorAction):
+    """Calculate (A-B)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA - vecB
+
+
+class DivideVector(VectorAction):
+    """Calculate (A-B)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA / vecB
+
+
 class LoadVector(VectorAction):
     """Load and return a Vector from KeyedData"""
 

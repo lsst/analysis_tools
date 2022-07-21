@@ -27,7 +27,15 @@ __all__ = [
 
 from ..actions.keyedData import KeyedDataSelectorAction
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
-from ..actions.scalar.scalarActions import ApproxFloor
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
+from ..actions.scalar.scalarActions import (
+    ApproxFloor,
+    FracThreshold,
+    MeanAction,
+    MedianAction,
+    SigmaMadAction,
+    StdevAction,
+)
 from ..actions.vector import (
     AndSelector,
     BandSelector,
@@ -318,7 +326,9 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
 
         self.produce.units = {  # type: ignore
             "photRepeatStdev": "mag",
+            "photRepeatOutlier": "percent",
         }
         self.produce.newNames = {
-            "photRepeatStdev": "{band}_stellarPhotRepeatStdev"
+            "photRepeatStdev": "{band}_stellarPhotRepeatStdev",
+            "photRepeatOutlier": "{band}_stellarPhotRepeatOutlierFraction",
         }

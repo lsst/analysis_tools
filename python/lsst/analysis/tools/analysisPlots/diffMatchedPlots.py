@@ -20,30 +20,36 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MatchedRefCoaddPlot", "MatchedRefCoaddCModelFluxPlot", "MatchedRefCoaddDiffCModelFluxPlot")
+__all__ = ("MatchedRefCoaddPlot", "MatchedRefCoaddCModelFluxPlot")
 
-from ..interfaces import AnalysisPlot
-from ..analysisParts.diffMatched import setMatchedRefCoaddDefaults, setMatchedRefCoaddDiffMagDefaults
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
-from ..actions.vector.vectorActions import (
-    DownselectVector,
-    VectorSelector,
-)
+from ..actions.vector.vectorActions import DownselectVector, VectorSelector
+from ..analysisParts.diffMatched import MatchedRefCoaddDiffMagTool
+from ..interfaces import AnalysisPlot
 
 
 class MatchedRefCoaddPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
-        setMatchedRefCoaddDefaults(self)
         self.produce = ScatterPlotWithTwoHists()
 
         self.produce.plotTypes = ["galaxies", "stars"]
         self.produce.xAxisLabel = "Reference Magnitude (mag)"
 
 
-class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot):
+class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot, MatchedRefCoaddDiffMagTool):
+    def matchRefDiffMagContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchRefDiffMagContext()
+        self.produce.yAxisLabel = "cModel - Reference Magnitude (mag)"
+
+    def matchRefDiffFluxChiContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchRefDiffFluxChiContext()
+        self.produce.yAxisLabel = "chi = (cModel - Ref mag)/error"
+
     def setDefaults(self):
-        super().setDefaults()
+        super(MatchedRefCoaddCModelFluxPlot, self).setDefaults()
+        self.produce.magLabel = "cModel Magnitude (mag)"
+
         # downselect the cModelFlux as well
         for (prefix, plural) in (("star", "Stars"), ("galaxy", "Galaxies")):
             for suffix in ("", "Err"):
@@ -52,8 +58,8 @@ class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot):
                     f"{prefix}_cModelFlux{suffix}",
                     DownselectVector(
                         vectorKey=f"{{band}}_cModelFlux{suffix}",
-                        selector=VectorSelector(vectorKey=f"{prefix}Selector")
-                    )
+                        selector=VectorSelector(vectorKey=f"{prefix}Selector"),
+                    ),
                 )
 
             statAction = ScatterPlotStatsAction(vectorKey=f"y{plural.capitalize()}")
@@ -64,12 +70,3 @@ class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot):
             statAction.lowSNSelector.threshold = 10
             statAction.fluxType = fluxType
             setattr(self.process.calculateActions, plural, statAction)
-
-
-class MatchedRefCoaddDiffCModelFluxPlot(MatchedRefCoaddCModelFluxPlot):
-    def setDefaults(self):
-        super().setDefaults()
-        setMatchedRefCoaddDiffMagDefaults(self)
-
-        self.produce.yAxisLabel = "cModel - Reference Magnitude (mmag)"
-        self.produce.magLabel = "cModel Magnitude (mag)"

@@ -29,7 +29,7 @@ from ._baseContext import Context
 
 
 class VisitContext(Context):
-    """A context which indicates `AnalysisActions are being run in the context
+    """A context which indicates `AnalysisAction`s are being run in the context
     of visit level data.
     """
 
@@ -37,8 +37,20 @@ class VisitContext(Context):
 
 
 class CoaddContext(Context):
-    """A context which indicates `AnalysisActions are being run in the context
+    """A context which indicates `AnalysisAction`s are being run in the context
     of coadd level data.
     """
 
     pass
+
+
+class MatchedRefDiffMagContext(Context):
+    """A context which indicates `AnalysisAction`s are computing
+    magnitude differences for matches to reference objects.
+    """
+
+
+class MatchedRefDiffFluxChiContext(Context):
+    """A context which indicates `AnalysisAction`s are computing
+    error-scaled flux differences for matches to reference objects.
+    """

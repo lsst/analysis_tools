@@ -34,7 +34,7 @@ class DiffMatchedAnalysisConnections(
         doc="Tract based object table to load from the butler",
         name="matched_truth_summary_objectTable_tract",
         storageClass="DataFrame",
-        # deferLoad=True,
+        deferLoad=True,
         dimensions=("skymap", "tract"),
     )
 

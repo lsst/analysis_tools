@@ -20,47 +20,63 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("setMatchedRefCoaddDefaults", "setMatchedRefCoaddDiffMagDefaults")
+__all__ = ("MatchedRefCoaddTool", "MatchedRefCoaddDiffMagTool")
 
-from ..interfaces import AnalysisTool
 from ..actions.vector.selectors import GalaxySelector, StarSelector
 from ..actions.vector.vectorActions import (
+    DivideVector,
     DownselectVector,
+    LoadVector,
     MagColumnNanoJansky,
-    MagDiff,
+    SubtractVector,
     VectorSelector,
 )
+from ..interfaces import AnalysisTool
 
 
-def setMatchedRefCoaddDefaults(tool: AnalysisTool):
-    # tool.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-    tool.process.buildActions.mags_ref = MagColumnNanoJansky(vectorKey="refcat_flux_{band}")
+class MatchedRefCoaddTool(AnalysisTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.fluxes_ref = LoadVector(vectorKey="refcat_flux_{band}")
+        # TODO: Why doesn't vectorKey="fluxes_ref" work?? Would it work as a filterAction?
+        self.process.buildActions.mags_ref = MagColumnNanoJansky(
+            vectorKey=self.process.buildActions.fluxes_ref.vectorKey
+        )
 
-    # pre-compute a stellar selector mask so it can be used in the filter
-    # actions while only being computed once, alternatively the stellar
-    # selector could be calculated and applied twice in the filter stage
-    tool.process.buildActions.galaxySelector = GalaxySelector(columnKey='refExtendedness')
-    tool.process.buildActions.starSelector = StarSelector(columnKey='refExtendedness')
+        self.process.buildActions.galaxySelector = GalaxySelector(vectorKey="refExtendedness")
+        self.process.buildActions.starSelector = StarSelector(vectorKey="refExtendedness")
 
-    tool.process.filterActions.xGalaxies = DownselectVector(
-        vectorKey="mags_ref", selector=VectorSelector(vectorKey="galaxySelector")
-    )
-    tool.process.filterActions.xStars = DownselectVector(
-        vectorKey="mags_ref", selector=VectorSelector(vectorKey="starSelector")
-    )
+        self.process.filterActions.xGalaxies = DownselectVector(
+            vectorKey="mags_ref", selector=VectorSelector(vectorKey="galaxySelector")
+        )
+        self.process.filterActions.xStars = DownselectVector(
+            vectorKey="mags_ref", selector=VectorSelector(vectorKey="starSelector")
+        )
 
 
-def setMatchedRefCoaddDiffMagDefaults(tool: AnalysisTool, column_flux: str = None):
-    if column_flux is None:
-        column_flux = "{band}_cModelFlux"
-    tool.process.buildActions.magDiff = MagDiff(
-        col1=column_flux,
-        col2=tool.process.buildActions.mags_ref.vectorKey,
-    )
+class MatchedRefCoaddDiffMagTool(MatchedRefCoaddTool):
+    def matchRefDiffMagContext(self):
+        self.process.buildActions.diff = SubtractVector(
+            actionA=MagColumnNanoJansky(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
+            actionB=self.process.buildActions.mags_ref,
+        )
 
-    tool.process.filterActions.yGalaxies = DownselectVector(
-        vectorKey="magDiff", selector=VectorSelector(vectorKey="galaxySelector")
-    )
-    tool.process.filterActions.yStars = DownselectVector(
-        vectorKey="magDiff", selector=VectorSelector(vectorKey="starSelector")
-    )
+    def matchRefDiffFluxChiContext(self):
+        self.process.buildActions.diff = DivideVector(
+            actionA=SubtractVector(
+                actionA=LoadVector(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
+                actionB=LoadVector(vectorKey=self.process.buildActions.fluxes_ref.vectorKey),
+            ),
+            actionB=LoadVector(vectorKey=f"{self.process.buildActions.fluxes_meas.vectorKey}Err"),
+        )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.fluxes_meas = LoadVector(vectorKey="{band}_cModelFlux")
+        self.process.filterActions.yGalaxies = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
+        )
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="starSelector")
+        )

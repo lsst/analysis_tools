@@ -22,46 +22,47 @@ from __future__ import annotations
 
 __all__ = ("MatchedRefCoaddMetric",)
 
-from ..analysisParts.diffMatched import setMatchedRefCoaddDefaults, setMatchedRefCoaddDiffMagDefaults
-from ..interfaces import AnalysisMetric
 from ..actions.vector.calcBinnedStats import CalcBinnedStatsAction
 from ..actions.vector.selectors import RangeSelector
+from ..analysisParts.diffMatched import MatchedRefCoaddDiffMagTool
+from ..interfaces import AnalysisMetric
 
 
 class MatchedRefCoaddMetric(AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
-        setMatchedRefCoaddDefaults(self)
 
         self.process.calculateActions.galaxies = CalcBinnedStatsAction(vectorKey="yGalaxies")
         self.process.calculateActions.stars = CalcBinnedStatsAction(vectorKey="yStars")
 
-        # TODO: Finish
-        self.produce.units = {  # type: ignore
-            "{band}_highSNStars_median": "pixel",
-            "{band}_highSNStars_sigmaMad": "pixel",
-            "{band}_highSNStars_count": "count",
-            "{band}_lowSNStars_median": "pixel",
-            "{band}_lowSNStars_sigmaMad": "pixel",
-            "{band}_lowSNStars_count": "count",
-        }
 
-
-class MatchedRefCoaddDiffCModelFluxMetric(MatchedRefCoaddMetric):
+class MatchedRefCoaddDiffCModelFluxMetric(MatchedRefCoaddDiffMagTool, MatchedRefCoaddMetric):
     def setDefaults(self):
-        super().setDefaults()
-        setMatchedRefCoaddDiffMagDefaults(self)
+        super(MatchedRefCoaddDiffCModelFluxMetric).setDefaults()
         minimum = 15
         maximum = 16
 
-        for action, name_class in (
-            (self.process.calculateActions.galaxies, "resolved"),
-            (self.process.calculateActions.stars, "unresolved"),
+        units = {}
+
+        for action, x_key, name_class in (
+            (self.process.calculateActions.galaxies, "xGalaxies", "resolved"),
+            (self.process.calculateActions.stars, "xStars", "unresolved"),
         ):
             name_prefix = f"photom_mag_cModelFlux_{name_class}_diff_sig_mad_ref_mag15"
             action.rangeSelector = RangeSelector(
-                column="mags_ref",
+                column=x_key,
                 minimum=minimum,
                 maximum=maximum,
             )
             action.name_prefix = name_prefix
+
+            units.update(
+                {
+                    action.name_selectMedian: "mag",
+                    action.name_median: "mag",
+                    action.name_sigmaMad: "mag",
+                    action.name_count: "count",
+                }
+            )
+
+        self.produce.units = units  # type: ignore

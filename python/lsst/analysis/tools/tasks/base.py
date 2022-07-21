@@ -32,10 +32,15 @@ connection classes and should specify a unique name
 """
 
 from collections import abc
+from typing import TYPE_CHECKING, Iterable, cast
 
+if TYPE_CHECKING:
+    from lsst.daf.butler import DeferredDatasetHandle
 from lsst.pex.config import ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base.butlerQuantumContext import ButlerQuantumContext
+from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 
 from ..analysisMetrics.metricMeasurementBundle import MetricMeasurementBundle
@@ -246,3 +251,80 @@ class AnalysisPipelineTask(PipelineTask):
             setattr(results, name, value)
 
         return results
+
+    def runQuantum(
+        self,
+        butlerQC: ButlerQuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        """Override default runQuantum to load the minimal columns necessary
+        to complete the action.
+
+        Parameters
+        ----------
+        butlerQC : `ButlerQuantumContext`
+            A butler which is specialized to operate in the context of a
+            `lsst.daf.butler.Quantum`.
+        inputRefs : `InputQuantizedConnection`
+            Datastructure whose attribute names are the names that identify
+            connections defined in corresponding `PipelineTaskConnections`
+            class. The values of these attributes are the
+            `lsst.daf.butler.DatasetRef` objects associated with the defined
+            input/prerequisite connections.
+        outputRefs : `OutputQuantizedConnection`
+            Datastructure whose attribute names are the names that identify
+            connections defined in corresponding `PipelineTaskConnections`
+            class. The values of these attributes are the
+            `lsst.daf.butler.DatasetRef` objects associated with the defined
+            output connections.
+        """
+        inputs = butlerQC.get(inputRefs)
+        data = self.loadData(inputs["data"])
+        outputs = self.run(data=data)
+        butlerQC.put(outputs, outputRefs)
+
+    def loadData(self, handle: DeferredDatasetHandle, names: Iterable[str] | None = None) -> KeyedData:
+        """Load the minimal set of keyed data from the input dataset.
+
+        Parameters
+        ----------
+        handle : `DeferredDatasetHandle`
+            Handle to load the dataset with only the specified columns.
+        names : `Iterable` of `str`
+            The names of keys to extract from the dataset.
+            If `names` is `None` then the `collectInputNames` method
+            is called to generate the names.
+            For most purposes these are the names of columns to load from
+            a catalog or data frame.
+
+        Returns
+        -------
+        result: `KeyedData`
+            The dataset with only the specified keys loaded.
+        """
+        if names is None:
+            names = self.collectInputNames()
+        return cast(KeyedData, handle.get(parameters={"columns": names}))
+
+    def collectInputNames(self) -> Iterable[str]:
+        """Get the names of the inputs.
+
+        If using the default `loadData` method this will gather the names
+        of the keys to be loaded from an input dataset.
+
+        Returns
+        -------
+        inputs : `Iterable` of `str`
+            The names of the keys in the `KeyedData` object to extract.
+
+        """
+        inputs = set()
+        for band in self.config.bands:
+            for name, action in self.config.plots.items():
+                for column, dataType in action.getFormattedInputSchema(band=band):
+                    inputs.add(column)
+            for name, action in self.config.metrics.items():
+                for column, dataType in action.getFormattedInputSchema(band=band):
+                    inputs.add(column)
+        return inputs

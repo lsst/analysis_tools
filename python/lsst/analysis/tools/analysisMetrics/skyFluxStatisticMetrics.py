@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = "SkyFluxStatisticMetric"
+__all__ = ("SkyFluxStatisticMetric",)
 
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector.selectors import SkyObjectSelector, SkySourceSelector
@@ -28,7 +28,12 @@ from ..interfaces import AnalysisMetric
 
 
 class SkyFluxStatisticMetric(AnalysisMetric):
-    # Calculate sky flux statistics on objectTable
+    """Calculate sky flux statistics. This uses the 9-pixel aperture flux for
+    sky sources/objects, and returns multiple statistics on the measured
+    fluxes. Note that either visitContext (measurement on sourceTable) or
+    coaddContext (measurement on objectTable) must be specified.
+    """
+
     parameterizedBand: bool = True
     fluxType: str = "ap09Flux"
 

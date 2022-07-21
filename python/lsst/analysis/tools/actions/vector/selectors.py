@@ -133,6 +133,10 @@ class CoaddPlotFlagSelector(FlagSelector):
 
 
 class VisitPlotFlagSelector(FlagSelector):
+    """Select on a set of flags appropriate for making visit-level plots
+    (i.e., using sourceTable_visit catalogs).
+    """
+
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
 

@@ -29,6 +29,13 @@ from ..interfaces import AnalysisMetric
 
 
 class FiveSigmaPointSourceDepthMetric(AnalysisMetric):
+    """Calculate the five-sigma point source depth of a visit, based on the
+    PSF flux and its reported error. By default the calculation selects
+    objects between 4.75 < S/N < 5.25, but these limits are configurable.
+    The flux type to use for selection is also configurable. Both the median
+    and mean 5-sigma depths are returned.
+    """
+
     parameterizedBand: bool = False
 
     def setDefaults(self):

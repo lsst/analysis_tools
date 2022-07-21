@@ -75,15 +75,15 @@ class _ApproxMedian(ScalarAction):
 
 
 class _StatsImpl(KeyedScalars):
-    columnKey = Field[str](doc="Column key to compute scalars")
+    vectorKey = Field[str](doc="Column key to compute scalars")
 
     snFluxType = Field[str](doc="column key for the flux type used in SN selection")
 
     def setDefaults(self):
         super().setDefaults()
-        self.scalarActions.median = MedianAction(colKey=self.columnKey)
-        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)
-        self.scalarActions.count = CountAction(colKey=self.columnKey)
+        self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)
+        self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)
+        self.scalarActions.count = CountAction(vectorKey=self.vectorKey)
         self.scalarActions.approxMag = _ApproxMedian(vectorKey=self.snFluxType)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
@@ -133,7 +133,7 @@ class ScatterPlotStatsAction(KeyedDataAction):
 
         prefix = f"{band}_" if (band := kwargs.get("band")) else ""
 
-        stats = _StatsImpl(columnKey=self.vectorKey, snFluxType=self.fluxType)
+        stats = _StatsImpl(vectorKey=self.vectorKey, snFluxType=self.fluxType)
         # this is sad, but pex_config seems to have broken behavior that
         # is dangerous to fix
         stats.setDefaults()

@@ -222,15 +222,15 @@ class SkyObjectSelector(FlagSelector):
 
 
 class ExtendednessSelector(VectorAction):
-    columnKey = Field[str](
+    vectorKey = Field[str](
         doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.columnKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        key = self.columnKey.format(**kwargs)
+        key = self.vectorKey.format(**kwargs)
         return cast(Vector, data[key])
 
 

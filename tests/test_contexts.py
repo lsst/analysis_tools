@@ -73,13 +73,13 @@ class TestAction1(KeyedDataAction):
         return (("a", Vector),)
 
     def medianContext(self) -> None:
-        self.multiple.a = MedianAction(colKey="a")
-        self.multiple.b = MedianAction(colKey="a")
-        self.multiple.c = MedianAction(colKey="a")
+        self.multiple.a = MedianAction(vectorKey="a")
+        self.multiple.b = MedianAction(vectorKey="a")
+        self.multiple.c = MedianAction(vectorKey="a")
 
     def meanContext(self) -> None:
-        self.multiple.a = MeanAction(colKey="a")
-        self.multiple.b = MeanAction(colKey="a")
+        self.multiple.a = MeanAction(vectorKey="a")
+        self.multiple.b = MeanAction(vectorKey="a")
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result = np.array([action(data, **kwargs) for action in self.multiple])
@@ -100,10 +100,10 @@ class TestAction2(KeyedDataAction):
         self.multiplier = TestAction3()
 
     def medianContext(self) -> None:
-        self.single = MedianAction(colKey="b")
+        self.single = MedianAction(vectorKey="b")
 
     def meanContext(self) -> None:
-        self.single = MeanAction(colKey="b")
+        self.single = MeanAction(vectorKey="b")
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result = self.single(data, **kwargs)

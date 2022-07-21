@@ -10,62 +10,62 @@ from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vect
 
 
 class MedianAction(ScalarAction):
-    colKey = Field[str]("Key of Vector to median")
+    vectorKey = Field[str]("Key of Vector to median")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.colKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanmedian(cast(Vector, data[self.colKey.format(**kwargs)])[mask])
+        return np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class MeanAction(ScalarAction):
-    colKey = Field[str]("Key of Vector from which to calculate mean")
+    vectorKey = Field[str]("Key of Vector from which to calculate mean")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.colKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanmean(cast(Vector, data[self.colKey.format(**kwargs)])[mask])
+        return np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class StdevAction(ScalarAction):
-    colKey = Field[str]("Key of Vector from which to calculate std deviation")
+    vectorKey = Field[str]("Key of Vector from which to calculate std deviation")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.colKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanstd(cast(Vector, data[self.colKey.format(**kwargs)])[mask])
+        return np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class SigmaMadAction(ScalarAction):
-    colKey = Field[str]("Key of Vector to median")
+    vectorKey = Field[str]("Key of Vector to median")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.colKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         return sps.median_abs_deviation(
-            cast(Vector, data[self.colKey.format(**kwargs)])[mask],
+            cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
             scale="normal",  # type: ignore
             nan_policy="omit",
         )
 
 
 class CountAction(ScalarAction):
-    colKey = Field[str]("Key of Vector to median")
+    vectorKey = Field[str]("Key of Vector to median")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.colKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return len(data[self.colKey.format(**kwargs)][mask])  # type: ignore
+        return len(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
 
 
 class ApproxFloor(ScalarAction):

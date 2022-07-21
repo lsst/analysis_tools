@@ -47,7 +47,7 @@ from ..interfaces import (
 class BasePrep(KeyedDataSelectorAction):
     def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
         self._frozen = False
-        self.columnKeys = [name for name, _ in inputSchema]
+        self.vectorKeys = [name for name, _ in inputSchema]
         self._frozen = True
 
 

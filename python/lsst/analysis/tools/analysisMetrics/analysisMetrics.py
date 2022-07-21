@@ -121,7 +121,7 @@ class GRIStellarPSFMetric(AnalysisMetric):
         self.prep.selectors.snSelector.bands = ["r"]
 
         self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.columnKey = "r_extendedness"
+        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = f"g_{self.fluxType}"
@@ -131,7 +131,7 @@ class GRIStellarPSFMetric(AnalysisMetric):
         self.process.buildActions.y.magDiff.col1 = f"r_{self.fluxType}"
         self.process.buildActions.y.magDiff.col2 = f"i_{self.fluxType}"
         self.process.buildActions.y.magDiff.returnMillimags = False
-        self.process.buildActions.mag = MagColumnNanoJansky(columnKey="r_psfFlux")
+        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
@@ -280,10 +280,10 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         self.prep.selectors.skyObjectSelector = SkyObjectSelector()
         self.prep.selectors.skyObjectSelector.bands = ["{band}"]
 
-        self.process.calculateActions.medianSky = MedianAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.meanSky = MeanAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.stdevSky = StdevAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.medianSky = MedianAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.meanSky = MeanAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.stdevSky = StdevAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.sigmaMADSky = SigmaMadAction(vectorKey=f"{{band}}_{self.fluxType}")
 
         self.produce.units = {  # type: ignore
             "medianSky": "nJy",

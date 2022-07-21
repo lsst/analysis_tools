@@ -36,7 +36,7 @@ class _ApproxMedian(ScalarAction):
 
 
 class ShapeSizeFractionalScalars(KeyedScalars):
-    columnKey = Field[str](doc="Column key to compute scalars")
+    vectorKey = Field[str](doc="Column key to compute scalars")
 
     snFluxType = Field[str](doc="column key for the flux type used in SN selection")
 
@@ -44,9 +44,9 @@ class ShapeSizeFractionalScalars(KeyedScalars):
 
     def setDefaults(self):
         super().setDefaults()
-        self.scalarActions.median = MedianAction(colKey=self.columnKey)  # type: ignore
-        self.scalarActions.sigmaMad = SigmaMadAction(colKey=self.columnKey)  # type: ignore
-        self.scalarActions.count = CountAction(colKey=self.columnKey)  # type: ignore
+        self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)  # type: ignore
+        self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)  # type: ignore
+        self.scalarActions.count = CountAction(vectorKey=self.vectorKey)  # type: ignore
         self.scalarActions.approxMag = _ApproxMedian(vectorKey=self.snFluxType)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
@@ -107,12 +107,12 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         self.lowSNRSelector = SnSelector(threshold=500)
 
         self.calculatorActions.highSNStars = ShapeSizeFractionalScalars(
-            columnKey=self.shapeFracDif.keyName, snFluxType=self.highSNRSelector.fluxType
+            vectorKey=self.shapeFracDif.keyName, snFluxType=self.highSNRSelector.fluxType
         )
         highSNSelector = VectorSelector(vectorKey="starHighSNMask")
         self.calculatorActions.highSNStars.selector = highSNSelector
         self.calculatorActions.lowSNStars = ShapeSizeFractionalScalars(
-            columnKey=self.shapeFracDif.keyName, snFluxType=self.lowSNRSelector.fluxType
+            vectorKey=self.shapeFracDif.keyName, snFluxType=self.lowSNRSelector.fluxType
         )
         self.calculatorActions.lowSNStars.selector = VectorSelector(vectorKey="starLowSNMask")
 

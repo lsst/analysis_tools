@@ -409,7 +409,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             sigMadYs = sigmaMad(ys, nan_policy="omit")
             if len(xs) < 2:
                 (medLine,) = ax.plot(
-                    xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):0.3g}", lw=0.8
+                    xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):.2g}", lw=0.8
                 )
                 linesForLegend.append(medLine)
                 sigMads = np.array([sigmaMad(ys, nan_policy="omit")] * len(xs))
@@ -419,7 +419,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     color,
                     alpha=0.8,
                     lw=0.8,
-                    label=r"$\sigma_{MAD}$: " + f"{sigMads[0]:0.3g}",
+                    label=r"$\sigma_{MAD}$: " + f"{sigMads[0]:.2g}",
                 )
                 ax.plot(xs, np.nanmedian(ys) - 1.0 * sigMads, color, alpha=0.8)
                 linesForLegend.append(sigMadLine)
@@ -510,11 +510,11 @@ class ScatterPlotWithTwoHists(PlotAction):
                 xPos = 0.65 - 0.4 * j
                 bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
                 highThresh = data["highSnThreshold"]
-                statText = f"S/N > {highThresh} Stats ({self.magLabel} < {highStats.approxMag})\n"
+                statText = f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
                 highStatsStr = (
-                    f"Median: {highStats.median}    "
+                    f"Median: {highStats.median:0.4g}    "
                     + r"$\sigma_{MAD}$: "
-                    + f"{highStats.sigmaMad}    "
+                    + f"{highStats.sigmaMad:0.4g}    "
                     + r"N$_{points}$: "
                     + f"{highStats.count}"
                 )
@@ -523,11 +523,11 @@ class ScatterPlotWithTwoHists(PlotAction):
 
                 bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
                 lowThresh = data["lowSnThreshold"]
-                statText = f"S/N > {lowThresh} Stats ({self.magLabel} < {lowStats.approxMag})\n"
+                statText = f"S/N > {lowThresh:0.4g} Stats ({self.magLabel} < {lowStats.approxMag:0.4g})\n"
                 lowStatsStr = (
-                    f"Median: {lowStats.median}    "
+                    f"Median: {lowStats.median:0.4g}    "
                     + r"$\sigma_{MAD}$: "
-                    + f"{lowStats.sigmaMad}    "
+                    + f"{lowStats.sigmaMad:0.4g}    "
                     + r"N$_{points}$: "
                     + f"{lowStats.count}"
                 )

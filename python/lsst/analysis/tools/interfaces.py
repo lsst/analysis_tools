@@ -420,6 +420,9 @@ class AnalysisPlot(AnalysisTool):
         """
         outNames = tuple(self.produce.getOutputNames())
         if outNames:
-            return outNames
+            return (f"{self.identity or ''}_{name}" for name in outNames)
         else:
-            return (f"{{band}}_{self.identity or ''}",)
+            if self.parameterizedBand:
+                return (f"{{band}}_{self.identity or ''}",)
+            else:
+                return (f"{self.identity or ''}",)

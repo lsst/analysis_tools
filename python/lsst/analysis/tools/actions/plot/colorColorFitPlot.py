@@ -26,7 +26,7 @@ import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.analysis.tools import PlotAction
-from lsst.pex.config import DictField, Field, ListField
+from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.stats import median_absolute_deviation as sigmaMad
@@ -48,14 +48,6 @@ class ColorColorFitPlot(PlotAction):
         optional=False,
     )
 
-    stellarLocusFitDict = DictField[str, float](
-        doc="The parameters to use for the stellar locus fit. The default parameters are examples and are "
-        "not useful for any of the fits. The dict needs to contain xMin/xMax/yMin/yMax which are the "
-        "limits of the initial box for fitting the stellar locus, mHW and bHW are the initial "
-        "intercept and gradient for the fitting.",
-        default={"xMin": 0.1, "xMax": 0.2, "yMin": 0.1, "yMax": 0.2, "mHW": 0.5, "bHW": 0.0},
-    )
-
     plotName = Field[str](doc="The name for the plot.", optional=False)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -68,6 +60,21 @@ class ColorColorFitPlot(PlotAction):
         base.append((f"{self.plotName}_median", Scalar))
         base.append((f"{self.plotName}_hardwired_sigmaMAD", Scalar))
         base.append((f"{self.plotName}_hardwired_median", Scalar))
+        base.append(("xMin", Scalar))
+        base.append(("xMax", Scalar))
+        base.append(("yMin", Scalar))
+        base.append(("yMax", Scalar))
+        base.append(("mHW", Scalar))
+        base.append(("bHW", Scalar))
+        base.append(("mODR", Scalar))
+        base.append(("bODR", Scalar))
+        base.append(("yBoxMin", Scalar))
+        base.append(("yBoxMax", Scalar))
+        base.append(("bPerpMin", Scalar))
+        base.append(("bPerpMax", Scalar))
+        base.append(("mODR2", Scalar))
+        base.append(("bODR2", Scalar))
+        base.append(("mPerp", Scalar))
 
         return base
 
@@ -93,7 +100,6 @@ class ColorColorFitPlot(PlotAction):
         self,
         data: KeyedData,
         plotInfo: Optional[Mapping[str, str]] = None,
-        fitParams: Optional[Mapping[str, Scalar]] = None,
         **kwargs,
     ) -> Figure:
         """Make stellar locus plots using pre fitted values.
@@ -165,8 +171,6 @@ class ColorColorFitPlot(PlotAction):
         xs = cast(Vector, data["x"])
         ys = cast(Vector, data["y"])
         mags = data["mag"]
-        # TODO: FIX THIS
-        fitParams = {key: cast(Scalar, data[key]) for key in ("xMin", "xMax", "yMin", "yMax")}
 
         # TODO: Make a no data fig function and use here
         if len(xs) == 0 or len(ys) == 0:
@@ -175,18 +179,16 @@ class ColorColorFitPlot(PlotAction):
         # Points to use for the fit
         # type ignore because Vector needs a prototype interface
         fitPoints = np.where(
-            (xs > fitParams["xMin"])
-            & (xs < fitParams["xMax"])  # type: ignore
-            & (ys > fitParams["yMin"])
-            & (ys < fitParams["yMax"])
-        )[
-            0
-        ]  # type: ignore
+            (xs > data["xMin"])  # type: ignore
+            & (xs < data["xMax"])  # type: ignore
+            & (ys > data["yMin"])  # type: ignore
+            & (ys < data["yMax"])  # type: ignore
+        )[0]
 
         # Plot the initial fit box
         ax.plot(
-            [fitParams["xMin"], fitParams["xMax"], fitParams["xMax"], fitParams["xMin"], fitParams["xMin"]],
-            [fitParams["yMin"], fitParams["yMin"], fitParams["yMax"], fitParams["yMax"], fitParams["yMin"]],
+            [data["xMin"], data["xMax"], data["xMax"], data["xMin"], data["xMin"]],
+            [data["yMin"], data["yMin"], data["yMax"], data["yMax"], data["yMin"]],
             "k",
             alpha=0.3,
         )
@@ -240,29 +242,29 @@ class ColorColorFitPlot(PlotAction):
         ax.set_ylim(percsY[0] - y5, percsY[1] + y5)
 
         # Plot the fit lines
-        if np.fabs(fitParams["mHW"]) > 1:
-            ysFitLineHW = np.array([fitParams["yMin"], fitParams["yMax"]])
-            xsFitLineHW = (ysFitLineHW - fitParams["bHW"]) / fitParams["mHW"]
-            ysFitLine = np.array([fitParams["yMin"], fitParams["yMax"]])
-            xsFitLine = (ysFitLine - fitParams["bODR"]) / fitParams["mODR"]
-            ysFitLine2 = np.array([fitParams["yMin"], fitParams["yMax"]])
-            xsFitLine2 = (ysFitLine2 - fitParams["bODR2"]) / fitParams["mODR2"]
+        if np.fabs(data["mHW"]) > 1:
+            ysFitLineHW = np.array([data["yMin"], data["yMax"]])
+            xsFitLineHW = (ysFitLineHW - data["bHW"]) / data["mHW"]
+            ysFitLine = np.array([data["yMin"], data["yMax"]])
+            xsFitLine = (ysFitLine - data["bODR"]) / data["mODR"]
+            ysFitLine2 = np.array([data["yMin"], data["yMax"]])
+            xsFitLine2 = (ysFitLine2 - data["bODR2"]) / data["mODR2"]
 
         else:
-            xsFitLineHW = np.array([fitParams["xMin"], fitParams["xMax"]])
-            ysFitLineHW = fitParams["mHW"] * xsFitLineHW + fitParams["bHW"]
-            xsFitLine = np.array([fitParams["xMin"], fitParams["xMax"]])
+            xsFitLineHW = np.array([data["xMin"], data["xMax"]])
+            ysFitLineHW = data["mHW"] * xsFitLineHW + data["bHW"]  # type: ignore
+            xsFitLine = np.array([data["xMin"], data["xMax"]])
             ysFitLine = np.array(
                 [
-                    fitParams["mODR"] * xsFitLine[0] + fitParams["bODR"],
-                    fitParams["mODR"] * xsFitLine[1] + fitParams["bODR"],
+                    data["mODR"] * xsFitLine[0] + data["bODR"],
+                    data["mODR"] * xsFitLine[1] + data["bODR"],
                 ]
             )
-            xsFitLine2 = np.array([fitParams["xMin"], fitParams["xMax"]])
+            xsFitLine2 = np.array([data["xMin"], data["xMax"]])
             ysFitLine2 = np.array(
                 [
-                    fitParams["mODR2"] * xsFitLine2[0] + fitParams["bODR2"],
-                    fitParams["mODR2"] * xsFitLine2[1] + fitParams["bODR2"],
+                    data["mODR2"] * xsFitLine2[0] + data["bODR2"],
+                    data["mODR2"] * xsFitLine2[1] + data["bODR2"],
                 ]
             )
 
@@ -290,22 +292,22 @@ class ColorColorFitPlot(PlotAction):
         # Now we have the information for the perpendicular line we
         # can use it to calculate the points at the ends of the
         # perpendicular lines that intersect at the box edges
-        if np.fabs(fitParams["mHW"]) > 1:
-            xMid = (fitParams["yMin"] - fitParams["bODR2"]) / fitParams["mODR2"]
+        if np.fabs(data["mHW"]) > 1:
+            xMid = (data["yMin"] - data["bODR2"]) / data["mODR2"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
-            ys = fitParams["mPerp"] * xs + fitParams["bPerpMin"]
+            ys = data["mPerp"] * xs + data["bPerpMin"]
         else:
-            xs = np.array([fitParams["xMin"] - 0.2, fitParams["xMin"], fitParams["xMin"] + 0.2])
-            ys = xs * fitParams["mPerp"] + fitParams["bPerpMin"]
+            xs = np.array([data["xMin"] - 0.2, data["xMin"], data["xMin"] + 0.2])
+            ys = xs * data["mPerp"] + data["bPerpMin"]
         ax.plot(xs, ys, "k--", alpha=0.7)
 
-        if np.fabs(fitParams["mHW"]) > 1:
-            xMid = (fitParams["yMax"] - fitParams["bODR2"]) / fitParams["mODR2"]
+        if np.fabs(data["mHW"]) > 1:
+            xMid = (data["yMax"] - data["bODR2"]) / data["mODR2"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
-            ys = fitParams["mPerp"] * xs + fitParams["bPerpMax"]
+            ys = data["mPerp"] * xs + data["bPerpMax"]
         else:
-            xs = np.array([fitParams["xMax"] - 0.2, fitParams["xMax"], fitParams["xMax"] + 0.2])
-            ys = xs * fitParams["mPerp"] + fitParams["bPerpMax"]
+            xs = np.array([data["xMax"] - 0.2, data["xMax"], data["xMax"] + 0.2])
+            ys = xs * data["mPerp"] + data["bPerpMax"]
         ax.plot(xs, ys, "k--", alpha=0.7)
 
         # Add a histogram

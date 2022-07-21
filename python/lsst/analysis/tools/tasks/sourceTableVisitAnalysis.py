@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisMetrics import SkyFluxStatisticMetric
 from ..analysisMetrics.limitingMagnitudeMetric import FiveSigmaPointSourceDepthMetric
+from ..analysisMetrics.skyFluxStatisticMetrics import SkyFluxStatisticMetric
 from ..contexts import VisitContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 

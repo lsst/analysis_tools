@@ -20,12 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("SkyFluxStatisticMetric", "SkyFluxVisitStatisticMetric")
+__all__ = "SkyFluxStatisticMetric"
 
-from ..actions.keyedData.skyFluxStatistic import SkyFluxStatisticAction
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector.selectors import SkyObjectSelector, SkySourceSelector
-from ..contexts import Context
 from ..interfaces import AnalysisMetric
 
 
@@ -51,55 +49,6 @@ class SkyFluxStatisticMetric(AnalysisMetric):
 
     def setDefaults(self):
         super().setDefaults()
-
-        self.produce.units = {  # type: ignore
-            "medianSky": "nJy",
-            "meanSky": "nJy",
-            "stdevSky": "nJy",
-            "sigmaMADSky": "nJy",
-        }
-
-
-"""
-class SkyFluxStatisticMetric(AnalysisMetric):
-    # Calculate sky flux statistics on objectTable
-    parameterizedBand: bool = True
-    fluxType: str = "ap09Flux"
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
-        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
-
-        self.process.calculateActions.medianSky = MedianAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.meanSky = MeanAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.stdevSky = StdevAction(colKey=f"{{band}}_{self.fluxType}")
-        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{{band}}_{self.fluxType}")
-
-        self.produce.units = {  # type: ignore
-            "medianSky": "nJy",
-            "meanSky": "nJy",
-            "stdevSky": "nJy",
-            "sigmaMADSky": "nJy",
-        }
-"""
-
-
-class SkyFluxVisitStatisticMetric(AnalysisMetric):
-    # Calculate sky flux statistics on sourceTable (i.e., per visit)
-    parameterizedBand: bool = False
-    fluxType: str = "ap09Flux"
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        self.prep.selectors.skySourceSelector = SkySourceSelector()
-
-        self.process.calculateActions.medianSky = MedianAction(colKey=f"{self.fluxType}")
-        self.process.calculateActions.meanSky = MeanAction(colKey=f"{self.fluxType}")
-        self.process.calculateActions.stdevSky = StdevAction(colKey=f"{self.fluxType}")
-        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{self.fluxType}")
 
         self.produce.units = {  # type: ignore
             "medianSky": "nJy",

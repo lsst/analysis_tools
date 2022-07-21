@@ -22,11 +22,45 @@ from __future__ import annotations
 
 __all__ = ("SkyFluxStatisticMetric", "SkyFluxVisitStatisticMetric")
 
+from ..actions.keyedData.skyFluxStatistic import SkyFluxStatisticAction
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector.selectors import SkyObjectSelector, SkySourceSelector
+from ..contexts import Context
 from ..interfaces import AnalysisMetric
 
 
+class SkyFluxStatisticMetric(AnalysisMetric):
+    # Calculate sky flux statistics on objectTable
+    parameterizedBand: bool = True
+    fluxType: str = "ap09Flux"
+
+    def visitContext(self) -> None:
+        self.prep.selectors.skySourceSelector = SkySourceSelector()
+        self._setActions(f"{self.fluxType}")
+
+    def coaddContext(self) -> None:
+        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
+        self._setActions(f"{{band}}_{self.fluxType}")
+
+    def _setActions(self, name: str) -> None:
+        self.process.calculateActions.medianSky = MedianAction(colKey=name)
+        self.process.calculateActions.meanSky = MeanAction(colKey=name)
+        self.process.calculateActions.stdevSky = StdevAction(colKey=name)
+        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=name)
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce.units = {  # type: ignore
+            "medianSky": "nJy",
+            "meanSky": "nJy",
+            "stdevSky": "nJy",
+            "sigmaMADSky": "nJy",
+        }
+
+
+"""
 class SkyFluxStatisticMetric(AnalysisMetric):
     # Calculate sky flux statistics on objectTable
     parameterizedBand: bool = True
@@ -43,12 +77,13 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         self.process.calculateActions.stdevSky = StdevAction(colKey=f"{{band}}_{self.fluxType}")
         self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=f"{{band}}_{self.fluxType}")
 
-        self.post_process.units = {  # type: ignore
+        self.produce.units = {  # type: ignore
             "medianSky": "nJy",
             "meanSky": "nJy",
             "stdevSky": "nJy",
             "sigmaMADSky": "nJy",
         }
+"""
 
 
 class SkyFluxVisitStatisticMetric(AnalysisMetric):

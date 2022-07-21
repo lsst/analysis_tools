@@ -25,6 +25,7 @@ from lsst.pipe.base import connectionTypes as ct
 from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
 from ..analysisMetrics.skyFluxStatisticMetrics import SkyFluxStatisticMetric
 from ..analysisPlots.analysisPlots import Ap12PsfSkyPlot, ShapeSizeFractionalDiffScatter
+from ..contexts import CoaddContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -54,6 +55,7 @@ class ObjectTableTractAnalysisConfig(
         # set metrics to run
         self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
         self.metrics.skyFluxStatisticMetric = SkyFluxStatisticMetric()
+        self.metrics.skyFluxStatisticMetric.applyContext(CoaddContext)
 
 
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):

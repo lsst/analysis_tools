@@ -94,26 +94,26 @@ class AddComputedVector(KeyedDataAction):
 
 
 class KeyedDataSelectorAction(KeyedDataAction):
-    """Extract Vector specified by ``columnKeys`` from input KeyedData and
+    """Extract Vector specified by ``vectorKeys`` from input KeyedData and
     optionally apply selectors to down select extracted vectors.
 
     Note this action will not work with keyed scalars, see `getInputSchema` for
     expected schema.
     """
 
-    columnKeys = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
+    vectorKeys = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
 
     selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
+        yield from ((column, Vector | Scalar) for column in self.vectorKeys)  # type: ignore
         for action in self.selectors:
             yield from action.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
-        return ((column, Vector | Scalar) for column in self.columnKeys)  # type: ignore
+        return ((column, Vector | Scalar) for column in self.vectorKeys)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask: Optional[np.ndarray] = None
@@ -124,7 +124,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
             else:
                 mask *= subMask  # type: ignore
 
-        result = {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.columnKeys}
+        result = {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.vectorKeys}
         if mask is not None:
             return {key: cast(Vector, col)[mask] for key, col in result.items()}
         else:

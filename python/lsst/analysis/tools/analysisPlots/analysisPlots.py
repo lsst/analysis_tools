@@ -103,7 +103,7 @@ class WPerpPSFPlot(AnalysisPlot):
         self.prep.selectors.snSelector.threshold = 300
 
         self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.columnKey = "r_extendedness"
+        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
@@ -141,7 +141,7 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.prep.selectors.snSelector.threshold = 300
 
         self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.columnKey = "{band}_extendedness"
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.xStars = LoadVector()

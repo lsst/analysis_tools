@@ -65,7 +65,9 @@ class CountAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return len(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
+        arr = np.array(data[self.vectorKey.format(**kwargs)][mask])
+        arr = arr[~np.isnan(arr)]
+        return len(arr)  # type: ignore
 
 
 class ApproxFloor(ScalarAction):

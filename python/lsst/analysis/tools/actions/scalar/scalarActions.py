@@ -65,7 +65,7 @@ class CountAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        arr = np.array(data[self.vectorKey.format(**kwargs)][mask])
+        arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
         arr = arr[~np.isnan(arr)]
         return len(arr)  # type: ignore
 
@@ -73,11 +73,11 @@ class CountAction(ScalarAction):
 class ApproxFloor(ScalarAction):
     vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
 
-    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
-        return ((self.vectorKey.format(**kwargs), Vector),)
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
-        x = int(len(value) / 10)
+        x = len(value) // 10
         return np.nanmedian(value[-x:])

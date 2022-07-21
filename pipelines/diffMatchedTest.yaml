@@ -1,0 +1,16 @@
+description: |
+  Test out if this runs using the middleware
+tasks:
+  diff_matched_analysis:
+    class: lsst.analysis.tools.tasks.diffMatchedAnalysis.DiffMatchedAnalysisTask
+    config:
+      bands: ['r',]
+      # set plots to run
+      # plots.matchedDiffCModelFluxPlot: MatchedRefCoaddDiffCModelFluxPlot
+
+      # set metrics to run
+      metrics.matchedDiffCModelFluxMetric: MatchedRefCoaddDiffCModelFluxMetric
+
+      python: |
+        from lsst.analysis.tools.analysisMetrics.diffMatchedMetrics import MatchedRefCoaddDiffCModelFluxMetric
+        from lsst.analysis.tools.analysisPlots.diffMatchedPlots import MatchedRefCoaddDiffCModelFluxPlot

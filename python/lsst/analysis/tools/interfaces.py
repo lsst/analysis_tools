@@ -306,23 +306,6 @@ class AnalysisTool(AnalysisAction):
     produce a result for multiple bands.
     """
 
-    def applyContext(self, context: ContextType) -> None:
-        r"""Apply a `Context` to this `AnalysisTool`.
-
-        `Context`\ s are specific execution environments that allow any
-        `AnalysisActions` specified within an `AnalysisTool` to be
-        automatically configured if they are aware of the execution context.
-
-        Parameters
-        ----------
-        context : `Context`
-            The specific execution context, this may be a single context or
-            a joint context, see `Context` for more info.
-        """
-        self.prep.applyContext(context)
-        self.process.applyContext(context)
-        self.produce.applyContext(context)
-
     def __call__(
         self, data: KeyedData, **kwargs
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:

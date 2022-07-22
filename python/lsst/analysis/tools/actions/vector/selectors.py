@@ -132,11 +132,39 @@ class CoaddPlotFlagSelector(FlagSelector):
         self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
 
 
+class VisitPlotFlagSelector(FlagSelector):
+    """Select on a set of flags appropriate for making visit-level plots
+    (i.e., using sourceTable_visit catalogs).
+    """
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result: Optional[Vector] = None
+        temp = super().__call__(data, **kwargs)
+        if result is not None:
+            result &= temp  # type: ignore
+        else:
+            result = temp
+
+        return result
+
+    def setDefaults(self):
+        self.selectWhenFalse = [
+            "psfFlux_flag",
+            "pixelFlags_saturatedCenter",
+            "extendedness_flag",
+            "centroid_flag",
+        ]
+
+
 class SnSelector(VectorAction):
     """Selects points that have S/N > threshold in the given flux type"""
 
     fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
     threshold = Field[float](doc="The S/N threshold to remove sources with.", default=500.0)
+    maxSN = Field[float](doc="Maximum S/N to include in the sample (to allow S/N ranges).", default=1e6)
     uncertaintySuffix = Field[str](
         doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
     )
@@ -175,7 +203,8 @@ class SnSelector(VectorAction):
         for band in bands:
             fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
             errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-            temp = (cast(Vector, data[fluxCol]) / data[errCol]) > self.threshold  # type: ignore
+            vec = cast(Vector, data[fluxCol]) / data[errCol]
+            temp = (vec > self.threshold) & (vec < self.maxSN)
             if mask is not None:
                 mask &= temp  # type: ignore
             else:
@@ -186,6 +215,8 @@ class SnSelector(VectorAction):
 
 
 class SkyObjectSelector(FlagSelector):
+    """Selects sky objects in the given band(s)"""
+
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
         default=["i"],
@@ -221,6 +252,28 @@ class SkyObjectSelector(FlagSelector):
         self.selectWhenTrue = ["sky_object"]
 
 
+class SkySourceSelector(FlagSelector):
+    """Selects sky sources from sourceTables"""
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result: Optional[Vector] = None
+        temp = super().__call__(data, **(kwargs))
+        if result is not None:
+            result &= temp  # type: ignore
+        else:
+            result = temp
+        return result
+
+    def setDefaults(self):
+        self.selectWhenFalse = [
+            "pixelFlags_edge",
+        ]
+        self.selectWhenTrue = ["sky_source"]
+
+
 class ExtendednessSelector(VectorAction):
     vectorKey = Field[str](
         doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"
@@ -241,7 +294,7 @@ class StarSelector(ExtendednessSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
-        return cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum))  # type: ignore
+        return np.array(cast(Vector, (extendedness >= 0) & (extendedness < self.extendedness_maximum)))
 
 
 class GalaxySelector(ExtendednessSelector):

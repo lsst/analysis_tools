@@ -8,6 +8,10 @@ tasks:
       connections.outputName: objectTableCore
       plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
+      plots.e1DiffScatter: E1DiffScatterPlot
+      metrics.e1DiffScatterMetric: E1DiffMetric
+      plots.e2DiffScatter: E2DiffScatterPlot
+      metrics.e2DiffScatterMetric: E2DiffMetric
       metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
       metrics.skyFluxStatisticMetric.applyContext: CoaddContext
       python: |

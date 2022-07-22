@@ -47,10 +47,10 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         self._setActions(f"{{band}}_{self.fluxType}")
 
     def _setActions(self, name: str) -> None:
-        self.process.calculateActions.medianSky = MedianAction(colKey=name)
-        self.process.calculateActions.meanSky = MeanAction(colKey=name)
-        self.process.calculateActions.stdevSky = StdevAction(colKey=name)
-        self.process.calculateActions.sigmaMADSky = SigmaMadAction(colKey=name)
+        self.process.calculateActions.medianSky = MedianAction(vectorKey=name)
+        self.process.calculateActions.meanSky = MeanAction(vectorKey=name)
+        self.process.calculateActions.stdevSky = StdevAction(vectorKey=name)
+        self.process.calculateActions.sigmaMADSky = SigmaMadAction(vectorKey=name)
 
     def setDefaults(self):
         super().setDefaults()

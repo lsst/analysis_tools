@@ -41,20 +41,15 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from collections import abc
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, MutableMapping, Tuple, Type
+from typing import Any, Iterable, Mapping, MutableMapping, Tuple, Type
 
 import numpy as np
-from lsst.pipe.tasks.configurableActions import (
-    ConfigurableAction,
-    ConfigurableActionField,
-    ConfigurableActionStruct,
-)
+from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
 from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
-if TYPE_CHECKING:
-    from .contexts import ContextType
+from .contexts import ContextApplier
 
 
 class ScalarMeta(ABCMeta):
@@ -111,33 +106,23 @@ class AnalysisAction(ConfigurableAction):
         if "getInputSchema" not in dir(cls):
             raise NotImplementedError(f"Class {cls} must implement method getInputSchema")
 
-    def applyContext(self, context: ContextType) -> None:
-        r"""Apply a `Context` to an `AnalysisAction` recursively.
+    # This is a descriptor that functions like a function in most contexts
+    # and can be treated as such
+    applyContext = ContextApplier()
+    r"""Apply a `Context` to an `AnalysisAction` recursively.
 
-        Generally this method is called from within an `AnalysisTool` to
-        configure all `AnalysisAction`\ s at one time to make sure that they
-        all are consistently configured. However, it is permitted to call this
-        method if you are aware of the effects, or from within a specific
-        execution environment like a python shell or notebook.
+    Generally this method is called from within an `AnalysisTool` to
+    configure all `AnalysisAction`\ s at one time to make sure that they
+    all are consistently configured. However, it is permitted to call this
+    method if you are aware of the effects, or from within a specific
+    execution environment like a python shell or notebook.
 
-        Parameters
-        ----------
-        context : `Context`
-            The specific execution context, this may be a single context or
-            a joint context, see `Context` for more info.
-        """
-        for ctx in context.getContexts():
-            ctx.apply(self)
-        for field in self._fields:
-            match getattr(self, field):
-                case AnalysisAction() as singleField:
-                    singleField.applyContext(context)
-                # type ignore because MyPy is not seeing Pipe_tasks imports
-                # correctly (its not formally typed)
-                case ConfigurableActionStruct() as multiField:  # type: ignore
-                    subField: AnalysisAction
-                    for subField in multiField:
-                        subField.applyContext(context)
+    Parameters
+    ----------
+    context : `Context`
+        The specific execution context, this may be a single context or
+        a joint context, see `Context` for more info.
+    """
 
     @abstractmethod
     def getInputSchema(self) -> KeyedDataSchema:

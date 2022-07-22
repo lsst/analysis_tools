@@ -144,7 +144,10 @@ class ContextTestCase(TestCase):
         tester = TestAnalysisTool()
         # test applying contexts serially
         tester.applyContext(MultiplyContext())
-        tester.applyContext(MedianContext)
+
+        # verify assignment syntax works to support Yaml
+        # normally this should be called as a function in python
+        tester.applyContext = MedianContext
         # cast below, because we are abusing AnalysisTool a bit for testing
         # the final stage produces KeyedData instead of Measurement of Figure
         with warnings.catch_warnings():

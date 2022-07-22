@@ -51,8 +51,8 @@ class FiveSigmaPointSourceDepthMetric(AnalysisMetric):
         self.prep.selectors.snSelector.maxSN = 5.25
 
         self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
-        self.process.calculateActions.median5sigmaDepth = MedianAction(colKey="mags")
-        self.process.calculateActions.mean5sigmaDepth = MeanAction(colKey="mags")
+        self.process.calculateActions.median5sigmaDepth = MedianAction(vectorKey="mags")
+        self.process.calculateActions.mean5sigmaDepth = MeanAction(vectorKey="mags")
 
         self.produce.units = {  # type: ignore
             "median5sigmaDepth": "mag",

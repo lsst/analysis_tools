@@ -24,9 +24,12 @@ from __future__ import annotations
 `Context` base class.
 """
 
-__all__ = ("ContextMeta", "Context", "ContextType")
+__all__ = ("ContextMeta", "Context", "ContextType", "ContextApplier")
 
-from typing import TYPE_CHECKING, Callable, Iterable, Union, cast
+from functools import partial, update_wrapper
+from typing import TYPE_CHECKING, Callable, Iterable, Union, cast, overload
+
+from lsst.pipe.tasks.configurableActions import ConfigurableActionStruct
 
 if TYPE_CHECKING:
     from ..interfaces import AnalysisAction
@@ -59,6 +62,63 @@ class ContextGetter:
             return GetterStandin(instance)
         else:
             return GetterStandin(klass)
+
+
+class ContextApplier:
+    @overload
+    def __get__(
+        self, instance: AnalysisAction, klass: type[AnalysisAction] | None = None
+    ) -> Callable[[ContextType], None]:
+        ...
+
+    @overload
+    def __get__(self, instance: None, klass: type[AnalysisAction] | None = None) -> ContextApplier:
+        ...
+
+    def __get__(
+        self, instance: AnalysisAction | None, klass: type[AnalysisAction] | None = None
+    ) -> Callable[[ContextType], None] | ContextApplier:
+        if instance is None:
+            return self
+        part = cast(Callable[[ContextType], None], partial(self.applyContext, instance))
+        part = update_wrapper(part, self.applyContext)
+        return part
+
+    def __set__(self, instance: AnalysisAction, context: ContextType) -> None:
+        self.applyContext(instance, context)
+
+    @staticmethod
+    def applyContext(instance: AnalysisAction, context: ContextType) -> None:
+        r"""Apply a `Context` to an `AnalysisAction` recursively.
+
+        Generally this method is called from within an `AnalysisTool` to
+        configure all `AnalysisAction`\ s at one time to make sure that they
+        all are consistently configured. However, it is permitted to call this
+        method if you are aware of the effects, or from within a specific
+        execution environment like a python shell or notebook.
+
+        Parameters
+        ----------
+        context : `Context`
+            The specific execution context, this may be a single context or
+            a joint context, see `Context` for more info.
+        """
+        # imported here to avoid circular imports at module scope
+        from ..interfaces import AnalysisAction
+
+        for ctx in context.getContexts():
+            ctx.apply(instance)
+        for field in instance._fields:
+            match getattr(instance, field):
+                case AnalysisAction() as singleField:
+                    singleField.applyContext
+                    singleField.applyContext(context)
+                # type ignore because MyPy is not seeing Pipe_tasks imports
+                # correctly (its not formally typed)
+                case ConfigurableActionStruct() as multiField:  # type: ignore
+                    subField: AnalysisAction
+                    for subField in multiField:
+                        subField.applyContext(context)
 
 
 class ContextMeta(type):

@@ -7,6 +7,10 @@ tasks:
       # Add plots and metrics that work when we have some
       # plots.label = APlotClass
       # metrics.name = AMetricsClass
+      connections.outputName: sourceTableCore
+      metrics.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
+      metrics.skyFluxVisitStatisticMetric.applyContext: VisitContext
       python: |
         from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.contexts import *

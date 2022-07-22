@@ -8,6 +8,9 @@ tasks:
       connections.outputName: objectTableCore
       plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatter
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
+      metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
+      metrics.skyFluxStatisticMetric.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.contexts import *

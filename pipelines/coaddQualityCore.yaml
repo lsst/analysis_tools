@@ -6,7 +6,7 @@ tasks:
     config:
       bands: ['u', 'g', 'r', 'i', 'z', 'y']
       connections.outputName: objectTableCore
-      plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatter
+      plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
       metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
       metrics.skyFluxStatisticMetric.applyContext: CoaddContext

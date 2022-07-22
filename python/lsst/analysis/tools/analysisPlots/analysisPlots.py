@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = (
     "E1DiffScatterPlot",
     "E2DiffScatterPlot",
-    "ShapeSizeFractionalDiffScatter",
+    "ShapeSizeFractionalDiffScatterPlot",
     "WPerpPSFPlot",
     "Ap12PsfSkyPlot",
 )
@@ -82,7 +82,7 @@ class BasePsfResidualScatterPlot(AnalysisPlot, BasePsfResidualMixin):
         self.produce.magLabel = "PSF Magnitude (mag)"
 
 
-class ShapeSizeFractionalDiffScatter(BasePsfResidualScatterPlot):
+class ShapeSizeFractionalDiffScatterPlot(BasePsfResidualScatterPlot):
     def setDefaults(self):
         super().setDefaults()
         self.process.filterActions.yStars = DownselectVector(

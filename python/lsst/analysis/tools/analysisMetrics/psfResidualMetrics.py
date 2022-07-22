@@ -20,7 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ShapeSizeFractionalMetric",)
+__all__ = (
+    "ShapeSizeFractionalMetric",
+    "E1DiffMetric",
+    "E2DiffMetric",
+)
 
 from ..actions.vector import DownselectVector, VectorSelector
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
@@ -45,4 +49,20 @@ class ShapeSizeFractionalMetric(BasePsfResidualMetric):
         super().setDefaults()
         self.process.filterActions.yStars = DownselectVector(
             vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+
+class E1DiffMetric(BasePsfResidualMetric):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e1Diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+
+class E2DiffMetric(BasePsfResidualMetric):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e2Diff", selector=VectorSelector(vectorKey="starSelector")
         )

@@ -1,0 +1,13 @@
+description: |
+  Tier2 plots and metrics to assess coadd quality
+tasks:
+  analyzeObjectTableExtended:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableExtended
+      bands: ['u', 'g', 'r', 'i', 'z', 'y']
+      # set plots to run
+      plots.ap12PsfSkyPlot: Ap12PsfSkyPlot
+      python: |
+        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.analysisMetrics import *

@@ -20,7 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ShapeSizeFractionalDiffScatter", "WPerpPSFPlot", "Ap12PsfSkyPlot")
+__all__ = (
+    "E1DiffScatterPlot",
+    "E2DiffScatterPlot",
+    "ShapeSizeFractionalDiffScatter",
+    "WPerpPSFPlot",
+    "Ap12PsfSkyPlot",
+)
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
@@ -83,6 +89,24 @@ class ShapeSizeFractionalDiffScatter(BasePsfResidualScatterPlot):
             vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
         )
         self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
+
+
+class E1DiffScatterPlot(BasePsfResidualScatterPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e1Diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.produce.yAxisLabel = "Ellipticty residuals (e1 - e1_PSF)"
+
+
+class E2DiffScatterPlot(BasePsfResidualScatterPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e2Diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.produce.yAxisLabel = "Ellipticty residuals (e2 - e2_PSF)"
 
 
 class WPerpPSFPlot(AnalysisPlot):

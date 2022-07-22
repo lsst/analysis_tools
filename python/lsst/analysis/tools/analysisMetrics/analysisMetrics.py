@@ -20,71 +20,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ["ShapeSizeFractionalMetric", "StellarLocusBaseMetric", "WPerpPSFMetric"]
+__all__ = [
+    "StellarLocusBaseMetric",
+    "WPerpPSFMetric",
+]
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
-from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..actions.scalar.scalarActions import ApproxFloor
 from ..actions.vector import (
-    CalcShapeSize,
     CoaddPlotFlagSelector,
-    DownselectVector,
     ExtinctionCorrectedMagDiff,
-    FractionalDifference,
     MagColumnNanoJansky,
     SnSelector,
     StarSelector,
-    VectorSelector,
 )
 from ..interfaces import AnalysisMetric
-
-
-class ShapeSizeFractionalMetric(AnalysisMetric):
-    def setDefaults(self):
-        super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
-
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
-        self.process.buildActions.fracDiff = FractionalDifference(
-            actionA=CalcShapeSize(),
-            actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
-        )
-        # pre-compute a stellar selector mask so it can be used in the filter
-        # actions while only being computed once, alternatively the stellar
-        # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StarSelector()
-
-        self.process.filterActions.xStars = DownselectVector(
-            vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
-        )
-        # downselect the psfFlux as well
-        self.process.filterActions.psfFlux = DownselectVector(
-            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.process.filterActions.psfFluxErr = DownselectVector(
-            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
-        )
-
-        self.process.calculateActions.stars = ScatterPlotStatsAction(
-            vectorKey="yStars",
-        )
-        # use the downselected psfFlux
-        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
-        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
-        self.process.calculateActions.stars.fluxType = "psfFlux"
-
-        self.produce.units = {  # type: ignore
-            "{band}_highSNStars_median": "pixel",
-            "{band}_highSNStars_sigmaMad": "pixel",
-            "{band}_highSNStars_count": "count",
-            "{band}_lowSNStars_median": "pixel",
-            "{band}_lowSNStars_sigmaMad": "pixel",
-            "{band}_lowSNStars_count": "count",
-        }
 
 
 class StellarLocusBaseMetric(AnalysisMetric):

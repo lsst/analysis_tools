@@ -59,7 +59,7 @@ class ShapeSizeFractionalScalars(KeyedScalars):
         return super().__call__(data, **kwargs | dict(mask=mask))
 
 
-class ShapeSizeFractionalProcess(KeyedDataAction):
+class ShapeSizeFractionalProcessLegacy(KeyedDataAction):
     psfFluxShape = ConfigurableActionField[AnalysisAction](
         doc="Action to calculate the PSF Shape",
     )

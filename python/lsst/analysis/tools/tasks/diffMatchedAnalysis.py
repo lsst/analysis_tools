@@ -39,9 +39,7 @@ class DiffMatchedAnalysisConnections(
     )
 
 
-class DiffMatchedAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections
-):
+class DiffMatchedAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections):
     def setDefaults(self):
         super().setDefaults()
 

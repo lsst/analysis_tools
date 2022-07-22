@@ -4,7 +4,7 @@ tasks:
   diff_matched_analysis:
     class: lsst.analysis.tools.tasks.diffMatchedAnalysis.DiffMatchedAnalysisTask
     config:
-      bands: ['r', ]
+      bands: ['r',]
       # set plots to run
       # plots.matchedDiffCModelMagPlot: MatchedRefCoaddCModelFluxPlot
 
@@ -15,5 +15,19 @@ tasks:
         from lsst.analysis.tools.analysisMetrics.diffMatchedMetrics import MatchedRefCoaddDiffCModelFluxMetric
         from lsst.analysis.tools.analysisPlots.diffMatchedPlots import MatchedRefCoaddCModelFluxPlot
 
+        from lsst.analysis.tools.contexts._contexts import (
+          MatchedRefDiffMagContext,
+          MatchedRefDiffFluxChiContext,
+        )
+
         config.plots.matchedDiffCModelMagPlot = MatchedRefCoaddCModelFluxPlot()
         config.plots.matchedDiffCModelMagPlot.applyContext(MatchedRefDiffMagContext)
+
+        config.plots.matchedDiffCModeFluxChiPlot = MatchedRefCoaddCModelFluxPlot()
+        config.plots.matchedDiffCModeFluxChiPlot.applyContext(MatchedRefDiffFluxChiContext)
+
+        config.metrics.matchedDiffCModelMagMetric = MatchedRefCoaddDiffCModelFluxMetric()
+        config.metrics.matchedDiffCModelMagMetric.applyContext(MatchedRefDiffMagContext)
+
+        config.metrics.matchedDiffCModelFluxChiMetric = MatchedRefCoaddDiffCModelFluxMetric()
+        config.metrics.matchedDiffCModelFluxChiMetric.applyContext(MatchedRefDiffFluxChiContext)

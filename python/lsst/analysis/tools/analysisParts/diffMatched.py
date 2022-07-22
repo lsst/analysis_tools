@@ -38,7 +38,8 @@ class MatchedRefCoaddTool(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
         self.process.buildActions.fluxes_ref = LoadVector(vectorKey="refcat_flux_{band}")
-        # TODO: Why doesn't vectorKey="fluxes_ref" work?? Would it work as a filterAction?
+        # TODO: Why won't vectorKey="fluxes_ref" work?
+        # Does it need to be a filterAction?
         self.process.buildActions.mags_ref = MagColumnNanoJansky(
             vectorKey=self.process.buildActions.fluxes_ref.vectorKey
         )
@@ -55,13 +56,13 @@ class MatchedRefCoaddTool(AnalysisTool):
 
 
 class MatchedRefCoaddDiffMagTool(MatchedRefCoaddTool):
-    def matchRefDiffMagContext(self):
+    def matchedRefDiffMagContext(self):
         self.process.buildActions.diff = SubtractVector(
             actionA=MagColumnNanoJansky(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
             actionB=self.process.buildActions.mags_ref,
         )
 
-    def matchRefDiffFluxChiContext(self):
+    def matchedRefDiffFluxChiContext(self):
         self.process.buildActions.diff = DivideVector(
             actionA=SubtractVector(
                 actionA=LoadVector(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),

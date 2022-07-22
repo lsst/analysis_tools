@@ -50,11 +50,13 @@ class SigmaMadAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return float(sps.median_abs_deviation(
-            cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
-            scale="normal",  # type: ignore
-            nan_policy="omit",
-        ))
+        return float(
+            sps.median_abs_deviation(
+                cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
+                scale="normal",  # type: ignore
+                nan_policy="omit",
+            )
+        )
 
 
 class CountAction(ScalarAction):

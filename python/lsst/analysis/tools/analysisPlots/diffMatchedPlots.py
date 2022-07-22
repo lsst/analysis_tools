@@ -38,12 +38,12 @@ class MatchedRefCoaddPlot(AnalysisPlot):
 
 
 class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot, MatchedRefCoaddDiffMagTool):
-    def matchRefDiffMagContext(self):
-        super(MatchedRefCoaddCModelFluxPlot, self).matchRefDiffMagContext()
+    def matchedRefDiffMagContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefDiffMagContext()
         self.produce.yAxisLabel = "cModel - Reference Magnitude (mag)"
 
-    def matchRefDiffFluxChiContext(self):
-        super(MatchedRefCoaddCModelFluxPlot, self).matchRefDiffFluxChiContext()
+    def matchedRefDiffFluxChiContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefDiffFluxChiContext()
         self.produce.yAxisLabel = "chi = (cModel - Ref mag)/error"
 
     def setDefaults(self):

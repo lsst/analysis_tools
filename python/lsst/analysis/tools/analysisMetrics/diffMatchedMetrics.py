@@ -29,40 +29,59 @@ from ..interfaces import AnalysisMetric
 
 
 class MatchedRefCoaddMetric(AnalysisMetric):
+    mag_low_min: int = 15
+    mag_low_max: int = 27
+    mag_interval: int = 1
+
+    names = ("stars", "galaxies")
+    types = ("unresolved", "resolved")
+
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.calculateActions.galaxies = CalcBinnedStatsAction(vectorKey="yGalaxies")
-        self.process.calculateActions.stars = CalcBinnedStatsAction(vectorKey="yStars")
+        for name in self.names:
+            name_capital = name.capitalize()
+            for minimum in range(self.mag_low_min, self.mag_low_max + 1):
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}{minimum}",
+                    CalcBinnedStatsAction(vectorKey=f"y{name_capital}"),
+                )
 
 
 class MatchedRefCoaddDiffCModelFluxMetric(MatchedRefCoaddDiffMagTool, MatchedRefCoaddMetric):
+    def matchedRefDiffMagContext(self):
+        super(MatchedRefCoaddDiffCModelFluxMetric, self).matchedRefDiffMagContext()
+
+    def matchedRefDiffFluxChiContext(self):
+        super(MatchedRefCoaddDiffCModelFluxMetric, self).matchedRefDiffFluxChiContext()
+
     def setDefaults(self):
-        super(MatchedRefCoaddDiffCModelFluxMetric).setDefaults()
-        minimum = 15
-        maximum = 16
+        super(MatchedRefCoaddDiffCModelFluxMetric, self).setDefaults()
 
         units = {}
 
-        for action, x_key, name_class in (
-            (self.process.calculateActions.galaxies, "xGalaxies", "resolved"),
-            (self.process.calculateActions.stars, "xStars", "unresolved"),
-        ):
-            name_prefix = f"photom_mag_cModelFlux_{name_class}_diff_sig_mad_ref_mag15"
-            action.rangeSelector = RangeSelector(
-                column=x_key,
-                minimum=minimum,
-                maximum=maximum,
-            )
-            action.name_prefix = name_prefix
+        for name, name_class in zip(self.names, self.types):
+            name_capital = name.capitalize()
+            x_key = f"x{name_capital}"
 
-            units.update(
-                {
-                    action.name_selectMedian: "mag",
-                    action.name_median: "mag",
-                    action.name_sigmaMad: "mag",
-                    action.name_count: "count",
-                }
-            )
+            for minimum in range(self.mag_low_min, self.mag_low_max + 1):
+                action = getattr(self.process.calculateActions, f"{name}{minimum}")
+                name_prefix = f"photom_mag_cModelFlux_{name_class}_diff_sig_mad_ref_mag{minimum}"
+                action.rangeSelector = RangeSelector(
+                    column=x_key,
+                    minimum=minimum,
+                    maximum=minimum + self.mag_interval,
+                )
+                action.name_prefix = name_prefix
+
+                units.update(
+                    {
+                        action.name_selectMedian: "mag",
+                        action.name_median: "mag",
+                        action.name_sigmaMad: "mag",
+                        action.name_count: "count",
+                    }
+                )
 
         self.produce.units = units  # type: ignore

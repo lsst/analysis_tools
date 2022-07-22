@@ -133,11 +133,11 @@ class TestVectorActions(unittest.TestCase):
 
     def testMagColumnNanoJansky(self):
         truth = [
-            31.40006562228223,
-            29.894915643962324,
-            29.014459348683918,
-            28.389765665642418,
-            27.905215600602137,
+            31.4,
+            29.89485002168,
+            29.0143937264,
+            28.38970004336,
+            27.90514997832,
         ]
         action = MagColumnNanoJansky(vectorKey="{band}_vector")
         result = action(self.data, band="i")

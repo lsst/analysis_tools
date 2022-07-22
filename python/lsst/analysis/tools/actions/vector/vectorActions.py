@@ -92,7 +92,7 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3630.780547701003))  # type: ignore
             if self.returnMillimags:
                 return mag * u.mag.to(u.mmag)
             else:

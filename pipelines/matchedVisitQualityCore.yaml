@@ -1,2 +1,11 @@
 description: |
   Tier1 plots and metrics to assess repeatability of sources matched per tract
+tasks:
+  analyzeMatchedVisitCore:
+    class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
+    config:
+      bands: ['i']
+      connections.outputName: matchedVisitCore
+      metrics.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatabilityMetric
+      python: |
+        from lsst.analysis.tools.analysisMetrics import *

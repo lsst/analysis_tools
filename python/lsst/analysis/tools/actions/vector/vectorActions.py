@@ -27,12 +27,30 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from lsst.pex.config import DictField, Field
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
+
+
+#class DownselectVector(VectorAction):
+#    """Get a vector from KeyedData, apply specified selector, return the
+#    shorter Vector.
+#    """
+#
+#    vectorKey = Field[str](doc="column key to load from KeyedData")
+#
+#    selector = ConfigurableActionField(doc="Action which returns a selection mask", default=VectorSelector)
+#
+#    def getInputSchema(self) -> KeyedDataSchema:
+#        yield (self.vectorKey, Vector)
+#        yield from cast(VectorAction, self.selector).getInputSchema()
+#
+#    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+#        mask = cast(VectorAction, self.selector)(data, **kwargs)
+#        return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
 
 
 class DownselectVector(VectorAction):
@@ -42,16 +60,24 @@ class DownselectVector(VectorAction):
 
     vectorKey = Field[str](doc="column key to load from KeyedData")
 
-    selector = ConfigurableActionField(doc="Action which returns a selection mask", default=VectorSelector)
+    selectors = ConfigurableActionStructField[VectorAction](
+        doc="Selectors for selecting rows, will be AND together",
+    )
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield (self.vectorKey, Vector)
-        yield from cast(VectorAction, self.selector).getInputSchema()
+        for action in self.selectors:
+            yield from cast(VectorAction, action).getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        mask = cast(VectorAction, self.selector)(data, **kwargs)
+        mask: Optional[Vector] = None
+        for selector in self.selectors:
+            subMask = selector(data, **kwargs)
+            if mask is None:
+                mask = subMask
+            else:
+                mask *= subMask  # type: ignore
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-
 
 class MagColumnNanoJansky(VectorAction):
     vectorKey = Field[str](doc="column key to use for this transformation")
@@ -262,13 +288,8 @@ class PerGroupStatistic(VectorAction):
 
     def getInputSchema(self) -> KeyedDataSchema:
         return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)
-        #yield from self.buildAction.getInputSchema()
-        #yield (self.groupKey, Vector)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-
-        result = data
-
         df = pd.DataFrame({
             "groupKey": data[self.groupKey],
             "value": self.buildAction(data, **kwargs)

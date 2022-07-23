@@ -81,3 +81,25 @@ class ApproxFloor(ScalarAction):
         value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
         x = len(value) // 10
         return np.nanmedian(value[-x:])
+
+
+class FracThreshold(ScalarAction):
+    """Compute the fraction of a distribution of values relative to a threshold."""
+
+    op = Field[str](doc="Operator name.")
+    threshold = Field[float](doc="Threshold to apply.")
+    vectorKey = Field[str](doc="Name of column")
+    percent = Field[bool](doc="Express result as percentage", default=False)
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        return ((self.vectorKey.format(**kwargs), Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        values = data[self.vectorKey.format(**kwargs)][mask]
+        values = values[np.logical_not(np.isnan(values))]
+        result = np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)
+        if self.percent:
+            return 100. * result
+        else:
+            return result

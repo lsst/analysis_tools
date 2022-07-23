@@ -25,6 +25,7 @@ __all__ = [
     "WPerpPSFMetric",
 ]
 
+from ..actions.keyedData import KeyedDataSelectorAction
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.scalar.scalarActions import ApproxFloor
 from ..actions.vector import (
@@ -230,7 +231,6 @@ class XPerpPSFMetric(AnalysisMetric):
 
 
 class SkyFluxStatisticMetric(AnalysisMetric):
-    parameterizedBand: bool = True
     fluxType: str = "ap09Flux"
 
     def setDefaults(self):
@@ -253,7 +253,6 @@ class SkyFluxStatisticMetric(AnalysisMetric):
 
 
 class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
-    parameterizedBand: bool = True
     fluxType: str = "psfFlux"
 
     def setDefaults(self):
@@ -276,19 +275,46 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
         self.process.buildActions.perGroupStdev.func = "std"
 
         # Filter on per-group quantities
-        self.process.filterActions.perGroupStdev = DownselectVector(vectorKey="perGroupStdev")
-        self.process.filterActions.perGroupStdev.selector = AndSelector()
-        self.process.filterActions.perGroupStdev.selector.selectors.count = ThresholdSelector(
-            columnKey="perGroupCount", op="ge", threshold=3,
+        """
+        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
+        self.process.filterActions.perGroupStdevFiltered.selector = AndSelector()
+        self.process.filterActions.perGroupStdevFiltered.selector.selectors.count = ThresholdSelector(
+            vectorKey="perGroupCount", op="ge", threshold=3,
         )
-        self.process.filterActions.perGroupStdev.selector.selectors.sn = ThresholdSelector(
-            columnKey="perGroupSn", op="ge", threshold=100,
+        self.process.filterActions.perGroupStdevFiltered.selector.selectors.sn = ThresholdSelector(
+            vectorKey="perGroupSn", op="ge", threshold=200,
         )
-        self.process.filterActions.perGroupStdev.selector.selectors.extendedness = ThresholdSelector(
-            columnKey="perGroupExtendedness", op="le", threshold=0.5,
+        self.process.filterActions.perGroupStdevFiltered.selector.selectors.extendedness = ThresholdSelector(
+            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
         )
+        """
+        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
+        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
+            vectorKey="perGroupCount", op="ge", threshold=3,
+        )
+        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
+            vectorKey="perGroupSn", op="ge", threshold=200,
+        )
+        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
+            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
+        )
+        """
+        self.process.filterActions.perGroupStdevFiltered = KeyedDataSelectorAction(vectorKeys=["perGroupStdev"])
+        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
+            vectorKey="perGroupCount", op="ge", threshold=3,
+        )
+        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
+            vectorKey="perGroupSn", op="ge", threshold=200,
+        )
+        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
+            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
+        )
+        """
 
-        self.process.calculateActions.photRepeatStdev = MedianAction(colKey="perGroupStdev")
+        self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
+        self.process.calculateActions.photRepeatOutlier = FracThreshold(
+            vectorKey="perGroupStdevFiltered", op='ge', threshold=0.015, percent=True,
+        )
 
         self.produce.units = {  # type: ignore
             "photRepeatStdev": "mag",

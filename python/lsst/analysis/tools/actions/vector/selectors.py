@@ -333,6 +333,8 @@ class VectorSelector(VectorAction):
 
 
 class AndSelector(VectorAction):
+    """Apply multiple selection criteria with logical AND.
+    """
 
     selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",
@@ -343,7 +345,7 @@ class AndSelector(VectorAction):
             yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask: Optional[np.ndarray] = None
+        mask: Optional[Vector] = None
         for selector in self.selectors:
             subMask = selector(data, **kwargs)
             if mask is None:
@@ -359,20 +361,20 @@ class ThresholdSelector(VectorAction):
 
     op = Field[str](doc="Operator name.")
     threshold = Field[float](doc="Threshold to apply.")
-    columnKey = Field[str](doc="Name of column")
+    vectorKey = Field[str](doc="Name of column")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.columnKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        mask = getattr(operator, self.op)(data[self.columnKey], self.threshold)
+        mask = getattr(operator, self.op)(data[self.vectorKey], self.threshold)
         return cast(Vector, mask)
 
 
 class BandSelector(VectorAction):
     """Makes a mask for sources observed in a specified set of bands."""
 
-    columnKey = Field[str](
+    vectorKey = Field[str](
         doc="Key of the Vector which defines the band", default="band"
     )
     bands = ListField[str](
@@ -380,7 +382,7 @@ class BandSelector(VectorAction):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.columnKey, Vector),)
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         match kwargs:
@@ -393,8 +395,8 @@ class BandSelector(VectorAction):
             case _:
                 bands = None
         if bands:
-            mask = np.in1d(data[self.columnKey], bands)
+            mask = np.in1d(data[self.vectorKey], bands)
         else:
             # No band selection is applied, i.e., select all rows
-            mask = np.full(len(data[self.columnKey]), True)
+            mask = np.full(len(data[self.vectorKey]), True)
         return cast(Vector, mask)

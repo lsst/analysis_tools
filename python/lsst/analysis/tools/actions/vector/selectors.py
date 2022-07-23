@@ -30,13 +30,18 @@ __all__ = (
     "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
+    "AndSelector",
+    "ThresholdSelector",
+    "BandSelector",
 )
 
+import operator
 from typing import Optional, cast
 
 import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
+from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
@@ -325,3 +330,71 @@ class VectorSelector(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[self.vectorKey.format(**kwargs)])
+
+
+class AndSelector(VectorAction):
+
+    selectors = ConfigurableActionStructField[VectorAction](
+        doc="Selectors for selecting rows, will be AND together",
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        for action in self.selectors:
+            yield from action.getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask: Optional[np.ndarray] = None
+        for selector in self.selectors:
+            subMask = selector(data, **kwargs)
+            if mask is None:
+                mask = subMask
+            else:
+                mask *= subMask  # type: ignore
+        return cast(Vector, mask)
+
+
+class ThresholdSelector(VectorAction):
+    """Return a mask corresponding to an applied threshold.
+    """
+
+    op = Field[str](doc="Operator name.")
+    threshold = Field[float](doc="Threshold to apply.")
+    columnKey = Field[str](doc="Name of column")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.columnKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = getattr(operator, self.op)(data[self.columnKey], self.threshold)
+        return cast(Vector, mask)
+
+
+class BandSelector(VectorAction):
+    """Makes a mask for sources observed in a specified set of bands."""
+
+    columnKey = Field[str](
+        doc="Key of the Vector which defines the band", default="band"
+    )
+    bands = ListField[str](
+        doc="The bands to select. `None` indicates no band selection applied.", default=None,
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.columnKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        match kwargs:
+            case {"band": band}:
+                bands = (band,)
+            case {"bands": bands} if not self.bands:
+                bands = bands
+            case _ if self.bands:
+                bands = tuple(self.bands)
+            case _:
+                bands = None
+        if bands:
+            mask = np.in1d(data[self.columnKey], bands)
+        else:
+            # No band selection is applied, i.e., select all rows
+            mask = np.full(len(data[self.columnKey]), True)
+        return cast(Vector, mask)

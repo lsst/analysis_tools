@@ -28,11 +28,19 @@ __all__ = [
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.scalar.scalarActions import ApproxFloor
 from ..actions.vector import (
+    AndSelector,
+    BandSelector,
+    CalcShapeSize,
     CoaddPlotFlagSelector,
     ExtinctionCorrectedMagDiff,
     MagColumnNanoJansky,
+    PerGroupStatistic,
+    SkyObjectSelector,
+    Sn,
     SnSelector,
     StarSelector,
+    ThresholdSelector,
+    VectorSelector,
 )
 from ..interfaces import AnalysisMetric
 
@@ -218,4 +226,73 @@ class XPerpPSFMetric(AnalysisMetric):
 
         self.produce.units = {  # type: ignore
             "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+        }
+
+
+class SkyFluxStatisticMetric(AnalysisMetric):
+    parameterizedBand: bool = True
+    fluxType: str = "ap09Flux"
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
+
+        self.process.calculateActions.medianSky = MedianAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.meanSky = MeanAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.stdevSky = StdevAction(vectorKey=f"{{band}}_{self.fluxType}")
+        self.process.calculateActions.sigmaMADSky = SigmaMadAction(vectorKey=f"{{band}}_{self.fluxType}")
+
+        self.produce.units = {  # type: ignore
+            "medianSky": "nJy",
+            "meanSky": "nJy",
+            "stdevSky": "nJy",
+            "sigmaMADSky": "nJy",
+        }
+
+
+class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
+    parameterizedBand: bool = True
+    fluxType: str = "psfFlux"
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Apply per-source selection criteria
+        self.prep.selectors.bandSelector = BandSelector()
+
+        # Compute per-group quantities
+        self.process.buildActions.perGroupSn = PerGroupStatistic()
+        self.process.buildActions.perGroupSn.buildAction = Sn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.func = "median"
+        self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
+        self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
+        self.process.buildActions.perGroupExtendedness.func = "median"
+        self.process.buildActions.perGroupCount = PerGroupStatistic()
+        self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
+        self.process.buildActions.perGroupStdev = PerGroupStatistic()
+        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(vectorKey=f"{self.fluxType}")
+        self.process.buildActions.perGroupStdev.func = "std"
+
+        # Filter on per-group quantities
+        self.process.filterActions.perGroupStdev = DownselectVector(vectorKey="perGroupStdev")
+        self.process.filterActions.perGroupStdev.selector = AndSelector()
+        self.process.filterActions.perGroupStdev.selector.selectors.count = ThresholdSelector(
+            columnKey="perGroupCount", op="ge", threshold=3,
+        )
+        self.process.filterActions.perGroupStdev.selector.selectors.sn = ThresholdSelector(
+            columnKey="perGroupSn", op="ge", threshold=100,
+        )
+        self.process.filterActions.perGroupStdev.selector.selectors.extendedness = ThresholdSelector(
+            columnKey="perGroupExtendedness", op="le", threshold=0.5,
+        )
+
+        self.process.calculateActions.photRepeatStdev = MedianAction(colKey="perGroupStdev")
+
+        self.produce.units = {  # type: ignore
+            "photRepeatStdev": "mag",
+        }
+        self.produce.newNames = {
+            "photRepeatStdev": "{band}_stellarPhotRepeatStdev"
         }

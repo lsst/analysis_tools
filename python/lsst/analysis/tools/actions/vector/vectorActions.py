@@ -24,6 +24,7 @@ import logging
 from typing import cast
 
 import numpy as np
+import pandas as pd
 from astropy import units as u
 from lsst.pex.config import DictField, Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
@@ -80,6 +81,36 @@ class FractionalDifference(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return (vecA - vecB) / vecB
+
+
+class Sn(VectorAction):
+    """Compute signal-to-noise in the given flux type"""
+
+    fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
+    )
+    band = Field[str](doc="Band to calculate the S/N in.", default="i")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (fluxCol := self.fluxType), Vector
+        yield f"{fluxCol}{self.uncertaintySuffix}", Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Computes S/N in self.fluxType
+        Parameters
+        ----------
+        df : `Tabular`
+        Returns
+        -------
+        result : `Vector`
+            Computed signal-to-noise ratio.
+        """
+        fluxCol = self.fluxType.format(**(kwargs | dict(band=self.band)))
+        errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
+        result = (cast(Vector, data[fluxCol]) / data[errCol]) # type: ignore
+
+        return np.array(cast(Vector, result))
 
 
 class LoadVector(VectorAction):
@@ -220,3 +251,27 @@ class ExtinctionCorrectedMagDiff(VectorAction):
             correction = correction.to(u.mmag)
 
         return np.array(diff - correction.value)
+
+
+class PerGroupStatistic(VectorAction):
+    """Compute per-group statistic values."""
+
+    groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    func = Field[str](doc="Name of function to be applied per group", default="count")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)
+        #yield from self.buildAction.getInputSchema()
+        #yield (self.groupKey, Vector)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+
+        result = data
+
+        df = pd.DataFrame({
+            "groupKey": data[self.groupKey],
+            "value": self.buildAction(data, **kwargs)
+        })
+        result = df.groupby("groupKey")["value"].aggregate(self.func)
+        return np.array(result)

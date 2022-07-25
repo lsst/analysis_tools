@@ -33,10 +33,7 @@ from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineT
 class AssociatedSourcesTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={
-        "inputName": "isolated_star_sources",
-        # "associatedSourcesInputName": "isolated_star_sources"},
-    },
+    defaultTemplates={"outputName": "isolated_star_sources"},
 ):
     data = ct.Input(
         doc="Visit based source table to load from the butler",
@@ -49,8 +46,7 @@ class AssociatedSourcesTractAnalysisConnections(
 
     associatedSources = ct.Input(
         doc="Table of associated sources",
-        # name="{associatedSourcesInputName}",
-        name="{inputName}",
+        name="{outputName}",
         storageClass="DataFrame",
         # deferLoad=True,
         dimensions=("instrument", "skymap", "tract"),

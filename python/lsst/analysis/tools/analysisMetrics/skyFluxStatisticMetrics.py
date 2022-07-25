@@ -34,7 +34,7 @@ class SkyFluxStatisticMetric(AnalysisMetric):
     coaddContext (measurement on objectTable) must be specified.
     """
 
-    parameterizedBand: bool = True
+    # parameterizedBand: bool = True
     fluxType: str = "ap09Flux"
 
     def visitContext(self) -> None:
@@ -45,6 +45,13 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         self.prep.selectors.skyObjectSelector = SkyObjectSelector()
         self.prep.selectors.skyObjectSelector.bands = ["{band}"]
         self._setActions(f"{{band}}_{self.fluxType}")
+
+        self.produce.newNames{
+            medianSky: {band}_medianSky
+            meanSky: {band}_meanSky
+            stdevSky: {band}_stdevSky
+            sigmaMADSky: {band}_sigmaMADSky
+        }
 
     def _setActions(self, name: str) -> None:
         self.process.calculateActions.medianSky = MedianAction(vectorKey=name)

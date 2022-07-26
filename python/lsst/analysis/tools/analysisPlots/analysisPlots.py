@@ -26,7 +26,11 @@ __all__ = (
     "ShapeSizeFractionalDiffScatterPlot",
     "WPerpPSFPlot",
     "Ap12PsfSkyPlot",
+    "TargetRefCatDeltaRAScatterPlot",
+    "TargetRefCatDeltaRAScatterPlot",
 )
+
+from lsst.pex.config import Field
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
@@ -35,7 +39,6 @@ from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
     AstromDiff,
-    CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -45,8 +48,8 @@ from ..actions.vector import (
     StarSelector,
     VectorSelector,
 )
-from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
+from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..interfaces import AnalysisPlot
 
 
@@ -195,13 +198,13 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
-        self.post_process = SkyPlot()
-        self.post_process.plotTypes = ["stars"]
-        self.post_process.plotName = f"ap12-psf_{self.band}"
-        self.post_process.xAxisLabel = "R.A."
-        self.post_process.yAxisLabel = "Declination"
-        self.post_process.zAxisLabel = "Ap 12 - PSF [mag]"
-        self.post_process.plotOutlines = False
+        self.produce = SkyPlot()
+        self.produce.plotTypes = ["stars"]
+        self.produce.plotName = "ap12-psf_{band}"
+        self.produce.xAxisLabel = "R.A. (degrees)"
+        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
+        self.produce.plotOutlines = False
 
 
 class TargetRefCatDelta(AnalysisPlot):
@@ -209,32 +212,53 @@ class TargetRefCatDelta(AnalysisPlot):
     reference catalog for the coordinate set in `setDefaults`.
     """
 
+    parameterizedBand = Field[bool](
+        doc="Does this AnalysisTool support band as a name parameter", default=True
+    )
+
     def coaddContext(self) -> None:
         self.prep = CoaddPrep()
         self.process.buildActions.starSelector.vectorKey = "{band}_extendedness"
         self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
+        self.process.filterActions.psfFlux = DownselectVector(
+            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.process.filterActions.psfFluxErr = DownselectVector(
+            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
+        )
 
     def visitContext(self) -> None:
+        self.parameterizedBand = False
         self.prep = VisitPrep()
         self.process.buildActions.starSelector.vectorKey = "extendedness"
         self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
-        self.process.calculateActions.stars.fluxType = "psfFlux"
-        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
-        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+        self.process.filterActions.psfFlux = DownselectVector(
+            vectorKey="psfFlux", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.process.filterActions.psfFluxErr = DownselectVector(
+            vectorKey="psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
+        )
 
     def setDefaults(self, coordinate):
         super().setDefaults()
 
         self.process.buildActions.starSelector = StarSelector()
+        coordStr = coordinate.lower()
+        self.process.buildActions.astromDiff = AstromDiff(
+            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        )
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
         )
-        coordStr = coordinate.lower()
-        self.process.buildActions.yStars = AstromDiff(
-            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="astromDiff", selector=VectorSelector(vectorKey="starSelector")
         )
+
         self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="yStars")
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.fluxType = "psfFlux"
 
         self.produce = ScatterPlotWithTwoHists()
 

@@ -231,13 +231,14 @@ class AstromDiff(VectorAction):
         The catalog to calculate the position difference from.
     Returns
     -------
-    The difference.
+    angleDiffValue : `np.ndarray`
+        The difference between two columns, either in the input units or in
+        milliarcseconds.
     Notes
     -----
-    The columns need to be in units (specifiable in
-    the radecUnits1 and 2 config options) that can be converted
-    to arcseconds. This action doesn't have any calibration
-    information and assumes that the positions are already
+    The columns need to be in units (specifiable in the radecUnits1 and 2
+    config options) that can be converted to arcseconds. This action doesn't
+    have any calibration information and assumes that the positions are already
     calibrated.
     """
 

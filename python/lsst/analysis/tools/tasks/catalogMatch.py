@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import astropy.units as u
+import astropy.units as units
 import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
@@ -47,6 +47,14 @@ class AstropyMatchConfig(pexConfig.Config):
     maxDistance = pexConfig.Field[float](
         doc="Max distance between matches in arcsec",
         default=1.0,
+    )
+    refCatUnits = pexConfig.Field[str](
+        doc="Units of the reference catalog coordinates",
+        default="degree",
+    )
+    targetCatUnits = pexConfig.Field[str](
+        doc="Units of the target catalog coordinates",
+        default="degree",
     )
 
 
@@ -76,10 +84,14 @@ class AstropyMatchTask(pipeBase.Task):
             separations: `astropy.coordinates.angles.Angle`
                 Array of angle separations between matched objects
         """
-        refCat_ap = SkyCoord(ra=refCatalog["coord_ra"] * u.degree, dec=refCatalog["coord_dec"] * u.degree)
+        refCat_ap = SkyCoord(
+            ra=refCatalog["coord_ra"] * units.Unit(self.config.refCatUnits),
+            dec=refCatalog["coord_dec"] * units.Unit(self.config.refCatUnits),
+        )
 
         sourceCat_ap = SkyCoord(
-            ra=targetCatalog["coord_ra"] * u.degree, dec=targetCatalog["coord_dec"] * u.degree
+            ra=targetCatalog["coord_ra"] * units.Unit(self.config.targetCatUnits),
+            dec=targetCatalog["coord_dec"] * units.Unit(self.config.targetCatUnits),
         )
 
         id, d2d, d3d = refCat_ap.match_to_catalog_sky(sourceCat_ap)
@@ -99,7 +111,7 @@ class AstropyMatchTask(pipeBase.Task):
 class CatalogMatchConnections(
     pipeBase.PipelineTaskConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "astrometryRefCat"},
+    defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "gaia_dr2_20200414"},
 ):
 
     catalog = pipeBase.connectionTypes.Input(
@@ -126,7 +138,7 @@ class CatalogMatchConnections(
         dimensions=("skymap",),
     )
 
-    matchCatalog = pipeBase.connectionTypes.Output(
+    matchedCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
         name="{targetCatalog}_{refCatalog}_match",
         storageClass="DataFrame",
@@ -141,6 +153,11 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
     )
 
     epoch = pexConfig.Field[float](doc="Epoch to which reference objects are shifted", default=2015.0)
+
+    bands = pexConfig.ListField[str](
+        doc="All bands to persist to downstream tasks",
+        default=["g", "r", "i", "z", "y"],
+    )
 
     selectorBand = pexConfig.Field[str](
         doc="Band to use when selecting objects, primarily for extendedness", default="i"
@@ -181,7 +198,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
     """Match a tract-level catalog to a reference catalog"""
 
     ConfigClass = CatalogMatchConfig
-    _DefaultName = "catalogMatch"
+    _DefaultName = "analysisToolsCatalogMatch"
 
     def __init__(self, butler=None, initInputs=None, **kwargs):
         super().__init__(**kwargs)
@@ -199,7 +216,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             self.config.extraColumnSelectors,
         ]:
             for selector in selectorAction:
-                for band in ["g", "r", "i", "z", "y"]:
+                for band in self.config.bands:
                     selectorSchema = selector.getFormattedInputSchema(band=band)
                     columns += [s[0] for s in selectorSchema]
 
@@ -265,7 +282,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         separations = pd.Series(matches.separations).rename("separation")
         matchedCat = matchedCat.join(separations)
 
-        return pipeBase.Struct(matchCatalog=matchedCat)
+        return pipeBase.Struct(matchedCatalog=matchedCat)
 
     def setRefCat(self, skymap, tract):
         """Make a reference catalog with coordinates in degrees
@@ -290,15 +307,15 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         # Convert the coordinates to RA/Dec and convert the catalog to a
         # dataframe
-        refCat["coord_ra"] = (refCat["coord_ra"] * u.radian).to(u.degree).to_value()
-        refCat["coord_dec"] = (refCat["coord_dec"] * u.radian).to(u.degree).to_value()
+        refCat["coord_ra"] = (refCat["coord_ra"] * units.radian).to(units.degree).to_value()
+        refCat["coord_dec"] = (refCat["coord_dec"] * units.radian).to(units.degree).to_value()
         self.refCat = refCat.asAstropy().to_pandas()
 
 
 class CatalogMatchVisitConnections(
     pipeBase.PipelineTaskConnections,
-    dimensions=("visit", "skymap"),
-    defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "astrometryRefCat"},
+    dimensions=("visit",),
+    defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr2_20200414"},
 ):
 
     catalog = pipeBase.connectionTypes.Input(
@@ -325,7 +342,7 @@ class CatalogMatchVisitConnections(
         dimensions=("visit",),
     )
 
-    matchCatalog = pipeBase.connectionTypes.Output(
+    matchedCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
         name="{targetCatalog}_{refCatalog}_match",
         storageClass="DataFrame",
@@ -357,7 +374,7 @@ class CatalogMatchVisitTask(CatalogMatchTask):
     """Match a visit-level catalog to a reference catalog"""
 
     ConfigClass = CatalogMatchVisitConfig
-    _DefaultName = "catalogMatchVisit"
+    _DefaultName = "analysisToolsCatalogMatchVisit"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         # Docs inherited from base class
@@ -418,6 +435,6 @@ class CatalogMatchVisitTask(CatalogMatchTask):
         skyCircle = self.refObjLoader.loadSkyCircle(center, radius, "i", epoch=epoch)
         refCat = skyCircle.refCat
 
-        refCat["coord_ra"] = (refCat["coord_ra"] * u.radian).to(u.degree).to_value()
-        refCat["coord_dec"] = (refCat["coord_dec"] * u.radian).to(u.degree).to_value()
+        refCat["coord_ra"] = (refCat["coord_ra"] * units.radian).to(units.degree).to_value()
+        refCat["coord_dec"] = (refCat["coord_dec"] * units.radian).to(units.degree).to_value()
         self.refCat = refCat.asAstropy().to_pandas()

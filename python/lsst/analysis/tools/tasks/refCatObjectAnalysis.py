@@ -30,11 +30,11 @@ from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineT
 class RefCatObjectAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "objectTable_tract_astrometryRefCat_match"},
+    defaultTemplates={"outputName": "objectTable_tract_gaia_dr2_20200414_match"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTable_tract_astrometryRefCat_match",
+        name="objectTable_tract_gaia_dr2_20200414_match",
         storageClass="DataFrame",
         deferLoad=True,
         dimensions=("skymap", "tract"),

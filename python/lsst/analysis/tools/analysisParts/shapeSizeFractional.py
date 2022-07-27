@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import numpy as np
 from lsst.analysis.tools.actions.vector import LoadVector, MagColumnNanoJansky, VectorSelector
 from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
@@ -26,25 +25,9 @@ from ..interfaces import (
     KeyedData,
     KeyedDataAction,
     KeyedDataSchema,
-    Scalar,
-    ScalarAction,
     Vector,
     VectorAction,
 )
-
-
-class _ApproxMedian(ScalarAction):
-    vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.vectorKey, Vector),)  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
-        mask = self.getMask(**kwargs)
-        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
-        x = int(len(value) / 10)
-        return np.nanmedian(value[-x:])
-
 
 class ShapeSizeFractionalScalars(KeyedScalars):
     vectorKey = Field[str](doc="Column key to compute scalars")
@@ -58,7 +41,7 @@ class ShapeSizeFractionalScalars(KeyedScalars):
         self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)  # type: ignore
         self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)  # type: ignore
         self.scalarActions.count = CountAction(vectorKey=self.vectorKey)  # type: ignore
-        self.scalarActions.approxMag = _ApproxMedian(vectorKey=self.snFluxType)  # type: ignore
+        self.scalarActions.approxMag = MedianAction(vectorKey=self.snFluxType)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask = kwargs.get("mask")

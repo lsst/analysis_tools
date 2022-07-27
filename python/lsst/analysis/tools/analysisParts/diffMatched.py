@@ -105,9 +105,10 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddTool):
         optional=False,
     )
 
-    # TODO: Determine if this can be put back into setDefaults. Doing so causes:
-    # lsst.pex.config.config.FieldValidationError: Field 'process.buildActions.pos_meas.vectorKey'
-    # failed validation: Required value cannot be None
+    # TODO: Determine if this can be put back into setDefaults w/o this:
+    # lsst.pex.config.config.FieldValidationError:
+    # Field 'process.buildActions.pos_meas.vectorKey' failed validation:
+    # Required value cannot be None
     def _setPos(self):
         self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
         self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")

@@ -37,6 +37,23 @@ class MatchedRefCoaddMetric(AnalysisMetric):
     types = ("unresolved", "resolved", "all")
 
     def configureMetrics(self, unit: str, name_prefix: str, name_suffix: str):
+        """Configure metric actions and return units.
+
+        Parameters
+        ----------
+        unit : `str`
+            The (astropy) unit of the summary statistic metrics.
+        name_prefix : `str`
+            The prefix for the action (column) name.
+        name_suffix : `str`
+            The sufffix for the action (column) name.
+
+        Returns
+        -------
+        units : `dict` [`str`, `str`]
+            A dict of the unit (value) for each metriccolumn names (value) for
+
+        """
         units = {}
         for name, name_class in zip(self.names, self.types):
             name_capital = name.capitalize()

@@ -252,7 +252,11 @@ class ScatterPlotWithTwoHists(PlotAction):
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
     def makePlot(
-        self, data: KeyedData, plotInfo: Mapping[str, str] = None, sumStats: Mapping = None, **kwargs
+        self,
+        data: KeyedData,
+        plotInfo: Optional[Mapping[str, str]] = None,
+        sumStats: Optional[Mapping] = None,
+        **kwargs,
     ) -> Figure:
         """Makes a generic plot with a 2D histogram and collapsed histograms of
         each axis.

@@ -8,10 +8,21 @@ from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ..actions.keyedData import AddComputedVector, KeyedScalars
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
-from ..actions.vector import CalcShapeSize, FractionalDifference, SnSelector, StarSelector
+from ..actions.vector import (
+    CalcE,
+    CalcEDiff,
+    CalcShapeSize,
+    CoaddPlotFlagSelector,
+    DownselectVector,
+    FractionalDifference,
+    SnSelector,
+    StarSelector,
+)
 from ..interfaces import (
     AnalysisAction,
+    AnalysisTool,
     KeyedData,
     KeyedDataAction,
     KeyedDataSchema,
@@ -59,7 +70,7 @@ class ShapeSizeFractionalScalars(KeyedScalars):
         return super().__call__(data, **kwargs | dict(mask=mask))
 
 
-class ShapeSizeFractionalProcess(KeyedDataAction):
+class ShapeSizeFractionalProcessLegacy(KeyedDataAction):
     psfFluxShape = ConfigurableActionField[AnalysisAction](
         doc="Action to calculate the PSF Shape",
     )
@@ -170,3 +181,55 @@ class ShapeSizeFractionalProcess(KeyedDataAction):
         shapeDiff = cast(Vector, data[cast(str, self.shapeFracDif.keyName.format(**kwargs))])  # type: ignore
         results["ysStars"] = shapeDiff[objectMask]
         return results
+
+
+class BasePsfResidualMixin(AnalysisTool):
+    """Shared configuration for `prep` and `process` stages of PSF residuals.
+
+    This is a mixin class used by `BasePsfResidualScatterPlot` and
+    `BasePsfResidualMetric` to share common default configuration.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
+
+        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
+        self.process.buildActions.fracDiff = FractionalDifference(
+            actionA=CalcShapeSize(colXx="{band}_ixx", colYy="{band}_iyy", colXy="{band}_ixy"),
+            actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
+        )
+        # Define an eDiff action and let e1Diff and e2Diff differ only in
+        # component.
+        self.process.buildActions.eDiff = CalcEDiff(
+            colA=CalcE(colXx="{band}_ixx", colYy="{band}_iyy", colXy="{band}_ixy"),
+            colB=CalcE(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
+        )
+        self.process.buildActions.e1Diff = self.process.buildActions.eDiff
+        self.process.buildActions.e1Diff.component = "1"
+        self.process.buildActions.e2Diff = self.process.buildActions.eDiff
+        self.process.buildActions.e2Diff.component = "2"
+        # pre-compute a stellar selector mask so it can be used in the filter
+        # actions while only being computed once, alternatively the stellar
+        # selector could be calculated and applied twice in the filter stage
+        self.process.buildActions.starSelector = StarSelector()
+
+        self.process.filterActions.xStars = DownselectVector(
+            vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
+        )
+        # downselect the psfFlux as well
+        self.process.filterActions.psfFlux = DownselectVector(
+            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.process.filterActions.psfFluxErr = DownselectVector(
+            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+        self.process.calculateActions.stars = ScatterPlotStatsAction(
+            vectorKey="yStars",
+        )
+        # use the downselected psfFlux
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.fluxType = "psfFlux"

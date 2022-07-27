@@ -21,4 +21,5 @@
 from .analysisMetrics import *
 from .limitingMagnitudeMetric import *
 from .metricMeasurementBundle import *
+from .psfResidualMetrics import *
 from .skyFluxStatisticMetrics import *

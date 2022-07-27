@@ -20,39 +20,45 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ShapeSizeFractionalDiffScatter", "WPerpPSFPlot", "Ap12PsfSkyPlot")
+__all__ = (
+    "E1DiffScatterPlot",
+    "E2DiffScatterPlot",
+    "ShapeSizeFractionalDiffScatterPlot",
+    "WPerpPSFPlot",
+    "Ap12PsfSkyPlot",
+)
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
-from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
-    CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
-    FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
     SnSelector,
     StarSelector,
     VectorSelector,
 )
+from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..interfaces import AnalysisPlot
 
 
-class ShapeSizeFractionalDiffScatter(AnalysisPlot):
+class BasePsfResidualScatterPlot(AnalysisPlot, BasePsfResidualMixin):
+    """Base class for scatter plots of PSF residuals.
+
+    This is shared by size and ellipticity plots.
+    """
+
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
         self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
-        self.process.buildActions.fracDiff = FractionalDifference(
-            actionA=CalcShapeSize(),
-            actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
-        )
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
         # selector could be calculated and applied twice in the filter stage
@@ -60,9 +66,6 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
         )
         # downselect the psfFlux as well
         self.process.filterActions.psfFlux = DownselectVector(
@@ -72,20 +75,38 @@ class ShapeSizeFractionalDiffScatter(AnalysisPlot):
             vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
         )
 
-        self.process.calculateActions.stars = ScatterPlotStatsAction(
-            vectorKey="yStars",
-        )
-        # use the downselected psfFlux
-        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
-        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
-        self.process.calculateActions.stars.fluxType = "psfFlux"
-
         self.produce = ScatterPlotWithTwoHists()
 
         self.produce.plotTypes = ["stars"]
         self.produce.xAxisLabel = "PSF Magnitude (mag)"
-        self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
         self.produce.magLabel = "PSF Magnitude (mag)"
+
+
+class ShapeSizeFractionalDiffScatterPlot(BasePsfResidualScatterPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
+
+
+class E1DiffScatterPlot(BasePsfResidualScatterPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e1Diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.produce.yAxisLabel = "Ellipticty residuals (e1 - e1_PSF)"
+
+
+class E2DiffScatterPlot(BasePsfResidualScatterPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="e2Diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+        self.produce.yAxisLabel = "Ellipticty residuals (e2 - e2_PSF)"
 
 
 class WPerpPSFPlot(AnalysisPlot):

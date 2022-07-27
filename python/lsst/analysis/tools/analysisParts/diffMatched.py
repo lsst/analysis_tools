@@ -20,7 +20,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MatchedRefCoaddTool", "MatchedRefCoaddDiffMagTool")
+__all__ = ("MatchedRefCoaddTool", "MatchedRefCoaddDiffMagTool", "MatchedRefCoaddDiffPositionTool")
+
+from lsst.pex.config import ChoiceField
 
 from ..actions.vector.selectors import GalaxySelector, StarSelector
 from ..actions.vector.vectorActions import (
@@ -44,9 +46,16 @@ class MatchedRefCoaddTool(AnalysisTool):
             vectorKey=self.process.buildActions.fluxes_ref.vectorKey
         )
 
+        # Select any finite extendedness (but still exclude NaNs)
+        self.process.buildActions.allSelector = StarSelector(
+            vectorKey="refExtendedness", extendedness_maximum=1.0
+        )
         self.process.buildActions.galaxySelector = GalaxySelector(vectorKey="refExtendedness")
         self.process.buildActions.starSelector = StarSelector(vectorKey="refExtendedness")
 
+        self.process.filterActions.xAll = DownselectVector(
+            vectorKey="mags_ref", selector=VectorSelector(vectorKey="allSelector")
+        )
         self.process.filterActions.xGalaxies = DownselectVector(
             vectorKey="mags_ref", selector=VectorSelector(vectorKey="galaxySelector")
         )
@@ -56,13 +65,13 @@ class MatchedRefCoaddTool(AnalysisTool):
 
 
 class MatchedRefCoaddDiffMagTool(MatchedRefCoaddTool):
-    def matchedRefDiffMagContext(self):
+    def matchedRefDiffContext(self):
         self.process.buildActions.diff = SubtractVector(
             actionA=MagColumnNanoJansky(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
             actionB=self.process.buildActions.mags_ref,
         )
 
-    def matchedRefDiffFluxChiContext(self):
+    def matchedRefChiContext(self):
         self.process.buildActions.diff = DivideVector(
             actionA=SubtractVector(
                 actionA=LoadVector(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
@@ -75,6 +84,57 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddTool):
         super().setDefaults()
 
         self.process.buildActions.fluxes_meas = LoadVector(vectorKey="{band}_cModelFlux")
+        self.process.filterActions.yAll = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="allSelector")
+        )
+        self.process.filterActions.yGalaxies = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
+        )
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+
+class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddTool):
+    variable = ChoiceField[str](
+        doc="The astrometric variable to compute metrics for",
+        allowed={
+            "x": "x",
+            "y": "y",
+        },
+        optional=False,
+    )
+
+    # TODO: Determine if this can be put back into setDefaults. Doing so causes:
+    # lsst.pex.config.config.FieldValidationError: Field 'process.buildActions.pos_meas.vectorKey'
+    # failed validation: Required value cannot be None
+    def _setPos(self):
+        self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
+        self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
+
+    def matchedRefDiffContext(self):
+        self._setPos()
+        self.process.buildActions.diff = SubtractVector(
+            actionA=self.process.buildActions.pos_meas,
+            actionB=self.process.buildActions.pos_ref,
+        )
+
+    def matchedRefChiContext(self):
+        self._setPos()
+        self.process.buildActions.diff = DivideVector(
+            actionA=SubtractVector(
+                actionA=self.process.buildActions.pos_meas,
+                actionB=self.process.buildActions.pos_ref,
+            ),
+            actionB=LoadVector(vectorKey=f"{self.process.buildActions.pos_meas.vectorKey}Err"),
+        )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.filterActions.yAll = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="allSelector")
+        )
         self.process.filterActions.yGalaxies = DownselectVector(
             vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
         )

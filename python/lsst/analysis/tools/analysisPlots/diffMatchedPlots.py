@@ -24,7 +24,7 @@ __all__ = ("MatchedRefCoaddPlot", "MatchedRefCoaddCModelFluxPlot")
 
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.vector.vectorActions import DownselectVector, VectorSelector
-from ..analysisParts.diffMatched import MatchedRefCoaddDiffMagTool
+from ..analysisParts.diffMatched import MatchedRefCoaddDiffMagTool, MatchedRefCoaddDiffPositionTool
 from ..interfaces import AnalysisPlot
 
 
@@ -37,18 +37,10 @@ class MatchedRefCoaddPlot(AnalysisPlot):
         self.produce.xAxisLabel = "Reference Magnitude (mag)"
 
 
-class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot, MatchedRefCoaddDiffMagTool):
-    def matchedRefDiffMagContext(self):
-        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefDiffMagContext()
-        self.produce.yAxisLabel = "cModel - Reference Magnitude (mag)"
-
-    def matchedRefDiffFluxChiContext(self):
-        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefDiffFluxChiContext()
-        self.produce.yAxisLabel = "chi = (cModel - Ref mag)/error"
-
+class MatchedRefCoaddCModelPlot(MatchedRefCoaddPlot):
     def setDefaults(self):
-        super(MatchedRefCoaddCModelFluxPlot, self).setDefaults()
-        self.produce.magLabel = "cModel Magnitude (mag)"
+        super().setDefaults()
+        self.produce.magLabel = "cModel mag"
 
         # downselect the cModelFlux as well
         for (prefix, plural) in (("star", "Stars"), ("galaxy", "Galaxies")):
@@ -70,3 +62,29 @@ class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddPlot, MatchedRefCoaddDiffMagT
             statAction.lowSNSelector.threshold = 10
             statAction.fluxType = fluxType
             setattr(self.process.calculateActions, plural, statAction)
+
+
+class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddCModelPlot, MatchedRefCoaddDiffMagTool):
+    def matchedRefDiffContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefDiffContext()
+        self.produce.yAxisLabel = "cModel - Reference mag"
+
+    def matchedRefChiContext(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).matchedRefChiContext()
+        self.produce.yAxisLabel = "chi = (cModel - Reference mag)/error"
+
+    def setDefaults(self):
+        super(MatchedRefCoaddCModelFluxPlot, self).setDefaults()
+
+
+class MatchedRefCoaddPositionPlot(MatchedRefCoaddCModelPlot, MatchedRefCoaddDiffPositionTool):
+    def matchedRefDiffContext(self):
+        super(MatchedRefCoaddPositionPlot, self).matchedRefDiffContext()
+        self.produce.yAxisLabel = f"{self.variable} position (pix)"
+
+    def matchedRefChiContext(self):
+        super(MatchedRefCoaddPositionPlot, self).matchedRefChiContext()
+        self.produce.yAxisLabel = f"chi = (slot - Reference {self.variable} position)/error"
+
+    def setDefaults(self):
+        super(MatchedRefCoaddPositionPlot, self).setDefaults()

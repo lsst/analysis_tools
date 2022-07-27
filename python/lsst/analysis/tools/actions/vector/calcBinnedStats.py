@@ -34,7 +34,8 @@ from .selectors import RangeSelector
 
 
 class CalcBinnedStatsAction(KeyedDataAction):
-    name_prefix = Field[str](doc="Field name to append stat names to")
+    name_prefix = Field[str](doc="Field name to append stat names to", default="")
+    name_suffix = Field[str](doc="Field name to append to stat names", default="")
     rangeSelector = ConfigurableActionField[RangeSelector](doc="Range selector")
     vectorKey = Field[str](doc="Vector on which to compute statistics")
 
@@ -55,23 +56,23 @@ class CalcBinnedStatsAction(KeyedDataAction):
 
     @cached_property
     def name_count(self):
-        return f"{self.name_prefix}_count"
+        return f"{self.name_prefix}count{self.name_suffix}"
 
     @cached_property
     def name_mask(self):
-        return f"{self.name_prefix}_mask"
+        return f"{self.name_prefix}mask{self.name_suffix}"
 
     @cached_property
     def name_median(self):
-        return f"{self.name_prefix}_median"
+        return f"{self.name_prefix}median{self.name_suffix}"
 
     @cached_property
     def name_selectMedian(self):
-        return f"{self.name_prefix}_selectMedian"
+        return f"{self.name_prefix}selectMedian{self.name_suffix}"
 
     @cached_property
     def name_sigmaMad(self):
-        return f"{self.name_prefix}_sigmaMad"
+        return f"{self.name_prefix}sigmaMad{self.name_suffix}"
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}

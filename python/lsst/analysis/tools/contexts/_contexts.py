@@ -44,13 +44,13 @@ class CoaddContext(Context):
     pass
 
 
-class MatchedRefDiffMagContext(Context):
-    """A context which indicates `AnalysisAction`s are computing
-    magnitude differences for matches to reference objects.
+class MatchedRefDiffContext(Context):
+    """A context which indicates `AnalysisAction`s are computing differences
+    between matches to reference objects.
     """
 
 
-class MatchedRefDiffFluxChiContext(Context):
-    """A context which indicates `AnalysisAction`s are computing
-    error-scaled flux differences for matches to reference objects.
+class MatchedRefChiContext(Context):
+    """A context which indicates `AnalysisAction`s are computing error-scaled
+    differences between matches to reference objects.
     """

@@ -20,14 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import numpy as np
+import pandas as pd
+from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
-# These need to be updated for this analysis context
-# from ..analysisPlots.analysisPlots import ShapeSizeFractionalDiffScatter
-# from ..analysisPlots.analysisPlots import Ap12PsfSkyPlot
-# from ..analysisMetrics.analysisMetrics import ShapeSizeFractionalMetric
 
 
 class AssociatedSourcesTractAnalysisConnections(
@@ -35,7 +33,7 @@ class AssociatedSourcesTractAnalysisConnections(
     dimensions=("skymap", "tract"),
     defaultTemplates={"outputName": "isolated_star_sources"},
 ):
-    data = ct.Input(
+    sourceCatalogs = ct.Input(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
         storageClass="DataFrame",
@@ -65,37 +63,33 @@ class AssociatedSourcesTractAnalysisConfig(
 ):
     def setDefaults(self):
         super().setDefaults()
-        # set plots to run
-        # update for this analysis context
-        # self.plots.shapeSizeFractionalDiffScatter = \
-        #     ShapeSizeFractionalDiffScatter()
-        # self.plots.Ap12PsfSkyPlot = Ap12PsfSkyPlot()
-
-        # set metrics to run
-        # update for this analysis context
-        # self.metrics.shapeSizeFractionalMetric = ShapeSizeFractionalMetric()
 
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = AssociatedSourcesTractAnalysisConfig
     _DefaultName = "associatedSourcesTractAnalysisTask"
 
-    def getBoxWcs(self, skymap, tract):
+    @staticmethod
+    def getBoxWcs(skymap, tract):
+        """Get box that defines tract boundaries."""
         tractInfo = skymap.generateTract(tract)
         wcs = tractInfo.getWcs()
         tractBox = tractInfo.getBBox()
-        self.log.info("Running tract: %s", tract)
         return tractBox, wcs
 
-    def prepareAssociatedSources(self, skymap, tract, sourceCatalogs, associatedSources):
-        """
-        This should be a standalone function rather than being associated with
-        this class.
-        """
+    @classmethod
+    def callback(cls, inputs, dataId):
+        """Callback function to be used with reconstructor."""
+        return cls.prepareAssociatedSources(
+            inputs["skyMap"],
+            dataId["tract"],
+            inputs["sourceCatalogs"],
+            inputs["associatedSources"],
+        )
 
-        import lsst.geom as geom
-        import numpy as np
-        import pandas as pd
+    @classmethod
+    def prepareAssociatedSources(cls, skymap, tract, sourceCatalogs, associatedSources):
+        """Concatenate source catalogs and join on associated object index."""
 
         # Keep only sources with associations
         dataJoined = pd.concat(sourceCatalogs).merge(associatedSources, on="sourceId", how="inner")
@@ -104,8 +98,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         # Determine which sources are contained in tract
         ra = np.radians(dataJoined["coord_ra"].values)
         dec = np.radians(dataJoined["coord_dec"].values)
-        box, wcs = self.getBoxWcs(skymap, tract)
-        box = geom.Box2D(box)
+        box, wcs = cls.getBoxWcs(skymap, tract)
+        box = Box2D(box)
         x, y = wcs.skyToPixelArray(ra, dec)
         boxSelection = box.contains(x, y)
 
@@ -120,14 +114,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
 
-        dataFiltered = self.prepareAssociatedSources(
-            inputs["skyMap"],
-            inputRefs.associatedSources.dataId.byName()["tract"],
-            inputs["data"],
-            inputs["associatedSources"],
-        )
-
-        kwargs = {"data": dataFiltered}
+        data = self.callback(inputs, inputRefs.associatedSources.dataId)
+        kwargs = {"data": data}
 
         outputs = self.run(**kwargs)
         butlerQC.put(outputs, outputRefs)

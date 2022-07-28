@@ -23,6 +23,7 @@ from __future__ import annotations
 __all__ = (
     "FlagSelector",
     "CoaddPlotFlagSelector",
+    "RangeSelector",
     "SnSelector",
     "ExtendednessSelector",
     "SkyObjectSelector",
@@ -159,6 +160,34 @@ class VisitPlotFlagSelector(FlagSelector):
         ]
 
 
+class RangeSelector(VectorAction):
+    """Selects rows within a range, inclusive of min/exclusive of max."""
+
+    column = Field[str](doc="Column to select from")
+    maximum = Field[float](doc="The maximum value")
+    minimum = Field[float](doc="The minimum value")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.column, Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values within the specified range.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values within the specified range.
+        """
+        values = cast(Vector, data[self.column])
+        mask = (values >= self.minimum) & (values < self.maximum)
+
+        return np.array(mask)
+
+
 class SnSelector(VectorAction):
     """Selects points that have S/N > threshold in the given flux type"""
 
@@ -182,7 +211,7 @@ class SnSelector(VectorAction):
         self.threshold in self.fluxType
         Parameters
         ----------
-        df : `Tabular`
+        data : `KeyedData`
         Returns
         -------
         result : `Vector`

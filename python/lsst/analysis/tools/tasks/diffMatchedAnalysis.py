@@ -20,37 +20,30 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-"""This is a module where concrete Contexts should be defined. These should
-be a subclass of `Context`, and should contain a description of what the
-context is for as it's docstring.
-"""
+from lsst.pipe.base import connectionTypes as ct
 
-from ._baseContext import Context
+from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class VisitContext(Context):
-    """A context which indicates `AnalysisAction`s are being run in the context
-    of visit level data.
-    """
-
-    pass
-
-
-class CoaddContext(Context):
-    """A context which indicates `AnalysisAction`s are being run in the context
-    of coadd level data.
-    """
-
-    pass
+class DiffMatchedAnalysisConnections(
+    AnalysisBaseConnections,
+    dimensions=("skymap", "tract"),
+    defaultTemplates={"inputName": "diff_matched_truth_summary_objectTable_tract"},
+):
+    data = ct.Input(
+        doc="Tract based object table to load from the butler",
+        name="matched_truth_summary_objectTable_tract",
+        storageClass="DataFrame",
+        deferLoad=True,
+        dimensions=("skymap", "tract"),
+    )
 
 
-class MatchedRefDiffContext(Context):
-    """A context which indicates `AnalysisAction`s are computing differences
-    between matches to reference objects.
-    """
+class DiffMatchedAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections):
+    def setDefaults(self):
+        super().setDefaults()
 
 
-class MatchedRefChiContext(Context):
-    """A context which indicates `AnalysisAction`s are computing error-scaled
-    differences between matches to reference objects.
-    """
+class DiffMatchedAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = DiffMatchedAnalysisConfig
+    _DefaultName = "DiffMatchedAnalysisTask"

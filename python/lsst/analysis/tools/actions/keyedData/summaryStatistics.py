@@ -20,37 +20,32 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-"""This is a module where concrete Contexts should be defined. These should
-be a subclass of `Context`, and should contain a description of what the
-context is for as it's docstring.
-"""
+from functools import partial
 
-from ._baseContext import Context
+import scipy.stats as sps
+from lsst.pex.config import Field
 
+from ...interfaces import KeyedData
+from ..scalar import CountAction, MedianAction, SigmaMadAction
+from .keyedDataActions import KeyedScalars
 
-class VisitContext(Context):
-    """A context which indicates `AnalysisAction`s are being run in the context
-    of visit level data.
-    """
+__all__ = (
+    "sigmaMad",
+    "SummaryStatisticAction",
+)
 
-    pass
-
-
-class CoaddContext(Context):
-    """A context which indicates `AnalysisAction`s are being run in the context
-    of coadd level data.
-    """
-
-    pass
+sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
 
 
-class MatchedRefDiffContext(Context):
-    """A context which indicates `AnalysisAction`s are computing differences
-    between matches to reference objects.
-    """
+class SummaryStatisticAction(KeyedScalars):
+    vectorKey = Field[str](doc="Column key to compute scalars")
 
+    def setDefaults(self):
+        super().setDefaults()
+        self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)
+        self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)
+        self.scalarActions.count = CountAction(vectorKey=self.vectorKey)
 
-class MatchedRefChiContext(Context):
-    """A context which indicates `AnalysisAction`s are computing error-scaled
-    differences between matches to reference objects.
-    """
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask = kwargs.get("mask")
+        return super().__call__(data, **(kwargs | dict(mask=mask)))

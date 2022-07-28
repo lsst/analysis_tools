@@ -17,7 +17,7 @@ class MedianAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return float(np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]))
+        return cast(Scalar, float(np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class MeanAction(ScalarAction):
@@ -28,7 +28,7 @@ class MeanAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return float(np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]))
+        return cast(Scalar, float(np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class StdevAction(ScalarAction):
@@ -39,7 +39,7 @@ class StdevAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return float(np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]))
+        return cast(Scalar, float(np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class SigmaMadAction(ScalarAction):
@@ -50,12 +50,15 @@ class SigmaMadAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return float(
-            sps.median_abs_deviation(
-                cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
-                scale="normal",  # type: ignore
-                nan_policy="omit",
-            )
+        return cast(
+            Scalar,
+            float(
+                sps.median_abs_deviation(
+                    cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
+                    scale="normal",  # type: ignore
+                    nan_policy="omit",
+                )
+            ),
         )
 
 
@@ -67,7 +70,7 @@ class CountAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return len(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
+        return cast(Scalar, len(data[self.vectorKey.format(**kwargs)][mask]))
 
 
 class ApproxFloor(ScalarAction):
@@ -78,6 +81,6 @@ class ApproxFloor(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
+        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])
         x = int(len(value) / 10)
-        return float(np.nanmedian(value[-x:]))
+        return cast(Scalar, float(np.nanmedian(value[-x:])))

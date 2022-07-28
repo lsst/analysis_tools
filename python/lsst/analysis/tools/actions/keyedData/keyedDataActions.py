@@ -123,12 +123,9 @@ class KeyedDataSelectorAction(KeyedDataAction):
                 mask = subMask
             else:
                 mask *= subMask  # type: ignore
-        #import pdb; pdb.set_trace()
         result = {}
         for key in self.vectorKeys:
             result[key.format_map(kwargs)] = data[key.format_map(kwargs)]
-        #import pdb; pdb.set_trace()
-        #result = {key.format_map(kwargs): data[key.format_map(kwargs)] for key in self.vectorKeys}
         if mask is not None:
             return {key: cast(Vector, col)[mask] for key, col in result.items()}
         else:

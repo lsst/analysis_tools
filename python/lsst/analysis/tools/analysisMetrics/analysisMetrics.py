@@ -25,21 +25,15 @@ __all__ = (
     "WPerpPSFMetric",
 )
 
-from ..actions.keyedData import KeyedDataSelectorAction
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
-from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
 from ..actions.scalar.scalarActions import ApproxFloor, MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector import (
-    CalcShapeSize,
     CoaddPlotFlagSelector,
-    DownselectVector,
     ExtinctionCorrectedMagDiff,
     MagColumnNanoJansky,
     SkyObjectSelector,
-    Sn,
     SnSelector,
     StarSelector,
-    VectorSelector,
 )
 from ..interfaces import AnalysisMetric
 

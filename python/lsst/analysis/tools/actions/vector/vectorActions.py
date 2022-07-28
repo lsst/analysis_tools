@@ -35,26 +35,26 @@ from .selectors import VectorSelector
 _LOG = logging.getLogger(__name__)
 
 
-#class DownselectVector(VectorAction):
-#    """Get a vector from KeyedData, apply specified selector, return the
-#    shorter Vector.
-#    """
-#
-#    vectorKey = Field[str](doc="column key to load from KeyedData")
-#
-#    selector = ConfigurableActionField(doc="Action which returns a selection mask", default=VectorSelector)
-#
-#    def getInputSchema(self) -> KeyedDataSchema:
-#        yield (self.vectorKey, Vector)
-#        yield from cast(VectorAction, self.selector).getInputSchema()
-#
-#    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-#        mask = cast(VectorAction, self.selector)(data, **kwargs)
-#        return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-
-
 class DownselectVector(VectorAction):
     """Get a vector from KeyedData, apply specified selector, return the
+    shorter Vector.
+    """
+
+    vectorKey = Field[str](doc="column key to load from KeyedData")
+
+    selector = ConfigurableActionField(doc="Action which returns a selection mask", default=VectorSelector)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (self.vectorKey, Vector)
+        yield from cast(VectorAction, self.selector).getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = cast(VectorAction, self.selector)(data, **kwargs)
+        return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+
+
+class MultiCriteriaDownselectVector(VectorAction):
+    """Get a vector from KeyedData, apply specified set of selectors with AND logic, and return the
     shorter Vector.
     """
 
@@ -78,6 +78,7 @@ class DownselectVector(VectorAction):
             else:
                 mask *= subMask  # type: ignore
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+
 
 class MagColumnNanoJansky(VectorAction):
     vectorKey = Field[str](doc="column key to use for this transformation")
@@ -134,7 +135,7 @@ class Sn(VectorAction):
         """
         fluxCol = self.fluxType.format(**(kwargs | dict(band=self.band)))
         errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-        result = (cast(Vector, data[fluxCol]) / data[errCol]) # type: ignore
+        result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
 
         return np.array(cast(Vector, result))
 
@@ -290,9 +291,6 @@ class PerGroupStatistic(VectorAction):
         return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        df = pd.DataFrame({
-            "groupKey": data[self.groupKey],
-            "value": self.buildAction(data, **kwargs)
-        })
+        df = pd.DataFrame({"groupKey": data[self.groupKey], "value": self.buildAction(data, **kwargs)})
         result = df.groupby("groupKey")["value"].aggregate(self.func)
         return np.array(result)

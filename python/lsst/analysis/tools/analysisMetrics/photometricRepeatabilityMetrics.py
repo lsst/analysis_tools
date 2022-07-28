@@ -25,8 +25,8 @@ __all__ = ("StellarPhotometricRepeatabilityMetric",)
 from ..actions.scalar.scalarActions import FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,
-    DownselectVector,
     MagColumnNanoJansky,
+    MultiCriteriaDownselectVector,
     PerGroupStatistic,
     Sn,
     ThresholdSelector,
@@ -35,7 +35,14 @@ from ..interfaces import AnalysisMetric
 
 
 class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
-    """Compute photometric repeatability from multiple observations of the same set of objects."""
+    """Compute photometric repeatability from multiple measurements of a set of
+    stars. First, a set of per-source quality criteria are applied. Second,
+    the individual source measurements are grouped together by object index
+    and per-group quantities are computed (e.g., a representative S/N for the
+    group based on the median of associated per-source measurements). Third,
+    additional per-group criteria are applied. Fourth, summary statistics are
+    computed for the filtered groups.
+    """
 
     fluxType: str = "psfFlux"
 
@@ -61,20 +68,9 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
         self.process.buildActions.perGroupStdev.func = "std"
 
         # Filter on per-group quantities
-        """
-        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
-        self.process.filterActions.perGroupStdevFiltered.selector = AndSelector()
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount", op="ge", threshold=3,
+        self.process.filterActions.perGroupStdevFiltered = MultiCriteriaDownselectVector(
+            vectorKey="perGroupStdev"
         )
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn", op="ge", threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
-        )
-        """
-        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
         self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
             vectorKey="perGroupCount",
             op="ge",
@@ -90,19 +86,8 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
             op="le",
             threshold=0.5,
         )
-        """
-        self.process.filterActions.perGroupStdevFiltered = KeyedDataSelectorAction(vectorKeys=["perGroupStdev"])
-        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount", op="ge", threshold=3,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn", op="ge", threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
-        )
-        """
 
+        # Compute summary statistics on filtered groups
         self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
         self.process.calculateActions.photRepeatOutlier = FracThreshold(
             vectorKey="perGroupStdevFiltered",

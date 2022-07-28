@@ -333,8 +333,7 @@ class VectorSelector(VectorAction):
 
 
 class AndSelector(VectorAction):
-    """Apply multiple selection criteria with logical AND.
-    """
+    """Apply multiple selection criteria with logical AND."""
 
     selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",
@@ -356,8 +355,7 @@ class AndSelector(VectorAction):
 
 
 class ThresholdSelector(VectorAction):
-    """Return a mask corresponding to an applied threshold.
-    """
+    """Return a mask corresponding to an applied threshold."""
 
     op = Field[str](doc="Operator name.")
     threshold = Field[float](doc="Threshold to apply.")
@@ -374,11 +372,10 @@ class ThresholdSelector(VectorAction):
 class BandSelector(VectorAction):
     """Makes a mask for sources observed in a specified set of bands."""
 
-    vectorKey = Field[str](
-        doc="Key of the Vector which defines the band", default="band"
-    )
+    vectorKey = Field[str](doc="Key of the Vector which defines the band", default="band")
     bands = ListField[str](
-        doc="The bands to select. `None` indicates no band selection applied.", default=None,
+        doc="The bands to select. `None` indicates no band selection applied.",
+        default=[],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

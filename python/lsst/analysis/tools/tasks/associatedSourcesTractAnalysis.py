@@ -31,7 +31,10 @@ from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineT
 class AssociatedSourcesTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "isolated_star_sources"},
+    defaultTemplates={
+        "outputName": "isolated_star_sources",
+        "associatedSourcesInputName": "isolated_star_sources",
+    },
 ):
     sourceCatalogs = ct.Input(
         doc="Visit based source table to load from the butler",
@@ -44,9 +47,9 @@ class AssociatedSourcesTractAnalysisConnections(
 
     associatedSources = ct.Input(
         doc="Table of associated sources",
-        name="{outputName}",
+        name="{associatedSourcesInputName}",
         storageClass="DataFrame",
-        # deferLoad=True,
+        deferLoad=True,
         dimensions=("instrument", "skymap", "tract"),
     )
 
@@ -113,6 +116,15 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
+
+        # names = self.collectInputNames()
+        # sourceCatalogs = []
+        # for handle in inputs["sourceCatalogs"]:
+        #    sourceCatalogs.append(self.loadData(handle, names))
+        # inputs["sourceCatalogs"] = sourceCatalogs
+
+        # TODO: make key used for joining configurable
+        inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
 
         data = self.callback(inputs, inputRefs.associatedSources.dataId)
         kwargs = {"data": data}

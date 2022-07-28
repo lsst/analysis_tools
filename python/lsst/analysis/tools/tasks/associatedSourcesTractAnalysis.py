@@ -40,7 +40,7 @@ class AssociatedSourcesTractAnalysisConnections(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
         storageClass="DataFrame",
-        # deferLoad=True,
+        deferLoad=True,
         dimensions=("visit", "band"),
         multiple=True,
     )
@@ -117,13 +117,16 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
 
-        # names = self.collectInputNames()
-        # sourceCatalogs = []
-        # for handle in inputs["sourceCatalogs"]:
-        #    sourceCatalogs.append(self.loadData(handle, names))
-        # inputs["sourceCatalogs"] = sourceCatalogs
+        # Load specified columns from source catalogs
+        names = self.collectInputNames()
+        names |= {"sourceId", "coord_ra", "coord_dec"}
+        names.remove("obj_index")
+        sourceCatalogs = []
+        for handle in inputs["sourceCatalogs"]:
+            sourceCatalogs.append(self.loadData(handle, names))
+        inputs["sourceCatalogs"] = sourceCatalogs
 
-        # TODO: make key used for joining configurable
+        # TODO: make key used for object index configurable
         inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
 
         data = self.callback(inputs, inputRefs.associatedSources.dataId)

@@ -20,37 +20,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
     "StellarLocusBaseMetric",
     "WPerpPSFMetric",
-    "StellarPhotometricRepeatabilityMetric",
-]
+)
 
 from ..actions.keyedData import KeyedDataSelectorAction
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction
-from ..actions.scalar.scalarActions import (
-    ApproxFloor,
-    FracThreshold,
-    MeanAction,
-    MedianAction,
-    SigmaMadAction,
-    StdevAction,
-)
+from ..actions.scalar.scalarActions import ApproxFloor, MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector import (
-    AndSelector,
-    BandSelector,
     CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     MagColumnNanoJansky,
-    PerGroupStatistic,
     SkyObjectSelector,
     Sn,
     SnSelector,
     StarSelector,
-    ThresholdSelector,
     VectorSelector,
 )
 from ..interfaces import AnalysisMetric
@@ -259,89 +247,4 @@ class SkyFluxStatisticMetric(AnalysisMetric):
             "meanSky": "nJy",
             "stdevSky": "nJy",
             "sigmaMADSky": "nJy",
-        }
-
-
-class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
-    fluxType: str = "psfFlux"
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        # Apply per-source selection criteria
-        self.prep.selectors.bandSelector = BandSelector()
-
-        # Compute per-group quantities
-        self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = Sn(fluxType=f"{self.fluxType}")
-        self.process.buildActions.perGroupSn.func = "median"
-        self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
-        self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
-        self.process.buildActions.perGroupExtendedness.func = "median"
-        self.process.buildActions.perGroupCount = PerGroupStatistic()
-        self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
-        self.process.buildActions.perGroupStdev = PerGroupStatistic()
-        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
-            vectorKey=f"{self.fluxType}"
-        )
-        self.process.buildActions.perGroupStdev.func = "std"
-
-        # Filter on per-group quantities
-        """
-        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
-        self.process.filterActions.perGroupStdevFiltered.selector = AndSelector()
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount", op="ge", threshold=3,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn", op="ge", threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selector.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
-        )
-        """
-        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
-        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount",
-            op="ge",
-            threshold=3,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn",
-            op="ge",
-            threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness",
-            op="le",
-            threshold=0.5,
-        )
-        """
-        self.process.filterActions.perGroupStdevFiltered = KeyedDataSelectorAction(vectorKeys=["perGroupStdev"])
-        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount", op="ge", threshold=3,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn", op="ge", threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
-        )
-        """
-
-        self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
-        self.process.calculateActions.photRepeatOutlier = FracThreshold(
-            vectorKey="perGroupStdevFiltered",
-            op="ge",
-            threshold=0.015,
-            percent=True,
-        )
-
-        self.produce.units = {  # type: ignore
-            "photRepeatStdev": "mag",
-            "photRepeatOutlier": "percent",
-        }
-        self.produce.newNames = {
-            "photRepeatStdev": "{band}_stellarPhotRepeatStdev",
-            "photRepeatOutlier": "{band}_stellarPhotRepeatOutlierFraction",
         }

@@ -226,19 +226,27 @@ class StellarPhotometricRepeatabilityPlot(AnalysisPlot):
         self.process.buildActions.perGroupCount = PerGroupStatistic()
         self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
         self.process.buildActions.perGroupStdev = PerGroupStatistic()
-        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(vectorKey=f"{self.fluxType}")
+        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
+            vectorKey=f"{self.fluxType}"
+        )
         self.process.buildActions.perGroupStdev.func = "std"
 
         # Filter on per-group quantities
         self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
         self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount", op="ge", threshold=3,
+            vectorKey="perGroupCount",
+            op="ge",
+            threshold=3,
         )
         self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn", op="ge", threshold=200,
+            vectorKey="perGroupSn",
+            op="ge",
+            threshold=200,
         )
         self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness", op="le", threshold=0.5,
+            vectorKey="perGroupExtendedness",
+            op="le",
+            threshold=0.5,
         )
 
         self.process.calculateActions.xStars = LoadVector(vectorKey="perGroupSn")

@@ -101,6 +101,6 @@ class FracThreshold(ScalarAction):
         values = values[np.logical_not(np.isnan(values))]
         result = np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)
         if self.percent:
-            return 100. * result
+            return 100.0 * result
         else:
             return result

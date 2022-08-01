@@ -18,30 +18,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
 
-from lsst.pex.config import Field
+from functools import partial
 
-from ...interfaces import KeyedData
-from ...statistics import sigmaMad
-from ..scalar import CountAction, MedianAction, SigmaMadAction
-from .keyedDataActions import KeyedScalars
+import scipy.stats as sps
 
 __all__ = (
+    "nansigmaMad",
     "sigmaMad",
-    "SummaryStatisticAction",
 )
 
-
-class SummaryStatisticAction(KeyedScalars):
-    vectorKey = Field[str](doc="Column key to compute scalars")
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.scalarActions.median = MedianAction(vectorKey=self.vectorKey)
-        self.scalarActions.sigmaMad = SigmaMadAction(vectorKey=self.vectorKey)
-        self.scalarActions.count = CountAction(vectorKey=self.vectorKey)
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask = kwargs.get("mask")
-        return super().__call__(data, **(kwargs | dict(mask=mask)))
+nansigmaMad = partial(sps.median_abs_deviation, scale="normal", nan_policy="omit")
+sigmaMad = partial(sps.median_abs_deviation, scale="normal", nan_policy="propagate")

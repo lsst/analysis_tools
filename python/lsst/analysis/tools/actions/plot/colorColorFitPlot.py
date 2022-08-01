@@ -30,10 +30,10 @@ from lsst.analysis.tools import PlotAction
 from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from scipy.stats import median_absolute_deviation as sigmaMad
 from sklearn.neighbors import KernelDensity
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, Vector
+from ...statistics import sigmaMad
 from .plotUtils import addPlotInfo, mkColormap, perpDistance
 
 

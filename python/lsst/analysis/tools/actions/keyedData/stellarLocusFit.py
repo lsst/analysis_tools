@@ -27,9 +27,9 @@ from typing import cast
 
 import numpy as np
 from lsst.pex.config import DictField
-from scipy.stats import median_absolute_deviation as sigmaMad
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
+from ...statistics import sigmaMad
 from ..plot.plotUtils import perpDistance, stellarLocusFit
 
 

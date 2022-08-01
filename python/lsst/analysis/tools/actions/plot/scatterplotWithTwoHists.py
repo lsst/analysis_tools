@@ -18,15 +18,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 
-from functools import partial
 from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.stats as sps
 from lsst.analysis.tools.actions.scalar.scalarActions import CountAction, MedianAction, SigmaMadAction
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
@@ -48,17 +47,14 @@ from ...interfaces import (
     Vector,
     VectorAction,
 )
+from ...statistics import nansigmaMad, sigmaMad
 from ..keyedData import KeyedScalars
 from ..vector import SnSelector
 from .plotUtils import addPlotInfo, mkColormap
 
-# from .plotUtils import addSummaryPlot, generateSummaryStats
-
 # ignore because coolwarm is actually part of module
 cmapPatch = plt.cm.coolwarm.copy()  # type: ignore
 cmapPatch.set_bad(color="none")
-
-sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
 
 
 class _ApproxMedian(ScalarAction):
@@ -426,13 +422,13 @@ class ScatterPlotWithTwoHists(PlotAction):
             # ensure the columns are actually array
             xs = np.array(xs)
             ys = np.array(ys)
-            sigMadYs = sigmaMad(ys, nan_policy="omit")
+            sigMadYs = nansigmaMad(ys)
             if len(xs) < 2:
                 (medLine,) = ax.plot(
                     xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):0.3g}", lw=0.8
                 )
                 linesForLegend.append(medLine)
-                sigMads = np.array([sigmaMad(ys, nan_policy="omit")] * len(xs))
+                sigMads = np.array([nansigmaMad(ys)] * len(xs))
                 (sigMadLine,) = ax.plot(
                     xs,
                     np.nanmedian(ys) + 1.0 * sigMads,
@@ -616,7 +612,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 meds = np.array([np.nanmedian(ys)] * len(xs))
                 (medLine,) = ax.plot(xs, meds, color, label=f"Median: {np.nanmedian(ys):0.3g}", lw=0.8)
                 linesForLegend.append(medLine)
-                sigMads = np.array([sigmaMad(ys, nan_policy="omit")] * len(xs))
+                sigMads = np.array([nansigmaMad(ys)] * len(xs))
                 (sigMadLine,) = ax.plot(
                     xs,
                     meds + 1.0 * sigMads,

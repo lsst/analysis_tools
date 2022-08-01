@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-import scipy.stats as sps
 from lsst.pex.config import Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
+from ...statistics import nansigmaMad
 
 
 class MedianAction(ScalarAction):
@@ -50,11 +50,7 @@ class SigmaMadAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return sps.median_abs_deviation(
-            cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
-            scale="normal",  # type: ignore
-            nan_policy="omit",
-        )
+        return nansigmaMad(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class CountAction(ScalarAction):

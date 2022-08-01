@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 
 from typing import Mapping
@@ -29,9 +30,9 @@ from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
-from scipy.stats import median_absolute_deviation as sigmaMad
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
+from ...statistics import nansigmaMad, sigmaMad
 from .plotUtils import addPlotInfo, extremaSort, mkColormap
 
 # from .plotUtils import generateSummaryStats, parsePlotInfo
@@ -128,7 +129,7 @@ class SkyPlot(PlotAction):
         if mask is not None:
             arr = arr[mask]
         med = np.nanmedian(arr)
-        sigMad = sigmaMad(arr, nan_policy="omit")
+        sigMad = nansigmaMad(arr)
 
         statsText = (
             "Median: {:0.2f}\n".format(med)

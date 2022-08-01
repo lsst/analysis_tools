@@ -136,6 +136,26 @@ class MagDiff(VectorAction):
         return np.array(magDiff.value)
 
 
+class SNCalculator(VectorAction):
+    """Calculate the signal-to-noise."""
+
+    fluxType = Field[str](doc="Flux type to calculate the S/N.", default="{band}_psfFlux")
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.fluxType, Vector
+        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        signal = np.array(data[self.fluxType.format(**kwargs)])
+        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
+        sn = signal / noise
+
+        return np.array(sn)
+
+
 class ExtinctionCorrectedMagDiff(VectorAction):
     """Compute the difference between two magnitudes and correct for extinction
     By default bands are derived from the <band>_ prefix on flux columns,

@@ -20,37 +20,56 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("SkyObjectSkyPlot",)
+__all__ = ("SkyObjectSkyPlot", "SkyObjectHistPlot")
 
+from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.vector import LoadVector
-from ..actions.vector.selectors import FlagSelector, SnSelector
+from ..actions.vector import LoadVector, SNCalculator
+from ..actions.vector.selectors import SkyObjectSelector, SnSelector
 from ..interfaces import AnalysisPlot
 
 
 class SkyObjectSkyPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = FlagSelector()
-        self.prep.selectors.flagSelector.selectWhenTrue = ["sky_object"]
-        self.prep.selectors.flagSelector.selectWhenFalse = ["{band}_pixelFlags_edge"]
+        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.x = LoadVector()
         self.process.buildActions.x.vectorKey = "coord_ra"
         self.process.buildActions.y = LoadVector()
         self.process.buildActions.y.vectorKey = "coord_dec"
+        self.process.buildActions.z = LoadVector()
+        self.process.buildActions.z.vectorKey = "{band}_ap09Flux"
         self.process.buildActions.statMask = SnSelector()
         self.process.buildActions.statMask.threshold = -1e12
         self.process.buildActions.statMask.fluxType = "{band}_psfFlux"
 
-        self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = "{band}_ap09Flux"
+        self.produce = SkyPlot()
+        self.produce.plotTypes = ["any"]
+        self.produce.plotName = "skyObject_{band}"
+        self.produce.xAxisLabel = "R.A. (degrees)"
+        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.zAxisLabel = "Sky Object Flux (nJy)"
+        self.produce.plotOutlines = False
 
-        self.post_process = SkyPlot()
-        self.post_process.plotTypes = ["any"]
-        self.post_process.plotName = "skyObject_{band}"
-        self.post_process.xAxisLabel = "R.A. (degrees)"
-        self.post_process.yAxisLabel = "Dec. (degrees)"
-        self.post_process.zAxisLabel = "Sky Object Flux (nJy)"
-        self.post_process.plotOutlines = False
+
+class SkyObjectHistPlot(AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+
+        self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="{band}_psfFlux")
+        self.process.buildActions.hist_09_flux = LoadVector(vectorKey="{band}_ap09Flux")
+        self.process.buildActions.hist_psf_sn = SNCalculator(fluxType="{band}_psfFlux")
+        self.process.buildActions.hist_09_sn = SNCalculator(fluxType="{band}_ap09Flux")
+
+        self.produce = HistPlot()
+
+        self.produce.panels["panel_flux"] = HistPanel()
+        self.produce.panels["panel_flux"].label = "Flux (nJy)"
+        self.produce.panels["panel_flux"].hists = dict(hist_psf_flux="psfFlux", hist_09_flux="ap09Flux")
+
+        self.produce.panels["panel_sn"] = HistPanel()
+        self.produce.panels["panel_sn"].label = "S/N"
+        self.produce.panels["panel_sn"].hists = dict(hist_psf_sn="psfFlux S/N", hist_09_sn="ap09Flux S/N")

@@ -212,8 +212,8 @@ class ScatterPlotWithTwoHists(PlotAction):
                 base.append((f"{{band}}_highSNGalaxies_{name}", Scalar))
                 base.append((f"{{band}}_lowSNGalaxies_{name}", Scalar))
         if "unknown" in self.plotTypes:  # type: ignore
-            base.append(("xUnknown", Scalar))
-            base.append(("yUnknown", Scalar))
+            base.append(("xUnknown", Vector))
+            base.append(("yUnknown", Vector))
             base.append(("unknownHighSNMask", Vector))
             base.append(("unknownLowSNMask", Vector))
             # statistics
@@ -221,7 +221,8 @@ class ScatterPlotWithTwoHists(PlotAction):
                 base.append((f"{{band}}_highSNUnknown_{name}", Scalar))
                 base.append((f"{{band}}_lowSNUnknown_{name}", Scalar))
         if "any" in self.plotTypes:  # type: ignore
-            base.extend((("x", Vector), ("y", Vector)))
+            base.append(("x", Vector))
+            base.append(("y", Vector))
             base.append(("anyHighSNMask", Vector))
             base.append(("anySNMask", Vector))
             # statistics
@@ -262,7 +263,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         each axis.
         Parameters
         ----------
-        catPlot : `pandas.core.frame.DataFrame`
+        data : `pandas.core.frame.DataFrame`
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:

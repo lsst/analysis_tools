@@ -45,7 +45,7 @@ def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
     -------
     plotInfo : `dict`
     """
-    plotInfo = {"run": runName, "tractTableType": tableName, "plotName": plotName, "SN": SN}
+    plotInfo = {"run": runName, "tableName": tableName, "plotName": plotName, "SN": SN}
 
     for dataInfo in dataId:
         plotInfo[dataInfo.name] = dataId[dataInfo.name]
@@ -63,14 +63,14 @@ def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
     return plotInfo
 
 
-def generateSummaryStats(cat, colName, skymap, plotInfo):
+def generateSummaryStats(data, skymap, plotInfo):
     """Generate a summary statistic in each patch or detector
     Parameters
     ----------
-    cat : `pandas.core.frame.DataFrame`
-    colName : `str`
+    data : `dict`
     skymap : `lsst.skymap.ringsSkyMap.RingsSkyMap`
     plotInfo : `dict`
+
     Returns
     -------
     patchInfoDict : `dict`
@@ -80,10 +80,15 @@ def generateSummaryStats(cat, colName, skymap, plotInfo):
     tractInfo = skymap.generateTract(plotInfo["tract"])
     tractWcs = tractInfo.getWcs()
 
-    if "sourceType" in cat.columns:
-        cat = cat.loc[cat["sourceType"] != 0]
-
     # For now also convert the gen 2 patchIds to gen 3
+    if "y" in data.keys():
+        yCol = "y"
+    elif "yStars" in data.keys():
+        yCol = "yStars"
+    elif "yGalaxies" in data.keys():
+        yCol = "yGalaxies"
+    elif "yUnknowns" in data.keys():
+        yCol = "yUnknowns"
 
     patchInfoDict = {}
     maxPatchNum = tractInfo.num_patches.x * tractInfo.num_patches.y
@@ -93,8 +98,8 @@ def generateSummaryStats(cat, colName, skymap, plotInfo):
             continue
         # Once the objectTable_tract catalogues are using gen 3 patches
         # this will go away
-        onPatch = cat["patch"] == patch
-        stat = np.nanmedian(cat[colName].values[onPatch])
+        onPatch = data["patch"] == patch
+        stat = np.nanmedian(data[yCol][onPatch])
         try:
             patchTuple = (int(patch.split(",")[0]), int(patch.split(",")[-1]))
             patchInfo = tractInfo.getPatchInfo(patchTuple)
@@ -245,15 +250,18 @@ def addPlotInfo(fig, plotInfo):
 
     run = plotInfo["run"]
     datasetsUsed = f"\nPhotoCalib: {photocalibDataset}, Astrometry: {astroDataset}"
-    tableType = f"\nTable: {plotInfo['tractTableType']}"
+    tableType = f"\nTable: {plotInfo['tableName']}"
 
     dataIdText = ""
-    if str(plotInfo["tract"]) != "N/A":
+    if "tract" in plotInfo.keys():
         dataIdText += f", Tract: {plotInfo['tract']}"
-    if str(plotInfo["visit"]) != "N/A":
+    if "visit" in plotInfo.keys():
         dataIdText += f", Visit: {plotInfo['visit']}"
 
-    bandsText = f", Bands: {''.join(plotInfo['bands'].split(' '))}"
+    bandText = ""
+    for band in plotInfo["bands"]:
+        bandText += band + ", "
+    bandsText = f", Bands: {bandText[:-2]}"
     SNText = f", S/N: {plotInfo['SN']}"
     infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}{SNText}"
     fig.text(0.01, 0.98, infoText, fontsize=7, transform=fig.transFigure, alpha=0.6, ha="left", va="top")

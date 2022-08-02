@@ -31,6 +31,7 @@ from lsst.analysis.tools.actions.scalar.scalarActions import CountAction, Median
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.skymap import BaseSkyMap
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
@@ -50,9 +51,7 @@ from ...interfaces import (
 )
 from ..keyedData import KeyedScalars
 from ..vector import SnSelector
-from .plotUtils import addPlotInfo, mkColormap
-
-# from .plotUtils import addSummaryPlot, generateSummaryStats
+from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
 
 # ignore because coolwarm is actually part of module
 cmapPatch = plt.cm.coolwarm.copy()  # type: ignore
@@ -189,6 +188,11 @@ class ScatterPlotWithTwoHists(PlotAction):
         itemCheck=_validatePlotTypes,
     )
 
+    addSummaryPlot = Field[bool](
+        doc="Add a summary plot to the figure?",
+        default=False,
+    )
+
     _stats = ("median", "sigmaMad", "count", "approxMag")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -231,12 +235,16 @@ class ScatterPlotWithTwoHists(PlotAction):
                 base.append((f"{{band}}_lowSNAny_{name}", Scalar))
         base.append(("lowSnThreshold", Scalar))
         base.append(("highSnThreshold", Scalar))
+
+        if self.addSummaryPlot:
+            base.append(("patch", Vector))
+
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
+
         self._validateInput(data, **kwargs)
         return self.makePlot(data, **kwargs)
-        # table is a dict that needs: x, y, run, skymap, filter, tract,
 
     def _validateInput(self, data: KeyedData, **kwargs) -> None:
         """NOTE currently can only check that something is not a Scalar, not
@@ -255,6 +263,7 @@ class ScatterPlotWithTwoHists(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
+        skymap: BaseSkyMap,
         plotInfo: Optional[Mapping[str, str]] = None,
         sumStats: Optional[Mapping] = None,
         **kwargs,
@@ -308,8 +317,10 @@ class ScatterPlotWithTwoHists(PlotAction):
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
         # Needs info from run quantum
-        # sumStats = generateSummaryStats(data, key)
-        # fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
+        if self.addSummaryPlot:
+            sumStats = generateSummaryStats(data, skymap, plotInfo)
+            label = self.yAxisLabel
+            fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         plt.draw()
         plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)

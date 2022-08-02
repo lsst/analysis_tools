@@ -30,7 +30,7 @@ __all__ = (
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
-from ..actions.plot.scatterplotWithTwoHists import ScatterPlotWithTwoHists
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
@@ -58,6 +58,9 @@ class BasePsfResidualScatterPlot(AnalysisPlot, BasePsfResidualMixin):
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
+        self.process.buildActions.patchWhole = LoadVector()
+        self.process.buildActions.patchWhole.vectorKey = "patch"
+
         self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
@@ -75,11 +78,24 @@ class BasePsfResidualScatterPlot(AnalysisPlot, BasePsfResidualMixin):
             vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
         )
 
+        self.process.filterActions.patch = DownselectVector(
+            vectorKey="patchWhole", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+        self.process.calculateActions.stars = ScatterPlotStatsAction(
+            vectorKey="yStars",
+        )
+        # use the downselected psfFlux
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.fluxType = "psfFlux"
+
         self.produce = ScatterPlotWithTwoHists()
 
         self.produce.plotTypes = ["stars"]
         self.produce.xAxisLabel = "PSF Magnitude (mag)"
         self.produce.magLabel = "PSF Magnitude (mag)"
+        self.produce.addSummaryPlot = True
 
 
 class ShapeSizeFractionalDiffScatterPlot(BasePsfResidualScatterPlot):

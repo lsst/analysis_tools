@@ -32,10 +32,12 @@ connection classes and should specify a unique name
 """
 
 from collections import abc
-from typing import TYPE_CHECKING, Iterable, cast
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, cast
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DeferredDatasetHandle
+
+from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as ct
@@ -193,6 +195,10 @@ class AnalysisPipelineTask(PipelineTask):
         if "plotInfo" not in kwargs:
             kwargs["plotInfo"] = _StandinPlotInfo()
         for name, action in self.config.plots.items():
+            for selector in action.prep.selectors:
+                if "threshold" in selector.keys():
+                    kwargs["plotInfo"]["SN"] = selector.threshold
+            kwargs["plotInfo"]["plotName"] = name
             match action(data, **kwargs):
                 case abc.Mapping() as val:
                     for n, v in val.items():
@@ -245,6 +251,7 @@ class AnalysisPipelineTask(PipelineTask):
         plotKey = f"{self.config.connections.outputName}_{{name}}"  # type: ignore
         if "bands" not in kwargs:
             kwargs["bands"] = list(self.config.bands)
+        kwargs["plotInfo"]["bands"] = kwargs["bands"]
         for name, value in self.runPlots(data, **kwargs).getDict().items():
             setattr(results, plotKey.format(name=name), value)
         for name, value in self.runMetrics(data, **kwargs).getDict().items():
@@ -280,9 +287,48 @@ class AnalysisPipelineTask(PipelineTask):
             output connections.
         """
         inputs = butlerQC.get(inputRefs)
+        dataId = butlerQC.quantum.dataId
+        if dataId is not None:
+            dataId = DataCoordinate.standardize(dataId, universe=butlerQC.registry.dimensions)
+        plotInfo = self.parsePlotInfo(inputs, dataId)
         data = self.loadData(inputs["data"])
-        outputs = self.run(data=data)
+        if "skymap" in inputs.keys():
+            skymap = inputs["skymap"]
+        else:
+            skymap = None
+        outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
         butlerQC.put(outputs, outputRefs)
+
+    def parsePlotInfo(self, inputs: Mapping[str, Any], dataId: DataCoordinate | None) -> Mapping[str, str]:
+        """Parse the inputs and dataId to get the information needed to
+        to add to the figure.
+
+        Parameters
+        ----------
+        inputs: `dict`
+            The inputs to the task
+        dataCoordinate: `lsst.daf.butler.DataCoordinate`
+            The dataId that the task is being run on.
+
+        Returns
+        -------
+        plotInfo : `dict`
+        """
+
+        if inputs is None:
+            tableName = ""
+            run = ""
+        else:
+            tableName = inputs["data"].ref.datasetType.name
+            run = inputs["data"].ref.run
+
+        plotInfo = {"tableName": tableName, "run": run}
+
+        if dataId is not None:
+            for dataInfo in dataId:
+                plotInfo[dataInfo.name] = dataId[dataInfo.name]
+
+        return plotInfo
 
     def loadData(self, handle: DeferredDatasetHandle, names: Iterable[str] | None = None) -> KeyedData:
         """Load the minimal set of keyed data from the input dataset.

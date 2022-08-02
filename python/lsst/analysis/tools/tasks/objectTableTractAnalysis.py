@@ -25,6 +25,7 @@ __all__ = [
 ]
 
 from lsst.pipe.base import connectionTypes as ct
+from lsst.skymap import BaseSkyMap
 
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -40,6 +41,13 @@ class ObjectTableTractAnalysisConnections(
         storageClass="DataFrame",
         deferLoad=True,
         dimensions=("skymap", "tract"),
+    )
+
+    skymap = ct.Input(
+        doc="The skymap that covers the tract that the data is from.",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
+        storageClass="SkyMap",
+        dimensions=("skymap",),
     )
 
 

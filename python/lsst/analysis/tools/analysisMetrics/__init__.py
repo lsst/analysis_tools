@@ -21,5 +21,6 @@
 from .analysisMetrics import *
 from .limitingMagnitudeMetric import *
 from .metricMeasurementBundle import *
+from .photometricRepeatabilityMetrics import *
 from .psfResidualMetrics import *
 from .skyFluxStatisticMetrics import *

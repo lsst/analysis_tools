@@ -22,6 +22,8 @@ from __future__ import annotations
 
 __all__ = ("StellarPhotometricRepeatabilityMetric",)
 
+from astropy import units as u
+
 from ..actions.scalar.scalarActions import FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,
@@ -62,9 +64,11 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
         self.process.buildActions.perGroupCount = PerGroupStatistic()
         self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
         self.process.buildActions.perGroupCount.func = "count"
+        # Use mmag units
         self.process.buildActions.perGroupStdev = PerGroupStatistic()
         self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
-            vectorKey=f"{self.fluxType}"
+            vectorKey=f"{self.fluxType}",
+            returnMillimags=True,
         )
         self.process.buildActions.perGroupStdev.func = "std"
 
@@ -93,12 +97,12 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
         self.process.calculateActions.photRepeatOutlier = FracThreshold(
             vectorKey="perGroupStdevFiltered",
             op="ge",
-            threshold=0.015,
+            threshold=15.0,
             percent=True,
         )
 
         self.produce.units = {  # type: ignore
-            "photRepeatStdev": "mag",
+            "photRepeatStdev": "mmag",
             "photRepeatOutlier": "percent",
         }
         self.produce.newNames = {

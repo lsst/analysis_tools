@@ -30,7 +30,7 @@ __all__ = (
     "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
-    "AndSelector",
+    # "AndSelector",
     "ThresholdSelector",
     "BandSelector",
 )
@@ -332,26 +332,26 @@ class VectorSelector(VectorAction):
         return cast(Vector, data[self.vectorKey.format(**kwargs)])
 
 
-class AndSelector(VectorAction):
-    """Apply multiple selection criteria with logical AND."""
-
-    selectors = ConfigurableActionStructField[VectorAction](
-        doc="Selectors for selecting rows, will be AND together",
-    )
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        for action in self.selectors:
-            yield from action.getInputSchema()
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask: Optional[Vector] = None
-        for selector in self.selectors:
-            subMask = selector(data, **kwargs)
-            if mask is None:
-                mask = subMask
-            else:
-                mask *= subMask  # type: ignore
-        return cast(Vector, mask)
+# class AndSelector(VectorAction):
+#    """Apply multiple selection criteria with logical AND."""
+#
+#    selectors = ConfigurableActionStructField[VectorAction](
+#        doc="Selectors for selecting rows, will be AND together",
+#    )
+#
+#    def getInputSchema(self) -> KeyedDataSchema:
+#        for action in self.selectors:
+#            yield from action.getInputSchema()
+#
+#    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+#        mask: Optional[Vector] = None
+#        for selector in self.selectors:
+#            subMask = selector(data, **kwargs)
+#            if mask is None:
+#                mask = subMask
+#            else:
+#                mask *= subMask  # type: ignore
+#        return cast(Vector, mask)
 
 
 class ThresholdSelector(VectorAction):

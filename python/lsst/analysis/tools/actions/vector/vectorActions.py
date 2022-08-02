@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -82,6 +82,7 @@ class MultiCriteriaDownselectVector(VectorAction):
 
 class MagColumnNanoJansky(VectorAction):
     vectorKey = Field[str](doc="column key to use for this transformation")
+    returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((self.vectorKey, Vector),)
@@ -91,7 +92,11 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            return np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            if self.returnMillimags:
+                return mag * u.mag.to(u.mmag)
+            else:
+                return mag
 
 
 class FractionalDifference(VectorAction):
@@ -281,9 +286,10 @@ class ExtinctionCorrectedMagDiff(VectorAction):
 
 
 class PerGroupStatistic(VectorAction):
-    """Compute per-group statistic values and return result as a vector with one element per group. The
-    computed statistic can be any function accepted by pandas DataFrameGroupBy.aggregate passed in as a string
-    function name."""
+    """Compute per-group statistic values and return result as a vector with
+    one element per group. The computed statistic can be any function accepted
+    by pandas DataFrameGroupBy.aggregate passed in as a string function name.
+    """
 
     groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
     buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)

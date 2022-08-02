@@ -26,7 +26,6 @@ __all__ = (
     "ShapeSizeFractionalDiffScatterPlot",
     "WPerpPSFPlot",
     "Ap12PsfSkyPlot",
-    "StellarPhotometricRepeatabilityPlot",
 )
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
@@ -35,18 +34,13 @@ from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, Scatt
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
-    BandSelector,
-    CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     LoadVector,
     MagColumnNanoJansky,
-    PerGroupStatistic,
-    Sn,
     SnSelector,
     StarSelector,
-    ThresholdSelector,
     VectorSelector,
 )
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
@@ -205,60 +199,3 @@ class Ap12PsfSkyPlot(AnalysisPlot):
         self.produce.yAxisLabel = "Dec. (degrees)"
         self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
         self.produce.plotOutlines = False
-
-
-class StellarPhotometricRepeatabilityPlot(AnalysisPlot):
-    fluxType: str = "psfFlux"
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        # Apply per-source selection criteria
-        self.prep.selectors.bandSelector = BandSelector()
-
-        # Compute per-group quantities
-        self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = Sn(fluxType=f"{self.fluxType}")
-        self.process.buildActions.perGroupSn.func = "median"
-        self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
-        self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
-        self.process.buildActions.perGroupExtendedness.func = "median"
-        self.process.buildActions.perGroupCount = PerGroupStatistic()
-        self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
-        self.process.buildActions.perGroupStdev = PerGroupStatistic()
-        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
-            vectorKey=f"{self.fluxType}"
-        )
-        self.process.buildActions.perGroupStdev.func = "std"
-
-        # Filter on per-group quantities
-        self.process.filterActions.perGroupStdevFiltered = DownselectVector(vectorKey="perGroupStdev")
-        self.process.filterActions.perGroupStdevFiltered.selectors.count = ThresholdSelector(
-            vectorKey="perGroupCount",
-            op="ge",
-            threshold=3,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
-            vectorKey="perGroupSn",
-            op="ge",
-            threshold=200,
-        )
-        self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
-            vectorKey="perGroupExtendedness",
-            op="le",
-            threshold=0.5,
-        )
-
-        self.process.calculateActions.xStars = LoadVector(vectorKey="perGroupSn")
-        self.process.calculateActions.yStars = LoadVector(vectorKey="perGroupStdev")
-
-        self.process.calculateActions.stars = ScatterPlotStatsAction(
-            vectorKey="yStars",
-        )
-
-        self.produce = ScatterPlotWithTwoHists()
-
-        self.produce.plotTypes = ["stars"]
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
-        self.produce.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
-        self.produce.magLabel = "PSF Magnitude (mag)"

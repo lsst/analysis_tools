@@ -214,7 +214,7 @@ class ExtinctionCorrectedMagDiff(VectorAction):
 
         ebv = data[self.ebvCol]
         # Ignore type until a more complete Vector protocol
-        correction = (av1 - av2) * ebv * u.mag  # type: ignore
+        correction = np.array((av1 - av2) * ebv) * u.mag  # type: ignore
 
         if self.magDiff.returnMillimags:
             correction = correction.to(u.mmag)

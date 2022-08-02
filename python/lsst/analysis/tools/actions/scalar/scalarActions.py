@@ -109,6 +109,7 @@ class FracThreshold(ScalarAction):
         return ((self.vectorKey.format(**kwargs), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        values: Vector
         mask = self.getMask(**kwargs)
         values = data[self.vectorKey.format(**kwargs)][mask]
         values = values[np.logical_not(np.isnan(values))]

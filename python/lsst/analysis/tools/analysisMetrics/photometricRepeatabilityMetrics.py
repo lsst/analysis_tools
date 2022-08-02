@@ -22,8 +22,6 @@ from __future__ import annotations
 
 __all__ = ("StellarPhotometricRepeatabilityMetric",)
 
-from astropy import units as u
-
 from ..actions.scalar.scalarActions import FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,

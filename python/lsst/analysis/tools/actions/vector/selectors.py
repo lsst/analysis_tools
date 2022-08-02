@@ -41,9 +41,10 @@ from typing import Optional, cast
 import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+
+# from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 
 
 class FlagSelector(VectorAction):
@@ -382,6 +383,17 @@ class BandSelector(VectorAction):
         return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        # bands: Union[tuple | None]
+        # match kwargs:
+        #    case {"band": band}:
+        #        bands = (band,)
+        #    case {"bands": bands} if not self.bands:
+        #        bands = bands
+        #    case _ if self.bands:
+        #        bands = tuple(self.bands)
+        #    case _:
+        #        bands = None
+        bands: Optional[tuple[str, ...]]
         match kwargs:
             case {"band": band}:
                 bands = (band,)
@@ -395,5 +407,5 @@ class BandSelector(VectorAction):
             mask = np.in1d(data[self.vectorKey], bands)
         else:
             # No band selection is applied, i.e., select all rows
-            mask = np.full(len(data[self.vectorKey]), True)
+            mask = np.full(len(data[self.vectorKey]), True)  # type: ignore
         return cast(Vector, mask)

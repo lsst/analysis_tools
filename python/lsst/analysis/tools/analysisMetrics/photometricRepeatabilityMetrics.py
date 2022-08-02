@@ -61,6 +61,7 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric):
         self.process.buildActions.perGroupExtendedness.func = "median"
         self.process.buildActions.perGroupCount = PerGroupStatistic()
         self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
+        self.process.buildActions.perGroupCount.func = "count"
         self.process.buildActions.perGroupStdev = PerGroupStatistic()
         self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
             vectorKey=f"{self.fluxType}"

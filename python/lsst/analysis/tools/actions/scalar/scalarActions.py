@@ -5,7 +5,7 @@ from typing import cast
 
 import numpy as np
 import scipy.stats as sps
-from lsst.pex.config import Field
+from lsst.pex.config import ChoiceField, Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
 
@@ -85,9 +85,22 @@ class ApproxFloor(ScalarAction):
 
 
 class FracThreshold(ScalarAction):
-    """Compute the fraction of a distribution of values relative to a threshold."""
+    """Compute the fraction of a distribution that is above or below a
+    specified threshold. The operator is specified as a string, for example,
+    "lt", "le", "ge", "gt" for the mathematical operations <, <=, >=, >. To
+    compute the fraction of elements with values less than a given threshold,
+    use op="le".
+    """
 
-    op = Field[str](doc="Operator name.")
+    op = ChoiceField[str](
+        doc="Operator name string.",
+        allowed={
+            "lt": "less than threshold",
+            "le": "less than or equal to threshold",
+            "ge": "greater than or equal to threshold",
+            "gt": "greater than threshold",
+        },
+    )
     threshold = Field[float](doc="Threshold to apply.")
     vectorKey = Field[str](doc="Name of column")
     percent = Field[bool](doc="Express result as percentage", default=False)

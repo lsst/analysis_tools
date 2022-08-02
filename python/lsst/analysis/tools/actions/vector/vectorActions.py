@@ -54,8 +54,8 @@ class DownselectVector(VectorAction):
 
 
 class MultiCriteriaDownselectVector(VectorAction):
-    """Get a vector from KeyedData, apply specified set of selectors with AND logic, and return the
-    shorter Vector.
+    """Get a vector from KeyedData, apply specified set of selectors with AND
+    logic, and return the shorter Vector.
     """
 
     vectorKey = Field[str](doc="column key to load from KeyedData")
@@ -281,11 +281,13 @@ class ExtinctionCorrectedMagDiff(VectorAction):
 
 
 class PerGroupStatistic(VectorAction):
-    """Compute per-group statistic values."""
+    """Compute per-group statistic values and return result as a vector with one element per group. The
+    computed statistic can be any function accepted by pandas DataFrameGroupBy.aggregate passed in as a string
+    function name."""
 
     groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
     buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
-    func = Field[str](doc="Name of function to be applied per group", default="count")
+    func = Field[str](doc="Name of function to be applied per group")
 
     def getInputSchema(self) -> KeyedDataSchema:
         return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)

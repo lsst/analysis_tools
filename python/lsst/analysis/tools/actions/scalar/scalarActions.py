@@ -109,11 +109,11 @@ class FracThreshold(ScalarAction):
         return ((self.vectorKey.format(**kwargs), Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
-        values: Vector
         mask = self.getMask(**kwargs)
-        values = data[self.vectorKey.format(**kwargs)][mask]
+        values = data[self.vectorKey.format(**kwargs)]
+        values = values[mask]
         values = values[np.logical_not(np.isnan(values))]
-        result = np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)
+        result = np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)  # type: ignore
         if self.percent:
             return 100.0 * result
         else:

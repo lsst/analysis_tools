@@ -29,7 +29,7 @@ or-ing them together i.e.
 
 compoundContext = VisitContext | PlotContext
 
-A `Context` is applied to an `AnalysisAction` by calling ``applyContext`` and 
+A `Context` is applied to an `AnalysisAction` by calling ``applyContext`` and
 passing in a context. The `AnalysisAction` will then see if it has
 corresponding method (the name of the context with the first letter lower case
 i.e. visitContext). If a method is present, it will be called to activate the

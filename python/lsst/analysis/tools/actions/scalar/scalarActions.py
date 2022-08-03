@@ -55,11 +55,11 @@ class SigmaMadAction(ScalarAction):
             Scalar,
             float(
                 sps.median_abs_deviation(
-                    data[self.vectorKey.format(**kwargs)][mask],
-                    scale="normal",  # type: ignore
+                    data[self.vectorKey.format(**kwargs)][mask],  # type: ignore
+                    scale="normal",
                     nan_policy="omit",
                 )
-            )
+            ),
         )
 
 
@@ -84,7 +84,7 @@ class ApproxFloor(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])
+        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
         x = len(value) // 10
         return cast(Scalar, float(np.nanmedian(value[-x:])))
 
@@ -120,7 +120,7 @@ class FracThreshold(ScalarAction):
         values = values[np.logical_not(np.isnan(values))]
         result = cast(
             Scalar,
-            float(np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values))
+            float(np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)),  # type: ignore
         )
         if self.percent:
             return 100.0 * result

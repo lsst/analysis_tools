@@ -105,7 +105,7 @@ class ScatterPlotStatsAction(KeyedDataAction):
             name = f"{prefix}{binName}SN{self.identity.capitalize() if self.identity else ''}"
             # set the approxMag to the median mag in the SN selection
             results[f"{name}_approxMag".format(**kwargs)] = (
-                medianAction({"mag": magAction({"flux": fluxes[results[maskKey]]})})
+                medianAction({"mag": magAction({"flux": fluxes[results[maskKey]]})})  # type: ignore
                 if band is not None
                 else np.nan
             )

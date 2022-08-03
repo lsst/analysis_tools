@@ -23,6 +23,7 @@ from __future__ import annotations
 __all__ = ("CalcBinnedStatsAction",)
 
 from functools import cached_property
+from typing import cast
 
 import numpy as np
 from lsst.pex.config import Field

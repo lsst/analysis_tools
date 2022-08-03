@@ -44,6 +44,7 @@ from numbers import Number
 from typing import Any, Iterable, Mapping, MutableMapping, Tuple, Type
 
 import numpy as np
+from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
 from lsst.verify import Measurement
 from matplotlib.figure import Figure
@@ -284,7 +285,7 @@ class AnalysisTool(AnalysisAction):
     )
     produce = ConfigurableActionField[AnalysisAction](doc="Action to perform any finalization steps")
 
-    parameterizedBand: bool = True
+    parameterizedBand: bool | Field[bool] = True
     """Specifies if an `AnalysisTool` may parameterize a band within any field
     in any stage, or if the set of bands is already uniquely determined though
     configuration. I.e. can this `AnalysisTool` be automatically looped over to
@@ -296,6 +297,10 @@ class AnalysisTool(AnalysisAction):
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
         bands = kwargs.pop("bands", None)
         if not self.parameterizedBand or bands is None:
+            if "band" not in kwargs:
+                # Some tasks require a "band" key for naming. This shouldn't
+                # affect the results. DM-35813 should make this unnecessary.
+                kwargs["band"] = "analysisTools"
             return self._call_single(data, **kwargs)
         results: dict[str, Any] = {}
         if self.identity is not None:

@@ -241,9 +241,10 @@ class TestCatalogMatch(unittest.TestCase):
         """
         output = self.task.run(self.objectTable)
 
-        self.assertEqual(len(output.matchCatalog), self.nStars)
+        self.assertEqual(len(output.matchedCatalog), self.nStars)
         self.assertListEqual(
-            output.matchCatalog["sourceId_target"].to_list(), output.matchCatalog["sourceId_ref"].to_list()
+            output.matchedCatalog["sourceId_target"].to_list(),
+            output.matchedCatalog["sourceId_ref"].to_list(),
         )
 
 

@@ -296,6 +296,10 @@ class AnalysisTool(AnalysisAction):
     ) -> Mapping[str, Figure] | Figure | Mapping[str, Measurement] | Measurement:
         bands = kwargs.pop("bands", None)
         if not self.parameterizedBand or bands is None:
+            if "band" not in kwargs:
+                # Some tasks require a "band" key for naming. This shouldn't
+                # affect the results.
+                kwargs["band"] = "tmpBand"
             return self._call_single(data, **kwargs)
         results: dict[str, Any] = {}
         if self.identity is not None:

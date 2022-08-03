@@ -24,6 +24,7 @@ from functools import partial
 from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
+import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as sps
@@ -62,6 +63,8 @@ sigmaMad = partial(sps.median_abs_deviation, scale="normal")  # type: ignore
 
 class _ApproxMedian(ScalarAction):
     vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
+    inputUnit = Field[str](doc="Input unit of the vector", default="nJy")
+    outputUnit = Field[str](doc="Output unit of the vector", default="mag(AB)")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         return ((self.vectorKey.format(**kwargs), Vector),)
@@ -70,7 +73,10 @@ class _ApproxMedian(ScalarAction):
         mask = self.getMask(**kwargs)
         value = np.sort(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
         x = int(len(value) / 10)
-        return np.nanmedian(value[-x:])
+        median = np.nanmedian(value[-x:])
+        if self.inputUnit != self.outputUnit:
+            median = (median * u.Unit(self.inputUnit)).to(u.Unit(self.outputUnit)).value
+        return median
 
 
 class _StatsImpl(KeyedScalars):

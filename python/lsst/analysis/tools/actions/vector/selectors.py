@@ -31,8 +31,11 @@ __all__ = (
     "UnknownSelector",
     "VectorSelector",
     "VisitPlotFlagSelector",
+    "ThresholdSelector",
+    "BandSelector",
 )
 
+import operator
 from typing import Optional, cast
 
 import numpy as np
@@ -326,3 +329,49 @@ class VectorSelector(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         return cast(Vector, data[self.vectorKey.format(**kwargs)])
+
+
+class ThresholdSelector(VectorAction):
+    """Return a mask corresponding to an applied threshold."""
+
+    op = Field[str](doc="Operator name.")
+    threshold = Field[float](doc="Threshold to apply.")
+    vectorKey = Field[str](doc="Name of column")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = getattr(operator, self.op)(data[self.vectorKey], self.threshold)
+        return cast(Vector, mask)
+
+
+class BandSelector(VectorAction):
+    """Makes a mask for sources observed in a specified set of bands."""
+
+    vectorKey = Field[str](doc="Key of the Vector which defines the band", default="band")
+    bands = ListField[str](
+        doc="The bands to select. `None` indicates no band selection applied.",
+        default=[],
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        bands: Optional[tuple[str, ...]]
+        match kwargs:
+            case {"band": band}:
+                bands = (band,)
+            case {"bands": bands} if not self.bands:
+                bands = bands
+            case _ if self.bands:
+                bands = tuple(self.bands)
+            case _:
+                bands = None
+        if bands:
+            mask = np.in1d(data[self.vectorKey], bands)
+        else:
+            # No band selection is applied, i.e., select all rows
+            mask = np.full(len(data[self.vectorKey]), True)  # type: ignore
+        return cast(Vector, mask)

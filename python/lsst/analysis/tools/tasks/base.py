@@ -299,7 +299,9 @@ class AnalysisPipelineTask(PipelineTask):
         outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
         butlerQC.put(outputs, outputRefs)
 
-    def parsePlotInfo(self, inputs: Mapping[str, Any], dataId: DataCoordinate | None) -> Mapping[str, str]:
+    def parsePlotInfo(
+        self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionName: str = "data"
+    ) -> Mapping[str, str]:
         """Parse the inputs and dataId to get the information needed to
         to add to the figure.
 
@@ -309,6 +311,8 @@ class AnalysisPipelineTask(PipelineTask):
             The inputs to the task
         dataCoordinate: `lsst.daf.butler.DataCoordinate`
             The dataId that the task is being run on.
+        connectionName: `str`
+            Name of the input connection to use for determining table name.
 
         Returns
         -------
@@ -319,8 +323,8 @@ class AnalysisPipelineTask(PipelineTask):
             tableName = ""
             run = ""
         else:
-            tableName = inputs["data"].ref.datasetType.name
-            run = inputs["data"].ref.run
+            tableName = inputs[connectionName].ref.datasetType.name
+            run = inputs[connectionName].ref.run
 
         plotInfo = {"tableName": tableName, "run": run}
 

@@ -20,10 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
     "StellarLocusBaseMetric",
     "WPerpPSFMetric",
-]
+)
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.scalar.scalarActions import ApproxFloor

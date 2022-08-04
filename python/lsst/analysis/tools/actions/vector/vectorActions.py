@@ -21,12 +21,13 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Optional, cast
 
 import numpy as np
+import pandas as pd
 from astropy import units as u
 from lsst.pex.config import DictField, Field
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector
@@ -52,8 +53,36 @@ class DownselectVector(VectorAction):
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
 
 
+class MultiCriteriaDownselectVector(VectorAction):
+    """Get a vector from KeyedData, apply specified set of selectors with AND
+    logic, and return the shorter Vector.
+    """
+
+    vectorKey = Field[str](doc="column key to load from KeyedData")
+
+    selectors = ConfigurableActionStructField[VectorAction](
+        doc="Selectors for selecting rows, will be AND together",
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (self.vectorKey, Vector)
+        for action in self.selectors:
+            yield from cast(VectorAction, action).getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask: Optional[Vector] = None
+        for selector in self.selectors:
+            subMask = selector(data, **kwargs)
+            if mask is None:
+                mask = subMask
+            else:
+                mask *= subMask  # type: ignore
+        return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+
+
 class MagColumnNanoJansky(VectorAction):
     vectorKey = Field[str](doc="column key to use for this transformation")
+    returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((self.vectorKey, Vector),)
@@ -63,7 +92,11 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            return np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            if self.returnMillimags:
+                return mag * u.mag.to(u.mmag)
+            else:
+                return mag
 
 
 class FractionalDifference(VectorAction):
@@ -80,6 +113,36 @@ class FractionalDifference(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return (vecA - vecB) / vecB
+
+
+class Sn(VectorAction):
+    """Compute signal-to-noise in the given flux type"""
+
+    fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
+    )
+    band = Field[str](doc="Band to calculate the S/N in.", default="i")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield (fluxCol := self.fluxType), Vector
+        yield f"{fluxCol}{self.uncertaintySuffix}", Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Computes S/N in self.fluxType
+        Parameters
+        ----------
+        df : `Tabular`
+        Returns
+        -------
+        result : `Vector`
+            Computed signal-to-noise ratio.
+        """
+        fluxCol = self.fluxType.format(**(kwargs | dict(band=self.band)))
+        errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
+        result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
+
+        return np.array(cast(Vector, result))
 
 
 class LoadVector(VectorAction):
@@ -263,3 +326,22 @@ class AstromDiff(VectorAction):
         else:
             angleDiffValue = angleDiff.value
         return angleDiffValue
+
+
+class PerGroupStatistic(VectorAction):
+    """Compute per-group statistic values and return result as a vector with
+    one element per group. The computed statistic can be any function accepted
+    by pandas DataFrameGroupBy.aggregate passed in as a string function name.
+    """
+
+    groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    func = Field[str](doc="Name of function to be applied per group")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        df = pd.DataFrame({"groupKey": data[self.groupKey], "value": self.buildAction(data, **kwargs)})
+        result = df.groupby("groupKey")["value"].aggregate(self.func)
+        return np.array(result)

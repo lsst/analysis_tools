@@ -98,8 +98,7 @@ class TestCatalogMatch(unittest.TestCase):
         refDataId, deferredRefCat = self._make_refCat(starIds, starRas, starDecs, self.tractPoly)
 
         self.task.refObjLoader = ReferenceObjectLoader(
-            dataIds=[refDataId],
-            refCats=[deferredRefCat],
+            dataIds=[refDataId], refCats=[deferredRefCat], name="gaia_dr2_20200414"
         )
         self.task.refObjLoader.config.anyFilterMapsToThis = "phot_g_mean"
         self.task.setRefCat(self.skymap, self.tract)

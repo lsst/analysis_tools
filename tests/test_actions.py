@@ -32,23 +32,27 @@ from lsst.analysis.tools.actions.scalar.scalarActions import (
     SigmaMadAction,
     StdevAction,
 )
+from lsst.analysis.tools.actions.vector.calcBinnedStats import CalcBinnedStatsAction
 from lsst.analysis.tools.actions.vector.calcShapeSize import CalcShapeSize
 from lsst.analysis.tools.actions.vector.selectors import (
     CoaddPlotFlagSelector,
     FlagSelector,
     GalaxySelector,
+    RangeSelector,
     SkyObjectSelector,
     SnSelector,
     StarSelector,
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
+    DivideVector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
     MagDiff,
+    SubtractVector,
 )
 
 
@@ -97,11 +101,12 @@ class TestVectorActions(unittest.TestCase):
     """Test VectorActions"""
 
     def setUp(self):
-        r = np.arange(5) + 1
+        self.size = 5
+        r = np.arange(self.size) + 1
         i = r**2
-        rFlag = np.ones(5)
+        rFlag = np.ones(self.size)
         rFlag[1] = 0
-        iFlag = np.ones(5)
+        iFlag = np.ones(self.size)
         iFlag[3] = 0
         data = {
             "r_vector": r,
@@ -133,11 +138,11 @@ class TestVectorActions(unittest.TestCase):
 
     def testMagColumnNanoJansky(self):
         truth = [
-            31.40006562228223,
-            29.894915643962324,
-            29.014459348683918,
-            28.389765665642418,
-            27.905215600602137,
+            31.4,
+            29.89485002168,
+            29.0143937264,
+            28.38970004336,
+            27.90514997832,
         ]
         action = MagColumnNanoJansky(vectorKey="{band}_vector")
         result = action(self.data, band="i")
@@ -149,6 +154,24 @@ class TestVectorActions(unittest.TestCase):
         actionB = LoadVector(vectorKey="{band2}_vector")
         truth = [0.0, -0.5, -0.6666666666666666, -0.75, -0.8]
         diff = FractionalDifference(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testSubtract(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
+        diff = SubtractVector(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testDivide(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = 1 / np.arange(1, 6)
+        diff = DivideVector(actionA=actionA, actionB=actionB)
         result = diff(self.data, band1="r", band2="i")
         self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
         np.testing.assert_array_almost_equal(result, truth)
@@ -220,6 +243,34 @@ class TestVectorActions(unittest.TestCase):
         truth = diff - correction
         self._checkSchema(action, ["E(B-V)", "g_vector", "r_vector"])
         np.testing.assert_array_almost_equal(result, truth.value)
+
+    def testCalcBinnedStats(self):
+        selector = RangeSelector(column="r_vector", minimum=0, maximum=self.size + 1)
+        prefix = "a"
+        stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
+        result = stats(self.data)
+        median = (1 + self.size) / 2.0
+        truth = {
+            stats.name_mask: np.ones(self.size),
+            stats.name_median: median,
+            stats.name_sigmaMad: 1.482602218505602 * np.median(np.abs(self.data["r_vector"] - median)),
+            stats.name_count: self.size,
+            stats.name_select_maximum: self.size,
+            stats.name_select_median: median,
+            stats.name_select_minimum: 1,
+            "range_maximum": self.size + 1,
+            "range_minimum": 0,
+        }
+        self.assertEqual(list(result.keys()), list(truth.keys()))
+
+        self.assertAlmostEqual(result[stats.name_sigmaMad], truth[stats.name_sigmaMad])
+        del truth[stats.name_sigmaMad]
+
+        np.testing.assert_array_equal(result[stats.name_mask], truth[stats.name_mask])
+        del truth[stats.name_mask]
+
+        for key, value in truth.items():
+            self.assertEqual(result[key], value, key)
 
     def testCalcShapeSize(self):
         xx = self.data["r_ixx"]
@@ -339,6 +390,13 @@ class TestVectorSelectors(unittest.TestCase):
         truth = np.ones(self.size, dtype=bool)
         for bit in (1, 11):
             truth[bit] = 0
+        np.testing.assert_array_equal(result, truth)
+
+    def testRangeSelector(self):
+        selector = RangeSelector(column="r_psfFlux", minimum=np.nextafter(20, 30), maximum=50)
+        self._checkSchema(selector, ["r_psfFlux"])
+        result = self.data["r_psfFlux"][selector(self.data)]
+        truth = [30, 40]
         np.testing.assert_array_equal(result, truth)
 
     def testSnSelector(self):

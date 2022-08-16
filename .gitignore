@@ -19,3 +19,7 @@ pytest_session.txt
 .cache/
 .pytest_cache
 .coverage
+
+# IDEs
+.idea
+.vscode

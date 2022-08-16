@@ -18,7 +18,7 @@ class MedianAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
+        return cast(Scalar, float(np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class MeanAction(ScalarAction):
@@ -29,7 +29,7 @@ class MeanAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
+        return cast(Scalar, float(np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class StdevAction(ScalarAction):
@@ -40,7 +40,7 @@ class StdevAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])
+        return cast(Scalar, float(np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
 
 
 class SigmaMadAction(ScalarAction):
@@ -51,10 +51,15 @@ class SigmaMadAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return sps.median_abs_deviation(
-            cast(Vector, data[self.vectorKey.format(**kwargs)])[mask],
-            scale="normal",  # type: ignore
-            nan_policy="omit",
+        return cast(
+            Scalar,
+            float(
+                sps.median_abs_deviation(
+                    data[self.vectorKey.format(**kwargs)][mask],  # type: ignore
+                    scale="normal",
+                    nan_policy="omit",
+                )
+            ),
         )
 
 
@@ -68,7 +73,7 @@ class CountAction(ScalarAction):
         mask = self.getMask(**kwargs)
         arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
         arr = arr[~np.isnan(arr)]
-        return len(arr)  # type: ignore
+        return cast(Scalar, len(arr))
 
 
 class ApproxFloor(ScalarAction):
@@ -81,7 +86,7 @@ class ApproxFloor(ScalarAction):
         mask = self.getMask(**kwargs)
         value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
         x = len(value) // 10
-        return np.nanmedian(value[-x:])
+        return cast(Scalar, float(np.nanmedian(value[-x:])))
 
 
 class FracThreshold(ScalarAction):
@@ -113,7 +118,10 @@ class FracThreshold(ScalarAction):
         values = data[self.vectorKey.format(**kwargs)]
         values = values[mask]  # type: ignore
         values = values[np.logical_not(np.isnan(values))]
-        result = np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)  # type: ignore
+        result = cast(
+            Scalar,
+            float(np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)),  # type: ignore
+        )
         if self.percent:
             return 100.0 * result
         else:

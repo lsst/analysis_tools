@@ -7,7 +7,6 @@ https://developer.lsst.io/stack/building-single-package-docs.html
 
 from documenteer.conf.pipelinespkg import *
 
-
 project = "analysis_tools"
 html_theme_options["logotext"] = project
 html_title = project

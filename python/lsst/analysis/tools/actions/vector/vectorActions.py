@@ -92,7 +92,7 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3631.0))  # type: ignore
+            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3630.780547701003))  # type: ignore
             if self.returnMillimags:
                 return mag * u.mag.to(u.mmag)
             else:
@@ -143,6 +143,38 @@ class Sn(VectorAction):
         result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
 
         return np.array(cast(Vector, result))
+
+
+class SubtractVector(VectorAction):
+    """Calculate (A-B)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA - vecB
+
+
+class DivideVector(VectorAction):
+    """Calculate (A-B)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA / vecB
 
 
 class LoadVector(VectorAction):

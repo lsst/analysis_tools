@@ -24,6 +24,7 @@ from __future__ import annotations
 __all__ = (
     "AnalysisAction",
     "KeyedDataAction",
+    "VectorAction",
     "ScalarAction",
     "MetricAction",
     "PlotAction",

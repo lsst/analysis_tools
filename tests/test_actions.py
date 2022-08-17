@@ -45,6 +45,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
+    ConstantValue,
     DivideVector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -158,6 +159,13 @@ class TestVectorActions(unittest.TestCase):
         self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
         np.testing.assert_array_almost_equal(result, truth)
 
+    def testConstant(self):
+        truth = [42.0]
+        action = ConstantValue(value=truth[0])
+        self._checkSchema(action, [])
+        result = action({})
+        np.testing.assert_array_equal(result, truth)
+
     def testSubtract(self):
         actionA = LoadVector(vectorKey="{band1}_vector")
         actionB = LoadVector(vectorKey="{band2}_vector")
@@ -246,7 +254,7 @@ class TestVectorActions(unittest.TestCase):
 
     def testCalcBinnedStats(self):
         selector = RangeSelector(column="r_vector", minimum=0, maximum=self.size + 1)
-        prefix = "a"
+        prefix = "a_"
         stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
         result = stats(self.data)
         median = (1 + self.size) / 2.0

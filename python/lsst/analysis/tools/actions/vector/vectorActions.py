@@ -92,11 +92,10 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mag = np.array(-2.5 * np.log10((vec * 1e-9) / 3630.780547701003))  # type: ignore
+            mags = (np.array(vec) * u.nJy).to(u.ABmag).value  # type: ignore
             if self.returnMillimags:
-                return mag * u.mag.to(u.mmag)
-            else:
-                return mag
+                mags *= 1000
+            return mags
 
 
 class FractionalDifference(VectorAction):
@@ -145,6 +144,18 @@ class Sn(VectorAction):
         return np.array(cast(Vector, result))
 
 
+class ConstantValue(VectorAction):
+    """Return a constant scalar value"""
+
+    value = Field[float](doc="A single constant value", optional=False)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        return np.array([self.value])
+
+
 class SubtractVector(VectorAction):
     """Calculate (A-B)"""
 
@@ -162,7 +173,7 @@ class SubtractVector(VectorAction):
 
 
 class DivideVector(VectorAction):
-    """Calculate (A-B)"""
+    """Calculate (A/B)"""
 
     actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
     actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)

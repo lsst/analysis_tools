@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
@@ -39,7 +40,8 @@ from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, Vector
-from ..keyedData.summaryStatistics import SummaryStatisticAction, sigmaMad
+from ...statistics import nansigmaMad, sigmaMad
+from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
 from ..vector import MagColumnNanoJansky, SnSelector
 from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
@@ -406,13 +408,13 @@ class ScatterPlotWithTwoHists(PlotAction):
             # ensure the columns are actually array
             xs = np.array(xs)
             ys = np.array(ys)
-            sigMadYs = sigmaMad(ys, nan_policy="omit")
+            sigMadYs = nansigmaMad(ys)
             if len(xs) < 2:
                 (medLine,) = ax.plot(
                     xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):.2g}", lw=0.8
                 )
                 linesForLegend.append(medLine)
-                sigMads = np.array([sigmaMad(ys, nan_policy="omit")] * len(xs))
+                sigMads = np.array([nansigmaMad(ys)] * len(xs))
                 (sigMadLine,) = ax.plot(
                     xs,
                     np.nanmedian(ys) + 1.0 * sigMads,
@@ -596,7 +598,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 meds = np.array([np.nanmedian(ys)] * len(xs))
                 (medLine,) = ax.plot(xs, meds, color, label=f"Median: {np.nanmedian(ys):0.3g}", lw=0.8)
                 linesForLegend.append(medLine)
-                sigMads = np.array([sigmaMad(ys, nan_policy="omit")] * len(xs))
+                sigMads = np.array([nansigmaMad(ys)] * len(xs))
                 (sigMadLine,) = ax.plot(
                     xs,
                     meds + 1.0 * sigMads,

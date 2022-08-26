@@ -4,10 +4,10 @@ import operator
 from typing import cast
 
 import numpy as np
-import scipy.stats as sps
 from lsst.pex.config import ChoiceField, Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
+from ...statistics import nansigmaMad
 
 
 class MedianAction(ScalarAction):
@@ -54,10 +54,8 @@ class SigmaMadAction(ScalarAction):
         return cast(
             Scalar,
             float(
-                sps.median_abs_deviation(
+                nansigmaMad(
                     data[self.vectorKey.format(**kwargs)][mask],  # type: ignore
-                    scale="normal",
-                    nan_policy="omit",
                 )
             ),
         )

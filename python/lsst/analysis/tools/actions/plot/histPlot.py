@@ -31,9 +31,9 @@ from lsst.pex.config import Config, ConfigDictField, DictField, Field
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
-from scipy.stats import median_absolute_deviation as sigmaMad
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
+from ...statistics import sigmaMad
 from .plotUtils import addPlotInfo
 
 

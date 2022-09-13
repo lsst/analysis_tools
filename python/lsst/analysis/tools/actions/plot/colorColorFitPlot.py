@@ -46,7 +46,7 @@ class ColorColorFitPlot(PlotAction):
     plotTypes = ListField[str](
         doc="Selection of types of objects to plot. Can take any combination of"
         " stars, galaxies, unknown, mag, any.",
-        optional=False,
+        default=["stars"],
     )
 
     plotName = Field[str](doc="The name for the plot.", optional=False)
@@ -169,9 +169,12 @@ class ColorColorFitPlot(PlotAction):
         ax = fig.add_axes([0.12, 0.25, 0.43, 0.60])
         axContour = fig.add_axes([0.65, 0.11, 0.3, 0.31])
         axHist = fig.add_axes([0.65, 0.51, 0.3, 0.31])
-        xs = cast(Vector, data["x"])
-        ys = cast(Vector, data["y"])
-        mags = data["mag"]
+
+        # Check for nans/infs
+        goodPoints = np.isfinite(data["x"]) & np.isfinite(data["y"]) & np.isfinite(data["mag"])
+        xs = cast(Vector, data["x"])[goodPoints]
+        ys = cast(Vector, data["y"])[goodPoints]
+        mags = cast(Vector, data["mag"])[goodPoints]
 
         # TODO: Make a no data fig function and use here
         if len(xs) == 0 or len(ys) == 0:

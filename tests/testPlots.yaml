@@ -1,0 +1,13 @@
+description: |
+  A test pipeline that makes one plot of each plot type.
+tasks:
+  analyzeObjectTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableCore
+      plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
+      plots.wPerpPSFPlot: WPerpPSFPlot
+      plots.ap12PsfSkyPlot: Ap12PsfSkyPlot
+      plots.skyObjectHistPlot: SkyObjectHistPlot
+      python: |
+        from lsst.analysis.tools.analysisPlots import *

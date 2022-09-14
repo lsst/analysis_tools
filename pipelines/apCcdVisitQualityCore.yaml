@@ -1,0 +1,10 @@
+description: |
+  Tier 1 AP plots and metrics to assess CcdVisit quality
+tasks:
+  analyzeDiaSourceTableCore:
+    class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
+    config:
+      metrics.numSsObjects: NumSsObjectsMetric
+      connections.outputName: diaSourceTableCore
+      python: |
+        from lsst.analysis.tools.analysisMetrics import *

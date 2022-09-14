@@ -4,6 +4,8 @@ tasks:
   analyzeDiaSourceTableCore:
     class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
     config:
+      metrics.numDiaSources: NumDiaSourcesMetric
+      metrics.numDipoles: NumDipolesMetric
       metrics.numSsObjects: NumSsObjectsMetric
       connections.outputName: diaSourceTableCore
       plots.simpleDiaPlot: SimpleDiaPlot

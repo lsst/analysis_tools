@@ -4,13 +4,7 @@ tasks:
   analyzeDiaSourceTableCore:
     class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
     config:
-      # Add plots and metrics that work when we have some
-      # plots.label: APlotClass
       metrics.numSsObjects: NumSsObjectsMetric
       connections.outputName: diaSourceTableCore
-      #metrics.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
-      #metrics.skyFluxVisitStatisticMetric.applyContext: VisitContext
       python: |
-        from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *
-        from lsst.analysis.tools.contexts import *

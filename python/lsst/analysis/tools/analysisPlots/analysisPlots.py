@@ -24,20 +24,23 @@ __all__ = (
     "E1DiffScatterPlot",
     "E2DiffScatterPlot",
     "ShapeSizeFractionalDiffScatterPlot",
-    "WPerpPSFPlot",
     "Ap12PsfSkyPlot",
+    "WPerpPSFPlot",
+    "WPerpCModelPlot",
+    "XPerpPSFPlot",
+    "XPerpCModelPlot",
+    "YPerpPSFPlot",
+    "YPerpCModelPlot",
     "TargetRefCatDeltaRAScatterPlot",
     "TargetRefCatDeltaRAScatterPlot",
 )
 
 from lsst.pex.config import Field
 
-from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
     AstromDiff,
     CoaddPlotFlagSelector,
@@ -52,6 +55,7 @@ from ..actions.vector import (
 from ..analysisParts.baseFluxRatio import BasePsfApRatio
 from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
+from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisPlot
 
 
@@ -133,43 +137,9 @@ class E2DiffScatterPlot(BasePsfResidualScatterPlot):
         self.produce.yAxisLabel = "Ellipticty residuals (e2 - e2_PSF)"
 
 
-class WPerpPSFPlot(AnalysisPlot):
-    # WPerp does not support running in multiband mode
-    multiband: bool = False
-
+class WPerpPSFPlot(WPerpPSF, AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.bands = ["r"]
-        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-        self.prep.selectors.snSelector.threshold = 300
-
-        self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
-
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
-        self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
-        self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
-            "xMin": 0.28,
-            "xMax": 1.0,
-            "yMin": 0.02,
-            "yMax": 0.48,
-            "mHW": 0.52,
-            "bHW": -0.08,
-        }
 
         self.produce = ColorColorFitPlot()
         self.produce.xAxisLabel = "g - r (PSF) [mags]"
@@ -178,11 +148,68 @@ class WPerpPSFPlot(AnalysisPlot):
         self.produce.plotName = "wPerp_psfFlux"
 
 
+class WPerpCModelPlot(WPerpCModel, AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "g - r (CModel) [mags]"
+        self.produce.yAxisLabel = "r - i (CModel) [mags]"
+        self.produce.magLabel = "CModel Mag"
+        self.produce.plotName = "wPerp_cmodelFlux"
+
+
+class XPerpPSFPlot(XPerpPSF, AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "g - r (PSF) [mags]"
+        self.produce.yAxisLabel = "r - i (PSF) [mags]"
+        self.produce.magLabel = "PSF Mag"
+        self.produce.plotName = "xPerp_psfFlux"
+
+
+class XPerpCModelPlot(XPerpCModel, AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "g - r (CModel) [mags]"
+        self.produce.yAxisLabel = "r - i (CModel) [mags]"
+        self.produce.magLabel = "CModel Mag"
+        self.produce.plotName = "xPerp_cmodelFlux"
+
+
+class YPerpPSFPlot(YPerpPSF, AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "r - i (PSF) [mags]"
+        self.produce.yAxisLabel = "i - z (PSF) [mags]"
+        self.produce.magLabel = "PSF Mag"
+        self.produce.plotName = "yPerp_psfFlux"
+
+
+class YPerpCModelPlot(YPerpCModel, AnalysisPlot):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "r - i (CModel) [mags]"
+        self.produce.yAxisLabel = "i - z (CModel) [mags]"
+        self.produce.magLabel = "CModel Mag"
+        self.produce.plotName = "yPerp_cmodelFlux"
+
+
 class Ap12PsfSkyPlot(AnalysisPlot):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["{band}"]
+        # Set this to an empty list to look at the band
+        # the plot is being made in.
+        self.prep.selectors.flagSelector.bands = []
 
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"

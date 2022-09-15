@@ -21,201 +21,77 @@
 from __future__ import annotations
 
 __all__ = (
-    "StellarLocusBaseMetric",
     "WPerpPSFMetric",
+    "WPerpCModelMetric",
+    "XPerpPSFMetric",
+    "XPerpCModelMetric",
+    "YPerpPSFMetric",
+    "YPerpCModelMetric",
 )
 
-from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
-from ..actions.scalar.scalarActions import ApproxFloor
-from ..actions.vector import (
-    CoaddPlotFlagSelector,
-    ExtinctionCorrectedMagDiff,
-    MagColumnNanoJansky,
-    SnSelector,
-    StarSelector,
-)
+from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisMetric
 
 
-class StellarLocusBaseMetric(AnalysisMetric):
-    # Use this as the Base Class for now StellarLocusBaseMetric
+class WPerpPSFMetric(WPerpPSF, AnalysisMetric):
     parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.threshold = 300
-
-        self.prep.selectors.starSelector = StarSelector()
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.returnMillimags = False
-
-
-class GRIStellarPSFMetric(AnalysisMetric):
-    # Use this as the Base Class for now StellarLocusBaseMetric
-    parameterizedBand: bool = False
-    fluxType: str = "psfFlux"
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "{band}_" + self.fluxType
-        self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["r"]
-
-        self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = f"g_{self.fluxType}"
-        self.process.buildActions.x.magDiff.col2 = f"r_{self.fluxType}"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = f"r_{self.fluxType}"
-        self.process.buildActions.y.magDiff.col2 = f"i_{self.fluxType}"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
-
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
-        self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
-        self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
-            "xMin": 0.28,
-            "xMax": 1.0,
-            "yMin": 0.02,
-            "yMax": 0.48,
-            "mHW": 0.52,
-            "bHW": -0.08,
-        }
-
-        # self.process.calculateActions.xPerp = StellarLocusFitAction()
-        # self.process.calculateActions.xPerp.stellarLocusFitDict = {}
 
         self.produce.units = {  # type: ignore
-            "wPerp_psfFlux_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+            "wPerp_psfFlux_sigmaMAD": "mmag",
+            "wPerp_psfFlux_median": "mmag",
         }
 
 
-#            "xPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
-
-
-class GRIStellarCModelMetric(GRIStellarPSFMetric):
-    fluxType: str = "CModel"
-
+class WPerpCModelMetric(WPerpCModel, AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
 
-        self.produce.newNames = {
-            "wPerp_sigmaMAD": "wCmodelPerp_sigmaMAD",  # TODO need to return mmag from wPerp
-            "xPerp_sigmaMAD": "xCmodelPerp_sigmaMAD",  # TODO need to return mmag from wPerp
+        self.produce.units = {  # type: ignore
+            "wPerp_cmodelFlux_sigmaMAD": "mmag",
+            "wPerp_cmodelFlux_median": "mmag",
         }
 
 
-class RIZStellarPSFMetric(AnalysisMetric):
-    # Use this as the Base Class for now StellarLocusBaseMetric
+class XPerpPSFMetric(XPerpPSF, AnalysisMetric):
     parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["r", "i", "z"]
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
-        self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["i"]
-
-        self.prep.selectors.starSelector = StarSelector()
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "i_psfFlux"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "z_psfFlux"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-
-        self.process.calculateActions.yPerp = StellarLocusFitAction()
-        self.process.calculateActions.yerp.stellarLocusFitDict = {}
 
         self.produce.units = {  # type: ignore
-            "yPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+            "xPerp_psfFlux_sigmaMAD": "mmag",
+            "xPerp_psfFlux_median": "mmag",
         }
 
 
-class WPerpPSFMetric(AnalysisMetric):
-    # Use this as the Base Class for now StellarLocusBaseMetric
-    parameterizedBand: bool = False
-
+class XPerpCModelMetric(XPerpCModel, AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
 
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
-        self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["r"]
-
-        self.prep.selectors.starSelector = StarSelector()
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-
-        self.process.calculateActions.wPerp = StellarLocusFitAction()
-        self.process.calculateActions.wPerp.stellarLocusFitDict = {
-            "xMin": 0.28,
-            "xMax": 1.0,
-            "yMin": 0.02,
-            "yMax": 0.48,
-            "mHW": 0.52,
-            "bHW": -0.08,
-        }
         self.produce.units = {  # type: ignore
-            "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+            "xPerp_cmodelFlux_sigmaMAD": "mmag",
+            "xPerp_cmodelFlux_median": "mmag",
         }
 
 
-class XPerpPSFMetric(AnalysisMetric):
-    parameterizedBand: bool = False
-
+class YPerpPSFMetric(YPerpPSF, AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-
-        self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
-        self.prep.selectors.snSelector.threshold = 300
-        self.prep.selectors.snSelector.bands = ["r"]
-
-        self.prep.selectors.starSelector = StarSelector()
-
-        self.process.buildActions.x = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.returnMillimags = False
-        self.process.buildActions.y = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.returnMillimags = False
-
-        self.process.calculateActions.xPerp = StellarLocusFitAction()
 
         self.produce.units = {  # type: ignore
-            "wPerp_sigmaMAD": "mag",  # TODO need to return mmag from wPerp
+            "yPerp_psfFlux_sigmaMAD": "mmag",
+            "yPerp_psfFlux_median": "mmag",
+        }
+
+
+class YPerpCModelMetric(YPerpCModel, AnalysisMetric):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce.units = {  # type: ignore
+            "yPerp_cmodelFlux_sigmaMAD": "mmag",
+            "yPerp_cmodelFlux_median": "mmag",
         }

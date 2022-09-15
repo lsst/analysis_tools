@@ -4,6 +4,7 @@ tasks:
   analyzeObjectTableCore:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
+      bands: ['u', 'g', 'r', 'i', 'z', 'y']
       connections.outputName: objectTableCore
       plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
@@ -13,6 +14,18 @@ tasks:
       metrics.e2DiffScatterMetric: E2DiffMetric
       metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
       metrics.skyFluxStatisticMetric.applyContext: CoaddContext
+      plots.wPerpPSFPlot: WPerpPSFPlot
+      metrics.wPerpPSFMetric: WPerpPSFMetric
+      plots.wPerpCModelPlot: WPerpCModelPlot
+      metrics.wPerpCModelMetric: WPerpCModelMetric
+      plots.xPerpPSFPlot: XPerpPSFPlot
+      metrics.xPerpPSFMetric: XPerpPSFMetric
+      plots.xPerpCModelPlot: XPerpCModelPlot
+      metrics.xPerpCModelMetric: XPerpCModelMetric
+      plots.yPerpPSFPlot: YPerpPSFPlot
+      metrics.yPerpPSFMetric: YPerpPSFMetric
+      plots.yPerpCModelPlot: YPerpCModelPlot
+      metrics.yPerpCModelMetric: YPerpCModelMetric
       python: |
         from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *

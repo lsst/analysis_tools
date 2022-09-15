@@ -111,7 +111,7 @@ class CoaddPlotFlagSelector(FlagSelector):
         result: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
-            case {"band": band}:
+            case {"band": band} if not self.bands:
                 bands = (band,)
             case {"bands": bands} if not self.bands:
                 bands = bands
@@ -225,7 +225,7 @@ class SnSelector(VectorAction):
         mask: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
-            case {"band": band}:
+            case {"band": band} if not self.bands:
                 bands = (band,)
             case {"bands": bands} if not self.bands:
                 bands = bands

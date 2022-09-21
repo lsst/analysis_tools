@@ -205,6 +205,8 @@ class AnalysisPipelineTask(PipelineTask):
                         setattr(results, n, v)
                 case value:
                     setattr(results, name, value)
+        if "SN" not in kwargs["plotInfo"].keys():
+            kwargs["plotInfo"]["SN"] = "-"
         return results
 
     def runMetrics(self, data: KeyedData, **kwargs) -> Struct:

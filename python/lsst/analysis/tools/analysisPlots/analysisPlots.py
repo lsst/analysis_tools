@@ -170,6 +170,9 @@ class WPerpPSFPlot(AnalysisPlot):
         }
 
         self.produce = ColorColorFitPlot()
+        self.produce.xAxisLabel = "g - r (PSF) [mags]"
+        self.produce.yAxisLabel = "r - i (PSF) [mags]"
+        self.produce.magLabel = "PSF Mag"
         self.produce.plotName = "wPerp_psfFlux"
 
 

@@ -20,6 +20,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+__all__ = ("PanelConfig",)
+
 from typing import List, Tuple
 
 import matplotlib
@@ -27,6 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.odr as scipyODR
 from lsst.geom import Box2D, SpherePoint, degrees
+from lsst.pex.config import Config, Field
 from matplotlib import colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
@@ -567,3 +570,52 @@ def addSummaryPlot(fig, loc, sumStats, label):
     )
 
     return fig
+
+
+class PanelConfig(Config):
+    """Configuration options for the plot panels used by DiaSkyPlot.
+
+    The defaults will produce a good-looking single panel plot.
+    The subplot2grid* fields correspond to matplotlib.pyplot.subplot2grid.
+    """
+
+    topSpinesVisible = Field[bool](
+        doc="Draw line and ticks on top of panel?",
+        default=False,
+    )
+    bottomSpinesVisible = Field[bool](
+        doc="Draw line and ticks on bottom of panel?",
+        default=True,
+    )
+    leftSpinesVisible = Field[bool](
+        doc="Draw line and ticks on left side of panel?",
+        default=True,
+    )
+    rightSpinesVisible = Field[bool](
+        doc="Draw line and ticks on right side of panel?",
+        default=True,
+    )
+    subplot2gridShapeRow = Field[int](
+        doc="Number of rows of the grid in which to place axis.",
+        default=10,
+    )
+    subplot2gridShapeColumn = Field[int](
+        doc="Number of columns of the grid in which to place axis.",
+        default=10,
+    )
+    subplot2gridLocRow = Field[int](
+        doc="Row of the axis location within the grid.",
+        default=1,
+    )
+    subplot2gridLocColumn = Field[int](
+        doc="Column of the axis location within the grid.",
+        default=1,
+    )
+    subplot2gridRowspan = Field[int](
+        doc="Number of rows for the axis to span downwards.",
+        default=5,
+    )
+    subplot2gridColspan = Field[int](
+        doc="Number of rows for the axis to span to the right.",
+        default=5,
+    )

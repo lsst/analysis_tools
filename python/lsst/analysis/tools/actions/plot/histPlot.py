@@ -146,7 +146,8 @@ class HistPlot(PlotAction):
         self._addStatisticsPanel(side_fig, all_handles, all_nums, all_meds, all_mads)
 
         # add general plot info
-        hist_fig = addPlotInfo(hist_fig, plotInfo)
+        if plotInfo is not None:
+            hist_fig = addPlotInfo(hist_fig, plotInfo)
 
         # finish up
         hist_fig.text(0.01, 0.42, "Frequency", rotation=90, transform=hist_fig.transFigure)

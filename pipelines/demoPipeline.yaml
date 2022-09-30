@@ -1,0 +1,13 @@
+description: |
+  Test pipeline
+tasks:
+  demoMetric1:
+    class: lsst.analysis.tools.tasks.DemoTask
+    config:
+      connections.outputName: demoOutput
+      bands: ['g']
+      metrics.demoMetric: DemoMetric
+      plots.demoPlot: DemoPlot
+      python: |
+        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.analysisPlots import *

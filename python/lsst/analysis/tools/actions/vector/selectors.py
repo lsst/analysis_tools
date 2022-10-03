@@ -27,6 +27,8 @@ __all__ = (
     "SnSelector",
     "ExtendednessSelector",
     "SkyObjectSelector",
+    "SkySourceSelector",
+    "GoodDiaSourceSelector",
     "StarSelector",
     "GalaxySelector",
     "UnknownSelector",
@@ -308,6 +310,32 @@ class SkySourceSelector(FlagSelector):
             "pixelFlags_edge",
         ]
         self.selectWhenTrue = ["sky_source"]
+
+
+class GoodDiaSourceSelector(FlagSelector):
+    """Selects good DIA sources from diaSourceTables"""
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result: Optional[Vector] = None
+        temp = super().__call__(data, **(kwargs))
+        if result is not None:
+            result &= temp  # type: ignore
+        else:
+            result = temp
+        return result
+
+    def setDefaults(self):
+        self.selectWhenFalse = [
+            "base_PixelFlags_flag_bad",
+            "base_PixelFlags_flag_suspect",
+            "base_PixelFlags_flag_saturatedCenter",
+            "base_PixelFlags_flag_interpolated",
+            "base_PixelFlags_flag_interpolatedCenter",
+            "base_PixelFlags_flag_edge",
+        ]
 
 
 class ExtendednessSelector(VectorAction):

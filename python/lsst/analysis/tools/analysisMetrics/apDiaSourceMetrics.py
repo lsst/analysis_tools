@@ -21,13 +21,27 @@
 from __future__ import annotations
 
 __all__ = (
+    "NumDiaSourcesAllMetric",
     "NumDiaSourcesMetric",
     "NumDipolesMetric",
 )
 
 from ..actions.scalar import CountAction
-from ..actions.vector import FlagSelector
+from ..actions.vector import FlagSelector, GoodDiaSourceSelector
 from ..interfaces import AnalysisMetric
+
+
+class NumDiaSourcesAllMetric(AnalysisMetric):
+    """Calculate the number of DIA Sources."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Count the number of dia sources
+        self.process.calculateActions.NumDiaSourcesMetricAll = CountAction(vectorKey="diaSourceId")
+
+        # the units for the quantity (count, an astropy quantity)
+        self.produce.units = {"NumDiaSourcesAll": "ct"}
 
 
 class NumDiaSourcesMetric(AnalysisMetric):
@@ -38,16 +52,8 @@ class NumDiaSourcesMetric(AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
 
-        # filter out DIA sources with bad flags
-        self.prep.selectors.flagSelector = FlagSelector()
-        self.prep.selectors.flagSelector.selectWhenFalse = [
-            "base_PixelFlags_flag_bad",
-            "base_PixelFlags_flag_suspect",
-            "base_PixelFlags_flag_saturatedCenter",
-            "base_PixelFlags_flag_interpolated",
-            "base_PixelFlags_flag_interpolatedCenter",
-            "base_PixelFlags_flag_edge",
-        ]
+        # select dia sources that do not have bad flags
+        self.prep.selectors.goodDiaSourceSelector = GoodDiaSourceSelector()
 
         # Count the number of dia sources left after filtering
         self.process.calculateActions.numDiaSources = CountAction(vectorKey="diaSourceId")

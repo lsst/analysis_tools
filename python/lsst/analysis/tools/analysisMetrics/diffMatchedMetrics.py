@@ -86,11 +86,11 @@ class MatchedRefCoaddMetric(MatchedRefCoaddTool, AnalysisMetric):
         name_prefix_is_none = name_prefix is None
 
         if unit_is_none or name_prefix_is_none:
-            self._validate()
             if unit_is_none:
                 unit = self.unit
             if name_prefix_is_none:
                 name_prefix = self.name_prefix
+            self._validate()
         if unit_select is None:
             unit_select = "mag"
 

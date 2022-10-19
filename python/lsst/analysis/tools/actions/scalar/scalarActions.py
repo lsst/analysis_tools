@@ -149,3 +149,69 @@ class FracThreshold(ScalarAction):
             return 100.0 * result
         else:
             return result
+
+
+class MaxAction(ScalarAction):
+    vectorKey = Field[str]("Key of Vector to find maximum")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, float(np.max(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class MinAction(ScalarAction):
+    vectorKey = Field[str]("Key for the vector to perform action on")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, float(np.min(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class UniqueAction(ScalarAction):
+    vectorKey = Field[str]("Key of Vector from which to investigate the number of unique entries")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, int(len(np.unique(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]))))
+
+
+class MaxAction(ScalarAction):
+    vectorKey = Field[str]("Key of Vector to find maximum")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, float(np.max(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class MinAction(ScalarAction):
+    vectorKey = Field[str]("Key for the vector to perform action on")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, float(np.min(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class UniqueAction(ScalarAction):
+    vectorKey = Field[str]("Key of Vector from which to investigate the number of unique entries")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return cast(Scalar, int(len(np.unique(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]))))

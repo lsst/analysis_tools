@@ -23,3 +23,5 @@ pytest_session.txt
 # IDEs
 .idea
 .vscode
+
+.DS_Store

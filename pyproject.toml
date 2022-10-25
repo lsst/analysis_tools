@@ -5,3 +5,7 @@ target-version = ["py310"]
 [tool.isort]
 profile = "black"
 line_length = 110
+
+[tool.lsst_versions]
+write_to = "python/lsst/analysis/tools/version.py"
+

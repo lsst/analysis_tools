@@ -34,6 +34,7 @@ from lsst.pex.config import Field
 
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
+from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import ApproxFloor
@@ -48,6 +49,7 @@ from ..actions.vector import (
     StarSelector,
     VectorSelector,
 )
+from ..analysisParts.baseFluxRatio import BasePsfApRatio
 from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..interfaces import AnalysisPlot
@@ -287,3 +289,16 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
 
     def setDefaults(self):
         super().setDefaults(coordinate="Dec")
+
+
+class FluxRatioPlot(AnalysisPlot, BasePsfApRatio):
+    """Plot a histogram of the PSF and AP flux ratios of sources."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce = HistPlot()
+
+        self.produce.panels["panel_flux"] = HistPanel()
+        self.produce.panels["panel_flux"].label = "Psf/Ap Ratio"
+        self.produce.panels["panel_flux"].hists = dict(fluxRatioMetric="Ratio")

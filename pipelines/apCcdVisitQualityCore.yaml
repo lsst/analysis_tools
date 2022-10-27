@@ -6,5 +6,7 @@ tasks:
     config:
       metrics.numSsObjects: NumSsObjectsMetric
       connections.outputName: diaSourceTableCore
+      plots.simpleDiaPlot: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.analysisPlots import *

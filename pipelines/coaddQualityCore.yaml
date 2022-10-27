@@ -21,6 +21,7 @@ tasks:
     class: lsst.analysis.tools.tasks.catalogMatch.CatalogMatchTask
     config:
       bands: ['u', 'g', 'r', 'i', 'z', 'y']
+      selectorActions.flagSelector.bands: ['u', 'g', 'r', 'i', 'z', 'y']
   refCatObjectTract:
     class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
     config:

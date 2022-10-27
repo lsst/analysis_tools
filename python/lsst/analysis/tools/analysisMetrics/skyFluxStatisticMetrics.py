@@ -42,7 +42,7 @@ class SkyFluxStatisticMetric(AnalysisMetric):
 
     def coaddContext(self) -> None:
         self.prep.selectors.skyObjectSelector = SkyObjectSelector()
-        self.prep.selectors.skyObjectSelector.bands = ["{band}"]
+        self.prep.selectors.skyObjectSelector.bands = []
         self._setActions(f"{{band}}_{self.fluxType}")
 
         # Need to pass a mapping of new names so the default names get the

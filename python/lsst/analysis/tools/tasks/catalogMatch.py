@@ -259,6 +259,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         # Apply the selectors to the catalog
         mask = np.ones(len(catalog), dtype=bool)
         for selector in self.config.selectorActions:
+            selector.bands = self.config.bands
             mask &= selector(catalog)
 
         for selector in self.config.sourceSelectorActions:

@@ -99,9 +99,12 @@ class FlagSelector(VectorAction):
 
 
 class CoaddPlotFlagSelector(FlagSelector):
+    """This default setting makes it take the band from
+    the kwargs."""
+
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
-        default=["i"],
+        default=[],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -111,9 +114,9 @@ class CoaddPlotFlagSelector(FlagSelector):
         result: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
-            case {"band": band} if not self.bands:
+            case {"band": band} if not self.bands and self.bands == []:
                 bands = (band,)
-            case {"bands": bands} if not self.bands:
+            case {"bands": bands} if not self.bands and self.bands == []:
                 bands = bands
             case _ if self.bands:
                 bands = tuple(self.bands)
@@ -225,9 +228,9 @@ class SnSelector(VectorAction):
         mask: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
-            case {"band": band} if not self.bands:
+            case {"band": band} if not self.bands and self.bands == []:
                 bands = (band,)
-            case {"bands": bands} if not self.bands:
+            case {"bands": bands} if not self.bands and self.bands == []:
                 bands = bands
             case _ if self.bands:
                 bands = tuple(self.bands)
@@ -262,9 +265,9 @@ class SkyObjectSelector(FlagSelector):
         result: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
-            case {"band": band}:
+            case {"band": band} if not self.bands and self.bands == []:
                 bands = (band,)
-            case {"bands": bands} if not self.bands:
+            case {"bands": bands} if not self.bands and self.bands == []:
                 bands = bands
             case _ if self.bands:
                 bands = tuple(self.bands)
@@ -390,9 +393,9 @@ class BandSelector(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         bands: Optional[tuple[str, ...]]
         match kwargs:
-            case {"band": band}:
+            case {"band": band} if not self.bands and self.bands == []:
                 bands = (band,)
-            case {"bands": bands} if not self.bands:
+            case {"bands": bands} if not self.bands and self.bands == []:
                 bands = bands
             case _ if self.bands:
                 bands = tuple(self.bands)

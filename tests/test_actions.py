@@ -370,7 +370,10 @@ class TestVectorSelectors(unittest.TestCase):
 
     def testCoaddPlotFlagSelector(self):
         # Test defaults
-        selector = CoaddPlotFlagSelector()
+        # Bands needs to be set to something otherwise it
+        # will crash as the default value looks it up
+        # elsewhere.
+        selector = CoaddPlotFlagSelector(bands=["i"])
         keys = [
             "{band}_psfFlux_flag",
             "{band}_pixelFlags_saturatedCenter",

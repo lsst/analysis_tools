@@ -265,10 +265,7 @@ def addPlotInfo(fig, plotInfo):
     for band in plotInfo["bands"]:
         bandText += band + ", "
     bandsText = f", Bands: {bandText[:-2]}"
-    try:
-        SNText = f", S/N: {plotInfo['SN']}"
-    except KeyError:
-        SNText = ", S/N: -"
+    SNText = f", S/N: {plotInfo.get('SN', 'N/A')}"
     infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}{SNText}"
     fig.text(0.01, 0.98, infoText, fontsize=7, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
 

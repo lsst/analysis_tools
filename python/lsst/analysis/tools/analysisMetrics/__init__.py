@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from .analysisMetrics import *
+from .apDiaSourceMetrics import *
 from .apSsoMetrics import *
 from .limitingMagnitudeMetric import *
 from .metricMeasurementBundle import *

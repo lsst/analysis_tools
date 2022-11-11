@@ -465,8 +465,8 @@ class ScatterPlotWithTwoHists(PlotAction):
 
                 for (i, xEdge) in enumerate(xEdgesPlot):
                     ids = np.where((xs < xEdge) & (xs > xEdges[i]) & (np.isfinite(ys)))[0]
-                    med = np.median(ys[ids])
-                    sigMad = sigmaMad(ys[ids])
+                    med = np.nanmedian(ys[ids])
+                    sigMad = sigmaMad(ys[ids], nan_policy="omit")
                     meds[i] = med
                     sigMads[i] = sigMad
                     threeSigMadVerts[i, :] = [xEdge, med + 3 * sigMad]
@@ -619,7 +619,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             plotMed = np.nanmedian(cast(Vector, data["yGalaxies"]))
         # Ignore types below pending making this not working my accident
         if len(xs) < 2:  # type: ignore
-            meds = [np.median(ys)]  # type: ignore
+            meds = [np.nanmedian(ys)]  # type: ignore
         if self.yLims:
             ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore
         else:

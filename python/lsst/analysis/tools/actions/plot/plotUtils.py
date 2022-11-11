@@ -472,7 +472,7 @@ def extremaSort(xs):
     ids : `np.array`
     """
 
-    med = np.median(xs)
+    med = np.nanmedian(xs)
     dists = np.abs(xs - med)
     ids = np.argsort(dists)
     return ids

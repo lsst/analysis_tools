@@ -102,8 +102,9 @@ class StellarLocusFitAction(KeyedDataAction):
         p1HW = np.array([xsFitLine[0], ysFitLineHW[0]])
         p2HW = np.array([xsFitLine[1], ysFitLineHW[1]])
 
-        distsHW = perpDistance(p1HW, p2HW, zip(xs[fitPoints], ys[fitPoints]))
-        dists = perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))
+        # Convert this to mmag
+        distsHW = np.array(perpDistance(p1HW, p2HW, zip(xs[fitPoints], ys[fitPoints]))) * 1000
+        dists = np.array(perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))) * 1000
 
         # Now we have the information for the perpendicular line we
         # can use it to calculate the points at the ends of the

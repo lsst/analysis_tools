@@ -21,7 +21,7 @@
 
 from __future__ import annotations
 
-from typing import Mapping
+from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
@@ -142,7 +142,11 @@ class SkyPlot(PlotAction):
         return med, sigMad, statsText
 
     def makePlot(
-        self, data: KeyedData, plotInfo: Mapping[str, str] = None, sumStats: Mapping = {}, **kwargs
+        self,
+        data: KeyedData,
+        plotInfo: Optional[Mapping[str, str]] = None,
+        sumStats: Optional[Mapping] = None,
+        **kwargs,
     ) -> Figure:
         """Prep the catalogue and then make a skyPlot of the given column.
 
@@ -219,6 +223,12 @@ class SkyPlot(PlotAction):
         """
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
+
+        if sumStats is None:
+            sumStats = {}
+
+        if plotInfo is None:
+            plotInfo = {}
 
         # Make divergent colormaps for stars, galaxes and all the points
         blueGreen = mkColormap(["midnightblue", "lightcyan", "darkgreen"])

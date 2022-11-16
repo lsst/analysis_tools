@@ -47,9 +47,11 @@ class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatO
 
         # set plots to run
         self.plots.astromDiffRA = TargetRefCatDeltaRAScatterPlot()
+        self.plots.astromDiffRA.parameterizedBand = True
         self.plots.astromDiffRA.applyContext(CoaddContext)
 
         self.plots.astromDiffDec = TargetRefCatDeltaDecScatterPlot()
+        self.plots.astromDiffDec.parameterizedBand = True
         self.plots.astromDiffDec.applyContext(CoaddContext)
 
         # set metrics to run - none so far

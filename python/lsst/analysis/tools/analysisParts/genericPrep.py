@@ -31,7 +31,7 @@ class CoaddPrep(BasePrep):
         super().setDefaults()
 
         self.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.selectors.flagSelector.bands = ["{band}"]
+        self.selectors.flagSelector.bands = []
 
         self.selectors.snSelector = SnSelector()
         self.selectors.snSelector.fluxType = "{band}_psfFlux"

@@ -199,7 +199,7 @@ class ColorColorFitPlot(PlotAction):
 
         # Add some useful information to the plot
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-        medMag = np.median(cast(Vector, mags))
+        medMag = np.nanmedian(cast(Vector, mags))
 
         # TODO: GET THE SN FROM THE EARLIER PREP STEP
         SN = "-"
@@ -318,9 +318,9 @@ class ColorColorFitPlot(PlotAction):
         # Add a histogram
         axHist.set_ylabel("Number")
         axHist.set_xlabel("Distance to Line Fit")
-        medDists = np.median(dists)
-        madDists = sigmaMad(dists)
-        meanDists = np.mean(dists)
+        medDists = np.nanmedian(dists)
+        madDists = sigmaMad(dists, nan_policy="omit")
+        meanDists = np.nanmean(dists)
 
         axHist.set_xlim(meanDists - 2.0 * madDists, meanDists + 2.0 * madDists)
         lineMedian = axHist.axvline(medDists, color="k", label="Median: {:0.3f}".format(medDists))

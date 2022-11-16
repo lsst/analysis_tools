@@ -335,8 +335,8 @@ class SkyPlot(PlotAction):
                     maxRa += 1e-5  # There is no reason to pick this number in particular
                 if minDec == maxDec:
                     maxDec += 1e-5  # There is no reason to pick this number in particular
-            med = np.median(colorVals)
-            mad = sigmaMad(colorVals)
+            med = np.nanmedian(colorVals)
+            mad = sigmaMad(colorVals, nan_policy="omit")
             vmin = med - 2 * mad
             vmax = med + 2 * mad
             if self.fixAroundZero:

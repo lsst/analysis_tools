@@ -24,6 +24,7 @@ class StellarLocusBase(AnalysisTool):
         self.prep.selectors.snSelector.threshold = 300
 
         self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "refExtendedness"
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.returnMillimags = False
@@ -35,10 +36,8 @@ class WPerpPSF(StellarLocusBase):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-        self.prep.selectors.snSelector.bands = ["r"]
+        self.prep.selectors.snSelector.bands = ["g", "r", "i"]
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
 
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
         self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
@@ -91,10 +90,8 @@ class XPerpPSF(StellarLocusBase):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-        self.prep.selectors.snSelector.bands = ["r"]
+        self.prep.selectors.snSelector.bands = ["g", "r", "i"]
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
 
         self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
         self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
@@ -145,10 +142,8 @@ class YPerpPSF(StellarLocusBase):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector.bands = ["r", "i", "z"]
-        self.prep.selectors.snSelector.bands = ["i"]
+        self.prep.selectors.snSelector.bands = ["r", "i", "z"]
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-
-        self.prep.selectors.starSelector.vectorKey = "i_extendedness"
 
         self.process.buildActions.x.magDiff.col1 = "r_psfFlux"
         self.process.buildActions.x.magDiff.col2 = "i_psfFlux"

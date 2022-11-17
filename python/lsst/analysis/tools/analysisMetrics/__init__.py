@@ -26,3 +26,4 @@ from .metricMeasurementBundle import *
 from .photometricRepeatabilityMetrics import *
 from .psfResidualMetrics import *
 from .skyFluxStatisticMetrics import *
+from .demoMetric import *

@@ -42,7 +42,7 @@ class FiveSigmaPointSourceDepthMetric(AnalysisMetric):
         super().setDefaults()
 
         self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.columnKey = "extendedness"
+        self.prep.selectors.starSelector.vectorKey = "extendedness"
 
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.fluxType = "psfFlux"

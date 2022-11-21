@@ -45,7 +45,7 @@ class CModelSubPsfMagMeasSkyGalaxies(AnalysisPlot):
         self.prep.selectors.snSelector.threshold = 100
 
         self.prep.selectors.galaxySelector = GalaxySelector()
-        self.prep.selectors.galaxySelector.columnKey = "{band}_extendedness"
+        self.prep.selectors.galaxySelector.vectorKey = "{band}_extendedness"
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.xGalaxies = LoadVector()

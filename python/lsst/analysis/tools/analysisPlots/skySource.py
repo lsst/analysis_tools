@@ -20,19 +20,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("SkyObjectSkyPlot", "SkyObjectHistPlot")
+__all__ = ("SkySourceSkyPlot", "SkySourceHistPlot")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.vector import LoadVector, SNCalculator
-from ..actions.vector.selectors import SkyObjectSelector, SnSelector
+from ..actions.vector.selectors import SkySourceSelector, SnSelector
 from ..interfaces import AnalysisPlot
 
 
-class SkyObjectSkyPlot(AnalysisPlot):
+class SkySourceSkyPlot(AnalysisPlot):
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+        self.prep.selectors.skySourceSelector = SkySourceSelector()
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.x = LoadVector()
@@ -40,30 +42,32 @@ class SkyObjectSkyPlot(AnalysisPlot):
         self.process.buildActions.y = LoadVector()
         self.process.buildActions.y.vectorKey = "coord_dec"
         self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = "{band}_ap09Flux"
+        self.process.buildActions.z.vectorKey = "ap09Flux"
         self.process.buildActions.statMask = SnSelector()
         self.process.buildActions.statMask.threshold = -1e12
-        self.process.buildActions.statMask.fluxType = "{band}_psfFlux"
+        self.process.buildActions.statMask.fluxType = "psfFlux"
 
         self.produce = SkyPlot()
         self.produce.plotTypes = ["any"]
-        self.produce.plotName = "skyObject_{band}"
+        self.produce.plotName = "skySource"
         self.produce.xAxisLabel = "R.A. (degrees)"
         self.produce.yAxisLabel = "Dec. (degrees)"
-        self.produce.zAxisLabel = "Sky Object ap09Flux (nJy)"
+        self.produce.zAxisLabel = "Sky Source ap09Flux (nJy)"
         self.produce.plotOutlines = False
         self.produce.fixAroundZero = True
 
 
-class SkyObjectHistPlot(AnalysisPlot):
+class SkySourceHistPlot(AnalysisPlot):
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+        self.prep.selectors.skySourceSelector = SkySourceSelector()
 
-        self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="{band}_psfFlux")
-        self.process.buildActions.hist_09_flux = LoadVector(vectorKey="{band}_ap09Flux")
-        self.process.buildActions.hist_psf_sn = SNCalculator(fluxType="{band}_psfFlux")
-        self.process.buildActions.hist_09_sn = SNCalculator(fluxType="{band}_ap09Flux")
+        self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="psfFlux")
+        self.process.buildActions.hist_09_flux = LoadVector(vectorKey="ap09Flux")
+        self.process.buildActions.hist_psf_sn = SNCalculator(fluxType="psfFlux")
+        self.process.buildActions.hist_09_sn = SNCalculator(fluxType="ap09Flux")
 
         self.produce = HistPlot()
 

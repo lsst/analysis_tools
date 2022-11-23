@@ -22,7 +22,12 @@ from __future__ import annotations
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisPlots.analysisPlots import TargetRefCatDeltaDecScatterPlot, TargetRefCatDeltaRAScatterPlot
+from ..analysisPlots.analysisPlots import (
+    TargetRefCatDeltaDecScatterPlot,
+    TargetRefCatDeltaDecSkyPlot,
+    TargetRefCatDeltaRAScatterPlot,
+    TargetRefCatDeltaRASkyPlot,
+)
 from ..contexts import VisitContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -46,11 +51,17 @@ class RefCatSourceAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatS
         super().setDefaults()
 
         # set plots to run
-        self.plots.astromDiffRA = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRA.applyContext(VisitContext)
+        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
+        self.plots.astromDiffRAScatterPlot.applyContext(VisitContext)
 
-        self.plots.astromDiffDec = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDec.applyContext(VisitContext)
+        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
+        self.plots.astromDiffDecScatterPlot.applyContext(VisitContext)
+
+        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
+        self.plots.astromDiffRASkyPlot.applyContext(VisitContext)
+
+        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
+        self.plots.astromDiffDecSkyPlot.applyContext(VisitContext)
 
         # set metrics to run - none so far
 

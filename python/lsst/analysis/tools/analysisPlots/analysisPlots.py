@@ -32,7 +32,9 @@ __all__ = (
     "YPerpPSFPlot",
     "YPerpCModelPlot",
     "TargetRefCatDeltaRAScatterPlot",
-    "TargetRefCatDeltaRAScatterPlot",
+    "TargetRefCatDeltaDecScatterPlot",
+    "TargetRefCatDeltaRASkyPlot",
+    "TargetRefCatDeltaDecSkyPlot",
     "SourcesPlot",
     "RhoStatisticsPlot",
 )
@@ -325,6 +327,68 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDelta):
 class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
     """Plot the difference in milliseconds between the Dec of a target catalog
     and a reference catalog
+    """
+
+    def setDefaults(self):
+        super().setDefaults(coordinate="Dec")
+
+
+class TargetRefCatDeltaSkyPlot(AnalysisPlot):
+    """Base class for plotting the RA/Dec distribution of stars, with the
+    difference between the RA or Dec of the target and reference catalog as
+    the color.
+    """
+
+    parameterizedBand = Field[bool](
+        doc="Does this AnalysisTool support band as a name parameter", default=True
+    )
+
+    def coaddContext(self) -> None:
+        self.prep = CoaddPrep()
+
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
+
+    def visitContext(self) -> None:
+        self.parameterizedBand = False
+        self.prep = VisitPrep()
+
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = "psfFlux"
+
+    def setDefaults(self, coordinate):
+        super().setDefaults()
+
+        coordStr = coordinate.lower()
+        self.process.buildActions.zStars = AstromDiff(
+            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        )
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra_target"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec_target"
+
+        self.produce = SkyPlot()
+        self.produce.plotTypes = ["stars"]
+        self.produce.plotName = f"astromDiffSky_{coordinate}"
+        self.produce.xAxisLabel = "R.A. (degrees)"
+        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.zAxisLabel = f"${coordinate}_{{target}} - {coordinate}_{{ref}}$ (marcsec)"
+        self.produce.plotOutlines = False
+
+
+class TargetRefCatDeltaRASkyPlot(TargetRefCatDeltaSkyPlot):
+    """Plot the difference in milliseconds between the RA of a target catalog
+    and a reference catalog as a function of RA and Dec.
+    """
+
+    def setDefaults(self):
+        super().setDefaults(coordinate="RA")
+
+
+class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlot):
+    """Plot the difference in milliseconds between the Dec of a target catalog
+    and a reference catalog as a function of RA and Dec.
     """
 
     def setDefaults(self):

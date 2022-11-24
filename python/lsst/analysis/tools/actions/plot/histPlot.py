@@ -27,7 +27,7 @@ from typing import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Config, ConfigDictField, DictField, Field
+from lsst.pex.config import ChoiceField, Config, ConfigDictField, DictField, Field, FieldValidationError
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
@@ -53,19 +53,53 @@ class HistPanel(Config):
         default="linear",
     )
     bins = Field[int](
-        doc="Number of x axis bins.",
+        doc="Number of x axis bins within plot x-range.",
         default=50,
     )
-    pLower = Field[float](
-        doc="Percentile used to determine the lower range of the histogram bins. If more than one histogram "
-        "is plotted in the panel, the percentile limit is the minimum value across all input data.",
-        default=2.0,
+    rangeType = ChoiceField[str](
+        doc="Set the type of range to use for the x-axis. Range bounds will be set according to "
+        "the values of lowerRange and upperRange.",
+        allowed={
+            "percentile": "Upper and lower percentile ranges of the data.",
+            "sigmaMad": "Range is (sigmaMad - lowerRange*sigmaMad, sigmaMad + upperRange*sigmaMad).",
+            "fixed": "Range is fixed to (lowerRange, upperRange).",
+        },
+        default="percentile",
     )
-    pUpper = Field[float](
-        doc="Percentile used to determine the upper range of the histogram bins. If more than one histogram "
-        "is plotted, the percentile limit is the maximum value across all input data.",
-        default=98.0,
+    lowerRange = Field[float](
+        doc="Lower range specifier for the histogram bins. See rangeType for interpretation "
+        "based on the type of range requested. If more than one histogram is plotted in a given "
+        "panel and rangeType is not set to fixed, the limit is the minimum value across all input "
+        "data.",
+        default=0.0,
     )
+    upperRange = Field[float](
+        doc="Upper range specifier for the histogram bins. See rangeType for interpretation "
+        "based on the type of range requested. If more than one histogram is plotted in a given "
+        "panel and rangeType is not set to fixed, the limit is the maximum value across all input "
+        "data.",
+        default=100.0,
+    )
+
+    def validate(self):
+        super().validate()
+        if self.rangeType == "percentile" and self.lowerRange < 0.0 or self.upperRange > 100.0:
+            msg = (
+                "For rangeType %s, ranges must obey: lowerRange >= 0 and upperRange <= 100." % self.rangeType
+            )
+            raise FieldValidationError(self.__class__.rangeType, self, msg)
+        if self.rangeType == "sigmaMad" and self.lowerRange < 0.0:
+            msg = (
+                "For rangeType %s, lower range must obey: lowerRange >= 0 (the lower range is "
+                "set as median - lowerRange*sigmaMad." % self.rangeType
+            )
+            raise FieldValidationError(self.__class__.rangeType, self, msg)
+        if self.rangeType == "fixed" and (self.upperRange - self.lowerRange) == 0.0:
+            msg = (
+                "For rangeType %s, lower and upper ranges must differ (i.e. must obey: "
+                "upperRange - lowerRange != 0)." % self.rangeType
+            )
+            raise FieldValidationError(self.__class__.rangeType, self, msg)
 
 
 class HistPlot(PlotAction):
@@ -129,28 +163,59 @@ class HistPlot(PlotAction):
         # set up figure
         fig = plt.figure(dpi=300)
         hist_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[3, 1])
-        axs = self._makeAxes(hist_fig)
+        axs, ncols, nrows = self._makeAxes(hist_fig)
 
         # loop over each panel; plot histograms
-        cols = self._assignColors()
-        all_handles, all_nums, all_meds, all_mads = [], [], [], []
+        colors = self._assignColors()
+        nth_panel = len(self.panels)
+        nth_col = ncols
+        nth_row = nrows - 1
+        label_font_size = max(6, 10 - nrows)
         for panel, ax in zip(self.panels, axs):
-            nums, meds, mads = self._makePanel(data, panel, ax, cols[panel], **kwargs)
+            nth_panel -= 1
+            nth_col = ncols - 1 if nth_col == 0 else nth_col - 1
+            if nth_panel == 0 and nrows * ncols - len(self.panels) > 0:
+                nth_col -= 1
+            # Set font size for legend based on number of panels being plotted.
+            legend_font_size = max(4, int(8 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
+            nums, meds, mads = self._makePanel(
+                data,
+                panel,
+                ax,
+                colors[panel],
+                label_font_size=label_font_size,
+                legend_font_size=legend_font_size,
+                ncols=ncols,
+            )
+
+            all_handles, all_nums, all_meds, all_mads = [], [], [], []
             handles, labels = ax.get_legend_handles_labels()  # code for plotting
             all_handles += handles
             all_nums += nums
             all_meds += meds
             all_mads += mads
-
-        # add side panel; add statistics
-        self._addStatisticsPanel(side_fig, all_handles, all_nums, all_meds, all_mads)
+            title_str = self.panels[panel].label  # type: ignore
+            # add side panel; add statistics
+            self._addStatisticsPanel(
+                side_fig,
+                all_handles,
+                all_nums,
+                all_meds,
+                all_mads,
+                legend_font_size=legend_font_size,
+                yAnchor0=ax.get_position().y0,
+                nth_row=nth_row,
+                nth_col=nth_col,
+                title_str=title_str,
+            )
+            nth_row = nth_row - 1 if nth_col == 0 else nth_row
 
         # add general plot info
         if plotInfo is not None:
             hist_fig = addPlotInfo(hist_fig, plotInfo)
 
         # finish up
-        hist_fig.text(0.01, 0.42, "Frequency", rotation=90, transform=hist_fig.transFigure)
+        hist_fig.text(0.01, 0.42, "Frequency", rotation=90, transform=hist_fig.transFigure, fontsize=9)
         plt.draw()
         return fig
 
@@ -176,7 +241,7 @@ class HistPlot(PlotAction):
                     axs.append(fig.add_subplot(gs[row : row + 1, col : np.min([col + 2, ncols + 1])]))
                     break
 
-        return axs
+        return axs, ncols, nrows
 
     def _assignColors(self):
         """Assign colors to histograms using a given color map."""
@@ -216,25 +281,32 @@ class HistPlot(PlotAction):
             ],
         )
         if self.cmap in custom_cmaps.keys():
-            all_cols = custom_cmaps[self.cmap]
+            all_colors = custom_cmaps[self.cmap]
         else:
             try:
-                all_cols = getattr(plt.cm, self.cmap).copy().colors
+                all_colors = getattr(plt.cm, self.cmap).copy().colors
             except AttributeError:
                 raise ValueError(f"Unrecognized color map: {self.cmap}")
 
         counter = 0
-        cols = defaultdict(list)
+        colors = defaultdict(list)
         for panel in self.panels:
             for hist in self.panels[panel].hists:
-                cols[panel].append(all_cols[counter % len(all_cols)])
+                colors[panel].append(all_colors[counter % len(all_colors)])
                 counter += 1
-        return cols
+        return colors
 
-    def _makePanel(self, data, panel, ax, col, **kwargs):
+    def _makePanel(self, data, panel, ax, colors, label_font_size=9, legend_font_size=7, ncols=1):
         """Plot a single panel containing histograms."""
-        panel_range = self._getPanelRange(data, panel)
         nums, meds, mads = [], [], []
+        for i, hist in enumerate(self.panels[panel].hists):
+            hist_data = data[hist][np.isfinite(data[hist])]
+            num, med, mad = self._calcStats(hist_data)
+            nums.append(num)
+            meds.append(med)
+            mads.append(mad)
+        panel_range = self._getPanelRange(data, panel, mads=mads, meds=meds)
+
         for i, hist in enumerate(self.panels[panel].hists):
             hist_data = data[hist][np.isfinite(data[hist])]
             ax.hist(
@@ -243,19 +315,21 @@ class HistPlot(PlotAction):
                 bins=self.panels[panel].bins,
                 histtype="step",
                 lw=2,
-                color=col[i],
+                color=colors[i],
                 label=self.panels[panel].hists[hist],
             )
-            num, med, mad = self._calcStats(hist_data)
-            nums.append(num)
-            meds.append(med)
-            mads.append(mad)
-            ax.axvline(med, ls="--", lw=1, c=col[i])
-        ax.legend(fontsize=6, loc="upper left")
+            ax.axvline(meds[i], ls="--", lw=1, c=colors[i])
+
+        ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
         ax.set_xlim(panel_range)
-        ax.set_xlabel(self.panels[panel].label)
+        # The following accommodates spacing for ranges with large numbers
+        # but small-ish dynamic range (example use case: RA 300-301).
+        if ncols > 1 and max(np.abs(panel_range)) >= 100 and (panel_range[1] - panel_range[0]) < 5:
+            ax.xaxis.set_major_formatter("{x:.2f}")
+            ax.tick_params(axis="x", labelrotation=25, pad=-1)
+        ax.set_xlabel(self.panels[panel].label, fontsize=label_font_size)
         ax.set_yscale(self.panels[panel].yscale)
-        ax.tick_params(labelsize=7)
+        ax.tick_params(labelsize=max(5, label_font_size - 2))
         # add a buffer to the top of the plot to allow headspace for labels
         ylims = list(ax.get_ylim())
         if ax.get_yscale() == "log":
@@ -265,11 +339,38 @@ class HistPlot(PlotAction):
         ax.set_ylim(ylims[0], ylims[1])
         return nums, meds, mads
 
-    def _getPanelRange(self, data, panel):
+    def _getPanelRange(self, data, panel, mads=None, meds=None):
+        """Determine panel x-axis range based config settings."""
+        panel_range = [np.nan, np.nan]
+        rangeType = self.panels[panel].rangeType
+        lowerRange = self.panels[panel].lowerRange
+        upperRange = self.panels[panel].upperRange
+        if rangeType == "percentile":
+            panel_range = self._getPercentilePanelRange(data, panel)
+        elif rangeType == "sigmaMad":
+            # Set the panel range to extend lowerRange[upperRange] times the
+            # maximum sigmaMad for the datasets in the panel to the left[right]
+            # from the minimum[maximum] median value of all datasets in the
+            # panel.
+            maxMad = np.nanmax(mads)
+            maxMed = np.nanmax(meds)
+            minMed = np.nanmin(meds)
+            panel_range = [minMed - lowerRange * maxMad, maxMed + upperRange * maxMad]
+            if panel_range[1] - panel_range[0] == 0:
+                panel_range = self._getPercentilePanelRange(data, panel)
+        elif rangeType == "fixed":
+            panel_range = [lowerRange, upperRange]
+        else:
+            raise RuntimeError(f"Invalid rangeType: {rangeType}")
+        return panel_range
+
+    def _getPercentilePanelRange(self, data, panel):
         """Determine panel x-axis range based on data percentile limits."""
         panel_range = [np.nan, np.nan]
         for hist in self.panels[panel].hists:
-            hist_range = np.nanpercentile(data[hist], [self.panels[panel].pLower, self.panels[panel].pUpper])
+            hist_range = np.nanpercentile(
+                data[hist], [self.panels[panel].lowerRange, self.panels[panel].upperRange]
+            )
             panel_range[0] = np.nanmin([panel_range[0], hist_range[0]])
             panel_range[1] = np.nanmax([panel_range[1], hist_range[1]])
         return panel_range
@@ -282,12 +383,23 @@ class HistPlot(PlotAction):
         mad = sigmaMad(data)
         return num, med, mad
 
-    def _addStatisticsPanel(self, fig, handles, nums, meds, mads):
+    def _addStatisticsPanel(
+        self,
+        fig,
+        handles,
+        nums,
+        meds,
+        mads,
+        legend_font_size=8,
+        yAnchor0=0.0,
+        nth_row=0,
+        nth_col=0,
+        title_str=None,
+    ):
         """Add an adjoining panel containing histogram summary statistics."""
         ax = fig.add_subplot(1, 1, 1)
         ax.axis("off")
-        plt.subplots_adjust(left=0.05, right=0.95, bottom=0.09, top=0.9)
-
+        plt.subplots_adjust(left=0.05, right=0.95, bottom=0.0, top=1.0)
         # empty handle, used to populate the bespoke legend layout
         empty = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor="none", linewidth=0)
 
@@ -295,23 +407,31 @@ class HistPlot(PlotAction):
         legend_handles = [empty] + handles + ([empty] * 3 * len(handles)) + ([empty] * 3)
         legend_labels = (
             ([""] * (len(handles) + 1))
-            + ["Num"]
+            + ["N$_{{data}}$"]
             + nums
             + ["Med"]
-            + [f"{x:0.1f}" for x in meds]
+            + [f"{x:.2f}" for x in meds]
             + ["${{\\sigma}}_{{MAD}}$"]
-            + [f"{x:0.1f}" for x in mads]
+            + [f"{x:.2f}" for x in mads]
         )
 
-        # add the legend
-        ax.legend(
+        # Set the y anchor for the legend such that it roughly lines up with
+        # the panels.
+        yAnchor = max(0, yAnchor0 - 0.01) + nth_col * (0.008 + len(nums) * 0.005) * legend_font_size
+
+        nth_legend = ax.legend(
             legend_handles,
             legend_labels,
             loc="lower left",
+            bbox_to_anchor=(0.0, yAnchor),
             ncol=4,
             handletextpad=-0.25,
-            fontsize=6,
+            fontsize=legend_font_size,
             borderpad=0,
             frameon=False,
             columnspacing=-0.25,
+            title=title_str,
+            title_fontproperties={"weight": "bold", "size": legend_font_size},
         )
+        if nth_row + nth_col > 0:
+            ax.add_artist(nth_legend)

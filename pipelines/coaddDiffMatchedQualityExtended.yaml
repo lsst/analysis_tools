@@ -4,7 +4,6 @@ tasks:
   diff_matched_analysis:
     class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
     config:
-      bands: ('u', 'g', 'r', 'i', 'z', 'y')
       connections.outputName: diff_matched_truth_summary_objectTable_tract
 
       # plots

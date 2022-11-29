@@ -27,7 +27,7 @@ import lsst.geom
 import lsst.skymap
 import numpy as np
 import pandas as pd
-from lsst.analysis.tools.tasks import CatalogMatchTask
+from lsst.analysis.tools.tasks import CatalogMatchConfig, CatalogMatchTask
 from lsst.daf.base import PropertyList
 from lsst.daf.butler import DatasetRef, DatasetType, DimensionUniverse, StorageClass
 from lsst.meas.algorithms import ReferenceObjectLoader
@@ -74,7 +74,9 @@ class TestCatalogMatch(unittest.TestCase):
     """Test CatalogMatchTask"""
 
     def setUp(self):
-        self.task = CatalogMatchTask()
+        config = CatalogMatchConfig()
+        config.bands = ["g", "r", "i", "z", "y"]
+        self.task = CatalogMatchTask(config=config)
         self.task.config.extraColumns.append("sourceId")
 
         self.skymap = self._make_skymap()

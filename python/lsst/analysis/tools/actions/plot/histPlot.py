@@ -22,6 +22,7 @@ from __future__ import annotations
 
 __all__ = ("HistPanel", "HistPlot")
 
+import logging
 from collections import defaultdict
 from typing import Mapping
 
@@ -35,6 +36,8 @@ from matplotlib.patches import Rectangle
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from ...statistics import sigmaMad
 from .plotUtils import addPlotInfo
+
+log = logging.getLogger(__name__)
 
 
 class HistPanel(Config):
@@ -357,6 +360,10 @@ class HistPlot(PlotAction):
             minMed = np.nanmin(meds)
             panel_range = [minMed - lowerRange * maxMad, maxMed + upperRange * maxMad]
             if panel_range[1] - panel_range[0] == 0:
+                self.log.info(
+                    "NOTE: panel_range for {} based on med/sigMad was 0. Computing using "
+                    "percentile range instead.".format(panel)
+                )
                 panel_range = self._getPercentilePanelRange(data, panel)
         elif rangeType == "fixed":
             panel_range = [lowerRange, upperRange]

@@ -83,6 +83,11 @@ class HistPanel(Config):
         "data.",
         default=100.0,
     )
+    referenceValue = Field[float](
+        doc="Value at which to add a black solid vertical line. Ignored if set to `None`.",
+        default=None,
+        optional=True,
+    )
 
     def validate(self):
         super().validate()
@@ -321,7 +326,7 @@ class HistPlot(PlotAction):
                 color=colors[i],
                 label=self.panels[panel].hists[hist],
             )
-            ax.axvline(meds[i], ls="--", lw=1, c=colors[i])
+            ax.axvline(meds[i], ls=(0, (5, 3)), lw=1, c=colors[i])
 
         ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
         ax.set_xlim(panel_range)
@@ -340,6 +345,11 @@ class HistPlot(PlotAction):
         else:
             ylims[1] *= 1.1
         ax.set_ylim(ylims[0], ylims[1])
+
+        # Draw a vertical line at a reference value, if given.
+        if self.panels[panel].referenceValue is not None:
+            ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
+
         return nums, meds, mads
 
     def _getPanelRange(self, data, panel, mads=None, meds=None):
@@ -389,6 +399,22 @@ class HistPlot(PlotAction):
         med = np.nanmedian(data)
         mad = sigmaMad(data)
         return num, med, mad
+
+    def _addReferenceLines(self, ax, panel, panel_range, legend_font_size=7):
+        """Draw the vertical reference line.
+        """
+        ax2 = ax.twinx()
+        ax2.axis("off")
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+
+        reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue)
+        ax2.axvline(
+            self.panels[panel].referenceValue, ls="-", lw=1, c="black", zorder=0, label=reference_label
+        )
+        ax2.legend(fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False)
+
+        return ax
 
     def _addStatisticsPanel(
         self,

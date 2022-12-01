@@ -44,11 +44,6 @@ class SkyPlot(PlotAction):
     yAxisLabel = Field[str](doc="Label to use for the y axis.", optional=False)
     zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
 
-    fixAroundZero = Field[bool](
-        doc="Fix the center of the colorscale to be zero.",
-        default=False,
-    )
-
     plotOutlines = Field[bool](
         doc="Plot the outlines of the ccds/patches?",
         default=True,

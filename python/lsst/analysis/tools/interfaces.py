@@ -374,7 +374,7 @@ class AnalysisMetric(AnalysisTool):
 class AnalysisPlot(AnalysisTool):
     """Specialized `AnalysisTool` for producing plots.
 
-    The produce stage of `AnalysisMetric` has been specialized such that
+    The produce stage of `AnalysisPlot` has been specialized such that
     it expects to be assigned to a `PlotAction`.
     """
 
@@ -384,7 +384,7 @@ class AnalysisPlot(AnalysisTool):
         """Return the names of the plots produced by this action.
 
         This will either come from the `PlotAction` if it defines a
-        ``getOutputNames`` method (likely if it returns a mapping of figures,
+        ``getOutputNames`` method (likely if it returns a mapping of figures),
         or a default value is used and a single figure is assumed.
 
         Returns

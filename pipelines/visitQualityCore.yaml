@@ -10,6 +10,8 @@ tasks:
       connections.outputName: sourceTableCore
       metrics.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
       metrics.skyFluxVisitStatisticMetric.applyContext: VisitContext
+      plots.skySourceSkyPlot: SkySourceSkyPlot
+      plots.skySourceHistPlot: SkySourceHistPlot
       python: |
         from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *

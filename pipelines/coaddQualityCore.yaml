@@ -26,6 +26,8 @@ tasks:
       metrics.yPerpPSFMetric: YPerpPSFMetric
       plots.yPerpCModelPlot: YPerpCModelPlot
       metrics.yPerpCModelMetric: YPerpCModelMetric
+      plots.skyObjectSkyPlot: SkyObjectSkyPlot
+      plots.skyObjectHistPlot: SkyObjectHistPlot
       python: |
         from lsst.analysis.tools.analysisPlots import *
         from lsst.analysis.tools.analysisMetrics import *

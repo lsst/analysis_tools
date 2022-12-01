@@ -11,3 +11,14 @@ tasks:
       plots.skyObjectHistPlot: SkyObjectHistPlot
       python: |
         from lsst.analysis.tools.analysisPlots import *
+  analyzeObjectTableSurveyCore:
+    class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
+    config:
+      connections.outputName: objectTableSurvey
+      plots.rhoStatisticsPlot: RhoStatisticsPlot
+      bands: ["i"]
+      python: |
+        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.contexts import *
+        from lsst.analysis.tools.actions.plot import *

@@ -88,6 +88,11 @@ class HistPanel(Config):
         default=None,
         optional=True,
     )
+    histDensity = Field[bool](
+        doc="Whether to plot the histogram as a normalized probability distribution. Must also "
+        "provide a value for referenceValue",
+        default=False,
+    )
 
     def validate(self):
         super().validate()
@@ -108,6 +113,9 @@ class HistPanel(Config):
                 "upperRange - lowerRange != 0)." % self.rangeType
             )
             raise FieldValidationError(self.__class__.rangeType, self, msg)
+        if self.histDensity and self.referenceValue is None:
+            msg = "Must provide referenceValue if histDensity is True."
+            raise FieldValidationError(self.__class__.referenceValue, self, msg)
 
 
 class HistPlot(PlotAction):
@@ -223,7 +231,6 @@ class HistPlot(PlotAction):
             hist_fig = addPlotInfo(hist_fig, plotInfo)
 
         # finish up
-        hist_fig.text(0.01, 0.42, "Frequency", rotation=90, transform=hist_fig.transFigure, fontsize=9)
         plt.draw()
         return fig
 
@@ -236,7 +243,7 @@ class HistPlot(PlotAction):
             ncols = 2
         nrows = int(np.ceil(num_panels / ncols))
 
-        gs = GridSpec(nrows, ncols, left=0.13, right=0.99, bottom=0.1, top=0.88, wspace=0.25, hspace=0.45)
+        gs = GridSpec(nrows, ncols, left=0.12, right=0.99, bottom=0.1, top=0.88, wspace=0.31, hspace=0.45)
 
         axs = []
         counter = 0
@@ -322,6 +329,7 @@ class HistPlot(PlotAction):
                 range=panel_range,
                 bins=self.panels[panel].bins,
                 histtype="step",
+                density=self.panels[panel].histDensity,
                 lw=2,
                 color=colors[i],
                 label=self.panels[panel].hists[hist],
@@ -336,6 +344,8 @@ class HistPlot(PlotAction):
             ax.xaxis.set_major_formatter("{x:.2f}")
             ax.tick_params(axis="x", labelrotation=25, pad=-1)
         ax.set_xlabel(self.panels[panel].label, fontsize=label_font_size)
+        y_label = "Normalized (PDF)" if self.panels[panel].histDensity else "Frequency"
+        ax.set_ylabel(y_label, fontsize=label_font_size)
         ax.set_yscale(self.panels[panel].yscale)
         ax.tick_params(labelsize=max(5, label_font_size - 2))
         # add a buffer to the top of the plot to allow headspace for labels
@@ -346,7 +356,9 @@ class HistPlot(PlotAction):
             ylims[1] *= 1.1
         ax.set_ylim(ylims[0], ylims[1])
 
-        # Draw a vertical line at a reference value, if given.
+        # Draw a vertical line at a reference value, if given. If histDensity
+        # is True, also plot a reference PDF with mean = referenceValue and
+        # sigma = 1 for reference.
         if self.panels[panel].referenceValue is not None:
             ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
 
@@ -401,17 +413,37 @@ class HistPlot(PlotAction):
         return num, med, mad
 
     def _addReferenceLines(self, ax, panel, panel_range, legend_font_size=7):
-        """Draw the vertical reference line.
+        """Draw the vertical reference line and density curve (if requested)
+        on the panel.
         """
         ax2 = ax.twinx()
         ax2.axis("off")
         ax2.set_xlim(ax.get_xlim())
         ax2.set_ylim(ax.get_ylim())
 
-        reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue)
+        if self.panels[panel].histDensity:
+            reference_label = None
+        else:
+            reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue)
         ax2.axvline(
             self.panels[panel].referenceValue, ls="-", lw=1, c="black", zorder=0, label=reference_label
         )
+        if self.panels[panel].histDensity:
+            ref_x = np.arange(panel_range[0], panel_range[1], (panel_range[1] - panel_range[0]) / 100.0)
+            ref_mean = self.panels[panel].referenceValue
+            ref_std = 1.0
+            ref_y = (
+                1.0
+                / (ref_std * np.sqrt(2.0 * np.pi))
+                * np.exp(-((ref_x - ref_mean) ** 2) / (2.0 * ref_std**2))
+            )
+            ax2.fill_between(ref_x, ref_y, alpha=0.1, color="black", label="P$_{{norm}}(0,1)$", zorder=-1)
+            # Make sure the y-axis extends beyond the data plotted and that
+            # the y-ranges of both axes are in sync.
+            y_max = max(max(ref_y), ax2.get_ylim()[1])
+            if ax2.get_ylim()[1] < 1.05 * y_max:
+                ax.set_ylim(ax.get_ylim()[0], 1.05 * y_max)
+                ax2.set_ylim(ax.get_ylim())
         ax2.legend(fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False)
 
         return ax

@@ -154,7 +154,7 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     plots = ConfigurableActionStructField[AnalysisPlot](doc="AnalysisPlots to run with this Task")
     metrics = ConfigurableActionStructField[AnalysisMetric](doc="AnalysisMetrics to run with this Task")
     bands = ListField[str](
-        doc="Filter bands on which to run all of the actions", default=["g", "r", "i", "z", "y"]
+        doc="Filter bands on which to run all of the actions", default=["u", "g", "r", "i", "z", "y"]
     )
 
     def validate(self):

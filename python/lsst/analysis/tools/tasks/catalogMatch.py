@@ -156,7 +156,7 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     bands = pexConfig.ListField[str](
         doc="All bands to persist to downstream tasks",
-        default=["g", "r", "i", "z", "y"],
+        default=["u", "g", "r", "i", "z", "y"],
     )
 
     selectorBand = pexConfig.Field[str](

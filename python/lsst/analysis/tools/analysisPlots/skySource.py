@@ -65,16 +65,33 @@ class SkySourceHistPlot(AnalysisPlot):
         self.prep.selectors.skySourceSelector = SkySourceSelector()
 
         self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="psfFlux")
-        self.process.buildActions.hist_09_flux = LoadVector(vectorKey="ap09Flux")
+        self.process.buildActions.hist_ap09_flux = LoadVector(vectorKey="ap09Flux")
         self.process.buildActions.hist_psf_sn = SNCalculator(fluxType="psfFlux")
-        self.process.buildActions.hist_09_sn = SNCalculator(fluxType="ap09Flux")
+        self.process.buildActions.hist_ap09_sn = SNCalculator(fluxType="ap09Flux")
 
         self.produce = HistPlot()
 
         self.produce.panels["panel_flux"] = HistPanel()
         self.produce.panels["panel_flux"].label = "Flux (nJy)"
-        self.produce.panels["panel_flux"].hists = dict(hist_psf_flux="psfFlux", hist_09_flux="ap09Flux")
+        self.produce.panels["panel_flux"].hists = dict(
+            hist_psf_flux="psfFlux",
+            hist_ap09_flux="ap09Flux",
+        )
+        self.produce.panels["panel_flux"].rangeType = "sigmaMad"
+        self.produce.panels["panel_flux"].lowerRange = 3.5
+        self.produce.panels["panel_flux"].upperRange = 3.5
+        self.produce.panels["panel_flux"].referenceValue = 0.0
+        self.produce.panels["panel_flux"].validate()
 
         self.produce.panels["panel_sn"] = HistPanel()
         self.produce.panels["panel_sn"].label = "S/N"
-        self.produce.panels["panel_sn"].hists = dict(hist_psf_sn="psfFlux S/N", hist_09_sn="ap09Flux S/N")
+        self.produce.panels["panel_sn"].hists = dict(
+            hist_psf_sn="psf S/N",
+            hist_ap09_sn="ap09 S/N",
+        )
+        self.produce.panels["panel_sn"].rangeType = "sigmaMad"
+        self.produce.panels["panel_sn"].lowerRange = 3.5
+        self.produce.panels["panel_sn"].upperRange = 3.5
+        self.produce.panels["panel_sn"].referenceValue = 0.0
+        self.produce.panels["panel_sn"].histDensity = True
+        self.produce.panels["panel_sn"].validate()

@@ -62,7 +62,7 @@ class SigmaMadAction(ScalarAction):
 
 
 class CountAction(ScalarAction):
-    vectorKey = Field[str]("Key of Vector to median")
+    vectorKey = Field[str]("Key of Vector to count")
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((self.vectorKey, Vector),)
@@ -171,3 +171,44 @@ class MinAction(ScalarAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         return cast(Scalar, float(np.min(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class FracInRange(ScalarAction):
+    """Compute the fraction of a distribution that is between specified
+    minimum and maximum values.
+    """
+
+    vectorKey = Field[str](doc="Name of column")
+    maximum = Field[float](doc="The maximum value", default=np.Inf)
+    minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.Inf, 0.0))
+    percent = Field[bool](doc="Express result as percentage", default=False)
+
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        return ((self.vectorKey.format(**kwargs), Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        """Return the fraction of rows with values within the specified range.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values within the specified range.
+        """
+        mask = self.getMask(**kwargs)
+        values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+        values = values[mask]  # type: ignore
+        nvalues = len(values)
+        values = values[np.logical_not(np.isnan(values))]
+        maskrange = (values >= self.minimum) & (values < self.maximum)
+        result = cast(
+            Scalar,
+            float(len(values[maskrange]) / nvalues),  # type: ignore
+        )
+        if self.percent:
+            return 100.0 * result
+        else:
+            return result

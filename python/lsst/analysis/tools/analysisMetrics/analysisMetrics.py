@@ -32,8 +32,8 @@ __all__ = (
 
 from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisMetric
-from ..actions.scalar import FracInRange
-from ..actions.vector import LoadVector, FlagSelector
+from ..actions.scalar import FracInRange, FracNan
+from ..actions.vector import LoadVector
 from ..actions.keyedData import KeyedDataSelectorAction
 
 
@@ -112,20 +112,21 @@ class ValidFracColumnMetric(AnalysisMetric):
     columnKey: str = "psfFlux"
 
     def visitContext(self) -> None:
-        self.prep.selectors.keyedDataSelector = KeyedDataSelectorAction()
+        self.process.buildActions.loadVector = LoadVector()
+        self.process.buildActions.loadVector.vectorKey = f"{self.columnKey}"
         self._setActions(f"{self.columnKey}")
 
     def coaddContext(self) -> None:
-        self.prep.selectors.keyedDataSelector = KeyedDataSelectorAction()
-        # self.process.buildActions.loadVector = LoadVector()
-        # self.process.buildActions.loadVector.vectorKey = f"{{band}}_{self.columnKey}"
-        self._setActions(f"{{band}}_{self.columnKey}")
+        self.process.buildActions.loadVector = LoadVector()
+        self.process.buildActions.loadVector.vectorKey = "{band}_"+f"{self.columnKey}"
+        self._setActions("{band}_"+f"{self.columnKey}")
 
         # Need to pass a mapping of new names so the default names get the
         # band prepended. Otherwise, each subsequent band's metric will
         # overwrite the current one.
         self.produce.newNames = {
             "validFracColumn": "{band}_validFracColumn",
+            "nanFracColumn": "{band}_nanFracColumn",
         }
 
     def _setActions(self, name: str) -> None:
@@ -135,39 +136,14 @@ class ValidFracColumnMetric(AnalysisMetric):
             maximum=1.0e6,
             percent=True,
         )
+        self.process.calculateActions.nanFracColumn = FracNan(
+            vectorKey=name,
+            percent=True,
+        )
 
     def setDefaults(self):
         super().setDefaults()
 
-        # self.process.buildActions.rangeSelector = RangeSelector()
-        #self.process.buildActions.fracInRangeSelector = FracInRange()
-
-        # select values within range
-        #self.process.buildActions.fracInRangeSelector.vectorKey = "psfFlux"
-        #self.process.buildActions.fracInRangeSelector.minimum = 1e-2
-        #self.process.buildActions.fracInRangeSelector.maximum = 1e6
-
-#        self.process.calculateActions.validFracColumn = FracInRange(
-#            vectorKey="psfFlux",
-#            minimum=1.0e-2,
-#            maximum=1.0e6,
-#            percent=True,
-#        )
-
-        self.produce.units = {"validFracColumn": "percent"}
-
-        # the final name in the qualification is used as a key to insert
-        # the calculation into KeyedData
-        #self.process.filterActions.allInRange = DownselectVector(
-        #    vectorKey=self.process.buildActions.rangeSelector.vectorKey,
-        #    selector=self.process.buildActions.rangeSelector
-        #)
-
-        #self.process.calculateActions.ValidFracColumnMetric = CountAction(vectorKey="allInRange")
-
-        #self.produce.units = {"ValidFracColumnMetric": "ct"}
-
-        #self.produce.units = {  # type: ignore
-        #    "yPerp_psfFlux_sigmaMAD": "mmag",
-        #    "yPerp_psfFlux_median": "mmag",
-        #}
+        self.produce.units = {"validFracColumn": "percent",
+                              "nanFracColumn": "percent",
+                             }

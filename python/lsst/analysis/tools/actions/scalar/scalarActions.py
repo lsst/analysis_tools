@@ -74,6 +74,31 @@ class CountAction(ScalarAction):
         return cast(Scalar, len(arr))
 
 
+class CountUniqueAction(ScalarAction):
+    """Counts the number of unique rows in a given column.
+
+    Parameters
+    ----------
+    data : `KeyedData`
+
+    Returns
+    -------
+    count : `Scalar`
+        The number of unique rows in a given column.
+    """
+
+    vectorKey = Field[str](doc="Name of column.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+        count = len(np.unique(values))
+        return cast(Scalar, count)
+
+
 class ApproxFloor(ScalarAction):
     vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
 

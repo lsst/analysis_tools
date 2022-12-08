@@ -1,0 +1,13 @@
+description: |
+  Pipeline to create metrics for associated and unassociated sources from diaObject tables
+tasks:
+  analyzeDiaObjectTableSources:
+    class: lsst.analysis.tools.tasks.DiaObjectTableAssociatedSourcesTask
+    config:
+      connections.outputName: sourcesOutput
+      bands: ['g']
+      metrics.sourceMetrics: CountSources
+      plots.analysisPlots: SourcesPlot
+      python: |
+        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.analysisPlots import *

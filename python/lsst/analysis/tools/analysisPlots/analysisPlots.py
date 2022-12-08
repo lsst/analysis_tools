@@ -33,14 +33,17 @@ __all__ = (
     "YPerpCModelPlot",
     "TargetRefCatDeltaRAScatterPlot",
     "TargetRefCatDeltaRAScatterPlot",
+    "SourcesPlot",
 )
 
 from lsst.pex.config import Field
 
+from ..actions.plot.barPlots import BarPanel, BarPlot
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
+from ..actions.scalar import CountAction
 from ..actions.vector import (
     AstromDiff,
     CoaddPlotFlagSelector,
@@ -53,6 +56,7 @@ from ..actions.vector import (
     VectorSelector,
 )
 from ..analysisParts.baseFluxRatio import BasePsfApRatio
+from ..analysisParts.baseSources import BaseSources
 from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
@@ -329,3 +333,21 @@ class FluxRatioPlot(AnalysisPlot, BasePsfApRatio):
         self.produce.panels["panel_flux"] = HistPanel()
         self.produce.panels["panel_flux"].label = "Psf/Ap Ratio"
         self.produce.panels["panel_flux"].hists = dict(fluxRatioMetric="Ratio")
+
+
+class SourcesPlot(AnalysisPlot, BaseSources):
+    """Plot a histogram of the associated and unassociated sources."""
+
+    def setDefaults(self, **kwargs):
+        super().setDefaults()
+
+        self.process.calculateActions.associatedCount = CountAction(vectorKey="associatedVector")
+        self.process.calculateActions.unassociatedCount = CountAction(vectorKey="unassociatedVector")
+
+        self.produce = BarPlot()
+        self.produce.panels["panel_source"] = BarPanel()
+        self.produce.panels["panel_source"].label = "N Assoc and Unassoc Sources"
+        self.produce.panels["panel_source"].bars = dict(
+            associatedVector="Associated Sources",
+            unassociatedVector="Unassociated Sources",
+        )

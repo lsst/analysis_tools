@@ -1,6 +1,8 @@
-from lsst.analysis.tools.actions.scalar import UniqueAction
+from lsst.analysis.tools.actions.scalar import CountUniqueAction
 from lsst.analysis.tools.actions.vector import DownselectVector, LoadVector, ThresholdSelector, VectorSelector
 from lsst.analysis.tools.interfaces import AnalysisTool
+
+__all__ = ("BaseSources",)
 
 
 class BaseSources(AnalysisTool):
@@ -30,4 +32,4 @@ class BaseSources(AnalysisTool):
             vectorKey="nDiaSources", selector=self.process.buildActions.unassociatedVectorSelector
         )
 
-        self.process.buildActions.uniqueSources = UniqueAction(vectorKey="nDiaSources")
+        self.process.buildActions.uniqueSources = CountUniqueAction(vectorKey="nDiaSources")

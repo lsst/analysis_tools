@@ -19,27 +19,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from lsst.analysis.tools.actions.scalar import MaxAction, MedianAction, MinAction
+from lsst.analysis.tools.actions.scalar import CountAction, FracThreshold
 
+from ..analysisParts.baseSources import BaseSources
 from ..interfaces import AnalysisMetric
 
-__all__ = ("SeeingStatistics",)
+__all__ = ("CountSources",)
 
 
-class SeeingStatistics(AnalysisMetric):
-    """Calculate seeing statistics from the ccdVisit table.
-    Statistics include mean, max, and min.
-    """
+class CountSources(AnalysisMetric, BaseSources):
+    """Counts associated and unassociated sources as
+    well as their percentage of the total sources."""
 
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.scalarActions.medianSeeing = MedianAction(vectorKey=self.vectorKey)
-        self.process.scalarActions.minSeeing = MinAction(vectorKey=self.vectorKey)
-        self.process.scalarActions.maxSeeing = MaxAction(vectorKey=self.vectorKey)
+        self.process.calculateActions.associatedPercent = FracThreshold(
+            op="gt", threshold=1.0, vectorKey="nDiaSources"
+        )
+        self.process.calculateActions.unassociatedPercent = FracThreshold(
+            op="le", threshold=1.0, vectorKey="nDiaSources"
+        )
+
+        self.process.calculateActions.associatedCount = CountAction(vectorKey="associatedVector")
+        self.process.calculateActions.unassociatedCount = CountAction(vectorKey="unassociatedVector")
 
         self.produce.units = {
-            "medianSeeing": "arcsec",
-            "minSeeing": "arcsec",
-            "maxSeeing": "arcsec",
+            "associatedPercent": "count",
+            "unassociatedPercent": "count",
+            "associatedCount": "count",
+            "unassociatedCount": "count",
+            "uniqueSources": "count",
         }

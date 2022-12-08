@@ -30,6 +30,7 @@ __all__ = (
     "ValidFracColumnMetric",
 )
 
+from lsst.pex.config import Field
 from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisMetric
 from ..actions.scalar import FracInRange, FracNan
@@ -106,20 +107,17 @@ class ValidFracColumnMetric(AnalysisMetric):
     numerical values (i.e., not NaN), and that fall within the specified
     "reasonable" range for the values.
     """
-
-    # parameterizedBand: bool = True
-
-    columnKey: str = "psfFlux"
+    vectorKey = Field[str](doc="Key of column to validate", default='psfFlux')
 
     def visitContext(self) -> None:
         self.process.buildActions.loadVector = LoadVector()
-        self.process.buildActions.loadVector.vectorKey = f"{self.columnKey}"
-        self._setActions(f"{self.columnKey}")
+        self.process.buildActions.loadVector.vectorKey = f"{self.vectorKey}"
+        self._setActions(f"{self.vectorKey}")
 
     def coaddContext(self) -> None:
         self.process.buildActions.loadVector = LoadVector()
-        self.process.buildActions.loadVector.vectorKey = "{band}_"+f"{self.columnKey}"
-        self._setActions("{band}_"+f"{self.columnKey}")
+        self.process.buildActions.loadVector.vectorKey = "{band}_"+f"{self.vectorKey}"
+        self._setActions("{band}_"+f"{self.vectorKey}")
 
         # Need to pass a mapping of new names so the default names get the
         # band prepended. Otherwise, each subsequent band's metric will

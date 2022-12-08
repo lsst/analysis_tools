@@ -7,7 +7,11 @@ tasks:
       bands: ['g', 'r', 'i', 'z', 'y']
       connections.outputName: objectTableCore
       metrics.validPsfFluxMetric: ValidFracColumnMetric
+      metrics.validPsfFluxMetric.vectorKey : 'psfFlux'
       metrics.validPsfFluxMetric.applyContext: CoaddContext
+      metrics.validCmodelFluxMetric: ValidFracColumnMetric
+      metrics.validCmodelFluxMetric.vectorKey : 'cModelFlux'
+      metrics.validCmodelFluxMetric.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.analysisMetrics import *
         from lsst.analysis.tools.contexts import *

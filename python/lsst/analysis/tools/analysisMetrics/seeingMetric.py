@@ -18,12 +18,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from .analysisMetrics import *
-from .apDiaSourceMetrics import *
-from .apSsoMetrics import *
-from .limitingMagnitudeMetric import *
-from .metricMeasurementBundle import *
-from .photometricRepeatabilityMetrics import *
-from .psfResidualMetrics import *
-from .skyFluxStatisticMetrics import *
-from .sourceMetrics import *
+
+from lsst.analysis.tools.actions.scalar import MaxAction, MedianAction, MinAction
+
+from ..interfaces import AnalysisMetric
+
+__all__ = ("SeeingStatistics",)
+
+
+class SeeingStatistics(AnalysisMetric):
+    """Calculate seeing statistics from the ccdVisit table.
+    Statistics include mean, max, and min.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.scalarActions.medianSeeing = MedianAction(vectorKey=self.vectorKey)
+        self.process.scalarActions.minSeeing = MinAction(vectorKey=self.vectorKey)
+        self.process.scalarActions.maxSeeing = MaxAction(vectorKey=self.vectorKey)
+
+        self.produce.units = {
+            "medianSeeing": "arcsec",
+            "minSeeing": "arcsec",
+            "maxSeeing": "arcsec",
+        }

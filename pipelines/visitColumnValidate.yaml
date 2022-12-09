@@ -4,8 +4,7 @@ tasks:
   validateSourceTableCore:
     class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
     config:
-      bands: ['g', 'r', 'i', 'z', 'y']
-      connections.outputName: visitTableCore
+      connections.outputName: visitTableColumnValidate
       metrics.validPsfFluxMetric: ValidFracColumnMetric
       metrics.validPsfFluxMetric.vectorKey : 'psfFlux'
       metrics.validPsfFluxMetric.applyContext: VisitContext

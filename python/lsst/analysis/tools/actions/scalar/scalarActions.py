@@ -179,7 +179,7 @@ class FracInRange(ScalarAction):
     """
 
     vectorKey = Field[str](doc="Name of column")
-    maximum = Field[float](doc="The maximum value", default=np.Inf)
+    maximum = Field[float](doc="The maximum value", default=np.nextafter(np.Inf, 0.0))
     minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.Inf, 0.0))
     percent = Field[bool](doc="Express result as percentage", default=False)
 
@@ -196,17 +196,17 @@ class FracInRange(ScalarAction):
         Returns
         -------
         result : `Scalar`
-            The fraction (or percentage) of rows with values within the specified range.
+            The fraction (or percentage) of rows with values within the
+            specified range.
         """
         mask = self.getMask(**kwargs)
         values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        values = values[mask]  # type: ignore
         nvalues = len(values)
         values = values[np.logical_not(np.isnan(values))]
-        maskrange = (values >= self.minimum) & (values < self.maximum)
+        sel_range = (values >= self.minimum) & (values < self.maximum)
         result = cast(
             Scalar,
-            float(len(values[maskrange]) / nvalues),  # type: ignore
+            float(len(values[sel_range]) / nvalues),  # type: ignore
         )
         if self.percent:
             return 100.0 * result
@@ -238,7 +238,6 @@ class FracNan(ScalarAction):
         """
         mask = self.getMask(**kwargs)
         values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        values = values[mask]  # type: ignore
         nvalues = len(values)
         values = values[np.isnan(values)]
         result = cast(

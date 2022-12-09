@@ -4,8 +4,7 @@ tasks:
   validateObjectTableCore:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
-      bands: ['g', 'r', 'i', 'z', 'y']
-      connections.outputName: objectTableCore
+      connections.outputName: objectTableColumnValidate
       metrics.validPsfFluxMetric: ValidFracColumnMetric
       metrics.validPsfFluxMetric.vectorKey : 'psfFlux'
       metrics.validPsfFluxMetric.applyContext: CoaddContext

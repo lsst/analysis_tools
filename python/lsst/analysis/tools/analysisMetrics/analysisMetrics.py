@@ -35,7 +35,6 @@ from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPe
 from ..interfaces import AnalysisMetric
 from ..actions.scalar import FracInRange, FracNan
 from ..actions.vector import LoadVector
-from ..actions.keyedData import KeyedDataSelectorAction
 
 
 class WPerpPSFMetric(WPerpPSF, AnalysisMetric):
@@ -128,10 +127,13 @@ class ValidFracColumnMetric(AnalysisMetric):
         }
 
     def _setActions(self, name: str) -> None:
+        # The default flux limits of 1e-1 < flux < 1e9 correspond to a
+        # magnitude range of 34 < mag < 9 (i.e., reasonably well-measured)
+        # objects should all be within this range).
         self.process.calculateActions.validFracColumn = FracInRange(
             vectorKey=name,
-            minimum=1.0e-2,
-            maximum=1.0e6,
+            minimum=1.0e-1,
+            maximum=1.0e9,
             percent=True,
         )
         self.process.calculateActions.nanFracColumn = FracNan(
@@ -142,6 +144,7 @@ class ValidFracColumnMetric(AnalysisMetric):
     def setDefaults(self):
         super().setDefaults()
 
-        self.produce.units = {"validFracColumn": "percent",
-                              "nanFracColumn": "percent",
-                             }
+        self.produce.units = {  # type: ignore
+            "validFracColumn": "percent",
+            "nanFracColumn": "percent",
+        }

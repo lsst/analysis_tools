@@ -33,6 +33,9 @@ from lsst.pex.config import Config, Field
 from matplotlib import colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
+from scipy.stats import binned_statistic_2d
+
+from ...statistics import nansigmaMad
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -481,6 +484,29 @@ def extremaSort(xs):
     return ids
 
 
+def sortAllArrays(arrsToSort, sortArrayIndex=0):
+    """Sort one array and then return all the others in the associated order.
+
+    Parameters
+    ----------
+    arrsToSort : `list` [`np.array`]
+        A list of arrays to be simultaneously sorted based on the array in
+        the list position given by ``sortArrayIndex`` (defaults to be the
+        first array in the list).
+    sortArrayIndex : `int`, optional
+        Zero-based index indicating the array on which to base the sorting.
+
+    Returns
+    -------
+    arrsToSort : `list` [`np.array`]
+        The list of arrays sorted on array in list index ``sortArrayIndex``.
+    """
+    ids = extremaSort(arrsToSort[sortArrayIndex])
+    for (i, arr) in enumerate(arrsToSort):
+        arrsToSort[i] = arr[ids]
+    return arrsToSort
+
+
 def addSummaryPlot(fig, loc, sumStats, label):
     """Add a summary subplot to the figure.
 
@@ -619,3 +645,121 @@ class PanelConfig(Config):
         doc="Number of rows for the axis to span to the right.",
         default=5,
     )
+
+
+def plotProjectionWithBinning(
+    ax,
+    xs,
+    ys,
+    zs,
+    cmap,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    xNumBins=45,
+    yNumBins=None,
+    fixAroundZero=False,
+    nPointBinThresh=5000,
+    isSorted=False,
+    vmin=None,
+    vmax=None,
+    scatPtSize=7,
+):
+    """Plot color-mapped data in projection and with binning when appropriate.
+
+    Parameters
+    ----------
+    ax : `matplotlib.axes.Axes`
+        Axis on which to plot the projection data.
+    xs, ys : `np.array`
+        Arrays containing the x and y positions of the data.
+    zs : `np.array`
+        Array containing the scaling value associated with the (``xs``, ``ys``)
+        positions.
+    cmap : `matplotlib.colors.Colormap`
+        Colormap for the ``zs`` values.
+    xMin, xMax, yMin, yMax : `float`
+        Data limits within which to compute bin sizes.
+    xNumBins : `int`, optional
+        The number of bins along the x-axis.
+    yNumBins : `int`, optional
+        The number of bins along the y-axis. If `None`, this is set to equal
+        ``xNumBins``.
+    nPointBinThresh : `int`, optional
+        Threshold number of points above which binning will be implemented
+        for the plotting. If the number of data points is lower than this
+        threshold, a basic scatter plot will be generated.
+    isSorted : `bool`, optional
+        Whether the data have been sorted in ``zs`` (the sorting is to
+        accommodate the overplotting of points in the upper and lower
+        extrema of the data).
+    vmin, vmax : `float`, optional
+        The min and max limits for the colorbar.
+    scatPtSize : `float`, optional
+        The point size to use if just plotting a regular scatter plot.
+
+    Returns
+    -------
+    plotOut : `matplotlib.collections.PathCollection`
+        The plot object with ``ax`` updated with data plotted here.
+    """
+    med = np.nanmedian(zs)
+    mad = nansigmaMad(zs)
+    if vmin is None:
+        vmin = med - 2 * mad
+    if vmax is None:
+        vmax = med + 2 * mad
+    if fixAroundZero:
+        scaleEnd = np.max([np.abs(vmin), np.abs(vmax)])
+        vmin = -1 * scaleEnd
+        vmax = scaleEnd
+
+    yNumBins = xNumBins if yNumBins is None else yNumBins
+
+    xBinEdges = np.linspace(xMin, xMax, xNumBins + 1)
+    yBinEdges = np.linspace(yMin, yMax, yNumBins + 1)
+    binnedStats, xEdges, yEdges, binNums = binned_statistic_2d(
+        xs, ys, zs, statistic="median", bins=(xBinEdges, yBinEdges)
+    )
+    if len(xs) >= nPointBinThresh:
+        s = min(10, max(0.5, nPointBinThresh / 10 / (len(xs) ** 0.5)))
+        lw = (s**0.5) / 10
+        plotOut = ax.imshow(
+            binnedStats.T,
+            cmap=cmap,
+            extent=[xEdges[0], xEdges[-1], yEdges[-1], yEdges[0]],
+            vmin=vmin,
+            vmax=vmax,
+        )
+        if not isSorted:
+            sortedArrays = sortAllArrays([zs, xs, ys])
+            zs, xs, ys = sortedArrays[0], sortedArrays[1], sortedArrays[2]
+        # Find the most extreme 15% of points. The list is ordered by the
+        # distance from the median, this is just the head/tail 15% of points.
+        if len(xs) > 1:
+            extremes = int(np.floor((len(xs) / 100)) * 85)
+            plotOut = ax.scatter(
+                xs[extremes:],
+                ys[extremes:],
+                c=zs[extremes:],
+                s=s,
+                cmap=cmap,
+                vmin=vmin,
+                vmax=vmax,
+                edgecolor="white",
+                linewidths=lw,
+            )
+    else:
+        plotOut = ax.scatter(
+            xs,
+            ys,
+            c=zs,
+            cmap=cmap,
+            s=scatPtSize,
+            vmin=vmin,
+            vmax=vmax,
+            edgecolor="white",
+            linewidths=0.2,
+        )
+    return plotOut

@@ -29,11 +29,10 @@ import numpy as np
 from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from scipy.stats import binned_statistic_2d
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
-from ...statistics import nansigmaMad, sigmaMad
-from .plotUtils import addPlotInfo, extremaSort, mkColormap
+from ...statistics import nansigmaMad
+from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays
 
 # from .plotUtils import generateSummaryStats, parsePlotInfo
 
@@ -106,15 +105,6 @@ class SkyPlot(PlotAction):
             isScalar = issubclass((colType := type(data[name.format(**kwargs)])), Scalar)
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
-
-    def sortAllArrays(self, arrsToSort):
-        """Sort one array and then return all the others in
-        the associated order.
-        """
-        ids = extremaSort(arrsToSort[0])
-        for (i, arr) in enumerate(arrsToSort):
-            arrsToSort[i] = arr[ids]
-        return arrsToSort
 
     def statsAndText(self, arr, mask=None):
         """Calculate some stats from an array and return them
@@ -237,7 +227,7 @@ class SkyPlot(PlotAction):
         toPlotList = []
         # For galaxies
         if "galaxies" in self.plotTypes:
-            sortedArrs = self.sortAllArrays(
+            sortedArrs = sortAllArrays(
                 [data["zGalaxies"], data["xGalaxies"], data["yGalaxies"], data["galaxyStatMask"]]
             )
             [colorValsGalaxies, xsGalaxies, ysGalaxies, statGalaxies] = sortedArrs
@@ -256,9 +246,7 @@ class SkyPlot(PlotAction):
 
         # For stars
         if "stars" in self.plotTypes:
-            sortedArrs = self.sortAllArrays(
-                [data["zStars"], data["xStars"], data["yStars"], data["starStatMask"]]
-            )
+            sortedArrs = sortAllArrays([data["zStars"], data["xStars"], data["yStars"], data["starStatMask"]])
             [colorValsStars, xsStars, ysStars, statStars] = sortedArrs
             statStarMed, statStarMad, starStatsText = self.statsAndText(colorValsStars, mask=statStars)
             # Add statistics
@@ -268,7 +256,7 @@ class SkyPlot(PlotAction):
 
         # For unknowns
         if "unknown" in self.plotTypes:
-            sortedArrs = self.sortAllArrays(
+            sortedArrs = sortAllArrays(
                 [data["zUnknowns"], data["xUnknowns"], data["yUnknowns"], data["unknownStatMask"]]
             )
             [colorValsUnknowns, xsUnknowns, ysUnknowns, statUnknowns] = sortedArrs
@@ -280,7 +268,7 @@ class SkyPlot(PlotAction):
             toPlotList.append((xsUnknowns, ysUnknowns, colorValsUnknowns, "viridis", "Unknown"))
 
         if "any" in self.plotTypes:
-            sortedArrs = self.sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
+            sortedArrs = sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
             [colorValsAny, xs, ys, statAny] = sortedArrs
             statAnyMed, statAnyMad, anyStatsText = self.statsAndText(colorValsAny, mask=statAny)
             bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
@@ -330,60 +318,20 @@ class SkyPlot(PlotAction):
                     maxRa += 1e-5  # There is no reason to pick this number in particular
                 if minDec == maxDec:
                     maxDec += 1e-5  # There is no reason to pick this number in particular
-            med = np.nanmedian(colorVals)
-            mad = sigmaMad(colorVals, nan_policy="omit")
-            vmin = med - 2 * mad
-            vmax = med + 2 * mad
-            if self.fixAroundZero:
-                scaleEnd = np.max([np.abs(vmin), np.abs(vmax)])
-                vmin = -1 * scaleEnd
-                vmax = scaleEnd
-            nBins = 45
-            xBinEdges = np.linspace(minRa, maxRa, nBins + 1)
-            yBinEdges = np.linspace(minDec, maxDec, nBins + 1)
-            binnedStats, xEdges, yEdges, binNums = binned_statistic_2d(
-                xs, ys, colorVals, statistic="median", bins=(xBinEdges, yBinEdges)
+
+            plotOut = plotProjectionWithBinning(
+                ax,
+                xs,
+                ys,
+                colorVals,
+                cmap,
+                minRa,
+                maxRa,
+                minDec,
+                maxDec,
+                fixAroundZero=self.fixAroundZero,
+                isSorted=True,
             )
-
-            if len(xs) > 5000:
-                s = 500 / (len(xs) ** 0.5)
-                lw = (s**0.5) / 10
-                plotOut = ax.imshow(
-                    binnedStats.T,
-                    cmap=cmap,
-                    extent=[xEdges[0], xEdges[-1], yEdges[-1], yEdges[0]],
-                    vmin=vmin,
-                    vmax=vmax,
-                )
-                # find the most extreme 15% of points, because the list
-                # is ordered by the distance from the median this is just
-                # the final 15% of points
-                extremes = int(np.floor((len(xs) / 100)) * 85)
-                ax.scatter(
-                    xs[extremes:],
-                    ys[extremes:],
-                    c=colorVals[extremes:],
-                    s=s,
-                    cmap=cmap,
-                    vmin=vmin,
-                    vmax=vmax,
-                    edgecolor="white",
-                    linewidths=lw,
-                )
-
-            else:
-                plotOut = ax.scatter(
-                    xs,
-                    ys,
-                    c=colorVals,
-                    cmap=cmap,
-                    s=7,
-                    vmin=vmin,
-                    vmax=vmax,
-                    edgecolor="white",
-                    linewidths=0.2,
-                )
-
             cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
             plt.colorbar(plotOut, cax=cax, extend="both")
             colorBarLabel = "{}: {}".format(self.zAxisLabel, label)

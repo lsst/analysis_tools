@@ -1,0 +1,16 @@
+description: |
+  Tier 1 DRP metrics to assess table column validity
+tasks:
+  validateObjectTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableColumnValidate
+      metrics.validPsfFluxMetric: ValidFracColumnMetric
+      metrics.validPsfFluxMetric.vectorKey: 'psfFlux'
+      metrics.validPsfFluxMetric.applyContext: CoaddContext
+      metrics.validCmodelFluxMetric: ValidFracColumnMetric
+      metrics.validCmodelFluxMetric.vectorKey: 'cModelFlux'
+      metrics.validCmodelFluxMetric.applyContext: CoaddContext
+      python: |
+        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.contexts import *

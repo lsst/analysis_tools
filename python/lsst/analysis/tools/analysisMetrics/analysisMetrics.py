@@ -27,8 +27,13 @@ __all__ = (
     "XPerpCModelMetric",
     "YPerpPSFMetric",
     "YPerpCModelMetric",
+    "ValidFracColumnMetric",
 )
 
+from lsst.pex.config import Field
+
+from ..actions.scalar import FracInRange, FracNan
+from ..actions.vector import LoadVector
 from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisMetric
 
@@ -94,4 +99,54 @@ class YPerpCModelMetric(YPerpCModel, AnalysisMetric):
         self.produce.units = {  # type: ignore
             "yPerp_cmodelFlux_sigmaMAD": "mmag",
             "yPerp_cmodelFlux_median": "mmag",
+        }
+
+
+class ValidFracColumnMetric(AnalysisMetric):
+    """Calculate the fraction of values in a column that have valid
+    numerical values (i.e., not NaN), and that fall within the specified
+    "reasonable" range for the values.
+    """
+
+    vectorKey = Field[str](doc="Key of column to validate", default="psfFlux")
+
+    def visitContext(self) -> None:
+        self.process.buildActions.loadVector = LoadVector()
+        self.process.buildActions.loadVector.vectorKey = f"{self.vectorKey}"
+        self._setActions(f"{self.vectorKey}")
+
+    def coaddContext(self) -> None:
+        self.process.buildActions.loadVector = LoadVector()
+        self.process.buildActions.loadVector.vectorKey = "{band}_" + f"{self.vectorKey}"
+        self._setActions("{band}_" + f"{self.vectorKey}")
+
+        # Need to pass a mapping of new names so the default names get the
+        # band prepended. Otherwise, each subsequent band's metric will
+        # overwrite the current one.
+        self.produce.newNames = {
+            "validFracColumn": "{band}_validFracColumn",
+            "nanFracColumn": "{band}_nanFracColumn",
+        }
+
+    def _setActions(self, name: str) -> None:
+        # The default flux limits of 1e-1 < flux < 1e9 correspond to a
+        # magnitude range of 34 < mag < 9 (i.e., reasonably well-measured)
+        # objects should all be within this range).
+        self.process.calculateActions.validFracColumn = FracInRange(
+            vectorKey=name,
+            minimum=1.0e-1,
+            maximum=1.0e9,
+            percent=True,
+        )
+        self.process.calculateActions.nanFracColumn = FracNan(
+            vectorKey=name,
+            percent=True,
+        )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce.units = {  # type: ignore
+            "validFracColumn": "percent",
+            "nanFracColumn": "percent",
         }

@@ -215,8 +215,7 @@ class FracInRange(ScalarAction):
 
 
 class FracNan(ScalarAction):
-    """Compute the fraction of vector entries that are NaN.
-    """
+    """Compute the fraction of vector entries that are NaN."""
 
     vectorKey = Field[str](doc="Name of column")
     percent = Field[bool](doc="Express result as percentage", default=False)

@@ -6,10 +6,10 @@ tasks:
     config:
       connections.outputName: objectTableColumnValidate
       metrics.validPsfFluxMetric: ValidFracColumnMetric
-      metrics.validPsfFluxMetric.vectorKey : 'psfFlux'
+      metrics.validPsfFluxMetric.vectorKey: 'psfFlux'
       metrics.validPsfFluxMetric.applyContext: CoaddContext
       metrics.validCmodelFluxMetric: ValidFracColumnMetric
-      metrics.validCmodelFluxMetric.vectorKey : 'cModelFlux'
+      metrics.validCmodelFluxMetric.vectorKey: 'cModelFlux'
       metrics.validCmodelFluxMetric.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.analysisMetrics import *

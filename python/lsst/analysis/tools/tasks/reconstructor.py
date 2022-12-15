@@ -20,9 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+__all__ = ["reconstructAnalysisTools", "getPlotDatasetTypeNames"]
 
-from lsst.pipe.base.connections import PipelineTaskConnections
+from typing import TYPE_CHECKING, Any, Callable, Iterable
+
+from lsst.pipe.base.connections import PipelineTaskConnections, iterConnections
 from lsst.pipe.base.connectionTypes import BaseConnection
 
 from .base import AnalysisBaseConfig
@@ -49,7 +51,7 @@ def reconstructAnalysisTools(
         Collection within the butler associated with desired data.
     label : `str`
         The label from the `~lsst.pipe.base.Pipeline` associated with the task
-        who's tools are to be reconstructed.
+        whose tools are to be reconstructed.
     dataId : `~lsst.daf.butler.DataId`
         Identifier for which data to retrieve.
     callback : `~typing.Callable` or None
@@ -95,3 +97,45 @@ def reconstructAnalysisTools(
         inputs = callback(inputs, dataId)
 
     return (config, inputs)
+
+
+def getPlotDatasetTypeNames(
+    butler: Butler,
+    collections: str | Iterable[str],
+    label: str | None = None,
+) -> Iterable[str]:
+    """Get the dataset type names for plots (anything with StorageClass="Plot")
+    from butler collections.
+
+    Parameters
+    ----------
+    butler : `~lsst.daf.butler.Butler`
+        The butler where the data is stored.
+    collections : `str` or `list` [`str`]
+        Collections within the butler to query for datasets containing plots.
+    label : `str`, optional
+        The label from the `~lsst.pipe.base.Pipeline` associated with the task
+        whose plots are to be queried. If no label is given, all requested
+        collections will be queried.
+
+    Returns
+    -------
+    plotNames : `list` [`str`]
+        Plot dataset type names.
+    """
+    if label is not None:
+        configs = [butler.get(f"{label}_config", collections=collections)]
+    else:
+        configs = []
+        datasetRefs = butler.registry.queryDatasets("*_config", collections=collections)
+        for datasetRef in datasetRefs:
+            config = butler.getDirect(datasetRef)
+            if isinstance(config, AnalysisBaseConfig):
+                configs.append(config)
+    plotNames = []
+    for config in configs:
+        connections: PipelineTaskConnections = config.connections.ConnectionsClass(config=config)
+        for connection in iterConnections(connections, "outputs"):
+            if connection.storageClass == "Plot":
+                plotNames.append(connection.name)
+    return plotNames

@@ -32,7 +32,7 @@ connection classes and should specify a unique name
 """
 
 from collections import abc
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, cast
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, MutableMapping, cast
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DeferredDatasetHandle
@@ -301,8 +301,24 @@ class AnalysisPipelineTask(PipelineTask):
         outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
         butlerQC.put(outputs, outputRefs)
 
+    def _populatePlotInfoWithDataId(
+        self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None
+    ) -> None:
+        """Update the plotInfo with the dataId values.
+
+        Parameters
+        ----------
+        plotInfo : `dict`
+            The plotInfo dictionary to update.
+        dataId : `lsst.daf.butler.DataCoordinate`
+            The dataId to use to update the plotInfo.
+        """
+        if dataId is not None:
+            for dataInfo in dataId:
+                plotInfo[dataInfo.name] = dataId[dataInfo.name]
+
     def parsePlotInfo(
-        self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionName: str = "data"
+        self, inputs: Mapping[str, Any] | None, dataId: DataCoordinate | None, connectionName: str = "data"
     ) -> Mapping[str, str]:
         """Parse the inputs and dataId to get the information needed to
         to add to the figure.
@@ -313,7 +329,7 @@ class AnalysisPipelineTask(PipelineTask):
             The inputs to the task
         dataCoordinate: `lsst.daf.butler.DataCoordinate`
             The dataId that the task is being run on.
-        connectionName: `str`
+        connectionName: `str`, optional
             Name of the input connection to use for determining table name.
 
         Returns
@@ -328,12 +344,10 @@ class AnalysisPipelineTask(PipelineTask):
             tableName = inputs[connectionName].ref.datasetType.name
             run = inputs[connectionName].ref.run
 
+        # Initialize the plot info dictionary
         plotInfo = {"tableName": tableName, "run": run}
 
-        if dataId is not None:
-            for dataInfo in dataId:
-                plotInfo[dataInfo.name] = dataId[dataInfo.name]
-
+        self._populatePlotInfoWithDataId(plotInfo, dataId)
         return plotInfo
 
     def loadData(self, handle: DeferredDatasetHandle, names: Iterable[str] | None = None) -> KeyedData:

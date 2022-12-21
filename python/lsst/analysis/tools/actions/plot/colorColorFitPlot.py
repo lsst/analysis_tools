@@ -21,7 +21,7 @@
 
 from __future__ import annotations
 
-from typing import Mapping, Optional, cast
+from typing import Mapping, cast
 
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
@@ -100,7 +100,7 @@ class ColorColorFitPlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str],
         **kwargs,
     ) -> Figure:
         """Make stellar locus plots using pre fitted values.

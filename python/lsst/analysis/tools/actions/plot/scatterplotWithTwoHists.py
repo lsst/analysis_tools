@@ -235,7 +235,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         self,
         data: KeyedData,
         skymap: BaseSkyMap,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str],
         sumStats: Optional[Mapping] = None,
         **kwargs,
     ) -> Figure:

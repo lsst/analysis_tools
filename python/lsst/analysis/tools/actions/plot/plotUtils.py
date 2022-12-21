@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("PanelConfig",)
 
-from typing import List, Tuple
+from typing import TYPE_CHECKING, List, Mapping, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -33,6 +33,9 @@ from lsst.pex.config import Config, Field
 from matplotlib import colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 null_formatter = matplotlib.ticker.NullFormatter()
 
@@ -206,7 +209,7 @@ def get_and_remove_axis_text(ax) -> Tuple[List[str], List[np.ndarray]]:
     return texts, line_xys
 
 
-def get_and_remove_figure_text(figure: plt.Figure):
+def get_and_remove_figure_text(figure: Figure):
     """Remove text from a Figure and its Axes and return with line points.
     Parameters
     ----------
@@ -234,7 +237,7 @@ def get_and_remove_figure_text(figure: plt.Figure):
     return texts, lines
 
 
-def addPlotInfo(fig, plotInfo):
+def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     """Add useful information to the plot
     Parameters
     ----------

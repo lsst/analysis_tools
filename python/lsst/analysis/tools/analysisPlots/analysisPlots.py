@@ -34,6 +34,7 @@ __all__ = (
     "TargetRefCatDeltaRAScatterPlot",
     "TargetRefCatDeltaRAScatterPlot",
     "SourcesPlot",
+    "RhoStatisticsPlot",
 )
 
 from lsst.pex.config import Field
@@ -41,6 +42,7 @@ from lsst.pex.config import Field
 from ..actions.plot.barPlots import BarPanel, BarPlot
 from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
 from ..actions.plot.histPlot import HistPanel, HistPlot
+from ..actions.plot.rhoStatisticsPlot import RhoStatisticsPlotAction
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import CountAction
@@ -58,6 +60,7 @@ from ..actions.vector import (
 from ..analysisParts.baseFluxRatio import BasePsfApRatio
 from ..analysisParts.baseSources import BaseSources
 from ..analysisParts.genericPrep import CoaddPrep, VisitPrep
+from ..analysisParts.rhoStatistics import RhoStatisticsMixin
 from ..analysisParts.shapeSizeFractional import BasePsfResidualMixin
 from ..analysisParts.stellarLocus import WPerpCModel, WPerpPSF, XPerpCModel, XPerpPSF, YPerpCModel, YPerpPSF
 from ..interfaces import AnalysisPlot
@@ -139,6 +142,12 @@ class E2DiffScatterPlot(BasePsfResidualScatterPlot):
             vectorKey="e2Diff", selector=VectorSelector(vectorKey="starSelector")
         )
         self.produce.yAxisLabel = "Ellipticty residuals (e2 - e2_PSF)"
+
+
+class RhoStatisticsPlot(AnalysisPlot, RhoStatisticsMixin):
+    def setDefaults(self):
+        super().setDefaults()
+        self.produce = RhoStatisticsPlotAction()
 
 
 class WPerpPSFPlot(WPerpPSF, AnalysisPlot):

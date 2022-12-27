@@ -2,10 +2,16 @@
 # - Any package whose API is used directly should be listed explicitly.
 # - Common third-party packages can be assumed to be recursively included by
 #   the "base" package.
+setupRequired(afw)
 setupRequired(base)
+setupRequired(cp_pipe)
 setupRequired(daf_butler)
+setupRequired(geom)
+setupRequired(meas_algorithms)
+setupRequired(pex_config)
 setupRequired(pipe_base)
 setupRequired(pipe_tasks)
+setupRequired(skymap)
 
 # The following is boilerplate for all packages.
 # See https://dmtn-001.lsst.io for details on LSST_LIBRARY_PATH.

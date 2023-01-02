@@ -280,6 +280,14 @@ class ScatterPlotWithTwoHists(PlotAction):
             noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
+        # Set default color and line style for the horizontal
+        # reference line at 0
+        if 'hlineColor' not in kwargs:
+            kwargs['hlineColor'] = 'black'
+
+        if 'hlineStyle' not in kwargs:
+            kwargs['hlineStyle'] = (0, (1, 4))
+
         fig = plt.figure(dpi=300)
         gs = gridspec.GridSpec(4, 4)
 
@@ -537,7 +545,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
-                    histIm = ax.hexbin(xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-2)
+                    histIm = ax.hexbin(xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3)
 
                 # If there are not many sources being used for the
                 # statistics then plot them individually as just
@@ -610,6 +618,9 @@ class ScatterPlotWithTwoHists(PlotAction):
                 ax.plot(xs, meds - 1.0 * sigMads, color, alpha=0.8)
                 linesForLegend.append(sigMadLine)
                 histIm = None
+
+        # Add a horizontal reference line at 0 to the scatter plot
+        ax.axhline(0, color=kwargs['hlineColor'], ls=kwargs['hlineStyle'], alpha=0.7, zorder=-2)
 
         # Set the scatter plot limits
         # TODO: Make this not work by accident
@@ -791,6 +802,9 @@ class ScatterPlotWithTwoHists(PlotAction):
                 log=True,
                 ls=":",
             )
+
+        # Add a horizontal reference line at 0 to the side histogram
+        sideHist.axhline(0, color=kwargs['hlineColor'], ls=kwargs['hlineStyle'], alpha=0.7, zorder=-2)
 
         sideHist.axes.get_yaxis().set_visible(False)
         sideHist.set_xlabel("Number", fontsize=8)

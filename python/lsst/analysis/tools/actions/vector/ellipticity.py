@@ -44,9 +44,8 @@ class CalcE(VectorAction):
     in GalSim (see Eq. 4.4. of Bartelmann and Schneider, 2001).
     The other definition differs in normalization.
     It is referred to as shear, and denoted by g = (g1, g2)
-    in GalSim and referred to as epsilon-type ellipticity again following the
-    notation in Eq. 4.10 of Bartelmann and Schneider (2001). It is defined as
-    g = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
+    in GalSim (see Eq. 4.10 of Bartelmann and Schneider (2001). It is defined
+    as g = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
 
     The shear measure is unbiased in weak-lensing shear, but may exclude some
     objects in the presence of noisy moment estimates. The distortion measure
@@ -94,7 +93,7 @@ class CalcE(VectorAction):
         doc="The type of ellipticity to calculate",
         allowed={
             "distortion": ("Distortion, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy)"),
-            "epsilon": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "shear": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
         default="distortion",
     )
@@ -122,7 +121,7 @@ class CalcE(VectorAction):
         )
         denom = data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)]
 
-        if self.ellipticityType == "epsilon":
+        if self.ellipticityType == "shear":
             denom += 2 * np.sqrt(
                 data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]
                 - data[self.colXy.format(**kwargs)] ** 2
@@ -223,7 +222,7 @@ class CalcEDiff(VectorAction):
 
 class CalcE1(VectorAction):
     """Calculate distortion-type e1 = (Ixx - Iyy)/(Ixx + Iyy) or
-    epsilon-type g1 = (Ixx - Iyy)/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
+    shear-type g1 = (Ixx - Iyy)/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
 
     See Also
     --------
@@ -256,7 +255,7 @@ class CalcE1(VectorAction):
         doc="The type of ellipticity to calculate",
         allowed={
             "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
-            "epsilon": ("Shear, defined as (Ixx - Iyy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "shear": ("Shear, measured as (Ixx - Iyy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
         default="distortion",
     )
@@ -276,7 +275,7 @@ class CalcE1(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         denom = data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)]
-        if self.ellipticityType == "epsilon":
+        if self.ellipticityType == "shear":
             denom += 2 * np.sqrt(
                 data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]
                 - data[self.colXy.format(**kwargs)] ** 2
@@ -287,14 +286,14 @@ class CalcE1(VectorAction):
 
     def validate(self):
         super().validate()
-        if self.ellipticityType == "epsilon" and self.colXy is None:
-            msg = "colXy is required for epsilon-type shear ellipticity"
+        if self.ellipticityType == "shear" and self.colXy is None:
+            msg = "colXy is required for shear-type shear ellipticity"
             raise FieldValidationError(self.__class__.colXy, self, msg)
 
 
 class CalcE2(VectorAction):
     """Calculate distortion-type e2 = 2Ixy/(Ixx+Iyy) or
-    epsilon-type g2 = 2Ixy/(Ixx+Iyy+2sqrt(Ixx*Iyy - Ixy**2)).
+    shear-type g2 = 2Ixy/(Ixx+Iyy+2sqrt(Ixx*Iyy - Ixy**2)).
 
     See Also
     --------
@@ -326,7 +325,7 @@ class CalcE2(VectorAction):
         doc="The type of ellipticity to calculate",
         allowed={
             "distortion": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
-            "epsilon": ("Shear, defined as 2*Ixy/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "shear": ("Shear, defined as 2*Ixy/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
         default="distortion",
     )
@@ -340,7 +339,7 @@ class CalcE2(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         denom = data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)]
-        if self.ellipticityType == "epsilon":
+        if self.ellipticityType == "shear":
             denom += 2 * np.sqrt(
                 data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]
                 - data[self.colXy.format(**kwargs)] ** 2

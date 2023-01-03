@@ -271,7 +271,7 @@ class CalcRhoStatistics(KeyedDataAction):
                            \right\rangle
 
 
-    The definition of ellipticity used in [1]_ correspond to ``epsilon``-type ellipticity, which is typically
+    The definition of ellipticity used in [1]_ correspond to ``shear``-type ellipticity, which is typically
     smaller by a factor of 4 than using ``distortion``-type ellipticity.
 
     References
@@ -311,12 +311,11 @@ class CalcRhoStatistics(KeyedDataAction):
         doc="The column name to get the PSF xy shape component from.", default="{band}_ixyPSF"
     )
 
-    # TODO: Replace them with distortion and shear (DM-37325).
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
             "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
-            "epsilon": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "shear": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
         default="distortion",
     )

@@ -67,7 +67,7 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
         accurate by comparing with GalSim routines.
         """
         shear = CalcE(ellipticityType="epsilon")(self.data, **self.kwargs)
-        distortion = CalcE(ellipticityType="chi")(self.data, **self.kwargs)
+        distortion = CalcE(ellipticityType="distortion")(self.data, **self.kwargs)
         size = CalcShapeSize(sizeType="determinant")(self.data, **self.kwargs)
         for idx, row in enumerate(self.data):
             galsim_shear = galsim.Shear(shear[idx])
@@ -98,7 +98,7 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
                 galsim_shear.beta / galsim.radians, 2 * galsim_shear_half.beta / galsim.radians
             )
 
-    @lsst.utils.tests.methodParameters(ellipticityType=("chi", "epsilon"))
+    @lsst.utils.tests.methodParameters(ellipticityType=("distortion", "epsilon"))
     def test_shear_components(self, ellipticityType):
         """Test CalcE1 and CalcE2 functors
 
@@ -114,7 +114,7 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
 
     def test_e1_validation(self):
         """Test that CalcE1 throws an exception when misconfigured."""
-        CalcE1(ellipticityType="chi", colXy=None).validate()
+        CalcE1(ellipticityType="distortion", colXy=None).validate()
         with self.assertRaises(FieldValidationError):
             CalcE1(ellipticityType="epsilon", colXy=None).validate()
 
@@ -127,7 +127,7 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
     def test_ediff_validation(self):
         """Test that CalcEDiff takes ellipticities of same convention."""
         ellipA = CalcE(ellipticityType="epsilon")
-        ellipB = CalcE(ellipticityType="chi")
+        ellipB = CalcE(ellipticityType="distortion")
         with self.assertRaises(FieldValidationError):
             CalcEDiff(colA=ellipA, colB=ellipB).validate()
 

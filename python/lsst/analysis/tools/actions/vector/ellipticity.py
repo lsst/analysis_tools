@@ -41,9 +41,9 @@ class CalcE(VectorAction):
     e = |e|exp(j*2*theta) = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy), where j is
     the square root of -1 and Ixx, Iyy, Ixy are second-order central moments.
     This is sometimes referred to as distortion, and denoted by e = (e1, e2)
-    in GalSim and referred to as chi-type ellipticity following the notation
-    in Eq. 4.4 of Bartelmann and Schneider (2001). The other definition differs
-    in normalization. It is referred to as shear, and denoted by g = (g1, g2)
+    in GalSim (see Eq. 4.4. of Bartelmann and Schneider, 2001).
+    The other definition differs in normalization.
+    It is referred to as shear, and denoted by g = (g1, g2)
     in GalSim and referred to as epsilon-type ellipticity again following the
     notation in Eq. 4.10 of Bartelmann and Schneider (2001). It is defined as
     g = ((Ixx - Iyy) + j*(2*Ixy))/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
@@ -93,10 +93,10 @@ class CalcE(VectorAction):
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
-            "chi": ("Distortion, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy)"),
+            "distortion": ("Distortion, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy)"),
             "epsilon": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
-        default="chi",
+        default="distortion",
     )
 
     halvePhaseAngle = Field[bool](
@@ -222,7 +222,7 @@ class CalcEDiff(VectorAction):
 
 
 class CalcE1(VectorAction):
-    """Calculate chi-type e1 = (Ixx - Iyy)/(Ixx + Iyy) or
+    """Calculate distortion-type e1 = (Ixx - Iyy)/(Ixx + Iyy) or
     epsilon-type g1 = (Ixx - Iyy)/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy**2)).
 
     See Also
@@ -255,14 +255,14 @@ class CalcE1(VectorAction):
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
-            "chi": "Distortion, defined as (Ixx - Iyy)/(Ixx + Iyy)",
+            "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
             "epsilon": ("Shear, defined as (Ixx - Iyy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
-        default="chi",
+        default="distortion",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        if self.ellipticityType == "chi":
+        if self.ellipticityType == "distortion":
             return (
                 (self.colXx, Vector),
                 (self.colYy, Vector),
@@ -293,7 +293,7 @@ class CalcE1(VectorAction):
 
 
 class CalcE2(VectorAction):
-    """Calculate chi-type e2 = 2Ixy/(Ixx+Iyy) or
+    """Calculate distortion-type e2 = 2Ixy/(Ixx+Iyy) or
     epsilon-type g2 = 2Ixy/(Ixx+Iyy+2sqrt(Ixx*Iyy - Ixy**2)).
 
     See Also
@@ -325,10 +325,10 @@ class CalcE2(VectorAction):
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
-            "chi": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
+            "distortion": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
             "epsilon": ("Shear, defined as 2*Ixy/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
-        default="chi",
+        default="distortion",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

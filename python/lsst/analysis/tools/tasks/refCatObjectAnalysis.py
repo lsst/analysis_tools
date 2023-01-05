@@ -22,7 +22,12 @@ from __future__ import annotations
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisPlots.analysisPlots import TargetRefCatDeltaDecScatterPlot, TargetRefCatDeltaRAScatterPlot
+from ..analysisPlots.analysisPlots import (
+    TargetRefCatDeltaDecScatterPlot,
+    TargetRefCatDeltaDecSkyPlot,
+    TargetRefCatDeltaRAScatterPlot,
+    TargetRefCatDeltaRASkyPlot,
+)
 from ..contexts import CoaddContext
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -46,13 +51,21 @@ class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatO
         super().setDefaults()
 
         # set plots to run
-        self.plots.astromDiffRA = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRA.parameterizedBand = True
-        self.plots.astromDiffRA.applyContext(CoaddContext)
+        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
+        self.plots.astromDiffRAScatterPlot.parameterizedBand = True
+        self.plots.astromDiffRAScatterPlot.applyContext(CoaddContext)
 
-        self.plots.astromDiffDec = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDec.parameterizedBand = True
-        self.plots.astromDiffDec.applyContext(CoaddContext)
+        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
+        self.plots.astromDiffDecScatterPlot.parameterizedBand = True
+        self.plots.astromDiffDecScatterPlot.applyContext(CoaddContext)
+
+        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
+        self.plots.astromDiffRASkyPlot.parameterizedBand = True
+        self.plots.astromDiffRASkyPlot.applyContext(CoaddContext)
+
+        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
+        self.plots.astromDiffDecSkyPlot.parameterizedBand = True
+        self.plots.astromDiffDecSkyPlot.applyContext(CoaddContext)
 
         # set metrics to run - none so far
 

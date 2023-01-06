@@ -43,7 +43,7 @@ class MatchedRefCoaddCModelPlot(MatchedRefCoaddPlot):
         self.produce.magLabel = "cModel mag"
 
         # downselect the cModelFlux as well
-        for (prefix, plural) in (("star", "Stars"), ("galaxy", "Galaxies")):
+        for prefix, plural in (("star", "Stars"), ("galaxy", "Galaxies")):
             for suffix in ("", "Err"):
                 setattr(
                     self.process.filterActions,

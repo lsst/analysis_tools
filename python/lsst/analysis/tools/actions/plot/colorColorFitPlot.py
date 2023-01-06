@@ -40,7 +40,6 @@ from .plotUtils import addPlotInfo, mkColormap, perpDistance
 
 
 class ColorColorFitPlot(PlotAction):
-
     xAxisLabel = Field[str](doc="Label to use for the x axis", optional=False)
     yAxisLabel = Field[str](doc="Label to use for the y axis", optional=False)
     magLabel = Field[str](doc="Label to use for the magnitudes used to color code by", optional=False)

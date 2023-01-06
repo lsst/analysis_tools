@@ -40,7 +40,6 @@ from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortA
 
 
 class SkyPlot(PlotAction):
-
     xAxisLabel = Field[str](doc="Label to use for the x axis.", optional=False)
     yAxisLabel = Field[str](doc="Label to use for the y axis.", optional=False)
     zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
@@ -309,7 +308,7 @@ class SkyPlot(PlotAction):
                         path_effects=[pathEffects.withStroke(linewidth=2, foreground="w")],
                     )
 
-        for (i, (xs, ys, colorVals, cmap, label)) in enumerate(toPlotList):
+        for i, (xs, ys, colorVals, cmap, label) in enumerate(toPlotList):
             if not self.plotOutlines or "tract" not in sumStats.keys():
                 minRa = np.min(xs)
                 maxRa = np.max(xs)

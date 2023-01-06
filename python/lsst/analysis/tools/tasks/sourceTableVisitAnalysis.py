@@ -12,7 +12,6 @@ class SourceTableVisitAnalysisConnections(
     dimensions=("visit", "band"),
     defaultTemplates={"inputName": "sourceTable_visit"},
 ):
-
     data = ct.Input(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",

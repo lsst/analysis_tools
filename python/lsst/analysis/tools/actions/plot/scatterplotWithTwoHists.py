@@ -213,7 +213,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
-
         self._validateInput(data, **kwargs)
         return self.makePlot(data, **kwargs)
 
@@ -282,11 +281,11 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         # Set default color and line style for the horizontal
         # reference line at 0
-        if 'hlineColor' not in kwargs:
-            kwargs['hlineColor'] = 'black'
+        if "hlineColor" not in kwargs:
+            kwargs["hlineColor"] = "black"
 
-        if 'hlineStyle' not in kwargs:
-            kwargs['hlineStyle'] = (0, (1, 4))
+        if "hlineStyle" not in kwargs:
+            kwargs["hlineStyle"] = (0, (1, 4))
 
         fig = plt.figure(dpi=300)
         gs = gridspec.GridSpec(4, 4)
@@ -410,7 +409,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
 
         xMin = None
-        for (j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats)) in enumerate(toPlotList):
+        for j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats) in enumerate(toPlotList):
             highSn = cast(Vector, highSn)
             lowSn = cast(Vector, lowSn)
             # ensure the columns are actually array
@@ -471,7 +470,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 threeSigMadVerts = np.zeros((len(xEdgesPlot) * 2, 2))
                 sigMads = np.zeros(len(xEdgesPlot))
 
-                for (i, xEdge) in enumerate(xEdgesPlot):
+                for i, xEdge in enumerate(xEdgesPlot):
                     ids = np.where((xs < xEdge) & (xs > xEdges[i]) & (np.isfinite(ys)))[0]
                     med = np.nanmedian(ys[ids])
                     sigMad = sigmaMad(ys[ids], nan_policy="omit")
@@ -620,7 +619,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 histIm = None
 
         # Add a horizontal reference line at 0 to the scatter plot
-        ax.axhline(0, color=kwargs['hlineColor'], ls=kwargs['hlineStyle'], alpha=0.7, zorder=-2)
+        ax.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         # Set the scatter plot limits
         # TODO: Make this not work by accident
@@ -804,7 +803,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
 
         # Add a horizontal reference line at 0 to the side histogram
-        sideHist.axhline(0, color=kwargs['hlineColor'], ls=kwargs['hlineStyle'], alpha=0.7, zorder=-2)
+        sideHist.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         sideHist.axes.get_yaxis().set_visible(False)
         sideHist.set_xlabel("Number", fontsize=8)

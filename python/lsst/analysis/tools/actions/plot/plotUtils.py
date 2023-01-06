@@ -155,7 +155,7 @@ def generateSummaryStatsVisit(cat, colName, visitSummaryTable, plotInfo):
         sumRow = visitSummaryTable["id"] == ccd
         corners = zip(visitSummaryTable["raCorners"][sumRow][0], visitSummaryTable["decCorners"][sumRow][0])
         cornersOut = []
-        for (ra, dec) in corners:
+        for ra, dec in corners:
             corner = SpherePoint(ra, dec, units=degrees)
             cornersOut.append(corner)
 
@@ -455,7 +455,7 @@ def mkColormap(colorNames):
     blues = []
     greens = []
     reds = []
-    for (num, color) in zip(nums, colorNames):
+    for num, color in zip(nums, colorNames):
         r, g, b = colors.colorConverter.to_rgb(color)
         blues.append((num, b, b))
         greens.append((num, g, g))
@@ -502,7 +502,7 @@ def sortAllArrays(arrsToSort, sortArrayIndex=0):
         The list of arrays sorted on array in list index ``sortArrayIndex``.
     """
     ids = extremaSort(arrsToSort[sortArrayIndex])
-    for (i, arr) in enumerate(arrsToSort):
+    for i, arr in enumerate(arrsToSort):
         arrsToSort[i] = arr[ids]
     return arrsToSort
 

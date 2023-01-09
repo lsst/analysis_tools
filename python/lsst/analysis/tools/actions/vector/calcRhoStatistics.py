@@ -271,8 +271,8 @@ class CalcRhoStatistics(KeyedDataAction):
                            \right\rangle
 
 
-    The definition of ellipticity used in [1]_ correspond to ``epsilon``-type ellipticity, which is typically
-    smaller by a factor of 4 than using ``chi``-type ellipticity.
+    The definition of ellipticity used in [1]_ correspond to ``shear``-type ellipticity, which is typically
+    smaller by a factor of 4 than using ``distortion``-type ellipticity.
 
     References
     ----------
@@ -311,14 +311,13 @@ class CalcRhoStatistics(KeyedDataAction):
         doc="The column name to get the PSF xy shape component from.", default="{band}_ixyPSF"
     )
 
-    # TODO: Replace them with distortion and shear (DM-37325).
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
-            "chi": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
-            "epsilon": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
+            "shear": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
-        default="chi",
+        default="distortion",
     )
 
     sizeType = ChoiceField[str](
@@ -383,7 +382,7 @@ class CalcRhoStatistics(KeyedDataAction):
             ),
         )
 
-        # chi-type ellipticity has a shear response of 2, so we need to
+        # distortion-type ellipticity has a shear response of 2, so we need to
         # divide by 2 so that the rho-stats do not depend on the
         # ellipticity-type.
         # Note: For distortion, the responsitivity is 2(1 - e^2_{rms}),
@@ -392,11 +391,11 @@ class CalcRhoStatistics(KeyedDataAction):
         # This definition of responsitivity is consistent with the definions
         # used in the rho-statistics calculations for the HSC shear catalog
         # papers (Mandelbaum et al. 2018, Li et al., 2022).
-        responsitivity = 2.0 if self.ellipticityType == "chi" else 1.0
+        responsitivity = 2.0 if self.ellipticityType == "distortion" else 1.0
 
         # Call the actions on the data.
         eMEAS = calcEMeas(data, **kwargs)
-        if self.ellipticityType == "chi":
+        if self.ellipticityType == "distortion":
             _LOG.debug("Correction value of responsitivity would be %f", 2 - np.mean(np.abs(eMEAS) ** 2))
         eMEAS /= responsitivity  # type: ignore
         e1, e2 = np.real(eMEAS), np.imag(eMEAS)

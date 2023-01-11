@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
 from lsst.pipe.base import connectionTypes as ct
 
+from ..actions.plot.plotUtils import shorten_list
 from ..interfaces import KeyedData
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -76,17 +77,17 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         if inputs is None:
             tableName = ""
             run = ""
-            tracts = ""
+            tracts = []
         else:
             tableName = inputs[connectionName][0].ref.datasetType.name
             run = inputs[connectionName][0].ref.run
-            tracts = str([data.ref.dataId["tract"] for data in inputs[connectionName]])
+            tracts = [data.ref.dataId["tract"] for data in inputs[connectionName]]
 
         # Initialize the plot info dictionary
         plotInfo = {
             "tableName": tableName,
             "run": run,
-            "tract": tracts,
+            "tract": shorten_list(tracts),
         }
 
         self._populatePlotInfoWithDataId(plotInfo, dataId)

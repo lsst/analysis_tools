@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("PanelConfig",)
 
-from typing import TYPE_CHECKING, List, Mapping, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -596,6 +596,73 @@ def addSummaryPlot(fig, loc, sumStats, label):
     )
 
     return fig
+
+
+def shorten_list(numbers: Iterable[int], *, range_indicator: str = "-", range_separator: str = ",") -> str:
+    """Shorten an iterable of integers.
+
+    Parameters
+    ----------
+    numbers : `~collections.abc.Iterable` [`int`]
+        Any iterable (list, set, tuple, numpy.array) of integers.
+    range_indicator : `str`, optional
+        The string to use to indicate a range of numbers.
+    range_separator : `str`, optional
+        The string to use to separate ranges of numbers.
+
+    Returns
+    -------
+    result : `str`
+        A shortened string representation of the list.
+
+    Examples
+    --------
+    >>> shorten_list([1,2,3,5,6,8])
+    "1-3,5-6,8"
+
+    >>> shorten_list((1,2,3,5,6,8,9,10,11), range_separator=", ")
+    "1-3, 5-6, 8-11"
+
+    >>> shorten_list(range(4), range_indicator="..")
+    "0..3"
+    """
+
+    # Sort the list in ascending order.
+    numbers = sorted(numbers)
+
+    if not numbers:  # empty container
+        return ""
+
+    # Initialize an empty list to hold the results to be returned.
+    result = []
+
+    # Initialize variables to track the current start and end of a list.
+    start = 0
+    end = 0  # initialize to 0 to handle single element lists.
+
+    # Iterate through the sorted list of numbers
+    for end in range(1, len(numbers)):
+        # If the current number is the same or consecutive to the previous
+        # number, skip to the next iteration.
+        if numbers[end] > numbers[end - 1] + 1:  # > is used to handle duplicates, if any.
+            # If the current number is not consecutive to the previous number,
+            # add the current range to the result and reset the start to end.
+            if start == end - 1:
+                result.append(str(numbers[start]))
+            else:
+                result.append(range_indicator.join((str(numbers[start]), str(numbers[end - 1]))))
+
+            # Update start.
+            start = end
+
+    # Add the final range to the result.
+    if start == end:
+        result.append(str(numbers[start]))
+    else:
+        result.append(range_indicator.join((str(numbers[start]), str(numbers[end]))))
+
+    # Return the shortened string representation.
+    return range_separator.join(result)
 
 
 class PanelConfig(Config):

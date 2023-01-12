@@ -23,7 +23,6 @@ from __future__ import annotations
 __all__ = ("CcdVisitTableAnalysisTask",)
 
 from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
-from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field
 from lsst.pipe.base import connectionTypes as cT
 from lsst.skymap import BaseSkyMap
@@ -95,8 +94,6 @@ class CcdVisitTableAnalysisTask(AnalysisPipelineTask):
         # Docs inherited from base class.
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
-        if dataId is not None:
-            dataId = DataCoordinate.standardize(dataId, universe=butlerQC.registry.dimensions)
         plotInfo = self.parsePlotInfo(inputs, dataId)
         data = self.loadData(inputs["data"])
         skymap = None if "skymap" not in inputs.keys() else inputs["skymap"]

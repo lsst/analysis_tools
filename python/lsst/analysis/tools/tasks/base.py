@@ -290,8 +290,6 @@ class AnalysisPipelineTask(PipelineTask):
         """
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
-        if dataId is not None:
-            dataId = DataCoordinate.standardize(dataId, universe=butlerQC.registry.dimensions)
         plotInfo = self.parsePlotInfo(inputs, dataId)
         data = self.loadData(inputs["data"])
         if "skymap" in inputs.keys():

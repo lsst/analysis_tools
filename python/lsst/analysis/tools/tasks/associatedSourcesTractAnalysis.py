@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from lsst.daf.butler import DataCoordinate
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 
@@ -128,9 +127,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         inputs["sourceCatalogs"] = sourceCatalogs
 
         dataId = butlerQC.quantum.dataId
-        if dataId is not None:
-            dataId = DataCoordinate.standardize(dataId, universe=butlerQC.registry.dimensions)
-
         plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")
 
         # TODO: make key used for object index configurable

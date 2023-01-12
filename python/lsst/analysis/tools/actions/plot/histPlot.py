@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("HistPanel", "HistPlot")
+__all__ = ("HistPanel", "HistPlot", "HistStatsPanel")
 
 import logging
 from collections import defaultdict
@@ -28,7 +28,16 @@ from typing import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import ChoiceField, Config, ConfigDictField, DictField, Field, FieldValidationError
+from lsst.pex.config import (
+    ChoiceField,
+    Config,
+    ConfigDictField,
+    ConfigField,
+    DictField,
+    Field,
+    FieldValidationError,
+    ListField,
+)
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
@@ -38,6 +47,58 @@ from ...statistics import sigmaMad
 from .plotUtils import addPlotInfo
 
 log = logging.getLogger(__name__)
+
+
+class HistStatsPanel(Config):
+    """A Config class that holds parameters to configure a the stats panel
+    shown for histPlot.
+
+    The fields in this class correspond to the parameters that can be used to
+    customize the HistPlot stats panel.
+
+    - The ListField parameter a dict to specify names of 3 stat columns accepts
+    latex formating
+
+    - The other parameters (stat1, stat2, stat3) are lists of strings that
+    specify vector keys correspoinding to scalar values computed in the
+    prep/process/produce steps of an analysis tools plot/metric configurable
+    action. There should be one key for each group in the HistPanel.
+
+    A separate config class is used instead of constructing
+    `~lsst.pex.config.DictField`'s in HistPanel for each parameter for clarity
+    and consistency.
+
+
+
+    Notes
+    -----
+    This is intended to be used as a configuration of the HistPlot/HistPanel
+    class.
+
+    If no HistStatsPanel is specified then the default behavor persists where
+    the stats panel shows N / median / sigma_mad for each group in the panel.
+    """
+
+    statsLabels = ListField[str](
+        doc="list specifying the labels for stats",
+        length=3,
+        default={"N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"},
+    )
+    stat1 = ListField[str](
+        doc="A list specifying the vector keys of the first scalar statistic to be shown in this panel."
+        "there should be one entry for each hist in the panel",
+        default=[],
+    )
+    stat2 = ListField[str](
+        doc="A list specifying the vector keys of the second scalar statistic to be shown in this panel."
+        "there should be one entry for each hist in the panel",
+        default=[],
+    )
+    stat3 = ListField[str](
+        doc="A list specifying the vector keys of the third scalar statistic to be shown in this panel."
+        "there should be one entry for each hist in the panel",
+        default=[],
+    )
 
 
 class HistPanel(Config):
@@ -92,6 +153,11 @@ class HistPanel(Config):
         doc="Whether to plot the histogram as a normalized probability distribution. Must also "
         "provide a value for referenceValue",
         default=False,
+    )
+    statsPanel = ConfigField[HistStatsPanel](
+        doc="configuration for stats to be shown on plot, if None then "
+        "default stats: N, median, sigma mad are shown",
+        default=None,
     )
 
     def validate(self):
@@ -194,7 +260,7 @@ class HistPlot(PlotAction):
                 nth_col -= 1
             # Set font size for legend based on number of panels being plotted.
             legend_font_size = max(4, int(8 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
-            nums, meds, mads = self._makePanel(
+            nums, meds, mads, stats_dict = self._makePanel(
                 data,
                 panel,
                 ax,
@@ -218,6 +284,7 @@ class HistPlot(PlotAction):
                 all_nums,
                 all_meds,
                 all_mads,
+                stats_dict,
                 legend_font_size=legend_font_size,
                 yAnchor0=ax.get_position().y0,
                 nth_row=nth_row,
@@ -362,7 +429,24 @@ class HistPlot(PlotAction):
         if self.panels[panel].referenceValue is not None:
             ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
 
-        return nums, meds, mads
+        if self.panels[panel].statsPanel is None:
+            stats_dict = {
+                "statLabels": ["N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"],
+                "stat1": nums,
+                "stat2": meds,
+                "stat3": mads,
+            }
+        else:
+            stat1 = [data[stat] for stat in self.panels[panel].statsPanel.stat1]
+            stat2 = [data[stat] for stat in self.panels[panel].statsPanel.stat2]
+            stat3 = [data[stat] for stat in self.panels[panel].statsPanel.stat3]
+            stats_dict = {
+                "statLabels": self.panels[panel].statsPanel.statsLabels,
+                "stat1": stat1,
+                "stat2": stat2,
+                "stat3": stat3,
+            }
+        return nums, meds, mads, stats_dict
 
     def _getPanelRange(self, data, panel, mads=None, meds=None):
         """Determine panel x-axis range based config settings."""
@@ -455,6 +539,7 @@ class HistPlot(PlotAction):
         nums,
         meds,
         mads,
+        stats_dict,
         legend_font_size=8,
         yAnchor0=0.0,
         nth_row=0,
@@ -470,16 +555,16 @@ class HistPlot(PlotAction):
 
         # set up new legend handles and labels
         legend_handles = [empty] + handles + ([empty] * 3 * len(handles)) + ([empty] * 3)
+
         legend_labels = (
             ([""] * (len(handles) + 1))
-            + ["N$_{{data}}$"]
-            + nums
-            + ["Med"]
-            + [f"{x:.2f}" for x in meds]
-            + ["${{\\sigma}}_{{MAD}}$"]
-            + [f"{x:.2f}" for x in mads]
+            + [stats_dict["statLabels"][0]]
+            + [f"{x:.3g}" for x in stats_dict["stat1"]]
+            + [stats_dict["statLabels"][1]]
+            + [f"{x:.3g}" for x in stats_dict["stat2"]]
+            + [stats_dict["statLabels"][2]]
+            + [f"{x:.3g}" for x in stats_dict["stat3"]]
         )
-
         # Set the y anchor for the legend such that it roughly lines up with
         # the panels.
         yAnchor = max(0, yAnchor0 - 0.01) + nth_col * (0.008 + len(nums) * 0.005) * legend_font_size

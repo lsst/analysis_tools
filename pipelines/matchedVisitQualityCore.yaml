@@ -4,8 +4,10 @@ tasks:
   analyzeMatchedVisitCore:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
-      bands: ['i']
+      bands: ['g', 'r', 'i', 'z']
       connections.outputName: matchedVisitCore
       metrics.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatabilityMetric
+      plots.StellarPhotometricRepeatabilityHistPlot: StellarPhotometricRepeatabilityHistPlot
       python: |
         from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.analysisPlots import *

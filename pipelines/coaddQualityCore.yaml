@@ -5,11 +5,11 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
       connections.outputName: objectTableCore
-      plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
+      plots.shapeSizeFractionalDiffScatterPlot: ShapeSizeFractionalDiffScatterPlot
       metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
-      plots.e1DiffScatter: E1DiffScatterPlot
+      plots.e1DiffScatterPlot: E1DiffScatterPlot
       metrics.e1DiffScatterMetric: E1DiffMetric
-      plots.e2DiffScatter: E2DiffScatterPlot
+      plots.e2DiffScatterPlot: E2DiffScatterPlot
       metrics.e2DiffScatterMetric: E2DiffMetric
       metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
       metrics.skyFluxStatisticMetric.applyContext: CoaddContext

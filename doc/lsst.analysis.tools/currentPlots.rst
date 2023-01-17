@@ -1,0 +1,9 @@
+Current Plot Types
+==================
+Details of current plot types are here, these plots are all in ``python/lsst/analysis/tools/actions/plot`` and
+can all be found on `github <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/actions/plot/>`__.
+
+
+.. automodapi:: lsst.analysis.tools.actions.plot
+   :no-inheritance-diagram:
+   :no-inherited-members:

@@ -52,6 +52,10 @@ cmapPatch.set_bad(color="none")
 
 
 class ScatterPlotStatsAction(KeyedDataAction):
+    """Calculates the statistics needed for the 
+    scatter plot with two hists.
+    """
+
     vectorKey = Field[str](doc="Vector on which to compute statistics")
     highSNSelector = ConfigurableActionField[SnSelector](
         doc="Selector used to determine high SN Objects", default=SnSelector(threshold=2700)
@@ -134,6 +138,10 @@ class _StatsContainer(NamedTuple):
 
 
 class ScatterPlotWithTwoHists(PlotAction):
+    """Makes a scatter plot of the data with a marginal 
+    histogram for each axis.
+    """
+
     yLims = ListField[float](
         doc="ylimits of the plot, if not specified determined from data",
         length=2,
@@ -240,28 +248,31 @@ class ScatterPlotWithTwoHists(PlotAction):
     ) -> Figure:
         """Makes a generic plot with a 2D histogram and collapsed histograms of
         each axis.
+
         Parameters
         ----------
-        data : `pandas.core.frame.DataFrame`
+        data : `KeyedData`
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
+            ``"run"``
+            The output run for the plots (`str`).
+            ``"skymap"``
+            The type of skymap used for the data (`str`).
+            ``"filter"``
+            The filter used for this data (`str`).
+            ``"tract"``
+            The tract that the data comes from (`str`).
         sumStats : `dict`
             A dictionary where the patchIds are the keys which store the R.A.
             and dec of the corners of the patch, along with a summary
             statistic for each patch.
+
         Returns
         -------
         fig : `matplotlib.figure.Figure`
             The resulting figure.
+
         Notes
         -----
         Uses the axisLabels config options `x` and `y` and the axisAction
@@ -272,6 +283,28 @@ class ScatterPlotWithTwoHists(PlotAction):
         of the resultant plot. The code uses the selectorActions to decide
         which points to plot and the statisticSelector actions to determine
         which points to use for the printed statistics.
+
+        If this function is being used within the pipetask framework 
+        that takes care of making sure that data has all the required 
+        elements but if you are runnign this as a standalone function 
+        then you will need to provide the following things in the 
+        input data.
+
+        If stars is in self.plotTypes:
+        xStars, yStars, starsHighSNMask, starsLowSNMask and 
+        {band}_highSNStars_{name}, {band}_lowSNStars_{name} 
+        where name is median, sigma_Mad, count and approxMag.
+
+        If it is for galaxies/unknowns then replace stars in 
+        the above names with galaxies/unknowns.
+
+        if it is for any (which covers all the points) then it 
+        becomes, x, y, and any instead of stars for the other 
+        parameters given above.
+
+        In every case it is expected that data contains:
+        lowSnThreshold, highSnThreshold and patch 
+        (if the summary plot is being plotted).
         """
         if not self.plotTypes:
             noDataFig = Figure()

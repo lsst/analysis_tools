@@ -40,6 +40,14 @@ from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortA
 
 
 class SkyPlot(PlotAction):
+    """Plots the on sky distribution of a parameter.
+
+    Plots the values of the parameter given for the z axis 
+    according to the positions given for x and y. Optimised 
+    for use with RA and Dec. Also calculates some basic 
+    statistics and includes those on the plot.
+    """
+
     xAxisLabel = Field[str](doc="Label to use for the x axis.", optional=False)
     yAxisLabel = Field[str](doc="Label to use for the y axis.", optional=False)
     zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
@@ -134,21 +142,25 @@ class SkyPlot(PlotAction):
         sumStats: Optional[Mapping] = None,
         **kwargs,
     ) -> Figure:
-        """Prep the catalogue and then make a skyPlot of the given column.
+        """Make a skyPlot of the given data.
 
         Parameters
         ----------
-        catPlot : `pandas.core.frame.DataFrame`
+        data : `KeyedData`
             The catalog to plot the points from.
-        dataId :
-        `lsst.daf.butler.core.dimensions._coordinate._ExpandedTupleDataCoordinate`
-            The dimensions that the plot is being made from.
-        runName : `str`
-            The name of the collection that the plot is written out to.
-        skymap : `lsst.skymap`
-            The skymap used to define the patch boundaries.
-        tableName : `str`
-            The type of table used to make the plot.
+        plotInfo : `dict`
+            A dictionary of information about the data being plotted with keys:
+            ``"run"``
+            The output run for the plots (`str`).
+            ``"skymap"``
+            The type of skymap used for the data (`str`).
+            ``"filter"``
+            The filter used for this data (`str`).
+            ``"tract"``
+            The tract that the data comes from (`str`).
+        sumStats : `dict`
+            A dictionary where the patchIds are the keys which store the R.A.
+            and dec of the corners of the patch.
 
         Returns
         -------
@@ -158,55 +170,27 @@ class SkyPlot(PlotAction):
 
         Notes
         -----
-        The catalogue is first narrowed down using the selectors specified in
-        `self.config.selectorActions`.
-        If the column names are 'Functor' then the functors specified in
-        `self.config.axisFunctors` are used to calculate the required values.
-        After this the following functions are run:
+        Expects the data to contain slightly different things 
+        depending on the types specified in plotTypes. This 
+        is handled automatically if you go through the pipetask 
+        framework but if you call this method separately then you 
+        need to make sure that data contains what the code is expecting.
 
-        `parsePlotInfo` which uses the dataId, runName and tableName to add
-        useful information to the plot.
+        If stars is in the plot types given then it is expected that 
+        data contains: xStars, yStars, zStars and starStatMask.
 
-        `generateSummaryStats` which parses the skymap to give the corners of
-        the patches for later plotting and calculates some basic statistics
-        in each patch for the column in self.config.axisActions['zAction'].
+        If galaxies is present: xGalaxies, yGalaxies, zGalaxies and 
+        galaxyStatsMask.
 
-        `SkyPlot` which makes the plot of the sky distribution of
-        `self.config.axisActions['zAction']`.
+        If unknown is present: xUnknowns, yUnknowns, zUnknowns and 
+        unknownStatMask.
 
-        Makes a generic plot showing the value at given points on the sky.
+        If any is specified: x, y, z, statMask.
 
-        Parameters
-        ----------
-        catPlot : `pandas.core.frame.DataFrame`
-            The catalog to plot the points from.
-        plotInfo : `dict`
-            A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
-        sumStats : `dict`
-            A dictionary where the patchIds are the keys which store the R.A.
-            and dec of the corners of the patch.
-
-        Returns
-        -------
-        fig : `matplotlib.figure.Figure`
-            The resulting figure.
-
-        Notes
-        -----
-        Uses the config options `self.config.xColName` and
-        `self.config.yColName` to plot points color coded by
-        `self.config.axisActions['zAction']`.
-        The points plotted are those selected by the selectors specified in
-        `self.config.selectorActions`.
+        These options are not exclusive and multiple can be specified
+        and thus need to be present in data.
         """
+
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 

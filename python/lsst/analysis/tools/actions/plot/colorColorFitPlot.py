@@ -40,6 +40,13 @@ from .plotUtils import addPlotInfo, mkColormap, perpDistance
 
 
 class ColorColorFitPlot(PlotAction):
+    """Makes a color-color plot and overplots a 
+    prefited line to the specified area of the plot.
+    This is mostly used for the stellar locus plots 
+    and also includes panels that illustrate the 
+    goodness of the given fit.
+    """
+
     xAxisLabel = Field[str](doc="Label to use for the x axis", optional=False)
     yAxisLabel = Field[str](doc="Label to use for the y axis", optional=False)
     magLabel = Field[str](doc="Label to use for the magnitudes used to color code by", optional=False)
@@ -108,42 +115,61 @@ class ColorColorFitPlot(PlotAction):
 
         Parameters
         ----------
-        catPlot : `pandas.core.frame.DataFrame`
+        data : `KeyedData`
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
+            ``"run"``
+            The output run for the plots (`str`).
+            ``"skymap"``
+            The type of skymap used for the data (`str`).
+            ``"filter"``
+            The filter used for this data (`str`).
+            ``"tract"``
+            The tract that the data comes from (`str`).
         fitParams : `dict`
             The parameters of the fit to the stellar locus calculated
             elsewhere, they are used to plot the fit line on the
             figure.
-                ``"bHW"``
-                    The hardwired intercept to fall back on.
-                ``"b_odr"``
-                    The intercept calculated by the orthogonal distance
-                    regression fitting.
-                ``"mHW"``
-                    The hardwired gradient to fall back on.
-                ``"m_odr"``
-                    The gradient calculated by the orthogonal distance
-                    regression fitting.
-                ``"magLim"``
-                    The magnitude limit used in the fitting.
-                ``"x1`"``
-                    The x minimum of the box used in the fit.
-                ``"x2"``
-                    The x maximum of the box used in the fit.
-                ``"y1"``
-                    The y minimum of the box used in the fit.
-                ``"y2"``
-                    The y maximum of the box used in the fit.
+            ``"bHW"``
+            The hardwired intercept to fall back on.
+            ``"bODR"``
+            The intercept calculated by the orthogonal distance
+            regression fitting.
+             ``"bODR2"``
+            The intercept calculated by the second iteration of
+            orthogonal distance regression fitting.
+            ``"mHW"``
+            The hardwired gradient to fall back on.
+            ``"mODR"``
+            The gradient calculated by the orthogonal distance
+            regression fitting.
+             ``"mODR2"``
+            The gradient calculated by the second iteration of 
+            orthogonal distance regression fitting.
+            ``"xMin`"``
+            The x minimum of the box used in the fit.
+            ``"xMax"``
+            The x maximum of the box used in the fit.
+            ``"yMin"``
+            The y minimum of the box used in the fit.
+            ``"yMax"``
+            The y maximum of the box used in the fit.
+            ``"mPerp"``
+            The gradient of the line perpendicular to the line from 
+            the second ODR fit.
+            ``"bPerpMin"``
+            The intercept of the perpendicular line that goes through xMin.
+            ``"bPerpMax"``
+            The intercept of the perpendicular line that goes through xMax.
+            ``f"{self.plotName}_sigmaMAD"``
+            The sigma mad of the distances to the line fit.
+            ``f"{self.identity or ''}_median"``
+            The median of the distances to the line fit.
+            ``f"{self.identity or ''}_hardwired_sigmaMAD"``
+            The sigma mad of the distances to the initial fit.
+            ``f"{self.identity or ''}_hardwired_median"``
+            The median of the distances to the initial fit.
 
         Returns
         -------
@@ -152,14 +178,32 @@ class ColorColorFitPlot(PlotAction):
 
         Notes
         -----
-        Makes a color-color plot of `self.config.xColName` against
-        `self.config.yColName`, these points are color coded by i band
-        CModel magnitude. The stellar locus fits calculated from
-        the calcStellarLocus task are then overplotted. The axis labels
-        are given by `self.config.xLabel` and `self.config.yLabel`.
-        The selector given in `self.config.sourceSelectorActions`
-        is used for source selection. The distance of the points to
+        The axis labels are given by `self.config.xLabel` and 
+        `self.config.yLabel`. The perpendicular distance of the points to
         the fit line is given in a histogram in the second panel.
+
+        For the code to work it expects various quantities to be
+        present in the 'data' that it is given.
+
+        The quantities that are expected to be present are: 
+
+        Statistics that are shown on the plot or used by the plotting code:
+
+        approxMagDepth,
+        f"{self.plotName}_sigmaMAD", 
+        f"{self.plotName}_sigmaMAD", 
+        f"{self.plotName}_sigmaMAD",
+        f"{self.plotName}_sigmaMAD", 
+        f"{self.plotName}_sigmaMAD"
+
+        Parameters from the fitting code that are illustrated on the plot:
+
+        xMin, xMax, yMin, yMax, mHW, bHW, mODR, bODR,
+        yBoxMin, yBoxMax, bPerpMin, bPerpMax, mODR2, bODR2, mPerp
+
+        The main inputs to plot:
+
+        x, y, mag
         """
 
         # Define a new colormap

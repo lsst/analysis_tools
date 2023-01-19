@@ -252,10 +252,10 @@ class MultiVisitCoveragePlot(PlotAction):
         plotInfo : `dict` [`str`], optional
             A dictionary of information about the data being plotted with (at
             least) keys:
-                `"run"`
-                    Output run for the plots (`str`).
-                `"tableName"`
-                    Name of the table from which results are taken (`str`).
+            `"run"`
+            Output run for the plots (`str`).
+            `"tableName"`
+            Name of the table from which results are taken (`str`).
         camera : `lsst.afw.cameraGeom.Camera`, optional
             The camera object associated with the data. This is to enable the
             conversion of to focal plane coordinates (if needed, i.e. for the

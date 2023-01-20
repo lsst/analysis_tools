@@ -119,57 +119,59 @@ class ColorColorFitPlot(PlotAction):
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-            ``"run"``
-            The output run for the plots (`str`).
-            ``"skymap"``
-            The type of skymap used for the data (`str`).
-            ``"filter"``
-            The filter used for this data (`str`).
-            ``"tract"``
-            The tract that the data comes from (`str`).
+
+            * ``"run"``
+                  The output run for the plots (`str`).
+            * ``"skymap"``
+                  The type of skymap used for the data (`str`).
+            * ``"filter"``
+                  The filter used for this data (`str`).
+            * ``"tract"``
+                  The tract that the data comes from (`str`).
         fitParams : `dict`
             The parameters of the fit to the stellar locus calculated
             elsewhere, they are used to plot the fit line on the
             figure.
-            ``"bHW"``
-            The hardwired intercept to fall back on.
-            ``"bODR"``
-            The intercept calculated by the orthogonal distance
-            regression fitting.
-             ``"bODR2"``
-            The intercept calculated by the second iteration of
-            orthogonal distance regression fitting.
-            ``"mHW"``
-            The hardwired gradient to fall back on.
-            ``"mODR"``
-            The gradient calculated by the orthogonal distance
-            regression fitting.
-             ``"mODR2"``
-            The gradient calculated by the second iteration of 
-            orthogonal distance regression fitting.
-            ``"xMin`"``
-            The x minimum of the box used in the fit.
-            ``"xMax"``
-            The x maximum of the box used in the fit.
-            ``"yMin"``
-            The y minimum of the box used in the fit.
-            ``"yMax"``
-            The y maximum of the box used in the fit.
-            ``"mPerp"``
-            The gradient of the line perpendicular to the line from 
-            the second ODR fit.
-            ``"bPerpMin"``
-            The intercept of the perpendicular line that goes through xMin.
-            ``"bPerpMax"``
-            The intercept of the perpendicular line that goes through xMax.
-            ``f"{self.plotName}_sigmaMAD"``
-            The sigma mad of the distances to the line fit.
-            ``f"{self.identity or ''}_median"``
-            The median of the distances to the line fit.
-            ``f"{self.identity or ''}_hardwired_sigmaMAD"``
-            The sigma mad of the distances to the initial fit.
-            ``f"{self.identity or ''}_hardwired_median"``
-            The median of the distances to the initial fit.
+
+            * ``"bHW"``
+                  The hardwired intercept to fall back on.
+            * ``"bODR"``
+                  The intercept calculated by the orthogonal distance
+                  regression fitting.
+            * ``"bODR2"``
+                  The intercept calculated by the second iteration of
+                  orthogonal distance regression fitting.
+            * ``"mHW"``
+                  The hardwired gradient to fall back on.
+            * ``"mODR"``
+                  The gradient calculated by the orthogonal distance
+                  regression fitting.
+            * ``"mODR2"``
+                  The gradient calculated by the second iteration of 
+                  orthogonal distance regression fitting.
+            * ``"xMin`"``
+                  The x minimum of the box used in the fit.
+            * ``"xMax"``
+                  The x maximum of the box used in the fit.
+            * ``"yMin"``
+                  The y minimum of the box used in the fit.
+            * ``"yMax"``
+                  The y maximum of the box used in the fit.
+            * ``"mPerp"``
+                  The gradient of the line perpendicular to the line from 
+                  the second ODR fit.
+            * ``"bPerpMin"``
+                  The intercept of the perpendicular line that goes through xMin.
+            * ``"bPerpMax"``
+                  The intercept of the perpendicular line that goes through xMax.
+            * ``f"{self.plotName}_sigmaMAD"``
+                  The sigma mad of the distances to the line fit.
+            * ``f"{self.identity or ''}_median"``
+                  The median of the distances to the line fit.
+            * ``f"{self.identity or ''}_hardwired_sigmaMAD"``
+                  The sigma mad of the distances to the initial fit.
+            * ``f"{self.identity or ''}_hardwired_median"``
+                  The median of the distances to the initial fit.
 
         Returns
         -------
@@ -187,23 +189,29 @@ class ColorColorFitPlot(PlotAction):
 
         The quantities that are expected to be present are: 
 
-        Statistics that are shown on the plot or used by the plotting code:
+         * Statistics that are shown on the plot or used by the plotting code:
+               approxMagDepth,
+               f"{self.plotName}_sigmaMAD", 
+               f"{self.plotName}_sigmaMAD", 
+               f"{self.plotName}_sigmaMAD",
+               f"{self.plotName}_sigmaMAD", 
+               f"{self.plotName}_sigmaMAD"
 
-        approxMagDepth,
-        f"{self.plotName}_sigmaMAD", 
-        f"{self.plotName}_sigmaMAD", 
-        f"{self.plotName}_sigmaMAD",
-        f"{self.plotName}_sigmaMAD", 
-        f"{self.plotName}_sigmaMAD"
+         * Parameters from the fitting code that are illustrated on the plot:
+               xMin, xMax, yMin, yMax, mHW, bHW, mODR, bODR,
+               yBoxMin, yBoxMax, bPerpMin, bPerpMax, mODR2, bODR2, mPerp
 
-        Parameters from the fitting code that are illustrated on the plot:
+         * The main inputs to plot:
+               x, y, mag
 
-        xMin, xMax, yMin, yMax, mHW, bHW, mODR, bODR,
-        yBoxMin, yBoxMax, bPerpMin, bPerpMax, mODR2, bODR2, mPerp
+        Examples
+        --------
+        An example of the plot produced from this code is here: 
 
-        The main inputs to plot:
+        ..image:: /sdf/group/rubin/u/sr525/repos/analysis_tools/doc/_static/analsysis_tools/stellarLocusExample.png
 
-        x, y, mag
+        For a detailed example of how to make a plot from the command line 
+        please see the :doc:`getting started guide<gettingStartedGuide>`.
         """
 
         # Define a new colormap

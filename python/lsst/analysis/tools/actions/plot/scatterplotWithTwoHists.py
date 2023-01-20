@@ -255,14 +255,15 @@ class ScatterPlotWithTwoHists(PlotAction):
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-            ``"run"``
-            The output run for the plots (`str`).
-            ``"skymap"``
-            The type of skymap used for the data (`str`).
-            ``"filter"``
-            The filter used for this data (`str`).
-            ``"tract"``
-            The tract that the data comes from (`str`).
+
+            * ``"run"``
+                The output run for the plots (`str`).
+            * ``"skymap"``
+                The type of skymap used for the data (`str`).
+            * ``"filter"``
+                The filter used for this data (`str`).
+            * ``"tract"``
+                The tract that the data comes from (`str`).
         sumStats : `dict`
             A dictionary where the patchIds are the keys which store the R.A.
             and dec of the corners of the patch, along with a summary
@@ -290,21 +291,21 @@ class ScatterPlotWithTwoHists(PlotAction):
         then you will need to provide the following things in the 
         input data.
 
-        If stars is in self.plotTypes:
-        xStars, yStars, starsHighSNMask, starsLowSNMask and 
-        {band}_highSNStars_{name}, {band}_lowSNStars_{name} 
-        where name is median, sigma_Mad, count and approxMag.
+        * If stars is in self.plotTypes:
+            xStars, yStars, starsHighSNMask, starsLowSNMask and 
+            {band}_highSNStars_{name}, {band}_lowSNStars_{name} 
+            where name is median, sigma_Mad, count and approxMag.
 
-        If it is for galaxies/unknowns then replace stars in 
-        the above names with galaxies/unknowns.
+        * If it is for galaxies/unknowns then replace stars in the above 
+          names with galaxies/unknowns.
 
-        if it is for any (which covers all the points) then it 
-        becomes, x, y, and any instead of stars for the other 
-        parameters given above.
+        * If it is for any (which covers all the points) then it 
+          becomes, x, y, and any instead of stars for the other 
+          parameters given above.
 
-        In every case it is expected that data contains:
-        lowSnThreshold, highSnThreshold and patch 
-        (if the summary plot is being plotted).
+        * In every case it is expected that data contains:
+            lowSnThreshold, highSnThreshold and patch 
+            (if the summary plot is being plotted).
         """
         if not self.plotTypes:
             noDataFig = Figure()

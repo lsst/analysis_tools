@@ -1,3 +1,5 @@
+.. _gettingStartedGuide:
+
 Getting Started Guide
 =====================
 

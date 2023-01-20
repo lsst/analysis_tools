@@ -13,6 +13,12 @@ Vector Actions
 .. automodapi:: lsst.analysis.tools.actions.vector
     :no-inheritance-diagram:
     :no-inherited-members:
+    :skip: ConfigurableActionField
+    :skip: ConfigurableActionStructField
+    :skip: DictField
+    :skip: Field
+    :skip: Vector
+    :skip: VectorAction
 
 Scalar Actions
 ==============
@@ -20,3 +26,9 @@ Scalar Actions
 .. automodapi:: lsst.analysis.tools.actions.scalar
     :no-inheritance-diagram:
     :no-inherited-members:
+    :skip: ChoiceField
+    :skip: Field
+    :skip: Scalar
+    :skip: ScalarAction
+    :skip: Vector
+

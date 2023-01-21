@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ("DiaSourceTableCcdVisitAnalysisConfig", "DiaSourceTableCcdVisitAnalysisTask")
+
 from lsst.pipe.base import connectionTypes as ct
 
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask

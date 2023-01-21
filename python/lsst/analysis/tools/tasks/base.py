@@ -31,6 +31,8 @@ Subclasses of these tasks should specify specific datasets to consume in their
 connection classes and should specify a unique name
 """
 
+__all__ = ("AnalysisBaseConfig", "AnalysisPipelineTask")
+
 from collections import abc
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, MutableMapping, cast
 

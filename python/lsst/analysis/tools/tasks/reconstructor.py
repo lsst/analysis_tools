@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ["reconstructAnalysisTools", "getPlotDatasetTypeNames"]
+__all__ = ("reconstructAnalysisTools", "getPlotDatasetTypeNames")
 
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 

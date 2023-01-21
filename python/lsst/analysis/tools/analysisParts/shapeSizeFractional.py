@@ -21,6 +21,11 @@
 
 from __future__ import annotations
 
+__all__ = (
+    "ShapeSizeFractionalScalars",
+    "BasePsfResidualMixin",
+)
+
 from lsst.pex.config import Field
 from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 

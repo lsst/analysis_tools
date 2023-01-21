@@ -20,17 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+__all__ = ("SummaryStatisticAction",)
+
 from lsst.pex.config import Field
 
 from ...interfaces import KeyedData
-from ...statistics import sigmaMad
 from ..scalar import CountAction, MedianAction, SigmaMadAction
 from .keyedDataActions import KeyedScalars
-
-__all__ = (
-    "sigmaMad",
-    "SummaryStatisticAction",
-)
 
 
 class SummaryStatisticAction(KeyedScalars):

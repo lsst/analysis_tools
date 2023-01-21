@@ -21,9 +21,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Mapping
-
 __all__ = ("XYPlot",)
+
+from typing import TYPE_CHECKING, Any, Mapping
 
 import matplotlib.pyplot as plt
 from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError

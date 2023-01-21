@@ -1,3 +1,5 @@
+__all__ = ("BasePsfApRatio",)
+
 from lsst.analysis.tools.actions.vector import DivideVector, LoadVector
 from lsst.analysis.tools.interfaces import AnalysisTool
 

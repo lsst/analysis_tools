@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ("CatalogMatchConfig", "CatalogMatchTask", "AstropyMatchConfig", "AstropyMatchTask")
+
 import astropy.units as units
 import lsst.geom
 import lsst.pex.config as pexConfig
@@ -38,8 +40,6 @@ from ..actions.vector import (
     StarSelector,
     VisitPlotFlagSelector,
 )
-
-__all__ = ["CatalogMatchConfig", "CatalogMatchTask", "AstropyMatchConfig", "AstropyMatchTask"]
 
 
 class AstropyMatchConfig(pexConfig.Config):

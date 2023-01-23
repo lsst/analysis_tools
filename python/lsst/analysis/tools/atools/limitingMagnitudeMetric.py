@@ -20,8 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("FiveSigmaPointSourceDepthMetric",)
+__all__ = ("FiveSigmaPointSourceDepthMetric", "PointSourceDepthMetric")
 
+from lsst.pex.config import Field
+
+from ..actions.keyedData.limitingMagnitude import depthCalculation
 from ..actions.scalar.scalarActions import MeanAction, MedianAction
 from ..actions.vector.selectors import SnSelector, StarSelector
 from ..actions.vector.vectorActions import ConvertFluxToMag
@@ -58,3 +61,30 @@ class FiveSigmaPointSourceDepthMetric(AnalysisTool):
             "median5sigmaDepth": "mag",
             "mean5sigmaDepth": "mag",
         }
+
+
+class PointSourceDepthMetric(AnalysisMetric):
+    """Calculate the point source depth of a visit to a signal to nosie specified by signalToNoise,"""
+
+    signalToNoise = Field[float](
+        doc="signal to nose value will compute mag where snr equals this value", default=5.0
+    )
+    fluxType = Field[str](doc="type of flux to use for calculation", default="psfFlux")
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "extendedness"
+
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey=self.fluxType)
+        self.process.buildActions.magErrs = ConvertFluxErrToMagErr(
+            fluxKey=self.fluxType, fluxErrKey=self.fluxType + "Err"
+        )
+
+        self.process.calculateActions.medianDepth = depthCalculation(signalToNoise=self.signalToNoise)
+
+        self.produce.newNames = {
+            "medianDepth": "median{:0.2g}SigmaDepth".format(self.signalToNoise),
+        }
+        self.produce.units = {"medianDepth": "mag"}

@@ -153,6 +153,27 @@ class ConvertFluxToMag(VectorAction):
                 mags *= 1000
             return mags
 
+class ConvertFluxErrToMagErr(VectorAction):
+    "Turn flux errors in nano janskies into magnitude errors"
+    fluxKey = Field[str](doc="column key to use for this transformation")
+    fluxErrKey = Field[str](doc="column key to use for this transformation")
+    returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.fluxKey, Vector), (self.fluxErrKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        with np.warnings.catch_warnings():  # type: ignore
+            np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
+            np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
+            flux = cast(Vector, data[self.fluxKey.format(**kwargs)])
+            fluxErr = cast(Vector, data[self.fluxErrKey.format(**kwargs)])
+
+            magerrs = np.array(np.abs(fluxErr / (-0.4 * flux * np.log(10))))  # type: ignore
+            if self.returnMillimags:
+                magerrs *= 1000
+            return magerrs
+
 
 class ConvertUnits(VectorAction):
     """Convert the units of a vector."""

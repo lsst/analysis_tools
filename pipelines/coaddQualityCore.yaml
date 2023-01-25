@@ -35,8 +35,6 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:
       connections.outputName: objectTableSurvey
-      # If plots.X is changed, the corresponding name in RhoStatisticsPlot
-      # must also be changed. TODO: DM-37431.
       plots.rhoStatisticsPlot: RhoStatisticsPlot
       bands: ["i"]
       python: |

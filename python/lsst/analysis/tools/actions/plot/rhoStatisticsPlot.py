@@ -115,12 +115,16 @@ class RhoStatisticsPlotAction(PlotAction):
         **kwargs
             Additional keyword arguments to pass to the plot
         """
+        # The prefix for the plot names must match the prefix in the pipeline.
+        # This is therefore obtained from the plotInfo dict.
+        default_prefix = "rhoStatisticsPlot"
+        prefix = plotInfo.get("plotName", default_prefix) if plotInfo else default_prefix
+
         fig_dict: dict[str, Figure] = {}
         for rho_name in ("rho1", "rho2", "rho3", "rho4", "rho5"):
             rho: XYPlot = self.rhoPlots[rho_name]
-            # The prefix below must match the prefix in the pipeline yaml.
-            # TODO: This will be fixed in DM-37431.
-            rhoPlot_name = f"rhoStatisticsPlot_{rho_name}"
+            rhoPlot_name = f"{prefix}_{rho_name}"
+
             subdata = {
                 "x": data[rho_name].meanr,  # type: ignore
                 "y": data[rho_name].xip,  # type: ignore

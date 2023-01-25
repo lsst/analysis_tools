@@ -69,15 +69,16 @@ class depthCalculation(KeyedDataAction):
         delta_log_magerr = np.log10(magErrVector[match["i1"]]) - np.log10(magErrVector[match["i2"]])
         # import pdb; pdb.set_trace()
         # old = np.seterr(divide='ignore',invalid='ignore')
+        np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
+        np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
         ratio = delta_log_magerr / delta_mag
         cut_nan_inf = np.isfinite(ratio) & (delta_mag > 0.5)
 
         # np.seterr(**old)
 
-        # if cut_nan_inf.sum() < 2:
-        #     logger.warn("Insufficent objects in %s-band"%band)
-        #     ret[band] = [np.array([],dtype=int),np.array([])]
-        #     continue
+        if cut_nan_inf.sum() < 2:
+            # logger not enough sources
+            return np.nan
 
         kde = gaussian_kde(ratio[cut_nan_inf])
 

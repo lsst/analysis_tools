@@ -102,7 +102,7 @@ class RhoStatisticsPlotAction(PlotAction):
         ----------
         data : `~pandas.core.frame.DataFrame`
             The catalog containing various rho statistics.
-        plotInfo : `dict`
+        plotInfo : `dict`, optional
             A dictionary of information about the data being plotted with keys:
                 ``"run"``
                     The output run for the plots (`str`).

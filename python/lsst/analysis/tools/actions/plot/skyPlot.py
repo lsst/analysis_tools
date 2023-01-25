@@ -21,6 +21,8 @@
 
 from __future__ import annotations
 
+__all__ = ("SkyPlot",)
+
 from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects

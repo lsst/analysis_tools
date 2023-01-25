@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+__all__ = (
+    "StellarLocusBase",
+    "WPerpPSF",
+    "WPerpCModel",
+    "XPerpPSF",
+    "XPerpCModel",
+    "YPerpPSF",
+    "YPerpCModel",
+)
+
 from ..actions.keyedData.stellarLocusFit import StellarLocusFitAction
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (

@@ -1,3 +1,5 @@
+__all__ = ("CentralTendency",)
+
 from lsst.analysis.tools.actions.scalar import MeanAction, MedianAction
 from lsst.analysis.tools.interfaces import AnalysisMetric
 

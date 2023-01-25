@@ -21,6 +21,8 @@
 
 from __future__ import annotations
 
+__all__ = ("ColorColorFitPlot",)
+
 from typing import Mapping, cast
 
 import matplotlib.patheffects as pathEffects

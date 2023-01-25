@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CcdVisitTableAnalysisTask",)
+__all__ = ("CcdVisitTableAnalysisConfig", "CcdVisitTableAnalysisTask")
 
 from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
 from lsst.pex.config import Field

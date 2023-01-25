@@ -20,9 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
+    "ObjectTableTractAnalysisConfig",
     "ObjectTableTractAnalysisTask",
-]
+)
 
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap

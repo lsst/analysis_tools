@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ("SourceTableVisitAnalysisConfig", "SourceTableVisitAnalysisTask")
+
 from lsst.pipe.base import connectionTypes as ct
 
 from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask

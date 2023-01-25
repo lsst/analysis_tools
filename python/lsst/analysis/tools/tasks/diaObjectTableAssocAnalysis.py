@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from lsst.pipe.base import connectionTypes as ct
-
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
-__all__ = [
+__all__ = (
     "DiaObjectTableAnalysisConnections",
     "DiaObjectTableAnalysisConfig",
     "DiaObjectTableAssociatedSourcesTask",
-]
+)
+
+from lsst.pipe.base import connectionTypes as ct
+
+from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class DiaObjectTableAnalysisConnections(

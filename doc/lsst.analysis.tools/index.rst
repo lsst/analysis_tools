@@ -49,3 +49,4 @@ Python API reference
 .. automodapi:: lsst.analysis.tools
    :no-main-docstr:
    :no-inheritance-diagram:
+   :include-all-objects:

@@ -46,7 +46,12 @@ You can find Jira issues for this module under the `analysis_tools <https://jira
 Python API reference
 ====================
 
+.. NOTE: Skip the type definitions that cause the pipelines docs build to fail.
 .. automodapi:: lsst.analysis.tools
    :no-main-docstr:
    :no-inheritance-diagram:
    :include-all-objects:
+   :skip: Vector
+   :skip: KeyedData
+   :skip: KeyedDataSchema
+   :skip: KeyedDataTypes

@@ -20,13 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("StellarPhotometricRepeatabilityMetric",)
+__all__ = ("StellarPhotometricRepeatabilityHistPlot",)
 
+from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
 from ..analysisParts.photometricRepeatability import StellarPhotometricRepeatabilityMixin
-from ..interfaces import AnalysisMetric
+from ..interfaces import AnalysisPlot
 
 
-class StellarPhotometricRepeatabilityMetric(AnalysisMetric, StellarPhotometricRepeatabilityMixin):
+class StellarPhotometricRepeatabilityHistPlot(AnalysisPlot, StellarPhotometricRepeatabilityMixin):
     """Compute photometric repeatability from multiple measurements of a set of
     stars. First, a set of per-source quality criteria are applied. Second,
     the individual source measurements are grouped together by object index
@@ -39,13 +40,16 @@ class StellarPhotometricRepeatabilityMetric(AnalysisMetric, StellarPhotometricRe
     def setDefaults(self):
         super().setDefaults()
 
-        self.produce.units = {  # type: ignore
-            "photRepeatStdev": "mmag",
-            "photRepeatOutlier": "percent",
-            "photRepeatNsources": "ct",
-        }
-        self.produce.newNames = {
-            "photRepeatStdev": "{band}_stellarPhotRepeatStdev",
-            "photRepeatOutlier": "{band}_stellarPhotRepeatOutlierFraction",
-            "photRepeatNsources": "{band}_ct",
-        }
+        self.produce = HistPlot()
+
+        self.produce.panels["panel_rms"] = HistPanel()
+
+        self.produce.panels["panel_rms"].statsPanel = HistStatsPanel()
+        self.produce.panels["panel_rms"].statsPanel.statsLabels = ["N", "PA1", "PF1 %"]
+        self.produce.panels["panel_rms"].statsPanel.stat1 = ["photRepeatNsources"]
+        self.produce.panels["panel_rms"].statsPanel.stat2 = ["photRepeatStdev"]
+        self.produce.panels["panel_rms"].statsPanel.stat3 = ["photRepeatOutlier"]
+
+        self.produce.panels["panel_rms"].referenceValue = self.PA2Value
+        self.produce.panels["panel_rms"].label = "rms (mmag)"
+        self.produce.panels["panel_rms"].hists = dict(perGroupStdevFiltered="Filtered per group rms")

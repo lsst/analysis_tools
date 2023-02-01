@@ -41,11 +41,11 @@ if TYPE_CHECKING:
 
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import ListField
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.base.butlerQuantumContext import ButlerQuantumContext
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 
 from ..analysisMetrics.metricMeasurementBundle import MetricMeasurementBundle
 from ..interfaces import AnalysisMetric, AnalysisPlot, KeyedData

@@ -27,7 +27,7 @@ from typing import cast
 
 import numpy as np
 from lsst.pex.config import Field
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
 from ..keyedData.summaryStatistics import SummaryStatisticAction

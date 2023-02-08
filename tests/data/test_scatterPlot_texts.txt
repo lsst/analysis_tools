@@ -1,0 +1,34 @@
+None
+S/N > 50 Stats (mag < 22.23)[newline]Median: -1.679    $\sigma_{MAD}$: 12.26    N$_{points}$: 77
+S/N > 20 Stats (mag < 24.03)[newline]Median: -1.153    $\sigma_{MAD}$: 34.02    N$_{points}$: 425
+S/N > 50 Stats (mag < 21.31)[newline]Median: 0.5209    $\sigma_{MAD}$: 11.38    N$_{points}$: 5
+S/N > 20 Stats (mag < 23.54)[newline]Median: -5.987    $\sigma_{MAD}$: 38.77    N$_{points}$: 70
+test
+test[newline]PhotoCalib: None, Astrometry: None[newline]Table: test, Bands: , S/N: N/A
+
+
+mag
+mag meas - ref
+Running Median
+$\sigma_{MAD}$
+2$\sigma_{MAD}$
+3$\sigma_{MAD}$
+High SN
+Running Median
+$\sigma_{MAD}$
+2$\sigma_{MAD}$
+3$\sigma_{MAD}$
+High SN
+Low SN
+
+
+Number
+All (23241)
+Galaxies (15770)
+Stars (7471)
+
+Number
+
+
+
+Number of Points Per Bin

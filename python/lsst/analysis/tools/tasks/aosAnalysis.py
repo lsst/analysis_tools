@@ -18,13 +18,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from .analysisMetrics import *
-from .aosMetrics import *
-from .apDiaSourceMetrics import *
-from .apSsoMetrics import *
-from .limitingMagnitudeMetric import *
-from .metricMeasurementBundle import *
-from .photometricRepeatabilityMetrics import *
-from .psfResidualMetrics import *
-from .skyFluxStatisticMetrics import *
-from .sourceMetrics import *
+from __future__ import annotations
+
+__all__ = ("aosAnalysisConnections", "aosAnalysisConfig", "aosAnalysisTask")
+
+from lsst.pipe.base import connectionTypes as ct
+
+from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+
+
+class aosAnalysisConnections(
+    AnalysisBaseConnections,
+    dimensions=("visit", "detector", "instrument"),
+):
+    data = ct.Input(
+        doc="Zernikes from detector.",
+        name="zernikeEstimateAvg",
+        storageClass="NumpyArray",
+        dimensions=("visit", "detector", "instrument"),
+        deferLoad=True,
+    )
+
+
+class aosAnalysisConfig(AnalysisBaseConfig, pipelineConnections=aosAnalysisConnections):
+    pass
+
+
+class aosAnalysisTask(AnalysisPipelineTask):
+
+    ConfigClass = aosAnalysisConfig
+    _DefaultName = "aosAnalysis"

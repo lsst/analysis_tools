@@ -16,7 +16,6 @@ class DiaObjectTableAnalysisConnections(
     dimensions=("visit", "band"),
     defaultTemplates={"coaddName": "deep", "fakesType": ""},
 ):
-
     data = ct.Input(
         doc="CcdVisit-based DiaObject table to load from the butler",
         name="{fakesType}{coaddName}Diff_diaObject",

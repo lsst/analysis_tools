@@ -43,7 +43,6 @@ from ..actions.vector import (
 
 
 class AstropyMatchConfig(pexConfig.Config):
-
     maxDistance = pexConfig.Field[float](
         doc="Max distance between matches in arcsec",
         default=1.0,
@@ -113,7 +112,6 @@ class CatalogMatchConnections(
     dimensions=("tract", "skymap"),
     defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "gaia_dr2_20200414"},
 ):
-
     catalog = pipeBase.connectionTypes.Input(
         doc="The tract-wide catalog to make plots from.",
         storageClass="DataFrame",
@@ -147,7 +145,6 @@ class CatalogMatchConnections(
 
 
 class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=CatalogMatchConnections):
-
     matcher = pexConfig.ConfigurableField[pipeBase.Task](
         target=AstropyMatchTask, doc="Task for matching refCat and SourceCatalog"
     )
@@ -318,7 +315,6 @@ class CatalogMatchVisitConnections(
     dimensions=("visit",),
     defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr2_20200414"},
 ):
-
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="DataFrame",
@@ -421,7 +417,7 @@ class CatalogMatchVisitTask(CatalogMatchTask):
         # Get convex hull around the detectors, then get its center and radius
         corners = []
         for visSum in visitSummaryTable:
-            for (ra, dec) in zip(visSum["raCorners"], visSum["decCorners"]):
+            for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())

@@ -12,7 +12,6 @@ class DiaSourceTableCcdVisitAnalysisConnections(
     dimensions=("visit", "band"),
     defaultTemplates={"coaddName": "deep", "fakesType": "fakes_"},
 ):
-
     data = ct.Input(
         doc="CcdVisit-based DiaSource table to load from the butler",
         name="{fakesType}{coaddName}Diff_assocDiaSrc",

@@ -308,7 +308,6 @@ class BarPlot(PlotAction):
         current_i = 0
 
         for i in x_values:
-
             # Number of repeating values
             n_repeating = x_values.count(i)
             width.append(1.0 / n_repeating)

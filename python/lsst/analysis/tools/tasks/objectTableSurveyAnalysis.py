@@ -41,7 +41,6 @@ class ObjectTableSurveyAnalysisConnections(
     dimensions=("skymap",),
     defaultTemplates={"input": "deepCoadd"},
 ):
-
     skymap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",
         name="skyMap",

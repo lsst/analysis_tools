@@ -6,7 +6,6 @@ tasks:
     config:
       connections.outputName: objectTableExtended
       # set plots to run
-      plots.ap12PsfSkyPlot: Ap12PsfSkyPlot
+      atools.ap12PsfSkyPlot: Ap12PsfSkyPlot
       python: |
-        from lsst.analysis.tools.analysisPlots import *
-        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.atools import *

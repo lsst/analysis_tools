@@ -5,42 +5,42 @@ tasks:
     class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
     config:
       connections.outputName: visitTableColumnValidate
-      metrics.validPsfFluxMetric: ValidFracColumnMetric
-      metrics.validPsfFluxMetric.vectorKey: 'psfFlux'
-      metrics.validPsfFluxMetric.applyContext: VisitContext
-      metrics.validAp03FluxMetric: ValidFracColumnMetric
-      metrics.validAp03FluxMetric.vectorKey: 'ap03Flux'
-      metrics.validAp03FluxMetric.applyContext: VisitContext
-      metrics.validAp06FluxMetric: ValidFracColumnMetric
-      metrics.validAp06FluxMetric.vectorKey: 'ap06Flux'
-      metrics.validAp06FluxMetric.applyContext: VisitContext
-      metrics.validAp09FluxMetric: ValidFracColumnMetric
-      metrics.validAp09FluxMetric.vectorKey: 'ap09Flux'
-      metrics.validAp09FluxMetric.applyContext: VisitContext
-      metrics.validAp12FluxMetric: ValidFracColumnMetric
-      metrics.validAp12FluxMetric.vectorKey: 'ap12Flux'
-      metrics.validAp12FluxMetric.applyContext: VisitContext
-      metrics.validAp17FluxMetric: ValidFracColumnMetric
-      metrics.validAp17FluxMetric.vectorKey: 'ap17Flux'
-      metrics.validAp17FluxMetric.applyContext: VisitContext
-      metrics.validAp25FluxMetric: ValidFracColumnMetric
-      metrics.validAp25FluxMetric.vectorKey: 'ap25Flux'
-      metrics.validAp25FluxMetric.applyContext: VisitContext
-      metrics.validAp35FluxMetric: ValidFracColumnMetric
-      metrics.validAp35FluxMetric.vectorKey: 'ap35Flux'
-      metrics.validAp35FluxMetric.applyContext: VisitContext
-      metrics.validAp50FluxMetric: ValidFracColumnMetric
-      metrics.validAp50FluxMetric.vectorKey: 'ap50Flux'
-      metrics.validAp50FluxMetric.applyContext: VisitContext
-      metrics.validAp70FluxMetric: ValidFracColumnMetric
-      metrics.validAp70FluxMetric.vectorKey: 'ap70Flux'
-      metrics.validAp70FluxMetric.applyContext: VisitContext
-      metrics.validCalibFluxMetric: ValidFracColumnMetric
-      metrics.validCalibFluxMetric.vectorKey: 'calibFlux'
-      metrics.validCalibFluxMetric.applyContext: VisitContext
-      metrics.validGaussianFluxMetric: ValidFracColumnMetric
-      metrics.validGaussianFluxMetric.vectorKey: 'gaussianFlux'
-      metrics.validGaussianFluxMetric.applyContext: VisitContext
+      atools.validPsfFluxMetric: ValidFracColumnMetric
+      atools.validPsfFluxMetric.vectorKey: 'psfFlux'
+      atools.validPsfFluxMetric.applyContext: VisitContext
+      atools.validAp03FluxMetric: ValidFracColumnMetric
+      atools.validAp03FluxMetric.vectorKey: 'ap03Flux'
+      atools.validAp03FluxMetric.applyContext: VisitContext
+      atools.validAp06FluxMetric: ValidFracColumnMetric
+      atools.validAp06FluxMetric.vectorKey: 'ap06Flux'
+      atools.validAp06FluxMetric.applyContext: VisitContext
+      atools.validAp09FluxMetric: ValidFracColumnMetric
+      atools.validAp09FluxMetric.vectorKey: 'ap09Flux'
+      atools.validAp09FluxMetric.applyContext: VisitContext
+      atools.validAp12FluxMetric: ValidFracColumnMetric
+      atools.validAp12FluxMetric.vectorKey: 'ap12Flux'
+      atools.validAp12FluxMetric.applyContext: VisitContext
+      atools.validAp17FluxMetric: ValidFracColumnMetric
+      atools.validAp17FluxMetric.vectorKey: 'ap17Flux'
+      atools.validAp17FluxMetric.applyContext: VisitContext
+      atools.validAp25FluxMetric: ValidFracColumnMetric
+      atools.validAp25FluxMetric.vectorKey: 'ap25Flux'
+      atools.validAp25FluxMetric.applyContext: VisitContext
+      atools.validAp35FluxMetric: ValidFracColumnMetric
+      atools.validAp35FluxMetric.vectorKey: 'ap35Flux'
+      atools.validAp35FluxMetric.applyContext: VisitContext
+      atools.validAp50FluxMetric: ValidFracColumnMetric
+      atools.validAp50FluxMetric.vectorKey: 'ap50Flux'
+      atools.validAp50FluxMetric.applyContext: VisitContext
+      atools.validAp70FluxMetric: ValidFracColumnMetric
+      atools.validAp70FluxMetric.vectorKey: 'ap70Flux'
+      atools.validAp70FluxMetric.applyContext: VisitContext
+      atools.validCalibFluxMetric: ValidFracColumnMetric
+      atools.validCalibFluxMetric.vectorKey: 'calibFlux'
+      atools.validCalibFluxMetric.applyContext: VisitContext
+      atools.validGaussianFluxMetric: ValidFracColumnMetric
+      atools.validGaussianFluxMetric.vectorKey: 'gaussianFlux'
+      atools.validGaussianFluxMetric.applyContext: VisitContext
       python: |
-        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

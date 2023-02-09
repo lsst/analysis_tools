@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable
 from lsst.pipe.base.connections import PipelineTaskConnections, iterConnections
 from lsst.pipe.base.connectionTypes import BaseConnection
 
-from .base import AnalysisBaseConfig
+from ..interfaces import AnalysisBaseConfig
 
 if TYPE_CHECKING:
     from lsst.daf.butler import Butler, DataId

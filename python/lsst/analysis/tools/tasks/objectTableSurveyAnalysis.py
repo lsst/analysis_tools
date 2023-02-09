@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 from lsst.pipe.base import connectionTypes as ct
 
 from ..actions.plot.plotUtils import shorten_list
-from ..interfaces import KeyedData
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, KeyedData
 
 
 class ObjectTableSurveyAnalysisConnections(

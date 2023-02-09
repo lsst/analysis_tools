@@ -24,7 +24,7 @@ from unittest import TestCase, main
 
 import lsst.utils.tests
 import numpy as np
-from lsst.analysis.tools.analysisMetrics.diffMatchedMetrics import (
+from lsst.analysis.tools.atools import (
     MatchedRefCoaddCModelFluxMetric,
     MatchedRefCoaddMetric,
     MatchedRefCoaddPositionMetric,
@@ -42,6 +42,7 @@ class TestDiffMatched(TestCase):
         for context in self.contexts:
             tester = type_metric(**kwargs)
             tester.applyContext(context)
+            tester.finalize()
 
             keys = list(k[0] for k in tester.getInputSchema())
             self.assertGreater(len(keys), 0)
@@ -57,6 +58,7 @@ class TestDiffMatched(TestCase):
         with self.assertRaises(ValueError):
             tester({})
         tester = MatchedRefCoaddMetric(unit="", name_prefix="")
+        tester.finalize()
         self.assertGreater(len(list(tester.getInputSchema())), 0)
         self.assertGreater(len(list(tester.configureMetrics())), 0)
 

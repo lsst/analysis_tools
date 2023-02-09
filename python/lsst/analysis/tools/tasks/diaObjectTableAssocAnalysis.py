@@ -8,7 +8,7 @@ __all__ = (
 
 from lsst.pipe.base import connectionTypes as ct
 
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class DiaObjectTableAnalysisConnections(

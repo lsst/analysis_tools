@@ -5,41 +5,30 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
       connections.outputName: objectTableCore
-      plots.shapeSizeFractionalDiffScatterPlot: ShapeSizeFractionalDiffScatterPlot
-      metrics.shapeSizeFractionalMetric: ShapeSizeFractionalMetric
-      plots.e1DiffScatterPlot: E1DiffScatterPlot
-      metrics.e1DiffScatterMetric: E1DiffMetric
-      plots.e2DiffScatterPlot: E2DiffScatterPlot
-      metrics.e2DiffScatterMetric: E2DiffMetric
-      metrics.skyFluxStatisticMetric: SkyFluxStatisticMetric
-      metrics.skyFluxStatisticMetric.applyContext: CoaddContext
-      plots.wPerpPSFPlot: WPerpPSFPlot
-      metrics.wPerpPSFMetric: WPerpPSFMetric
-      plots.wPerpCModelPlot: WPerpCModelPlot
-      metrics.wPerpCModelMetric: WPerpCModelMetric
-      plots.xPerpPSFPlot: XPerpPSFPlot
-      metrics.xPerpPSFMetric: XPerpPSFMetric
-      plots.xPerpCModelPlot: XPerpCModelPlot
-      metrics.xPerpCModelMetric: XPerpCModelMetric
-      plots.yPerpPSFPlot: YPerpPSFPlot
-      metrics.yPerpPSFMetric: YPerpPSFMetric
-      plots.yPerpCModelPlot: YPerpCModelPlot
-      metrics.yPerpCModelMetric: YPerpCModelMetric
-      plots.skyObjectSkyPlot: SkyObjectSkyPlot
-      plots.skyObjectHistPlot: SkyObjectHistPlot
+      atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiff
+      atools.e1Diff: E1Diff
+      atools.e2Diff: E2Diff
+      atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
+      atools.skyFluxStatisticMetric.applyContext: CoaddContext
+      atools.wPerpPSFP: WPerpPSF
+      atools.wPerpCModel: WPerpCModel
+      atools.xPerpPSFP: XPerpPSF
+      atools.xPerpCModel: XPerpCModel
+      atools.yPerpPSF: YPerpPSF
+      atools.yPerpCModel: YPerpCModel
+      atools.skyObjectSkyPlot: SkyObjectSkyPlot
+      atools.skyObjectHistPlot: SkyObjectHistPlot
       python: |
-        from lsst.analysis.tools.analysisPlots import *
-        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
   analyzeObjectTableSurveyCore:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:
       connections.outputName: objectTableSurvey
-      plots.rhoStatisticsPlot: RhoStatisticsPlot
+      plots.rhoStatistics: RhoStatistics
       bands: ["i"]
       python: |
-        from lsst.analysis.tools.analysisPlots import *
-        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
         from lsst.analysis.tools.actions.plot import *
   catalogMatchTract:

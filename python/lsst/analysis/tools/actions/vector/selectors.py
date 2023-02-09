@@ -48,6 +48,16 @@ from lsst.pex.config.listField import ListField
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
+class SelectorBase(VectorAction):
+    plotLabelKey = Field[str](
+        doc="Key to use when populating plot info, ignored if empty string", optional=True, default=""
+    )
+
+    def _addValueToPlotInfo(self, value, **kwargs):
+        if "plotInfo" in kwargs and self.plotLabelKey:
+            kwargs["plotInfo"][self.plotLabelKey] = value
+
+
 class FlagSelector(VectorAction):
     """The base flag selector to use to select valid sources for QA"""
 
@@ -197,7 +207,7 @@ class RangeSelector(VectorAction):
         return np.array(mask)
 
 
-class SnSelector(VectorAction):
+class SnSelector(SelectorBase):
     """Selects points that have S/N > threshold in the given flux type"""
 
     fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
@@ -227,6 +237,7 @@ class SnSelector(VectorAction):
             A mask of the objects that satisfy the given
             S/N cut.
         """
+        self._addValueToPlotInfo(self.threshold, **kwargs)
         mask: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
@@ -241,7 +252,7 @@ class SnSelector(VectorAction):
         for band in bands:
             fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
             errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-            vec = cast(Vector, data[fluxCol]) / data[errCol]
+            vec = cast(Vector, data[fluxCol]) / cast(Vector, data[errCol])
             temp = (vec > self.threshold) & (vec < self.maxSN)
             if mask is not None:
                 mask &= temp  # type: ignore

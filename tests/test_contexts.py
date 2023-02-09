@@ -24,6 +24,7 @@ import warnings
 from typing import cast
 from unittest import TestCase, main
 
+import astropy.units as apu
 import lsst.utils.tests
 import numpy as np
 from lsst.analysis.tools import (
@@ -32,6 +33,7 @@ from lsst.analysis.tools import (
     KeyedData,
     KeyedDataAction,
     KeyedDataSchema,
+    KeyedResults,
     Scalar,
     ScalarAction,
     Vector,
@@ -40,6 +42,7 @@ from lsst.analysis.tools.actions.scalar import MeanAction, MedianAction
 from lsst.analysis.tools.contexts import Context
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
+from lsst.verify import Measurement
 
 
 class MedianContext(Context):
@@ -107,7 +110,10 @@ class TestAction2(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         result = self.single(data, **kwargs)
-        result *= cast(Scalar, self.multiplier(cast(KeyedData, {"c": result}), **kwargs)["d"])
+        intermediate = self.multiplier(cast(KeyedData, {"c": result}), **kwargs)["d"]
+        intermediate = cast(Measurement, intermediate)
+        assert intermediate.quantity is not None
+        result *= cast(Scalar, intermediate.quantity.value)
         return {"c": result}
 
 
@@ -123,8 +129,9 @@ class TestAction3(KeyedDataAction):
     def divideContext(self):
         self.multiplier = 0.5
 
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        return {"d": cast(Scalar, data["c"]) * self.multiplier}
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedResults:
+        result = Measurement("TestMeasurement", cast(Scalar, data["c"]) * self.multiplier * apu.Unit("count"))
+        return {"d": result}
 
 
 class TestAnalysisTool(AnalysisTool):
@@ -148,23 +155,21 @@ class ContextTestCase(TestCase):
         # verify assignment syntax works to support Yaml
         # normally this should be called as a function in python
         tester.applyContext = MedianContext
-        # cast below, because we are abusing AnalysisTool a bit for testing
-        # the final stage produces KeyedData instead of Measurement of Figure
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            result = cast(KeyedData, tester(self.input))
-        self.assertEqual(result["d"], 361)
+            result = cast(Measurement, tester(self.input)["d"])
+            assert result.quantity is not None
+        self.assertEqual(result.quantity.value, 361)
 
     def testContext2(self):
         tester2 = TestAnalysisTool()
         compound = MeanContext | DivideContext
         tester2.applyContext(compound)
-        # cast below, because we are abusing AnalysisTool a bit for testing
-        # the final stage produces KeyedData instead of Measurement of Figure
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            result = cast(KeyedData, tester2(self.input))
-        self.assertEqual(result["d"], 22.5625)
+            result = cast(Measurement, tester2(self.input)["d"])
+            assert result.quantity is not None
+        self.assertEqual(result.quantity.value, 22.5625)
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

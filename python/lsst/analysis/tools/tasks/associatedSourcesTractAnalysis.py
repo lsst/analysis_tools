@@ -27,7 +27,7 @@ import pandas as pd
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class AssociatedSourcesTractAnalysisConnections(

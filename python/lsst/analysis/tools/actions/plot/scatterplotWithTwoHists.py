@@ -462,12 +462,17 @@ class ScatterPlotWithTwoHists(PlotAction):
             xs = np.array(xs)
             ys = np.array(ys)
             sigMadYs = nansigmaMad(ys)
-            if len(xs) < 2:
+            # plot lone median point if there's not enough data to measure more
+            n_xs = len(xs)
+            if n_xs == 0:
+                continue
+            elif n_xs < 10:
+                xs = np.nanmedian(xs)
                 (medLine,) = ax.plot(
                     xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):.2g}", lw=0.8
                 )
                 linesForLegend.append(medLine)
-                sigMads = np.array([nansigmaMad(ys)] * len(xs))
+                sigMads = np.array([nansigmaMad(ys)])
                 (sigMadLine,) = ax.plot(
                     xs,
                     np.nanmedian(ys) + 1.0 * sigMads,
@@ -669,16 +674,19 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         # Set the scatter plot limits
         # TODO: Make this not work by accident
-        if len(cast(Vector, data["yStars"])) > 0:
+        if "yStars" in data and (len(cast(Vector, data["yStars"])) > 0):
             plotMed = np.nanmedian(cast(Vector, data["yStars"]))
-        else:
+        elif "yGalaxies" in data and (len(cast(Vector, data["yGalaxies"])) > 0):
             plotMed = np.nanmedian(cast(Vector, data["yGalaxies"]))
+        else:
+            plotMed = np.nan
+
         # Ignore types below pending making this not working my accident
         if len(xs) < 2:  # type: ignore
             meds = [np.nanmedian(ys)]  # type: ignore
         if self.yLims:
             ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore
-        else:
+        elif np.isfinite(plotMed):
             numSig = 4
             yLimMin = plotMed - numSig * sigMadYs  # type: ignore
             yLimMax = plotMed + numSig * sigMadYs  # type: ignore
@@ -770,16 +778,16 @@ class ScatterPlotWithTwoHists(PlotAction):
     ) -> None:
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
 
-        totalY: list[Vector] = []
-        if "stars" in self.plotTypes:  # type: ignore
-            totalY.append(cast(Vector, data["yStars"]))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            totalY.append(cast(Vector, data["yGalaxies"]))
-        if "unknown" in self.plotTypes:  # type: ignore
-            totalY.append(cast(Vector, data["yUknown"]))
-        if "any" in self.plotTypes:  # type: ignore
-            totalY.append(cast(Vector, data["y"]))
-        totalYChained = [y for y in chain.from_iterable(totalY) if y == y]
+        totalY: dict[str, Vector] = {}
+        if "stars" in self.plotTypes and "yStars" in data:  # type: ignore
+            totalY["stars"] = cast(Vector, data["yStars"])
+        if "galaxies" in self.plotTypes and "yGalaxies" in data:  # type: ignore
+            totalY["galaxies"] = cast(Vector, data["yGalaxies"])
+        if "unknown" in self.plotTypes and "yUnknown" in data:  # type: ignore
+            totalY["unknown"] = cast(Vector, data["yUnknown"])
+        if "any" in self.plotTypes and "y" in data:  # type: ignore
+            totalY["y"] = cast(Vector, data["y"])
+        totalYChained = [y for y in chain.from_iterable(totalY.values()) if y == y]
 
         # cheat to get the total count while iterating once
         yLimMin, yLimMax = ax.get_ylim()
@@ -792,7 +800,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             orientation="horizontal",
             log=True,
         )
-        if "galaxies" in self.plotTypes:  # type: ignore
+        if "galaxies" in totalY:  # type: ignore
             sideHist.hist(
                 [g for g in cast(Vector, data["yGalaxies"]) if g == g],
                 bins=bins,
@@ -820,7 +828,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 ls=":",
             )
 
-        if "stars" in self.plotTypes:  # type: ignore
+        if "stars" in totalY:  # type: ignore
             sideHist.hist(
                 [s for s in cast(Vector, data["yStars"]) if s == s],
                 bins=bins,

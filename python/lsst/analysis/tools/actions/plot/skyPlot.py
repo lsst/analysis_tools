@@ -309,6 +309,11 @@ class SkyPlot(PlotAction):
                     )
 
         for i, (xs, ys, colorVals, cmap, label) in enumerate(toPlotList):
+            xs = xs[np.isfinite(xs)]
+            ys = ys[np.isfinite(ys)]
+            n_xs = len(xs)
+            if (n_xs < 5) or (n_xs != len(ys)):
+                continue
             if not self.plotOutlines or "tract" not in sumStats.keys():
                 minRa = np.min(xs)
                 maxRa = np.max(xs)

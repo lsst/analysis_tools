@@ -87,17 +87,20 @@ class HistStatsPanel(Config):
     stat1 = ListField[str](
         doc="A list specifying the vector keys of the first scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
     stat2 = ListField[str](
         doc="A list specifying the vector keys of the second scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
     stat3 = ListField[str](
         doc="A list specifying the vector keys of the third scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
 
 
@@ -429,7 +432,13 @@ class HistPlot(PlotAction):
         if self.panels[panel].referenceValue is not None:
             ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
 
-        if self.panels[panel].statsPanel is None:
+        # check if we should use the default stats panel or if a custom one
+        # has been created.
+        default_stats_panel_bool = self.panels[panel].statsPanel.stat1 is None
+        default_stats_panel_bool &= self.panels[panel].statsPanel.stat2 is None
+        default_stats_panel_bool &= self.panels[panel].statsPanel.stat3 is None
+
+        if default_stats_panel_bool:
             stats_dict = {
                 "statLabels": ["N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"],
                 "stat1": nums,

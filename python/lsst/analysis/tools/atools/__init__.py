@@ -1,5 +1,6 @@
 from .apDiaSourceMetrics import *
 from .apSsoMetrics import *
+from .astrometricRepeatability import *
 from .astrometryWithReference import *
 from .coveragePlots import *
 from .diffMatched import *

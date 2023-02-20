@@ -4,8 +4,12 @@ tasks:
   analyzeMatchedVisitCore:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
-      bands: ['g', 'r', 'i', 'z']
       connections.outputName: matchedVisitCore
       atools.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatability
+      atools.stellarPhotometricResiduals: StellarPhotometricResiduals
+      atools.stellarAstrometricResidualsRAFocalPlanePlot: StellarAstrometricResidualsRAFocalPlanePlot
+      atools.stellarAstrometricResidualsDecFocalPlanePlot: StellarAstrometricResidualsDecFocalPlanePlot
+      atools.stellarAstrometricResidualStdDevRAFocalPlanePlot: StellarAstrometricResidualStdDevRAFocalPlanePlot
+      atools.stellarAstrometricResidualStdDevDecFocalPlanePlot: StellarAstrometricResidualStdDevDecFocalPlanePlot
       python: |
         from lsst.analysis.tools.atools import *

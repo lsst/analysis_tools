@@ -35,6 +35,9 @@ __all__ = (
     "ExtinctionCorrectedMagDiff",
     "AstromDiff",
     "PerGroupStatistic",
+    "ResidualWithPerGroupStatistic",
+    "RAcosDec",
+    "ConvertUnits",
 )
 
 import logging
@@ -378,10 +381,14 @@ class AstromDiff(VectorAction):
     radecUnits1 = Field[str](doc="Units for col1", dtype=str, default="degree")
     col2 = Field[str](doc="Column to subtract", dtype=str)
     radecUnits2 = Field[str](doc="Units for col2", dtype=str, default="degree")
+    decCol = Field[str](doc="Declination column to use for RA differences", default=None, optional=True)
     returnMilliArcsecs = Field[bool](doc="Use marcseconds or not?", dtype=bool, default=True)
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.col1, Vector), (self.col2, Vector))
+        inputSchema = ((self.col1, Vector), (self.col2, Vector))
+        if self.decCol is not None:
+            inputSchema += ((self.decCol, Vector),)
+        return inputSchema
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         angle1 = np.array(data[self.col1.format(**kwargs)]) * u.Unit(self.radecUnits1)
@@ -389,6 +396,9 @@ class AstromDiff(VectorAction):
         angle2 = np.array(data[self.col2.format(**kwargs)]) * u.Unit(self.radecUnits2)
 
         angleDiff = angle1 - angle2
+        if self.decCol is not None:
+            coord_dec = data[self.decCol]
+            angleDiff *= np.cos((coord_dec.to_numpy() * u.degree).to(u.radian).value)
 
         if self.returnMilliArcsecs:
             angleDiffValue = angleDiff.to(u.arcsec).value * 1000
@@ -414,3 +424,56 @@ class PerGroupStatistic(VectorAction):
         df = pd.DataFrame({"groupKey": data[self.groupKey], "value": self.buildAction(data, **kwargs)})
         result = df.groupby("groupKey")["value"].aggregate(self.func)
         return np.array(result)
+
+
+class ResidualWithPerGroupStatistic(VectorAction):
+    """Compute residual between individual elements of group and the per-group
+    statistic."""
+
+    groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    func = Field[str](doc="Name of function to be applied per group", default="mean")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return tuple(self.buildAction.getInputSchema()) + ((self.groupKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        values = self.buildAction(data, **kwargs)
+        df = pd.DataFrame({"groupKey": data[self.groupKey], "value": values})
+        result = df.groupby("groupKey")["value"].aggregate(self.func)
+
+        joinedDf = df.join(result, on="groupKey", validate="m:1", lsuffix="_individual", rsuffix="_group")
+
+        result = joinedDf["value_individual"] - joinedDf["value_group"]
+        return np.array(result)
+
+
+class RAcosDec(VectorAction):
+    """Construct a vector of RA*cos(Dec) in order to have commensurate values
+    between RA and Dec."""
+
+    raKey = Field[str](doc="RA coordinate", default="coord_ra")
+    decKey = Field[str](doc="Dec coordinate", default="coord_dec")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.decKey, Vector), (self.raKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        ra = data[self.raKey]
+        dec = data[self.decKey]
+        return ra * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
+
+
+class ConvertUnits(VectorAction):
+    """Convert the units of a vector."""
+
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    inUnit = Field[str](doc="input Astropy unit")
+    outUnit = Field[str](doc="output Astropy unit")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return tuple(self.buildAction.getInputSchema())
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
+        return dataWithUnit.to(self.outUnit).value

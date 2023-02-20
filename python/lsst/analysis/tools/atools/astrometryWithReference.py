@@ -113,6 +113,9 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDelta):
     def setDefaults(self):
         super().setDefaults(coordinate="RA")
 
+        self.process.buildActions.astromDiff.decCol = "coord_dec_ref"
+
+
 
 class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
     """Plot the difference in milliseconds between the Dec of a target catalog
@@ -174,6 +177,9 @@ class TargetRefCatDeltaRASkyPlot(TargetRefCatDeltaSkyPlot):
 
     def setDefaults(self):
         super().setDefaults(coordinate="RA")
+
+        self.process.buildActions.zStars.decCol = "coord_dec_ref"
+
 
 
 class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlot):

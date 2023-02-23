@@ -87,18 +87,26 @@ class HistStatsPanel(Config):
     stat1 = ListField[str](
         doc="A list specifying the vector keys of the first scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
     stat2 = ListField[str](
         doc="A list specifying the vector keys of the second scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
     stat3 = ListField[str](
         doc="A list specifying the vector keys of the third scalar statistic to be shown in this panel."
         "there should be one entry for each hist in the panel",
-        default=[],
+        default=None,
+        optional=True,
     )
+
+    def validate(self):
+        super().validate()
+        if not all([self.stat1, self.stat2, self.stat3]) and any([self.stat1, self.stat2, self.stat3]):
+            raise ValueError(f"{self._name}: If one stat is configured, all 3 stats must be configured")
 
 
 class HistPanel(Config):
@@ -429,14 +437,21 @@ class HistPlot(PlotAction):
         if self.panels[panel].referenceValue is not None:
             ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
 
-        if self.panels[panel].statsPanel is None:
+        # Check if we should use the default stats panel or if a custom one
+        # has been created.
+        statList = [
+            self.panels[panel].statsPanel.stat1,
+            self.panels[panel].statsPanel.stat2,
+            self.panels[panel].statsPanel.stat3,
+        ]
+        if not any(statList):
             stats_dict = {
                 "statLabels": ["N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"],
                 "stat1": nums,
                 "stat2": meds,
                 "stat3": mads,
             }
-        else:
+        elif all(statList):
             stat1 = [data[stat] for stat in self.panels[panel].statsPanel.stat1]
             stat2 = [data[stat] for stat in self.panels[panel].statsPanel.stat2]
             stat3 = [data[stat] for stat in self.panels[panel].statsPanel.stat3]
@@ -446,6 +461,9 @@ class HistPlot(PlotAction):
                 "stat2": stat2,
                 "stat3": stat3,
             }
+        else:
+            raise RuntimeError("Invalid configuration of HistStatPanel")
+
         return nums, meds, mads, stats_dict
 
     def _getPanelRange(self, data, panel, mads=None, meds=None):

@@ -79,6 +79,8 @@ class TestCatalogMatch(unittest.TestCase):
         self.task = CatalogMatchTask(config=config)
         self.task.config.extraColumns.append("sourceId")
 
+        self.rng = np.random.default_rng(12345)
+
         self.skymap = self._make_skymap()
         self.tract = 9813
 
@@ -89,11 +91,11 @@ class TestCatalogMatch(unittest.TestCase):
         self.nStars = 1000
         starIds = np.arange(self.nStars)
         starRas = (
-            np.random.random(self.nStars) * self.tractBbox.getWidth().asDegrees()
+            self.rng.random(self.nStars) * self.tractBbox.getWidth().asDegrees()
             + self.tractBbox.getLon().getA().asDegrees()
         )
         starDecs = (
-            np.random.random(self.nStars) * self.tractBbox.getHeight().asDegrees()
+            self.rng.random(self.nStars) * self.tractBbox.getHeight().asDegrees()
             + self.tractBbox.getLat().getA().asDegrees()
         )
 
@@ -181,13 +183,13 @@ class TestCatalogMatch(unittest.TestCase):
         sourceCat : `pd.DataFrame`
             Catalog containing the simulated stars
         """
-        x = np.random.random(self.nStars) * 4000
-        y = np.random.random(self.nStars) * 4000
+        x = self.rng.random(self.nStars) * 4000
+        y = self.rng.random(self.nStars) * 4000
         radecErr = 1.0 / (3600 * 10)  # Let random scatter be about 1/10 arcsecond
         sourceDict = {
             "sourceId": starIds,
-            "coord_ra": starRas + np.random.randn(self.nStars) * radecErr,
-            "coord_dec": starDecs + np.random.randn(self.nStars) * radecErr,
+            "coord_ra": starRas + self.rng.standard_normal(self.nStars) * radecErr,
+            "coord_dec": starDecs + self.rng.standard_normal(self.nStars) * radecErr,
             "x": x,
             "y": y,
         }

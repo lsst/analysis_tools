@@ -29,10 +29,10 @@ post-process. Creating a new `AnalysisTool` is the process of choosing (though
 configuration) what `AnalysisAction` will run for each of those stages.
 
 `AnalysisTool`\ s and `AnalysisAction`\ s are subclasses of
-`~lsst.pipe.tasks.configurableActions.ConfigurableAction`\ s. These objects are
+`~lsst.pex.config.configurableActions.ConfigurableAction`\ s. These objects are
 special types that are configured _prior_ to any code execution, and behave as
 functions at runtime. The configuration state of a
-`~lsst.pipe.tasks.configurableActions.ConfigurableAction` is saved separately
+`~lsst.pex.config.configurableActions.ConfigurableAction` is saved separately
 from the object itself, which allows
 """
 

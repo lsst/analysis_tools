@@ -46,7 +46,7 @@ from typing import Any, Iterable, Mapping, MutableMapping, Tuple, Type
 
 import numpy as np
 from lsst.pex.config import Field
-from lsst.pipe.tasks.configurableActions import ConfigurableAction, ConfigurableActionField
+from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray

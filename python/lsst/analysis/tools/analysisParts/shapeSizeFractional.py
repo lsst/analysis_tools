@@ -27,7 +27,7 @@ __all__ = (
 )
 
 from lsst.pex.config import Field
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ..actions.keyedData import KeyedScalars
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction

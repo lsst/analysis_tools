@@ -44,7 +44,7 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from lsst.pex.config import DictField, Field
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField, ConfigurableActionStructField
+from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector

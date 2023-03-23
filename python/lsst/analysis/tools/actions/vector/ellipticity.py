@@ -29,7 +29,7 @@ __all__ = (
 
 import numpy as np
 from lsst.pex.config import ChoiceField, Field, FieldValidationError
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 

@@ -29,7 +29,7 @@ __all__ = ("ContextMeta", "Context", "ContextType", "ContextApplier")
 from functools import partial, update_wrapper
 from typing import TYPE_CHECKING, Callable, Iterable, Union, cast, overload
 
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStruct
+from lsst.pex.config.configurableActions import ConfigurableActionStruct
 
 if TYPE_CHECKING:
     from ..interfaces import AnalysisAction

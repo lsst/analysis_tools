@@ -29,8 +29,8 @@ from typing import Mapping, NamedTuple, Optional, cast
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionField
 from lsst.skymap import BaseSkyMap
 from matplotlib import gridspec
 from matplotlib.axes import Axes

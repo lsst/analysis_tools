@@ -26,8 +26,8 @@ from collections import abc
 from typing import Mapping
 
 import astropy.units as apu
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.dictField import DictField
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.verify import Measurement
 
 from ..actions.keyedData import KeyedDataSelectorAction

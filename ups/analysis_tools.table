@@ -10,7 +10,6 @@ setupRequired(geom)
 setupRequired(meas_algorithms)
 setupRequired(pex_config)
 setupRequired(pipe_base)
-setupRequired(pipe_tasks)
 setupRequired(skymap)
 
 # The following is boilerplate for all packages.

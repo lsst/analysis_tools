@@ -30,7 +30,7 @@ import pandas as pd
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from lsst.meas.algorithms import ReferenceObjectLoader
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.skymap import BaseSkyMap
 
 from ..actions.vector import (

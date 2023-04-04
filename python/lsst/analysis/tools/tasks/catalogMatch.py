@@ -84,13 +84,13 @@ class AstropyMatchTask(pipeBase.Task):
                 Array of angle separations between matched objects
         """
         refCat_ap = SkyCoord(
-            ra=refCatalog["coord_ra"] * units.Unit(self.config.refCatUnits),
-            dec=refCatalog["coord_dec"] * units.Unit(self.config.refCatUnits),
+            ra=refCatalog["coord_ra"].values * units.Unit(self.config.refCatUnits),
+            dec=refCatalog["coord_dec"].values * units.Unit(self.config.refCatUnits),
         )
 
         sourceCat_ap = SkyCoord(
-            ra=targetCatalog["coord_ra"] * units.Unit(self.config.targetCatUnits),
-            dec=targetCatalog["coord_dec"] * units.Unit(self.config.targetCatUnits),
+            ra=targetCatalog["coord_ra"].values * units.Unit(self.config.targetCatUnits),
+            dec=targetCatalog["coord_dec"].values * units.Unit(self.config.targetCatUnits),
         )
 
         id, d2d, d3d = refCat_ap.match_to_catalog_sky(sourceCat_ap)

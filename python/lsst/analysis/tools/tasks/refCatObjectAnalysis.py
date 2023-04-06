@@ -30,7 +30,6 @@ from ..atools.astrometryWithReference import (
     TargetRefCatDeltaRAScatterPlot,
     TargetRefCatDeltaRASkyPlot,
 )
-from ..contexts import CoaddContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -51,23 +50,13 @@ class RefCatObjectAnalysisConnections(
 class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatObjectAnalysisConnections):
     def setDefaults(self):
         super().setDefaults()
+        kwargs = {"context": "coadd", "parameterizedBand": True}
 
         # set plots to run
-        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRAScatterPlot.parameterizedBand = True
-        self.plots.astromDiffRAScatterPlot.applyContext(CoaddContext)
-
-        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDecScatterPlot.parameterizedBand = True
-        self.plots.astromDiffDecScatterPlot.applyContext(CoaddContext)
-
-        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
-        self.plots.astromDiffRASkyPlot.parameterizedBand = True
-        self.plots.astromDiffRASkyPlot.applyContext(CoaddContext)
-
-        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
-        self.plots.astromDiffDecSkyPlot.parameterizedBand = True
-        self.plots.astromDiffDecSkyPlot.applyContext(CoaddContext)
+        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot(**kwargs)
+        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot(**kwargs)
+        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot(**kwargs)
+        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot(**kwargs)
 
         # set metrics to run - none so far
 

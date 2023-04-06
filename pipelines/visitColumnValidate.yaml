@@ -7,40 +7,39 @@ tasks:
       connections.outputName: visitTableColumnValidate
       atools.validPsfFluxMetric: ValidFracColumnMetric
       atools.validPsfFluxMetric.vectorKey: 'psfFlux'
-      atools.validPsfFluxMetric.applyContext: VisitContext
+      atools.validPsfFluxMetric.context: 'visit'
       atools.validAp03FluxMetric: ValidFracColumnMetric
       atools.validAp03FluxMetric.vectorKey: 'ap03Flux'
-      atools.validAp03FluxMetric.applyContext: VisitContext
+      atools.validAp03FluxMetric.context: 'visit'
       atools.validAp06FluxMetric: ValidFracColumnMetric
       atools.validAp06FluxMetric.vectorKey: 'ap06Flux'
-      atools.validAp06FluxMetric.applyContext: VisitContext
+      atools.validAp06FluxMetric.context: 'visit'
       atools.validAp09FluxMetric: ValidFracColumnMetric
       atools.validAp09FluxMetric.vectorKey: 'ap09Flux'
-      atools.validAp09FluxMetric.applyContext: VisitContext
+      atools.validAp09FluxMetric.context: 'visit'
       atools.validAp12FluxMetric: ValidFracColumnMetric
       atools.validAp12FluxMetric.vectorKey: 'ap12Flux'
-      atools.validAp12FluxMetric.applyContext: VisitContext
+      atools.validAp12FluxMetric.context: 'visit'
       atools.validAp17FluxMetric: ValidFracColumnMetric
       atools.validAp17FluxMetric.vectorKey: 'ap17Flux'
-      atools.validAp17FluxMetric.applyContext: VisitContext
+      atools.validAp17FluxMetric.context: 'visit'
       atools.validAp25FluxMetric: ValidFracColumnMetric
       atools.validAp25FluxMetric.vectorKey: 'ap25Flux'
-      atools.validAp25FluxMetric.applyContext: VisitContext
+      atools.validAp25FluxMetric.context: 'visit'
       atools.validAp35FluxMetric: ValidFracColumnMetric
       atools.validAp35FluxMetric.vectorKey: 'ap35Flux'
-      atools.validAp35FluxMetric.applyContext: VisitContext
+      atools.validAp35FluxMetric.context: 'visit'
       atools.validAp50FluxMetric: ValidFracColumnMetric
       atools.validAp50FluxMetric.vectorKey: 'ap50Flux'
-      atools.validAp50FluxMetric.applyContext: VisitContext
+      atools.validAp50FluxMetric.context: 'visit'
       atools.validAp70FluxMetric: ValidFracColumnMetric
       atools.validAp70FluxMetric.vectorKey: 'ap70Flux'
-      atools.validAp70FluxMetric.applyContext: VisitContext
+      atools.validAp70FluxMetric.context: 'visit'
       atools.validCalibFluxMetric: ValidFracColumnMetric
       atools.validCalibFluxMetric.vectorKey: 'calibFlux'
-      atools.validCalibFluxMetric.applyContext: VisitContext
+      atools.validCalibFluxMetric.context: 'visit'
       atools.validGaussianFluxMetric: ValidFracColumnMetric
       atools.validGaussianFluxMetric.vectorKey: 'gaussianFlux'
-      atools.validGaussianFluxMetric.applyContext: VisitContext
+      atools.validGaussianFluxMetric.context: 'visit'
       python: |
         from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *

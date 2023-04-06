@@ -9,9 +9,8 @@ tasks:
       # metrics.name = AMetricsClass
       connections.outputName: sourceTableCore
       atools.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
-      atools.skyFluxVisitStatisticMetric.applyContext: VisitContext
+      atools.skyFluxVisitStatisticMetric.context: 'visit'
       atools.skySourceSkyPlot: SkySourceSkyPlot
       atools.skySourceHistPlot: SkySourceHistPlot
       python: |
         from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *

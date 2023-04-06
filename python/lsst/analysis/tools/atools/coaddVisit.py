@@ -18,24 +18,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
 
-"""This is a module where concrete Contexts should be defined. These should
-be a subclass of `Context`, and should contain a description of what the
-context is for as it's docstring.
-"""
-__all__ = ("MatchedRefDiffContext", "MatchedRefChiContext")
+from lsst.pex.config import ChoiceField, Config
 
-from ._baseContext import Context
+__all__ = ("CoaddVisitConfig",)
 
 
-class MatchedRefDiffContext(Context):
-    """A context which indicates `AnalysisAction`s are computing differences
-    between matches to reference objects.
-    """
+class CoaddVisitConfig(Config):
+    """Config for tools that can be applied in coadd and visit contexts."""
 
-
-class MatchedRefChiContext(Context):
-    """A context which indicates `AnalysisAction`s are computing error-scaled
-    differences between matches to reference objects.
-    """
+    context: ChoiceField = ChoiceField(
+        doc="The analysis context for this class",
+        dtype=str,
+        allowed={"coadd": "Coadded images", "visit": "Single visit images"},
+        optional=False,
+    )

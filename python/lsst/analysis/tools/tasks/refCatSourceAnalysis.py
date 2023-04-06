@@ -30,7 +30,6 @@ from ..atools.astrometryWithReference import (
     TargetRefCatDeltaRAScatterPlot,
     TargetRefCatDeltaRASkyPlot,
 )
-from ..contexts import VisitContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -51,19 +50,13 @@ class RefCatSourceAnalysisConnections(
 class RefCatSourceAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatSourceAnalysisConnections):
     def setDefaults(self):
         super().setDefaults()
+        kwargs = {"context": "visit"}
 
         # set plots to run
-        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRAScatterPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDecScatterPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
-        self.plots.astromDiffRASkyPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
-        self.plots.astromDiffDecSkyPlot.applyContext(VisitContext)
+        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot(**kwargs)
+        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot(**kwargs)
+        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot(**kwargs)
+        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot(**kwargs)
 
         # set metrics to run - none so far
 

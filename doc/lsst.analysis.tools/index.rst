@@ -16,7 +16,7 @@ It is a very powerful way to explore and interact with the pipeline outputs.
 Using lsst.analysis.tools
 =========================
 For a tutorial on working with
-``analysis_tools`` please see the :doc:`getting started guide <gettingStartedGuide>`.
+``analysis_tools`` please see the :ref:`getting started guide <analysis-tools-getting-started>`.
 
 .. toctree linking to topics related to using the module's APIs.
 

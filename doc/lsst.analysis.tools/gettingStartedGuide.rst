@@ -1,4 +1,4 @@
-.. _gettingStartedGuide:
+.. _analysis-tools-getting-started:
 
 Getting Started Guide
 =====================

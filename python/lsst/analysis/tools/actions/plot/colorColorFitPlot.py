@@ -208,10 +208,10 @@ class ColorColorFitPlot(PlotAction):
         --------
         An example of the plot produced from this code is here: 
 
-        ..image:: /sdf/group/rubin/u/sr525/repos/analysis_tools/doc/_static/analsysis_tools/stellarLocusExample.png
+        .. image:: /_static/analysis_tools/stellarLocusExample.png
 
         For a detailed example of how to make a plot from the command line 
-        please see the :doc:`getting started guide<gettingStartedGuide>`.
+        please see the :ref:`getting started guide<analysis-tools-getting-started>`.
         """
 
         # Define a new colormap

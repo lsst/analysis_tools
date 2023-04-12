@@ -40,6 +40,7 @@ from ..actions.vector import (
     StarSelector,
     VisitPlotFlagSelector,
 )
+from ..interfaces import VectorAction
 
 
 class AstropyMatchConfig(pexConfig.Config):
@@ -84,13 +85,13 @@ class AstropyMatchTask(pipeBase.Task):
                 Array of angle separations between matched objects
         """
         refCat_ap = SkyCoord(
-            ra=refCatalog["coord_ra"] * units.Unit(self.config.refCatUnits),
-            dec=refCatalog["coord_dec"] * units.Unit(self.config.refCatUnits),
+            ra=refCatalog["coord_ra"].values * units.Unit(self.config.refCatUnits),
+            dec=refCatalog["coord_dec"].values * units.Unit(self.config.refCatUnits),
         )
 
         sourceCat_ap = SkyCoord(
-            ra=targetCatalog["coord_ra"] * units.Unit(self.config.targetCatUnits),
-            dec=targetCatalog["coord_dec"] * units.Unit(self.config.targetCatUnits),
+            ra=targetCatalog["coord_ra"].values * units.Unit(self.config.targetCatUnits),
+            dec=targetCatalog["coord_dec"].values * units.Unit(self.config.targetCatUnits),
         )
 
         id, d2d, d3d = refCat_ap.match_to_catalog_sky(sourceCat_ap)
@@ -160,19 +161,19 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
         doc="Band to use when selecting objects, primarily for extendedness", default="i"
     )
 
-    selectorActions = ConfigurableActionStructField(
+    selectorActions = ConfigurableActionStructField[VectorAction](
         doc="Which selectors to use to narrow down the data for QA plotting.",
-        default={"flagSelector": CoaddPlotFlagSelector},
+        default={"flagSelector": CoaddPlotFlagSelector()},
     )
 
-    sourceSelectorActions = ConfigurableActionStructField(
+    sourceSelectorActions = ConfigurableActionStructField[VectorAction](
         doc="What types of sources to use.",
-        default={"sourceSelector": StarSelector},
+        default={"sourceSelector": StarSelector()},
     )
 
-    extraColumnSelectors = ConfigurableActionStructField(
+    extraColumnSelectors = ConfigurableActionStructField[VectorAction](
         doc="Other selectors that are not used in this task, but whose columns" "may be needed downstream",
-        default={"selector1": SnSelector, "selector2": GalaxySelector},
+        default={"selector1": SnSelector(), "selector2": GalaxySelector()},
     )
 
     extraColumns = pexConfig.ListField[str](
@@ -350,7 +351,7 @@ class CatalogMatchVisitConnections(
 class CatalogMatchVisitConfig(CatalogMatchConfig, pipelineConnections=CatalogMatchVisitConnections):
     selectorActions = ConfigurableActionStructField(
         doc="Which selectors to use to narrow down the data for QA plotting.",
-        default={"flagSelector": VisitPlotFlagSelector},
+        default={"flagSelector": VisitPlotFlagSelector()},
     )
 
     extraColumns = pexConfig.ListField[str](

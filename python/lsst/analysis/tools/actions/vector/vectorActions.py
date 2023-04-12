@@ -59,7 +59,9 @@ class DownselectVector(VectorAction):
 
     vectorKey = Field[str](doc="column key to load from KeyedData")
 
-    selector = ConfigurableActionField(doc="Action which returns a selection mask", default=VectorSelector)
+    selector = ConfigurableActionField[VectorAction](
+        doc="Action which returns a selection mask", default=VectorSelector
+    )
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield (self.vectorKey, Vector)
@@ -84,7 +86,7 @@ class MultiCriteriaDownselectVector(VectorAction):
     def getInputSchema(self) -> KeyedDataSchema:
         yield (self.vectorKey, Vector)
         for action in self.selectors:
-            yield from cast(VectorAction, action).getInputSchema()
+            yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         mask: Optional[Vector] = None
@@ -118,8 +120,8 @@ class MagColumnNanoJansky(VectorAction):
 class FractionalDifference(VectorAction):
     """Calculate (A-B)/B"""
 
-    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
-    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
+    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from self.actionA.getInputSchema()  # type: ignore
@@ -176,8 +178,8 @@ class ConstantValue(VectorAction):
 class SubtractVector(VectorAction):
     """Calculate (A-B)"""
 
-    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
-    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
+    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from self.actionA.getInputSchema()  # type: ignore
@@ -192,8 +194,8 @@ class SubtractVector(VectorAction):
 class DivideVector(VectorAction):
     """Calculate (A/B)"""
 
-    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
-    actionB = ConfigurableActionField(doc="Action which supplies vector B", dtype=VectorAction)
+    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
+    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from self.actionA.getInputSchema()  # type: ignore
@@ -289,8 +291,8 @@ class ExtinctionCorrectedMagDiff(VectorAction):
     If band1 and band2 are supplied, the flux column names are ignored.
     """
 
-    magDiff = ConfigurableActionField(
-        doc="Action that returns a difference in magnitudes", default=MagDiff, dtype=VectorAction
+    magDiff = ConfigurableActionField[VectorAction](
+        doc="Action that returns a difference in magnitudes", default=MagDiff
     )
     ebvCol = Field[str](doc="E(B-V) Column Name", default="ebv")
     band1 = Field[str](
@@ -395,7 +397,7 @@ class PerGroupStatistic(VectorAction):
     """
 
     groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
-    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    buildAction = ConfigurableActionField[VectorAction](doc="Action to build vector", default=LoadVector)
     func = Field[str](doc="Name of function to be applied per group")
 
     def getInputSchema(self) -> KeyedDataSchema:

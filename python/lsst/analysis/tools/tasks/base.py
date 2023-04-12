@@ -390,7 +390,7 @@ class AnalysisPipelineTask(PipelineTask):
             for name, action in self.config.plots.items():
                 for column, dataType in action.getFormattedInputSchema(band=band):
                     inputs.add(column)
-            for name, action in self.config.metrics.items():
-                for column, dataType in action.getFormattedInputSchema(band=band):
+            for name, metricAction in self.config.metrics.items():
+                for column, dataType in metricAction.getFormattedInputSchema(band=band):
                     inputs.add(column)
         return inputs

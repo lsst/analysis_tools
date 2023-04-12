@@ -361,7 +361,9 @@ class AnalysisMetric(AnalysisTool):
     setDefaults) to be `BaseMetricAction`.
     """
 
-    produce = ConfigurableActionField[MetricAction](doc="Action which returns a calculated Metric")
+    produce = ConfigurableActionField[MetricAction](  # type: ignore
+        doc="Action which returns a calculated Metric"
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -378,7 +380,7 @@ class AnalysisPlot(AnalysisTool):
     it expects to be assigned to a `PlotAction`.
     """
 
-    produce = ConfigurableActionField[PlotAction](doc="Action which returns a plot")
+    produce = ConfigurableActionField[PlotAction](doc="Action which returns a plot")  # type: ignore
 
     def getOutputNames(self) -> Iterable[str]:
         """Return the names of the plots produced by this action.
@@ -392,7 +394,7 @@ class AnalysisPlot(AnalysisTool):
         result : `tuple` of `str`
             Names for each plot produced by this action.
         """
-        outNames = tuple(self.produce.getOutputNames())
+        outNames = tuple(self.produce.getOutputNames())  # type: ignore
         if outNames:
             return (f"{self.identity or ''}_{name}" for name in outNames)
         else:

@@ -84,8 +84,8 @@ class BaseProcess(KeyedDataAction):
             else:
                 filterOutputSchema[fieldName] = Vector
 
-        for action in self.calculateActions:
-            for name, typ in action.getInputSchema():
+        for calcAction in self.calculateActions:
+            for name, typ in calcAction.getInputSchema():
                 if name not in buildOutputSchema and name not in filterOutputSchema:
                     inputSchema[name] = typ
         return ((name, typ) for name, typ in inputSchema.items())
@@ -117,8 +117,8 @@ class BaseProcess(KeyedDataAction):
                     results[name] = item
 
         view2 = data | results
-        for name, action in self.calculateActions.items():
-            match action(view2, **kwargs):
+        for name, calcAction in self.calculateActions.items():
+            match calcAction(view2, **kwargs):
                 case abc.Mapping() as item:
                     for key, result in item.items():
                         results[key] = result

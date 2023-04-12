@@ -85,10 +85,10 @@ class ScatterPlotStatsAction(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        highMaskKey = f'{self.identity.lower() or ""}HighSNMask'
+        highMaskKey = f'{(self.identity or "").lower()}HighSNMask'
         results[highMaskKey] = self.highSNSelector(data, **kwargs)
 
-        lowMaskKey = f'{self.identity.lower() or ""}LowSNMask'
+        lowMaskKey = f'{(self.identity or "").lower()}LowSNMask'
         results[lowMaskKey] = self.lowSNSelector(data, **kwargs)
 
         prefix = f"{band}_" if (band := kwargs.get("band")) else ""

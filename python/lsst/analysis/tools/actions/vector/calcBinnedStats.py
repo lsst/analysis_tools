@@ -48,7 +48,7 @@ class CalcBinnedStatsAction(KeyedDataAction):
         return (
             (self.name_mask, Vector),
             (self.name_median, Scalar),
-            (self.name_sig_mad, Scalar),
+            (self.name_sigmaMad, Scalar),
             (self.name_count, Scalar),
             (self.name_select_maximum, Scalar),
             (self.name_select_median, Scalar),

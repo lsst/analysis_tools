@@ -50,7 +50,7 @@ class SkyFluxStatisticMetric(AnalysisMetric):
         # overwrite the current one (e.g., running with g, r bands without
         # this, you would get "meanSky," "meanSky"; with it: "g_meanSky,"
         # "r_meanSky").
-        self.produce.newNames = {
+        self.produce.newNames = {  # type: ignore
             "medianSky": "{band}_medianSky",
             "meanSky": "{band}_meanSky",
             "stdevSky": "{band}_stdevSky",

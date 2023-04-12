@@ -165,13 +165,12 @@ class CalcEDiff(VectorAction):
     the returned quantity therefore corresponds to |e|*exp(j*theta).
     """
 
-    colA = ConfigurableActionField(
+    colA = ConfigurableActionField[VectorAction](
         doc="Ellipticity to subtract from",
-        dtype=VectorAction,
         default=CalcE,
     )
 
-    colB = ConfigurableActionField(
+    colB = ConfigurableActionField[VectorAction](
         doc="Ellipticity to subtract",
         dtype=VectorAction,
         default=CalcE,

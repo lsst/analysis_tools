@@ -129,7 +129,7 @@ def getPlotDatasetTypeNames(
         configs = []
         datasetRefs = butler.registry.queryDatasets("*_config", collections=collections)
         for datasetRef in datasetRefs:
-            config = butler.getDirect(datasetRef)
+            config = butler.get(datasetRef)
             if isinstance(config, AnalysisBaseConfig):
                 configs.append(config)
     plotNames = []

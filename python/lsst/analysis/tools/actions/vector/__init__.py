@@ -1,3 +1,4 @@
+from .calcFwhmZernikes import *
 from .calcRhoStatistics import *
 from .calcShapeSize import CalcShapeSize
 from .ellipticity import *

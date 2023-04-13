@@ -371,7 +371,15 @@ class AnalysisPipelineTask(PipelineTask):
         """
         if names is None:
             names = self.collectInputNames()
-        return cast(KeyedData, handle.get(parameters={"columns": names}))
+
+        # If input data is a numpy array instead of a catalog
+        #  or dataframe, we need to create an object with keys.
+        if handle.ref.datasetType.storageClass_name == "NumpyArray":
+            dataLabel = list(names)[0]
+            dataDict = {dataLabel: handle.get()}
+            return cast(KeyedData, dataDict)
+        else:
+            return cast(KeyedData, handle.get(parameters={"columns": names}))
 
     def collectInputNames(self) -> Iterable[str]:
         """Get the names of the inputs.

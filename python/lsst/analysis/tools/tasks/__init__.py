@@ -1,3 +1,4 @@
+from .aosAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *

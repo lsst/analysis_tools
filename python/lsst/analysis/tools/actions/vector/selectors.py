@@ -49,7 +49,8 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class FlagSelector(VectorAction):
-    """The base flag selector to use to select valid sources for QA"""
+    """The base flag selector to use to select valid sources for QA
+    """
 
     selectWhenFalse = ListField[str](
         doc="Names of the flag columns to select on when False", optional=False, default=[]
@@ -65,20 +66,24 @@ class FlagSelector(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
+
         Parameters
         ----------
         table : `Tabular`
+
         Returns
         -------
         result : `Vector`
             A mask of the objects that satisfy the given
             flag cuts.
+
         Notes
         -----
         Uses the columns in selectWhenFalse and
         selectWhenTrue to decide which columns to
         select on in each circumstance.
         """
+
         if not self.selectWhenFalse and not self.selectWhenTrue:
             raise RuntimeError("No column keys specified")
         results: Optional[Vector] = None
@@ -102,7 +107,8 @@ class FlagSelector(VectorAction):
 
 class CoaddPlotFlagSelector(FlagSelector):
     """This default setting makes it take the band from
-    the kwargs."""
+    the kwargs.
+    """
 
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
@@ -218,15 +224,18 @@ class SnSelector(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
         self.threshold in self.fluxType
+
         Parameters
         ----------
         data : `KeyedData`
+
         Returns
         -------
         result : `Vector`
             A mask of the objects that satisfy the given
             S/N cut.
         """
+
         mask: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
@@ -339,6 +348,9 @@ class GoodDiaSourceSelector(FlagSelector):
 
 
 class ExtendednessSelector(VectorAction):
+    """A selector that picks between extended and point sources.
+    """
+
     vectorKey = Field[str](
         doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"
     )
@@ -352,6 +364,9 @@ class ExtendednessSelector(VectorAction):
 
 
 class StarSelector(ExtendednessSelector):
+    """A selector that picks out stars based off of their
+    extendedness values.
+    """
     extendedness_maximum = Field[float](
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )
@@ -362,6 +377,9 @@ class StarSelector(ExtendednessSelector):
 
 
 class GalaxySelector(ExtendednessSelector):
+    """A selector that picks out galaxies based off of their
+    extendedness values.
+    """
     extendedness_minimum = Field[float](
         doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5
     )
@@ -372,6 +390,10 @@ class GalaxySelector(ExtendednessSelector):
 
 
 class UnknownSelector(ExtendednessSelector):
+    """A selector that picks out unclassified objects based off of their
+    extendedness values.
+    """
+
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
         return extendedness == 9

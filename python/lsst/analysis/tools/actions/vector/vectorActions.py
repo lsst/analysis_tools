@@ -98,6 +98,8 @@ class MultiCriteriaDownselectVector(VectorAction):
 
 
 class MagColumnNanoJansky(VectorAction):
+    """Turn nano janskies into magnitudes.
+    """
     vectorKey = Field[str](doc="column key to use for this transformation")
     returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 
@@ -146,9 +148,11 @@ class Sn(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Computes S/N in self.fluxType
+
         Parameters
         ----------
         df : `Tabular`
+
         Returns
         -------
         result : `Vector`
@@ -348,15 +352,18 @@ class ExtinctionCorrectedMagDiff(VectorAction):
 class AstromDiff(VectorAction):
     """Calculate the difference between two columns, assuming their units
     are degrees, and convert the difference to arcseconds.
+
     Parameters
     ----------
     df : `pandas.core.frame.DataFrame`
         The catalog to calculate the position difference from.
+
     Returns
     -------
     angleDiffValue : `np.ndarray`
         The difference between two columns, either in the input units or in
         milliarcseconds.
+
     Notes
     -----
     The columns need to be in units (specifiable in the radecUnits1 and 2

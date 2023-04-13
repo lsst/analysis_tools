@@ -7,3 +7,8 @@ can all be found on `github <https://github.com/lsst/analysis_tools/blob/main/py
 .. automodapi:: lsst.analysis.tools.actions.plot
    :no-inheritance-diagram:
    :no-inherited-members:
+   :skip: BarPanel
+   :skip: DiaSkyPanel
+   :skip: HistPanel
+   :skip: HistStatsPanel
+   :skip: ScatterPlotStatsAction

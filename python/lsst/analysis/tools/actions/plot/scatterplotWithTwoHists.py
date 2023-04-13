@@ -253,6 +253,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         ----------
         data : `KeyedData`
             The catalog to plot the points from.
+        skymap : `lsst.skymap.BaseSkyMap`
+            The skymap that gives the patch locations
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
 
@@ -306,6 +308,15 @@ class ScatterPlotWithTwoHists(PlotAction):
         * In every case it is expected that data contains:
             lowSnThreshold, highSnThreshold and patch 
             (if the summary plot is being plotted).
+
+        Examples
+        --------
+        An example of the plot produced from this code is here:
+
+        .. image:: /_static/analysis_tools/scatterPlotExample.png
+
+        For a detailed example of how to make a plot from the command line
+        please see the :ref:`getting started guide<analysis-tools-getting-started>`.
         """
         if not self.plotTypes:
             noDataFig = Figure()

@@ -116,7 +116,8 @@ class ColorColorFitPlot(PlotAction):
         Parameters
         ----------
         data : `KeyedData`
-            The catalog to plot the points from.
+            The data to plot the points from, for more information
+            please see the notes section.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
 
@@ -128,11 +129,37 @@ class ColorColorFitPlot(PlotAction):
                   The filter used for this data (`str`).
             * ``"tract"``
                   The tract that the data comes from (`str`).
-        fitParams : `dict`
-            The parameters of the fit to the stellar locus calculated
-            elsewhere, they are used to plot the fit line on the
-            figure.
 
+       Returns
+        -------
+        fig : `matplotlib.figure.Figure`
+            The resulting figure.
+
+        Notes
+        -----
+        The axis labels are given by `self.config.xLabel` and 
+        `self.config.yLabel`. The perpendicular distance of the points to
+        the fit line is given in a histogram in the second panel.
+
+        For the code to work it expects various quantities to be
+        present in the 'data' that it is given.
+
+        The quantities that are expected to be present are: 
+
+         * Statistics that are shown on the plot or used by the plotting code:
+            * ``approxMagDepth``
+                  The approximate magnitude corresponding to the SN cut used.
+            * ``f"{self.plotName}_sigmaMAD"``
+                  The sigma mad of the distances to the line fit.
+            * ``f"{self.identity or ''}_median"``
+                  The median of the distances to the line fit.
+            * ``f"{self.identity or ''}_hardwired_sigmaMAD"``
+                  The sigma mad of the distances to the initial fit.
+            * ``f"{self.identity or ''}_hardwired_median"``
+                  The median of the distances to the initial fit.
+
+
+         * Parameters from the fitting code that are illustrated on the plot:
             * ``"bHW"``
                   The hardwired intercept to fall back on.
             * ``"bODR"``
@@ -164,43 +191,7 @@ class ColorColorFitPlot(PlotAction):
                   The intercept of the perpendicular line that goes through xMin.
             * ``"bPerpMax"``
                   The intercept of the perpendicular line that goes through xMax.
-            * ``f"{self.plotName}_sigmaMAD"``
-                  The sigma mad of the distances to the line fit.
-            * ``f"{self.identity or ''}_median"``
-                  The median of the distances to the line fit.
-            * ``f"{self.identity or ''}_hardwired_sigmaMAD"``
-                  The sigma mad of the distances to the initial fit.
-            * ``f"{self.identity or ''}_hardwired_median"``
-                  The median of the distances to the initial fit.
-
-        Returns
-        -------
-        fig : `matplotlib.figure.Figure`
-            The resulting figure.
-
-        Notes
-        -----
-        The axis labels are given by `self.config.xLabel` and 
-        `self.config.yLabel`. The perpendicular distance of the points to
-        the fit line is given in a histogram in the second panel.
-
-        For the code to work it expects various quantities to be
-        present in the 'data' that it is given.
-
-        The quantities that are expected to be present are: 
-
-         * Statistics that are shown on the plot or used by the plotting code:
-               approxMagDepth,
-               f"{self.plotName}_sigmaMAD", 
-               f"{self.plotName}_sigmaMAD", 
-               f"{self.plotName}_sigmaMAD",
-               f"{self.plotName}_sigmaMAD", 
-               f"{self.plotName}_sigmaMAD"
-
-         * Parameters from the fitting code that are illustrated on the plot:
-               xMin, xMax, yMin, yMax, mHW, bHW, mODR, bODR,
-               yBoxMin, yBoxMax, bPerpMin, bPerpMax, mODR2, bODR2, mPerp
-
+ 
          * The main inputs to plot:
                x, y, mag
 

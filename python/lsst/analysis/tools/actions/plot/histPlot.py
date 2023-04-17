@@ -68,8 +68,6 @@ class HistStatsPanel(Config):
     `~lsst.pex.config.DictField`'s in HistPanel for each parameter for clarity
     and consistency.
 
-
-
     Notes
     -----
     This is intended to be used as a configuration of the HistPlot/HistPanel
@@ -110,6 +108,10 @@ class HistStatsPanel(Config):
 
 
 class HistPanel(Config):
+    """A Config class that holds parameters to configure a single panel of a
+    histogram plot. This class is intended to be used within the ``HistPlot``
+    class.
+    """
     label = Field[str](
         doc="Panel x-axis label.",
         default="label",
@@ -193,6 +195,10 @@ class HistPanel(Config):
 
 
 class HistPlot(PlotAction):
+    """Make an N-panel plot with a configurable number of histograms displayed
+    in each panel. Reference lines showing values of interest may also be added
+    to each histogram. Panels are configured using the ``HistPanel`` class.
+    """
     panels = ConfigDictField(
         doc="A configurable dict describing the panels to be plotted, and the histograms for each panel.",
         keytype=str,
@@ -248,6 +254,14 @@ class HistPlot(PlotAction):
         fig : `matplotlib.figure.Figure`
             The resulting figure.
 
+        Examples
+        --------
+        An example histogram plot may be seen below:
+
+        .. image:: /_static/analysis_tools/histPlotExample.png
+
+        For further details on how to generate a plot, please refere to the
+        :ref:`getting started guide<analysis-tools-getting-started>`.
         """
 
         # set up figure

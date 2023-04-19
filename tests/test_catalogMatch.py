@@ -29,34 +29,8 @@ import numpy as np
 import pandas as pd
 from lsst.analysis.tools.tasks import CatalogMatchConfig, CatalogMatchTask
 from lsst.daf.base import PropertyList
-from lsst.daf.butler import DatasetRef, DatasetType, DimensionUniverse, StorageClass
 from lsst.meas.algorithms import ReferenceObjectLoader
-
-
-class MockSourceTableRef:
-    """Replicate functionality of `DeferredDatasetHandle`"""
-
-    def __init__(self, source_table, ref=None, dataId=None):
-        self.source_table = source_table
-        self.ref = ref
-        self.dataId = dataId
-
-    def get(self, parameters={}, **kwargs):
-        """Retrieve the specified dataset using the API of the Gen3 Butler.
-        Parameters
-        ----------
-        parameters : `dict`, optional
-            Parameter dictionary.  Supported key is ``columns``.
-        Returns
-        -------
-        dataframe : `pandas.DataFrame`
-            dataframe, cut to the specified columns.
-        """
-        if "columns" in parameters:
-            _columns = parameters["columns"]
-            return self.source_table[_columns]
-        else:
-            return self.source_table.copy()
+from lsst.pipe.base import InMemoryDatasetHandle
 
 
 class MockDataId:
@@ -64,10 +38,6 @@ class MockDataId:
 
     def __init__(self, region):
         self.region = region
-
-        datasetDimensions = DimensionUniverse().extract(["htm7"])
-        datasetType = DatasetType("gaia_dr2_20200414", datasetDimensions, StorageClass("SimpleCatalog"))
-        self.ref = DatasetRef(datasetType, {"htm7": "mockRefCat"})
 
 
 class TestCatalogMatch(unittest.TestCase):
@@ -143,7 +113,7 @@ class TestCatalogMatch(unittest.TestCase):
         -------
         refDataId : MockDataId
             Object that replicates the functionality of a dataId
-        deferredRefCat : MockSourceTableRef
+        deferredRefCat : InMemoryDatasetHandle
             Object that replicates the functionality of a `DeferredDatasetRef`
         """
         refSchema = afwTable.SimpleTable.makeMinimalSchema()
@@ -160,7 +130,7 @@ class TestCatalogMatch(unittest.TestCase):
             record.setDec(lsst.geom.Angle(starDecs[i], lsst.geom.degrees))
             record.set(fluxKey, 1)
         refDataId = MockDataId(poly)
-        deferredRefCat = MockSourceTableRef(refCat, ref=refDataId.ref)
+        deferredRefCat = InMemoryDatasetHandle(refCat, storageClass="SimpleCatalog", htm7="mockRefCat")
         return refDataId, deferredRefCat
 
     def _make_objectCat(self, starIds, starRas, starDecs):

@@ -29,7 +29,6 @@ import numpy as np
 import pandas as pd
 from lsst.analysis.tools.tasks import CatalogMatchConfig, CatalogMatchTask
 from lsst.daf.base import PropertyList
-from lsst.daf.butler import DatasetRef, DatasetType, DimensionUniverse, StorageClass
 from lsst.meas.algorithms import ReferenceObjectLoader
 from lsst.pipe.base import InMemoryDatasetHandle
 
@@ -39,10 +38,6 @@ class MockDataId:
 
     def __init__(self, region):
         self.region = region
-
-        datasetDimensions = DimensionUniverse().extract(["htm7"])
-        datasetType = DatasetType("gaia_dr2_20200414", datasetDimensions, StorageClass("SimpleCatalog"))
-        self.ref = DatasetRef(datasetType, {"htm7": "mockRefCat"}, run="mock")
 
 
 class TestCatalogMatch(unittest.TestCase):
@@ -135,9 +130,7 @@ class TestCatalogMatch(unittest.TestCase):
             record.setDec(lsst.geom.Angle(starDecs[i], lsst.geom.degrees))
             record.set(fluxKey, 1)
         refDataId = MockDataId(poly)
-        deferredRefCat = InMemoryDatasetHandle(
-            refCat, storageClass="SimpleCatalog", dataId=refDataId.ref.dataId
-        )
+        deferredRefCat = InMemoryDatasetHandle(refCat, storageClass="SimpleCatalog", htm7="mockRefCat")
         return refDataId, deferredRefCat
 
     def _make_objectCat(self, starIds, starRas, starDecs):

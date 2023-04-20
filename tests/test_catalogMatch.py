@@ -30,14 +30,8 @@ import pandas as pd
 from lsst.analysis.tools.tasks import CatalogMatchConfig, CatalogMatchTask
 from lsst.daf.base import PropertyList
 from lsst.meas.algorithms import ReferenceObjectLoader
+from lsst.meas.algorithms.testUtils import MockRefcatDataId
 from lsst.pipe.base import InMemoryDatasetHandle
-
-
-class MockDataId:
-    """Replicate functionality of `DeferredDatasetHandle.dataId`"""
-
-    def __init__(self, region):
-        self.region = region
 
 
 class TestCatalogMatch(unittest.TestCase):
@@ -111,7 +105,7 @@ class TestCatalogMatch(unittest.TestCase):
 
         Returns
         -------
-        refDataId : MockDataId
+        refDataId : `lsst.meas.algorithms.testUtils.MockRefcatDataId`
             Object that replicates the functionality of a dataId
         deferredRefCat : InMemoryDatasetHandle
             Object that replicates the functionality of a `DeferredDatasetRef`
@@ -129,7 +123,7 @@ class TestCatalogMatch(unittest.TestCase):
             record.setRa(lsst.geom.Angle(starRas[i], lsst.geom.degrees))
             record.setDec(lsst.geom.Angle(starDecs[i], lsst.geom.degrees))
             record.set(fluxKey, 1)
-        refDataId = MockDataId(poly)
+        refDataId = MockRefcatDataId(poly)
         deferredRefCat = InMemoryDatasetHandle(refCat, storageClass="SimpleCatalog", htm7="mockRefCat")
         return refDataId, deferredRefCat
 

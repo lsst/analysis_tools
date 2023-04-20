@@ -42,9 +42,9 @@ from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortA
 class SkyPlot(PlotAction):
     """Plots the on sky distribution of a parameter.
 
-    Plots the values of the parameter given for the z axis 
-    according to the positions given for x and y. Optimised 
-    for use with RA and Dec. Also calculates some basic 
+    Plots the values of the parameter given for the z axis
+    according to the positions given for x and y. Optimised
+    for use with RA and Dec. Also calculates some basic
     statistics and includes those on the plot.
     """
 
@@ -150,14 +150,16 @@ class SkyPlot(PlotAction):
             The catalog to plot the points from.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
+
             ``"run"``
-            The output run for the plots (`str`).
+                The output run for the plots (`str`).
             ``"skymap"``
-            The type of skymap used for the data (`str`).
+                The type of skymap used for the data (`str`).
             ``"filter"``
-            The filter used for this data (`str`).
+                The filter used for this data (`str`).
             ``"tract"``
-            The tract that the data comes from (`str`).
+                The tract that the data comes from (`str`).
+
         sumStats : `dict`
             A dictionary where the patchIds are the keys which store the R.A.
             and dec of the corners of the patch.
@@ -170,19 +172,19 @@ class SkyPlot(PlotAction):
 
         Notes
         -----
-        Expects the data to contain slightly different things 
-        depending on the types specified in plotTypes. This 
-        is handled automatically if you go through the pipetask 
-        framework but if you call this method separately then you 
+        Expects the data to contain slightly different things
+        depending on the types specified in plotTypes. This
+        is handled automatically if you go through the pipetask
+        framework but if you call this method separately then you
         need to make sure that data contains what the code is expecting.
 
-        If stars is in the plot types given then it is expected that 
+        If stars is in the plot types given then it is expected that
         data contains: xStars, yStars, zStars and starStatMask.
 
-        If galaxies is present: xGalaxies, yGalaxies, zGalaxies and 
+        If galaxies is present: xGalaxies, yGalaxies, zGalaxies and
         galaxyStatsMask.
 
-        If unknown is present: xUnknowns, yUnknowns, zUnknowns and 
+        If unknown is present: xUnknowns, yUnknowns, zUnknowns and
         unknownStatMask.
 
         If any is specified: x, y, z, statMask.

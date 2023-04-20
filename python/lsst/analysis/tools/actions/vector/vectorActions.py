@@ -100,8 +100,8 @@ class MultiCriteriaDownselectVector(VectorAction):
 
 
 class MagColumnNanoJansky(VectorAction):
-    """Turn nano janskies into magnitudes.
-    """
+    """Turn nano janskies into magnitudes."""
+
     vectorKey = Field[str](doc="column key to use for this transformation")
     returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 

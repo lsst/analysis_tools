@@ -8,5 +8,5 @@ modules:
 # Name of the static content directories (subdirectories of `_static`).
 # Static content directories are usually named after the package.
 # Most packages do not need a static content directory (leave commented out).
- statics:
-   - "_static/analysis_tools"
+statics:
+  - "_static/analysis_tools"

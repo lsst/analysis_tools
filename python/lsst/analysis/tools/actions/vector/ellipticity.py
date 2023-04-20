@@ -37,17 +37,24 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class CalcE(VectorAction):
-    """Calculate a complex value representation of the ellipticity.
+    r"""Calculate a complex value representation of the ellipticity.
 
     The complex ellipticity is typically defined as
-    :math:`e = |e|\exp{(j*2*theta)} = \\frac{((Ixx - Iyy) + j*(2*Ixy))}{(Ixx + Iyy)}`, where j is
-    the square root of -1 and Ixx, Iyy, Ixy are second-order central moments.
-    This is sometimes referred to as distortion, and denoted by e = (e1, e2)
-    in GalSim (see Eq. 4.4. of Bartelmann and Schneider, 2001).
+    .. math::
+
+        e = |e|\exp{(j*2*theta)}
+        e = \\frac{((Ixx - Iyy) + j*(2*Ixy))}{(Ixx + Iyy)},
+
+    where j is the square root of -1 and Ixx, Iyy, Ixy are second-order
+    central moments. This is sometimes referred to as distortion, and denoted
+    by e = (e1, e2) in GalSim (see Eq. 4.4. of Bartelmann and Schneider, 2001).
     The other definition differs in normalization.
     It is referred to as shear, and denoted by g = (g1, g2)
     in GalSim (see Eq. 4.10 of Bartelmann and Schneider (2001). It is defined
-    as :math:`g = \\frac{((Ixx - Iyy) + j*(2*Ixy))}{(Ixx + Iyy + 2\sqrt{(Ixx*Iyy - Ixy^{2})})}`.
+    as
+    .. math::
+
+        g = \\frac{((Ixx-Iyy)+j*(2*Ixy))}{(Ixx+Iyy+2\sqrt{(Ixx*Iyy-Ixy^{2})})}.
 
     The shear measure is unbiased in weak-lensing shear, but may exclude some
     objects in the presence of noisy moment estimates. The distortion measure
@@ -149,7 +156,7 @@ class CalcE(VectorAction):
 
 
 class CalcEDiff(VectorAction):
-    """Calculate the difference of two ellipticities as a complex quantity.
+    r"""Calculate the difference of two ellipticities as a complex quantity.
 
     The complex ellipticity difference between e_A and e_B is defined as
     :math:`e_{A} - e_{B} = de = |de|\exp{(j*2*theta)}`.
@@ -164,7 +171,10 @@ class CalcEDiff(VectorAction):
     1. This is a shape measurement used for doing QA on the ellipticity
     of the sources.
 
-    2. For plotting purposes we might want to plot :math:`|de|*\exp{(j*theta)}`.
+    2. For plotting purposes we might want to plot
+
+    .. math:: |de|*\exp{(j*theta)}.
+
     If `halvePhaseAngle` config parameter is set to `True`, then
     the returned quantity therefore corresponds to :math:`|e|*\exp{(j*theta)}`.
     """
@@ -295,7 +305,7 @@ class CalcE1(VectorAction):
 
 
 class CalcE2(VectorAction):
-    """Calculate distortion-type :math:`e2 = 2Ixy/(Ixx+Iyy)` or
+    r"""Calculate distortion-type :math:`e2 = 2Ixy/(Ixx+Iyy)` or
     shear-type :math:`g2 = 2Ixy/(Ixx+Iyy+2\sqrt(Ixx*Iyy - Ixy^{2}))`.
 
     See Also

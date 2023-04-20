@@ -15,15 +15,19 @@ It is a very powerful way to explore and interact with the pipeline outputs.
 
 Using lsst.analysis.tools
 =========================
+
 For a tutorial on working with
 ``analysis_tools`` please see the :ref:`getting started guide <analysis-tools-getting-started>`.
 
 .. toctree linking to topics related to using the module's APIs.
 
-.. .. toctree::
-..   :glob:
-..   currentActions
-..   currentPlots
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   getting-started
+   action-types
+   plot-types
 
 Need Help?
 ==========
@@ -36,7 +40,6 @@ channel on slack and hopefully someone will help you!
 
 Contributing
 ============
-
 
 ``lsst.analysis.tools`` is developed at https://github.com/lsst/analysis_tools.
 You can find Jira issues for this module under the `analysis_tools <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20analysis_tools>`_ component.

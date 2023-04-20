@@ -54,7 +54,7 @@ class BarPanel(Config):
 
 
 class BarPlot(PlotAction):
-    """A plotting tool which can take multiple keyed data inputs 
+    """A plotting tool which can take multiple keyed data inputs
     and can create one or more bar graphs.
     """
 
@@ -84,7 +84,6 @@ class BarPlot(PlotAction):
         """Make an N-panel plot with a user-configurable number of bar graphs
         displayed in each panel.
 
-
         Parameters
         ----------
         data : `KeyedData`
@@ -92,22 +91,23 @@ class BarPlot(PlotAction):
         plotInfo : `dict`
             An optional dictionary of information about the data being
             plotted with keys:
+
             `"run"`
-            Output run for the plots (`str`).
+                Output run for the plots (`str`).
             `"tractTableType"`
-            Table from which results are taken (`str`).
+                Table from which results are taken (`str`).
             `"plotName"`
-            Output plot name (`str`)
+                Output plot name (`str`)
             `"SN"`
-            The global signal-to-noise data threshold (`float`)
+                The global signal-to-noise data threshold (`float`)
             `"skymap"`
-            The type of skymap used for the data (`str`).
+                The type of skymap used for the data (`str`).
             `"tract"`
-            The tract that the data comes from (`int`).
+                The tract that the data comes from (`int`).
             `"bands"`
-            The bands used for this data (`str` or `list`).
+                The bands used for this data (`str` or `list`).
             `"visit"`
-            The visit that the data comes from (`int`)
+                The visit that the data comes from (`int`)
 
         Returns
         -------

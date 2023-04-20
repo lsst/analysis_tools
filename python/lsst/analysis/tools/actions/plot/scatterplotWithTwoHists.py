@@ -52,7 +52,7 @@ cmapPatch.set_bad(color="none")
 
 
 class ScatterPlotStatsAction(KeyedDataAction):
-    """Calculates the statistics needed for the 
+    """Calculates the statistics needed for the
     scatter plot with two hists.
     """
 
@@ -138,7 +138,7 @@ class _StatsContainer(NamedTuple):
 
 
 class ScatterPlotWithTwoHists(PlotAction):
-    """Makes a scatter plot of the data with a marginal 
+    """Makes a scatter plot of the data with a marginal
     histogram for each axis.
     """
 
@@ -287,26 +287,26 @@ class ScatterPlotWithTwoHists(PlotAction):
         which points to plot and the statisticSelector actions to determine
         which points to use for the printed statistics.
 
-        If this function is being used within the pipetask framework 
-        that takes care of making sure that data has all the required 
-        elements but if you are runnign this as a standalone function 
-        then you will need to provide the following things in the 
+        If this function is being used within the pipetask framework
+        that takes care of making sure that data has all the required
+        elements but if you are runnign this as a standalone function
+        then you will need to provide the following things in the
         input data.
 
         * If stars is in self.plotTypes:
-            xStars, yStars, starsHighSNMask, starsLowSNMask and 
-            {band}_highSNStars_{name}, {band}_lowSNStars_{name} 
+            xStars, yStars, starsHighSNMask, starsLowSNMask and
+            {band}_highSNStars_{name}, {band}_lowSNStars_{name}
             where name is median, sigma_Mad, count and approxMag.
 
-        * If it is for galaxies/unknowns then replace stars in the above 
+        * If it is for galaxies/unknowns then replace stars in the above
           names with galaxies/unknowns.
 
-        * If it is for any (which covers all the points) then it 
-          becomes, x, y, and any instead of stars for the other 
+        * If it is for any (which covers all the points) then it
+          becomes, x, y, and any instead of stars for the other
           parameters given above.
 
         * In every case it is expected that data contains:
-            lowSnThreshold, highSnThreshold and patch 
+            lowSnThreshold, highSnThreshold and patch
             (if the summary plot is being plotted).
 
         Examples
@@ -316,7 +316,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         .. image:: /_static/analysis_tools/scatterPlotExample.png
 
         For a detailed example of how to make a plot from the command line
-        please see the :ref:`getting started guide<analysis-tools-getting-started>`.
+        please see the
+        :ref:`getting started guide<analysis-tools-getting-started>`.
         """
         if not self.plotTypes:
             noDataFig = Figure()

@@ -59,8 +59,7 @@ class SelectorBase(VectorAction):
 
 
 class FlagSelector(VectorAction):
-    """The base flag selector to use to select valid sources for QA
-    """
+    """The base flag selector to use to select valid sources for QA"""
 
     selectWhenFalse = ListField[str](
         doc="Names of the flag columns to select on when False", optional=False, default=[]
@@ -359,8 +358,7 @@ class GoodDiaSourceSelector(FlagSelector):
 
 
 class ExtendednessSelector(VectorAction):
-    """A selector that picks between extended and point sources.
-    """
+    """A selector that picks between extended and point sources."""
 
     vectorKey = Field[str](
         doc="Key of the Vector which defines extendedness metric", default="{band}_extendedness"
@@ -378,6 +376,7 @@ class StarSelector(ExtendednessSelector):
     """A selector that picks out stars based off of their
     extendedness values.
     """
+
     extendedness_maximum = Field[float](
         doc="Maximum extendedness to qualify as unresolved, inclusive.", default=0.5, dtype=float
     )
@@ -391,6 +390,7 @@ class GalaxySelector(ExtendednessSelector):
     """A selector that picks out galaxies based off of their
     extendedness values.
     """
+
     extendedness_minimum = Field[float](
         doc="Minimum extendedness to qualify as resolved, not inclusive.", default=0.5
     )

@@ -70,3 +70,15 @@ Python API reference
    :skip: KeyedData
    :skip: KeyedDataSchema
    :skip: KeyedDataTypes
+.. automodapi:: lsst.analysis.tools.actions.plot
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.vector
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.scalar
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.analysisMetrics
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.analysisParts
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.analysisPlots
+   :no-inheritance-diagram:

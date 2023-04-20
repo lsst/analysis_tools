@@ -474,17 +474,17 @@ plot and then add documentation here for other users so that they can easily see
 
 ------------------
 
-Current Plot Types
-==================
-The current plot types that are available are detailed :doc:`here<currentPlots>`. Most common plots are
+Plot Types
+==========
+The current plot types that are available are detailed :doc:`here<plot-types>`. Most common plots are
 already coded up and please try to reuse them before making your own. Before adding a new plot type please
 think about if some of the already coded ones can be adapted to your needs rather than making multiple plots
 that are basically identical.
 
 ---------------
 
-Current Actions
-===============
-The current actions that are available are detailed :doc:`here<currentActions>`. Most common requests are already coded up and
+Actions Types
+=============
+The current actions that are available are detailed :doc:`here<action-types>`. Most common requests are already coded up and
 please try to reuse actions that already exist before making your own. Please also try to make actions as
 reusable as possible so that other people can also use them.

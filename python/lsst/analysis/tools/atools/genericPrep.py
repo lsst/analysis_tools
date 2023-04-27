@@ -20,32 +20,30 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("DiffMatchedAnalysisConfig", "DiffMatchedAnalysisTask")
+__all__ = ("CoaddPrep", "VisitPrep")
 
-from lsst.pipe.base import connectionTypes as ct
-
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
-
-class DiffMatchedAnalysisConnections(
-    AnalysisBaseConnections,
-    dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "diff_matched_truth_summary_objectTable_tract"},
-):
-    data = ct.Input(
-        doc="Tract based object table to load from the butler",
-        name="matched_truth_summary_objectTable_tract",
-        storageClass="DataFrame",
-        deferLoad=True,
-        dimensions=("skymap", "tract"),
-    )
+from ..actions.vector import CoaddPlotFlagSelector, SnSelector, VisitPlotFlagSelector
+from ..interfaces import BasePrep
 
 
-class DiffMatchedAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections):
+class CoaddPrep(BasePrep):
     def setDefaults(self):
         super().setDefaults()
 
+        self.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.selectors.flagSelector.bands = []
 
-class DiffMatchedAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = DiffMatchedAnalysisConfig
-    _DefaultName = "DiffMatchedAnalysisTask"
+        self.selectors.snSelector = SnSelector()
+        self.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.selectors.snSelector.threshold = 100
+
+
+class VisitPrep(BasePrep):
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.selectors.flagSelector = VisitPlotFlagSelector()
+
+        self.selectors.snSelector = SnSelector()
+        self.selectors.snSelector.fluxType = "psfFlux"
+        self.selectors.snSelector.threshold = 100

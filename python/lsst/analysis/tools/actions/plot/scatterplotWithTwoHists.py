@@ -39,7 +39,7 @@ from matplotlib.figure import Figure
 from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, Vector
+from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
 from ...statistics import nansigmaMad, sigmaMad
 from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
@@ -167,7 +167,7 @@ class ScatterPlotWithTwoHists(PlotAction):
     _stats = ("median", "sigmaMad", "count", "approxMag")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        base: list[tuple[str, type[Vector] | type[Scalar]]] = []
+        base: list[tuple[str, type[Vector] | ScalarType]] = []
         if "stars" in self.plotTypes:  # type: ignore
             base.append(("xStars", Vector))
             base.append(("yStars", Vector))

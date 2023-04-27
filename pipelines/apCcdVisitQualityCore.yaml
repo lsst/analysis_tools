@@ -4,12 +4,11 @@ tasks:
   analyzeDiaSourceTableCore:
     class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
     config:
-      metrics.numDiaSources: NumDiaSourcesMetric
-      metrics.numDiaSourcesAll: NumDiaSourcesAllMetric
-      metrics.numDipoles: NumDipolesMetric
-      metrics.numSsObjects: NumSsObjectsMetric
+      atools.numDiaSources: NumDiaSourcesMetric
+      atools.numDiaSourcesAll: NumDiaSourcesAllMetric
+      atools.numDipoles: NumDipolesMetric
+      atools.numSsObjects: NumSsObjectsMetric
       connections.outputName: diaSourceTableCore
-      plots.simpleDiaPlot: SimpleDiaPlot
+      atools.simpleDiaPlot: SimpleDiaPlot
       python: |
-        from lsst.analysis.tools.analysisMetrics import *
-        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.atools import *

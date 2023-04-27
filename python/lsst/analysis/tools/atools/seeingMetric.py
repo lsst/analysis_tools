@@ -18,34 +18,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
 
-__all__ = ("DiffMatchedAnalysisConfig", "DiffMatchedAnalysisTask")
+from lsst.pex.config import Field
 
-from lsst.pipe.base import connectionTypes as ct
+from ..actions.scalar import MaxAction, MedianAction, MinAction
+from ..interfaces import AnalysisTool
 
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
-
-class DiffMatchedAnalysisConnections(
-    AnalysisBaseConnections,
-    dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "diff_matched_truth_summary_objectTable_tract"},
-):
-    data = ct.Input(
-        doc="Tract based object table to load from the butler",
-        name="matched_truth_summary_objectTable_tract",
-        storageClass="DataFrame",
-        deferLoad=True,
-        dimensions=("skymap", "tract"),
-    )
+__all__ = ("SeeingStatistics",)
 
 
-class DiffMatchedAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections):
+class SeeingStatistics(AnalysisTool):
+    """Calculate seeing statistics from the ccdVisit table.
+    Statistics include mean, max, and min.
+    """
+
+    vectorKey = Field[str](doc="Key which corresponds to seeing vector")
+
     def setDefaults(self):
         super().setDefaults()
 
+        self.process.scalarActions.medianSeeing = MedianAction(vectorKey=self.vectorKey)
+        self.process.scalarActions.minSeeing = MinAction(vectorKey=self.vectorKey)
+        self.process.scalarActions.maxSeeing = MaxAction(vectorKey=self.vectorKey)
 
-class DiffMatchedAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = DiffMatchedAnalysisConfig
-    _DefaultName = "DiffMatchedAnalysisTask"
+        self.produce.units = {
+            "medianSeeing": "arcsec",
+            "minSeeing": "arcsec",
+            "maxSeeing": "arcsec",
+        }

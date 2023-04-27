@@ -27,6 +27,8 @@ __all__ = (
     "CalcE2",
 )
 
+from typing import cast
+
 import numpy as np
 from lsst.pex.config import ChoiceField, Field, FieldValidationError
 from lsst.pex.config.configurableActions import ConfigurableActionField
@@ -126,6 +128,8 @@ class CalcE(VectorAction):
                 data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]
                 - data[self.colXy.format(**kwargs)] ** 2
             )
+        e = cast(Vector, e)
+        denom = cast(Vector, denom)
 
         e /= denom
 
@@ -281,7 +285,7 @@ class CalcE1(VectorAction):
             )
         e1 = (data[self.colXx.format(**kwargs)] - data[self.colYy.format(**kwargs)]) / denom
 
-        return e1
+        return cast(Vector, e1)
 
     def validate(self):
         super().validate()
@@ -344,4 +348,4 @@ class CalcE2(VectorAction):
                 - data[self.colXy.format(**kwargs)] ** 2
             )
         e2 = 2 * data[self.colXy.format(**kwargs)] / denom
-        return e2
+        return cast(Vector, e2)

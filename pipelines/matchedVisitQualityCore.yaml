@@ -6,8 +6,6 @@ tasks:
     config:
       bands: ['g', 'r', 'i', 'z']
       connections.outputName: matchedVisitCore
-      metrics.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatabilityMetric
-      plots.StellarPhotometricRepeatabilityHistPlot: StellarPhotometricRepeatabilityHistPlot
+      atools.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatability
       python: |
-        from lsst.analysis.tools.analysisMetrics import *
-        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.atools import *

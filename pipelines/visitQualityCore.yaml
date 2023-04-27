@@ -8,11 +8,10 @@ tasks:
       # plots.label = APlotClass
       # metrics.name = AMetricsClass
       connections.outputName: sourceTableCore
-      metrics.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
-      metrics.skyFluxVisitStatisticMetric.applyContext: VisitContext
-      plots.skySourceSkyPlot: SkySourceSkyPlot
-      plots.skySourceHistPlot: SkySourceHistPlot
+      atools.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
+      atools.skyFluxVisitStatisticMetric.applyContext: VisitContext
+      atools.skySourceSkyPlot: SkySourceSkyPlot
+      atools.skySourceHistPlot: SkySourceHistPlot
       python: |
-        from lsst.analysis.tools.analysisPlots import *
-        from lsst.analysis.tools.analysisMetrics import *
+        from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

@@ -24,14 +24,14 @@ __all__ = ("RefCatObjectAnalysisConfig", "RefCatObjectAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..analysisPlots.analysisPlots import (
+from ..atools.astrometryWithReference import (
     TargetRefCatDeltaDecScatterPlot,
     TargetRefCatDeltaDecSkyPlot,
     TargetRefCatDeltaRAScatterPlot,
     TargetRefCatDeltaRASkyPlot,
 )
 from ..contexts import CoaddContext
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class RefCatObjectAnalysisConnections(

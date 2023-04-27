@@ -4,7 +4,7 @@ __all__ = ("DiaSourceTableCcdVisitAnalysisConfig", "DiaSourceTableCcdVisitAnalys
 
 from lsst.pipe.base import connectionTypes as ct
 
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class DiaSourceTableCcdVisitAnalysisConnections(

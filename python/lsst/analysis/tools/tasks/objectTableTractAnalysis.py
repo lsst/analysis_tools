@@ -28,7 +28,7 @@ __all__ = (
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class ObjectTableTractAnalysisConnections(

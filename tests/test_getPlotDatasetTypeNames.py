@@ -24,8 +24,8 @@ import os
 from unittest import TestCase, main
 
 import lsst.utils.tests
-from lsst.analysis.tools.analysisPlots.skyObject import SkyObjectHistPlot
-from lsst.analysis.tools.tasks.base import AnalysisBaseConfig
+from lsst.analysis.tools.atools import SkyObjectHistPlot
+from lsst.analysis.tools.interfaces import AnalysisBaseConfig
 from lsst.analysis.tools.tasks.objectTableTractAnalysis import ObjectTableTractAnalysisConfig
 from lsst.analysis.tools.tasks.reconstructor import getPlotDatasetTypeNames
 from lsst.daf.butler import Butler, DatasetType

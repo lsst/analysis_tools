@@ -27,7 +27,7 @@ from lsst.pex.config import Field
 from lsst.pipe.base import connectionTypes as cT
 from lsst.skymap import BaseSkyMap
 
-from .base import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class CcdVisitTableAnalysisConnections(

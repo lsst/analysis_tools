@@ -49,7 +49,7 @@ from lsst.analysis.tools.actions.vector.vectorActions import (
     MagColumnNanoJansky,
     SubtractVector,
 )
-from lsst.analysis.tools.interfaces import AnalysisPlot
+from lsst.analysis.tools.interfaces import AnalysisTool
 
 matplotlib.use("Agg")
 
@@ -89,7 +89,8 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             xLims=(20, 30),
             yLims=(-1000, 1000),
         )
-        plot = AnalysisPlot(produce=action)
+        plot = AnalysisTool()
+        plot.produce.plot = action
 
         # Load the relevant columns
         key_flux = "meas_Flux"
@@ -150,7 +151,6 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
                 lowSNSelector=SnSelector(fluxType=f"flux{plural}", threshold=20),
             )
             setattr(plot.process.calculateActions, plural.lower(), statAction)
-        plot.produce = action
 
         data = {
             "ref_Flux": flux,
@@ -161,6 +161,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
 
         self.data = pd.DataFrame(data)
         self.plot = plot
+        self.plot.finalize()
         plotInfo = {key: "test" for key in ("plotName", "run", "tableName")}
         plotInfo["bands"] = []
         self.plotInfo = plotInfo
@@ -180,6 +181,8 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             skymap=None,
             plotInfo=self.plotInfo,
         )
+        # unpack the result from the dictionary
+        result = result[type(self.plot.produce.plot).__name__]
         self.assertTrue(isinstance(result, plt.Figure))
 
         # Set to true to save plots as PNGs
@@ -218,7 +221,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             texts_ref = set(x.strip() for x in f.readlines())
         texts_set = set(x.strip().replace(newline, newline_replace) for x in texts)
 
-        self.assertTrue(texts_set.issuperset(texts_ref))
+        self.assertTrue(texts_ref.issuperset(texts_set))
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):

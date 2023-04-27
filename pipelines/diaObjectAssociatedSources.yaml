@@ -6,8 +6,6 @@ tasks:
     config:
       connections.outputName: sourcesOutput
       bands: ['g']
-      metrics.sourceMetrics: CountSources
-      plots.analysisPlots: SourcesPlot
+      atools.sourceTool: SourcesTool
       python: |
-        from lsst.analysis.tools.analysisMetrics import *
-        from lsst.analysis.tools.analysisPlots import *
+        from lsst.analysis.tools.atools import *

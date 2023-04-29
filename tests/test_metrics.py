@@ -29,19 +29,17 @@ from lsst.analysis.tools.atools import (
     MatchedRefCoaddMetric,
     MatchedRefCoaddPositionMetric,
 )
-from lsst.analysis.tools.contexts import MatchedRefChiContext, MatchedRefDiffContext
 
 
 class TestDiffMatched(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.band_default = "analysisTools"
-        self.contexts = (MatchedRefChiContext, MatchedRefDiffContext)
+        self.contexts = ("chi", "diff")
 
     def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddMetric], **kwargs):
         for context in self.contexts:
-            tester = type_metric(**kwargs)
-            tester.applyContext(context)
+            tester = type_metric(**kwargs, context=context)
             tester.finalize()
 
             keys = list(k[0] for k in tester.getInputSchema())

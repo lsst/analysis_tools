@@ -197,26 +197,30 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddToolBase):
     The default model flux is cModel.
     """
 
-    def matchedRefDiffContext(self):
-        self.process.buildActions.diff = SubtractVector(
-            actionA=MagColumnNanoJansky(
-                vectorKey=self.process.buildActions.fluxes_meas.vectorKey, returnMillimags=True
-            ),
-            actionB=DivideVector(
-                actionA=self.process.buildActions.mags_ref,
-                # To convert to mmag
-                actionB=ConstantValue(value=1e-3),
-            ),
-        )
-
-    def matchedRefChiContext(self):
-        self.process.buildActions.diff = DivideVector(
-            actionA=SubtractVector(
-                actionA=LoadVector(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
-                actionB=LoadVector(vectorKey=self.process.buildActions.fluxes_ref.vectorKey),
-            ),
-            actionB=LoadVector(vectorKey=f"{self.process.buildActions.fluxes_meas.vectorKey}Err"),
-        )
+    def finalize(self):
+        super().finalize()
+        if not hasattr(self.process.buildActions, "diff"):
+            if self.context == "diff":
+                self.process.buildActions.diff = SubtractVector(
+                    actionA=MagColumnNanoJansky(
+                        vectorKey=self.process.buildActions.fluxes_meas.vectorKey, returnMillimags=True
+                    ),
+                    actionB=DivideVector(
+                        actionA=self.process.buildActions.mags_ref,
+                        # To convert to mmag
+                        actionB=ConstantValue(value=1e-3),
+                    ),
+                )
+            elif self.context == "chi":
+                self.process.buildActions.diff = DivideVector(
+                    actionA=SubtractVector(
+                        actionA=LoadVector(vectorKey=self.process.buildActions.fluxes_meas.vectorKey),
+                        actionB=LoadVector(vectorKey=self.process.buildActions.fluxes_ref.vectorKey),
+                    ),
+                    actionB=LoadVector(vectorKey=f"{self.process.buildActions.fluxes_meas.vectorKey}Err"),
+                )
+            else:
+                raise ValueError(f"Unrecognized {self.context=}")
 
     def setDefaults(self):
         super().setDefaults()
@@ -237,20 +241,19 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddToolBase):
 class MatchedRefCoaddCModelFluxMetric(MatchedRefCoaddDiffMagTool, MatchedRefCoaddMetric):
     """Metric for diffs between reference and CModel coadd mags."""
 
-    def matchedRefDiffContext(self):
-        super().matchedRefDiffContext()
-        self.unit = "mmag"
-        self.name_prefix = "photom_mag_cModelFlux_{name_class}_diff_"
-        self.produce.metric.units = self.configureMetrics()
-
-    def matchedRefChiContext(self):
-        super().matchedRefChiContext()
-        self.unit = ""
-        self.name_prefix = "photom_mag_cModelFlux_{name_class}_chi_"
-        self.produce.metric.units = self.configureMetrics()
-
-    def setDefaults(self):
-        super().setDefaults()
+    def finalize(self):
+        super().finalize()
+        if not hasattr(self.process.metric, "units"):
+            if self.context == "diff":
+                self.unit = "mmag"
+                self.name_prefix = "photom_mag_cModelFlux_{name_class}_diff_"
+                self.produce.metric.units = self.configureMetrics()
+            elif self.context == "chi":
+                self.unit = ""
+                self.name_prefix = "photom_mag_cModelFlux_{name_class}_chi_"
+                self.produce.metric.units = self.configureMetrics()
+            else:
+                raise ValueError(f"Unrecognized {self.context=}")
 
 
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddToolBase):
@@ -265,30 +268,26 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddToolBase):
         optional=False,
     )
 
-    # TODO: Determine if this can be put back into setDefaults w/o this:
-    # lsst.pex.config.config.FieldValidationError:
-    # Field 'process.buildActions.pos_meas.vectorKey' failed validation:
-    # Required value cannot be None
-    def _setPos(self):
-        self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
-        self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
-
-    def matchedRefDiffContext(self):
-        self._setPos()
-        self.process.buildActions.diff = SubtractVector(
-            actionA=self.process.buildActions.pos_meas,
-            actionB=self.process.buildActions.pos_ref,
-        )
-
-    def matchedRefChiContext(self):
-        self._setPos()
-        self.process.buildActions.diff = DivideVector(
-            actionA=SubtractVector(
-                actionA=self.process.buildActions.pos_meas,
-                actionB=self.process.buildActions.pos_ref,
-            ),
-            actionB=LoadVector(vectorKey=f"{self.process.buildActions.pos_meas.vectorKey}Err"),
-        )
+    def finalize(self):
+        super().finalize()
+        if not hasattr(self.process.buildActions, "pos_meas"):
+            self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
+            self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
+            if self.context == "diff":
+                self.process.buildActions.diff = SubtractVector(
+                    actionA=self.process.buildActions.pos_meas,
+                    actionB=self.process.buildActions.pos_ref,
+                )
+            elif self.context == "chi":
+                self.process.buildActions.diff = DivideVector(
+                    actionA=SubtractVector(
+                        actionA=self.process.buildActions.pos_meas,
+                        actionB=self.process.buildActions.pos_ref,
+                    ),
+                    actionB=LoadVector(vectorKey=f"{self.process.buildActions.pos_meas.vectorKey}Err"),
+                )
+            else:
+                raise ValueError(f"Unrecognized {self.context=}")
 
     def setDefaults(self):
         super().setDefaults()
@@ -307,20 +306,19 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddToolBase):
 class MatchedRefCoaddPositionMetric(MatchedRefCoaddDiffPositionTool, MatchedRefCoaddMetric):
     """Metric for diffs between reference and base coadd centroids."""
 
-    def matchedRefDiffContext(self):
-        super().matchedRefDiffContext()
-        self.unit = "pix"
-        self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
-        self.produce.metric.units = self.configureMetrics()
-
-    def matchedRefChiContext(self):
-        super().matchedRefChiContext()
-        self.unit = ""
-        self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
-        self.produce.metric.units = self.configureMetrics()
-
-    def setDefaults(self):
-        super().setDefaults()
+    def finalize(self):
+        super().finalize()
+        if not hasattr(self.process.metric, "units"):
+            if self.context == "diff":
+                self.unit = "pix"
+                self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
+                self.produce.metric.units = self.configureMetrics()
+            elif self.context == "chi":
+                self.unit = ""
+                self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
+                self.produce.metric.units = self.configureMetrics()
+            else:
+                raise ValueError(f"Unrecognized {self.context=}")
 
 
 class MatchedRefCoaddPlot(AnalysisTool):
@@ -360,26 +358,24 @@ class MatchedRefCoaddCModelPlot(MatchedRefCoaddPlot):
 
 
 class MatchedRefCoaddCModelFluxPlot(MatchedRefCoaddCModelPlot, MatchedRefCoaddDiffMagTool):
-    def matchedRefDiffContext(self):
-        super().matchedRefDiffContext()
-        self.produce.plot.yAxisLabel = "cModel - Reference mmag"
-
-    def matchedRefChiContext(self):
-        super().matchedRefChiContext()
-        self.produce.plot.yAxisLabel = "chi = (cModel - Reference mag)/error"
-
-    def setDefaults(self):
-        super().setDefaults()
+    def finalize(self):
+        MatchedRefCoaddCModelPlot(self).finalize()
+        MatchedRefCoaddDiffMagTool(self).finalize()
+        if self.context == "diff":
+            self.produce.plot.yAxisLabel = "cModel - Reference mmag"
+        elif self.context == "chi":
+            self.produce.plot.yAxisLabel = "chi = (cModel - Reference mag)/error"
+        else:
+            raise ValueError(f"Unrecognized {self.context=}")
 
 
 class MatchedRefCoaddPositionPlot(MatchedRefCoaddCModelPlot, MatchedRefCoaddDiffPositionTool):
-    def matchedRefDiffContext(self):
-        super().matchedRefDiffContext()
-        self.produce.plot.yAxisLabel = f"{self.variable} position (pix)"
-
-    def matchedRefChiContext(self):
-        super().matchedRefChiContext()
-        self.produce.plot.yAxisLabel = f"chi = (slot - Reference {self.variable} position)/error"
-
-    def setDefaults(self):
-        super().setDefaults()
+    def finalize(self):
+        MatchedRefCoaddCModelPlot(self).finalize()
+        MatchedRefCoaddDiffPositionTool(self).finalize()
+        if self.context == "diff":
+            self.produce.plot.yAxisLabel = f"{self.variable} position (pix)"
+        elif self.context == "chi":
+            self.produce.plot.yAxisLabel = f"chi = (slot - Reference {self.variable} position)/error"
+        else:
+            raise ValueError(f"Unrecognized {self.context=}")

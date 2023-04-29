@@ -24,18 +24,10 @@ from __future__ import annotations
 be a subclass of `Context`, and should contain a description of what the
 context is for as it's docstring.
 """
-__all__ = ("MatchedRefDiffContext", "MatchedRefChiContext")
+__all__ = ("ExampleContext",)
 
 from ._baseContext import Context
 
 
-class MatchedRefDiffContext(Context):
-    """A context which indicates `AnalysisAction`s are computing differences
-    between matches to reference objects.
-    """
-
-
-class MatchedRefChiContext(Context):
-    """A context which indicates `AnalysisAction`s are computing error-scaled
-    differences between matches to reference objects.
-    """
+class ExampleContext(Context):
+    """An example context which should not actually be used."""

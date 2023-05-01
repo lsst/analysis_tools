@@ -146,7 +146,7 @@ class AnalysisTool(AnalysisAction):
         super().__init_subclass__(**kwargs)
         # Wrap all definitions of the finalize method in a special wrapper that
         # ensures that the bases classes private finalize is called last.
-        if "finalize" in dir(cls):
+        if "finalize" in vars(cls):
             cls.finalize = _finalizeWrapper(cls.finalize, cls)
 
     parameterizedBand: bool | Field[bool] = True

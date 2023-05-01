@@ -57,18 +57,16 @@ class HistStatsPanel(Config):
     customize the HistPlot stats panel.
 
     - The ListField parameter a dict to specify names of 3 stat columns accepts
-    latex formating
+      latex formating
 
     - The other parameters (stat1, stat2, stat3) are lists of strings that
-    specify vector keys correspoinding to scalar values computed in the
-    prep/process/produce steps of an analysis tools plot/metric configurable
-    action. There should be one key for each group in the HistPanel.
+      specify vector keys correspoinding to scalar values computed in the
+      prep/process/produce steps of an analysis tools plot/metric configurable
+      action. There should be one key for each group in the HistPanel.
 
     A separate config class is used instead of constructing
     `~lsst.pex.config.DictField`'s in HistPanel for each parameter for clarity
     and consistency.
-
-
 
     Notes
     -----

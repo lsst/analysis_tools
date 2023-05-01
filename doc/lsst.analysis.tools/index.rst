@@ -8,15 +8,33 @@ lsst.analysis.tools
 
 .. Paragraph that describes what this Python module does and links to related modules and frameworks.
 
+``analysis_tools`` is the plotting and metric framework that is used to perform QA on the pipeline products.
+It is a very powerful way to explore and interact with the pipeline outputs.
+
 .. .. _lsst.analysis.tools-using:
 
-.. Using lsst.analysis.tools
-.. =========================
+Using lsst.analysis.tools
+=========================
+
+For a tutorial on working with
+``analysis_tools`` please see the :ref:`getting started guide <analysis-tools-getting-started>`.
 
 .. toctree linking to topics related to using the module's APIs.
 
-.. .. toctree::
-..    :maxdepth: 1
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   getting-started
+   action-types
+   plot-types
+
+Need Help?
+==========
+
+If you get stuck with ``analysis_tools`` then feel free to reach out to the ``#rubinobs-analysis-tools``
+channel on slack and hopefully someone will help you!
+
 
 .. _lsst.analysis.tools-contributing:
 
@@ -55,3 +73,9 @@ Python API reference
    :skip: KeyedData
    :skip: KeyedDataSchema
    :skip: KeyedDataTypes
+.. automodapi:: lsst.analysis.tools.actions.plot
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.vector
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.scalar
+   :no-inheritance-diagram:

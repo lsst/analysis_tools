@@ -26,6 +26,8 @@ from ...statistics import nansigmaMad
 
 
 class MedianAction(ScalarAction):
+    """Calculates the median of the given data."""
+
     vectorKey = Field[str]("Key of Vector to median")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -37,6 +39,8 @@ class MedianAction(ScalarAction):
 
 
 class MeanAction(ScalarAction):
+    """Calculates the mean of the given data."""
+
     vectorKey = Field[str]("Key of Vector from which to calculate mean")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -48,6 +52,8 @@ class MeanAction(ScalarAction):
 
 
 class StdevAction(ScalarAction):
+    """Calculates the standard deviation of the given data."""
+
     vectorKey = Field[str]("Key of Vector from which to calculate std deviation")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -59,6 +65,8 @@ class StdevAction(ScalarAction):
 
 
 class SigmaMadAction(ScalarAction):
+    """Calculates the sigma mad of the given data."""
+
     vectorKey = Field[str]("Key of Vector to median")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -77,6 +85,8 @@ class SigmaMadAction(ScalarAction):
 
 
 class CountAction(ScalarAction):
+    """Returns the number of non nan entries in the given column,"""
+
     vectorKey = Field[str]("Key of Vector to count")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -115,6 +125,8 @@ class CountUniqueAction(ScalarAction):
 
 
 class ApproxFloor(ScalarAction):
+    """Returns the median of the lowest ten values of the sorted input."""
+
     vectorKey = Field[str](doc="Key for the vector to perform action on", optional=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -167,6 +179,8 @@ class FracThreshold(ScalarAction):
 
 
 class MaxAction(ScalarAction):
+    """Returns the maximum of the given data."""
+
     vectorKey = Field[str]("Key of Vector to find maximum")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -178,6 +192,8 @@ class MaxAction(ScalarAction):
 
 
 class MinAction(ScalarAction):
+    """Returns the minimum of the given data."""
+
     vectorKey = Field[str]("Key for the vector to perform action on")
 
     def getInputSchema(self) -> KeyedDataSchema:

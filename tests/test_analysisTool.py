@@ -41,7 +41,10 @@ class B(NamedTool):
 
 
 class C(B):
-    pass
+    # Override the default finalize to show that it does get called just once
+    # at the end. This should not be implemented normally.
+    def _baseFinalize(self) -> None:
+        self.name += "_final"
 
 
 class D(A, C):
@@ -57,6 +60,10 @@ class E(C, A):
 
 
 class FinalizeTestCase(TestCase):
+    """Test that finalize method properly calls through the MRO, and that
+    it appropriately calls the base finalize once, at the end.
+    """
+
     def setUp(self) -> None:
         super().setUp()
         self.a = A()
@@ -66,13 +73,13 @@ class FinalizeTestCase(TestCase):
 
     def testFinalize(self):
         self.a.finalize()
-        self.assertEquals(self.a.name, "")
+        self.assertEqual(self.a.name, "")
         self.c.finalize()
-        self.assertEquals(self.c.name, "B")
+        self.assertEqual(self.c.name, "B_final")
         self.d.finalize()
-        self.assertEquals(self.d.name, "BD")
+        self.assertEqual(self.d.name, "BD_final")
         self.e.finalize()
-        self.assertEquals(self.e.name, "BE")
+        self.assertEqual(self.e.name, "BE_final")
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

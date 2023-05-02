@@ -37,11 +37,15 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class RefCatObjectAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "objectTable_tract_gaia_dr2_20200414_match"},
+    defaultTemplates={
+        "targetCatalog": "objectTable_tract",
+        "refCatalog": "gaia_dr2_20200414",
+        "outputName": "{targetCatalog}_{refCatalog}_match",
+    },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTable_tract_gaia_dr2_20200414_match",
+        name="{targetCatalog}_{refCatalog}_match",
         storageClass="DataFrame",
         deferLoad=True,
         dimensions=("skymap", "tract"),

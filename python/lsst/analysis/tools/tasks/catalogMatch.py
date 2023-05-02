@@ -123,7 +123,7 @@ class CatalogMatchConnections(
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
         doc="The reference catalog to match to loaded input catalog sources.",
-        name="gaia_dr2_20200414",
+        name="{refCatalog}",
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,
@@ -326,7 +326,7 @@ class CatalogMatchVisitConnections(
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
         doc="The astrometry reference catalog to match to loaded input catalog sources.",
-        name="gaia_dr2_20200414",
+        name="{refCatalog}",
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,

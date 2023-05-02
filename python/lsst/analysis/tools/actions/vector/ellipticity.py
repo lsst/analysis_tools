@@ -105,6 +105,7 @@ class CalcE(VectorAction):
             "shear": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
         },
         default="distortion",
+        optional=False,
     )
 
     halvePhaseAngle = Field[bool](
@@ -266,6 +267,7 @@ class CalcE1(VectorAction):
 
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
+        optional=False,
         allowed={
             "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
             "shear": ("Shear, measured as (Ixx - Iyy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
@@ -336,6 +338,7 @@ class CalcE2(VectorAction):
 
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
+        optional=False,
         allowed={
             "distortion": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
             "shear": ("Shear, defined as 2*Ixy/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),

@@ -65,6 +65,7 @@ class CalcShapeSize(VectorAction):
     sizeType = ChoiceField[str](
         doc="The type of size to calculate",
         default="determinant",
+        optional=False,
         allowed={
             "trace": "trace radius",
             "determinant": "determinant radius",

@@ -313,6 +313,7 @@ class CalcRhoStatistics(KeyedDataAction):
 
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
+        optional=False,
         allowed={
             "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
             "shear": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),

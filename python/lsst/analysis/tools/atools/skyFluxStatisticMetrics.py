@@ -27,46 +27,52 @@ from lsst.pex.config import Field
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
 from ..actions.vector.selectors import SkyObjectSelector, SkySourceSelector
 from ..interfaces import AnalysisTool
+from .coaddVisit import CoaddVisitConfig
 
 
-class SkyFluxStatisticMetric(AnalysisTool):
-    """Calculate sky flux statistics. This uses the 9-pixel aperture flux for
-    sky sources/objects, and returns multiple statistics on the measured
-    fluxes. Note that either visitContext (measurement on sourceTable) or
-    coaddContext (measurement on objectTable) must be specified.
+class SkyFluxStatisticMetric(AnalysisTool, CoaddVisitConfig):
+    """Calculate sky flux statistics.
+
+    This uses the 9-pixel aperture flux for sky sources/objects, and returns
+    multiple statistics on the measured fluxes. Note that self.context must be
+    set to "visit" (for measurement on sourceTables) or "coadd"
+    (for measurement on objectTables).
     """
 
     fluxType = Field[str](doc="Key to use to retrieve flux column", default="ap09Flux")
 
-    def visitContext(self) -> None:
-        self.prep.selectors.skySourceSelector = SkySourceSelector()
+    def _setActions(self) -> None:
+        if self.context == "coadd":
+            name = f"{{band}}_{self.fluxType}"
+            self.prep.selectors.skyObjectSelector = SkyObjectSelector()
+            self.prep.selectors.skyObjectSelector.bands = []
 
-    def coaddContext(self) -> None:
-        self.prep.selectors.skyObjectSelector = SkyObjectSelector()
-        self.prep.selectors.skyObjectSelector.bands = []
-        self.fluxType = f"{{band}}_{self.fluxType}"
+            # Need to pass a mapping of new names so the default names get the
+            # band prepended. Otherwise, each subsequent band's metric will
+            # overwrite the current one (e.g., running with g, r bands without
+            # this, you would get "meanSky," "meanSky"; with it: "g_meanSky,"
+            # "r_meanSky").
+            self.produce.metric.newNames = {
+                "medianSky": "{band}_medianSky",
+                "meanSky": "{band}_meanSky",
+                "stdevSky": "{band}_stdevSky",
+                "sigmaMADSky": "{band}_sigmaMADSky",
+            }
+        elif self.context == "visit":
+            name = f"{self.fluxType}"
+            self.prep.selectors.skySourceSelector = SkySourceSelector()
+        else:
+            raise ValueError(f"Unsupported {self.context=}")
 
-        # Need to pass a mapping of new names so the default names get the
-        # band prepended. Otherwise, each subsequent band's metric will
-        # overwrite the current one (e.g., running with g, r bands without
-        # this, you would get "meanSky," "meanSky"; with it: "g_meanSky,"
-        # "r_meanSky").
-        self.produce.metric.newNames = {  # type: ignore
-            "medianSky": "{band}_medianSky",
-            "meanSky": "{band}_meanSky",
-            "stdevSky": "{band}_stdevSky",
-            "sigmaMADSky": "{band}_sigmaMADSky",
-        }
-
-    def _setActions(self, name: str) -> None:
         self.process.calculateActions.medianSky = MedianAction(vectorKey=name)
         self.process.calculateActions.meanSky = MeanAction(vectorKey=name)
         self.process.calculateActions.stdevSky = StdevAction(vectorKey=name)
         self.process.calculateActions.sigmaMADSky = SigmaMadAction(vectorKey=name)
 
     def finalize(self) -> None:
-        super().finalize()
-        self._setActions(self.fluxType)
+        AnalysisTool(self).finalize()
+        if not hasattr(self.process.calculateActions, "medianSky"):
+            self._setActions()
 
     def setDefaults(self):
         super().setDefaults()

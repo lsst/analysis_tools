@@ -9,7 +9,7 @@ tasks:
       atools.e1Diff: E1Diff
       atools.e2Diff: E2Diff
       atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
-      atools.skyFluxStatisticMetric.applyContext: CoaddContext
+      atools.skyFluxStatisticMetric.context: 'coadd'
       atools.wPerpPSFP: WPerpPSF
       atools.wPerpCModel: WPerpCModel
       atools.xPerpPSFP: XPerpPSF
@@ -20,7 +20,6 @@ tasks:
       atools.skyObjectHistPlot: SkyObjectHistPlot
       python: |
         from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *
   analyzeObjectTableSurveyCore:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:
@@ -29,7 +28,6 @@ tasks:
       bands: ["i"]
       python: |
         from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *
         from lsst.analysis.tools.actions.plot import *
   catalogMatchTract:
     class: lsst.analysis.tools.tasks.catalogMatch.CatalogMatchTask

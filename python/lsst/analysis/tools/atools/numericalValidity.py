@@ -27,9 +27,10 @@ from lsst.pex.config import Field
 from ..actions.scalar import FracInRange, FracNan
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
+from .coaddVisit import CoaddVisitConfig
 
 
-class ValidFracColumnMetric(AnalysisTool):
+class ValidFracColumnMetric(AnalysisTool, CoaddVisitConfig):
     """Calculate the fraction of values in a column that have valid
     numerical values (i.e., not NaN), and that fall within the specified
     "reasonable" range for the values.
@@ -37,25 +38,26 @@ class ValidFracColumnMetric(AnalysisTool):
 
     vectorKey = Field[str](doc="Key of column to validate", default="psfFlux")
 
-    def visitContext(self) -> None:
-        self.process.buildActions.loadVector = LoadVector()
-        self.process.buildActions.loadVector.vectorKey = f"{self.vectorKey}"
-        self._setActions(f"{self.vectorKey}")
+    def _setActions(self) -> None:
+        if self.context == "coadd":
+            name = "{band}_" + f"{self.vectorKey}"
+            self.process.buildActions.loadVector = LoadVector()
+            self.process.buildActions.loadVector.vectorKey = "{band}_" + f"{self.vectorKey}"
 
-    def coaddContext(self) -> None:
-        self.process.buildActions.loadVector = LoadVector()
-        self.process.buildActions.loadVector.vectorKey = "{band}_" + f"{self.vectorKey}"
-        self._setActions("{band}_" + f"{self.vectorKey}")
+            # Need to pass a mapping of new names so the default names get the
+            # band prepended. Otherwise, each subsequent band's metric will
+            # overwrite the current one.
+            self.produce.metric.newNames = {
+                "validFracColumn": "{band}_validFracColumn",
+                "nanFracColumn": "{band}_nanFracColumn",
+            }
+        elif self.context == "visit":
+            name = f"{self.vectorKey}"
+            self.process.buildActions.loadVector = LoadVector()
+            self.process.buildActions.loadVector.vectorKey = f"{self.vectorKey}"
+        else:
+            raise ValueError(f"Unsupported {self.context=}")
 
-        # Need to pass a mapping of new names so the default names get the
-        # band prepended. Otherwise, each subsequent band's metric will
-        # overwrite the current one.
-        self.produce.newNames = {  # type: ignore
-            "validFracColumn": "{band}_validFracColumn",
-            "nanFracColumn": "{band}_nanFracColumn",
-        }
-
-    def _setActions(self, name: str) -> None:
         # The default flux limits of 1e-1 < flux < 1e9 correspond to a
         # magnitude range of 34 < mag < 9 (i.e., reasonably well-measured)
         # objects should all be within this range).
@@ -77,3 +79,9 @@ class ValidFracColumnMetric(AnalysisTool):
             "validFracColumn": "percent",
             "nanFracColumn": "percent",
         }
+
+    def finalize(self):
+        AnalysisTool(self).finalize()
+        CoaddVisitConfig(self).finalize()
+        if not hasattr(self.process.buildActions, "loadVector"):
+            self._setActions()

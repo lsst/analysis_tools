@@ -243,8 +243,8 @@ class CalcE1(VectorAction):
     CalcE
     CalcE2
 
-    Note
-    ----
+    Notes
+    -----
     This is a shape measurement used for doing QA on the ellipticity
     of the sources.
     """
@@ -315,8 +315,8 @@ class CalcE2(VectorAction):
     CalcE
     CalcE1
 
-    Note
-    ----
+    Notes
+    -----
     This is a shape measurement used for doing QA on the ellipticity
     of the sources.
     """

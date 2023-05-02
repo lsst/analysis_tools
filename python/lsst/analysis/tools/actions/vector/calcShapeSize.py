@@ -40,8 +40,8 @@ class CalcShapeSize(VectorAction):
     the magnification cleanly as it is derived from the area of isophotes, but
     have a slightly higher chance of being NaNs for noisy moment estimates.
 
-    Note
-    ----
+    Notes
+    -----
     This is a size measurement used for doing QA on the ellipticity
     of the sources.
     """

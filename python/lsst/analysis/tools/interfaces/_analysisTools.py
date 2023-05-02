@@ -81,7 +81,7 @@ def _finalizeWrapper(
             # inspect the classes dictionary to see if it specifically defines
             # finalize. This is needed because normal lookup will go through
             # the mro, but this needs to be restricted to each class.
-            if "finalize" in dir(klass):
+            if "finalize" in vars(klass):
                 mostDerived = klass
                 break
 

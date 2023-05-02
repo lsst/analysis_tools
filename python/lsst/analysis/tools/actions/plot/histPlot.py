@@ -412,74 +412,77 @@ class HistPlot(PlotAction):
             meds.append(med)
             mads.append(mad)
         panel_range = self._getPanelRange(data, panel, mads=mads, meds=meds)
+        if all(np.isfinite(panel_range)):
+            for i, hist in enumerate(self.panels[panel].hists):
+                hist_data = data[hist][np.isfinite(data[hist])]
+                if len(hist_data) > 0:
+                    ax.hist(
+                        hist_data,
+                        range=panel_range,
+                        bins=self.panels[panel].bins,
+                        histtype="step",
+                        density=self.panels[panel].histDensity,
+                        lw=2,
+                        color=colors[i],
+                        label=self.panels[panel].hists[hist],
+                    )
+                    ax.axvline(meds[i], ls=(0, (5, 3)), lw=1, c=colors[i])
 
-        for i, hist in enumerate(self.panels[panel].hists):
-            hist_data = data[hist][np.isfinite(data[hist])]
-            ax.hist(
-                hist_data,
-                range=panel_range,
-                bins=self.panels[panel].bins,
-                histtype="step",
-                density=self.panels[panel].histDensity,
-                lw=2,
-                color=colors[i],
-                label=self.panels[panel].hists[hist],
-            )
-            ax.axvline(meds[i], ls=(0, (5, 3)), lw=1, c=colors[i])
+            ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
+            ax.set_xlim(panel_range)
+            # The following accommodates spacing for ranges with large numbers
+            # but small-ish dynamic range (example use case: RA 300-301).
+            if ncols > 1 and max(np.abs(panel_range)) >= 100 and (panel_range[1] - panel_range[0]) < 5:
+                ax.xaxis.set_major_formatter("{x:.2f}")
+                ax.tick_params(axis="x", labelrotation=25, pad=-1)
+            ax.set_xlabel(self.panels[panel].label, fontsize=label_font_size)
+            y_label = "Normalized (PDF)" if self.panels[panel].histDensity else "Frequency"
+            ax.set_ylabel(y_label, fontsize=label_font_size)
+            ax.set_yscale(self.panels[panel].yscale)
+            ax.tick_params(labelsize=max(5, label_font_size - 2))
+            # add a buffer to the top of the plot to allow headspace for labels
+            ylims = list(ax.get_ylim())
+            if ax.get_yscale() == "log":
+                ylims[1] = 10 ** (np.log10(ylims[1]) * 1.1)
+            else:
+                ylims[1] *= 1.1
+            ax.set_ylim(ylims[0], ylims[1])
 
-        ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
-        ax.set_xlim(panel_range)
-        # The following accommodates spacing for ranges with large numbers
-        # but small-ish dynamic range (example use case: RA 300-301).
-        if ncols > 1 and max(np.abs(panel_range)) >= 100 and (panel_range[1] - panel_range[0]) < 5:
-            ax.xaxis.set_major_formatter("{x:.2f}")
-            ax.tick_params(axis="x", labelrotation=25, pad=-1)
-        ax.set_xlabel(self.panels[panel].label, fontsize=label_font_size)
-        y_label = "Normalized (PDF)" if self.panels[panel].histDensity else "Frequency"
-        ax.set_ylabel(y_label, fontsize=label_font_size)
-        ax.set_yscale(self.panels[panel].yscale)
-        ax.tick_params(labelsize=max(5, label_font_size - 2))
-        # add a buffer to the top of the plot to allow headspace for labels
-        ylims = list(ax.get_ylim())
-        if ax.get_yscale() == "log":
-            ylims[1] = 10 ** (np.log10(ylims[1]) * 1.1)
+            # Draw a vertical line at a reference value, if given.
+            # If histDensity is True, also plot a reference PDF with
+            # mean = referenceValue and sigma = 1 for reference.
+            if self.panels[panel].referenceValue is not None:
+                ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
+
+            # Check if we should use the default stats panel or if a custom one
+            # has been created.
+            statList = [
+                self.panels[panel].statsPanel.stat1,
+                self.panels[panel].statsPanel.stat2,
+                self.panels[panel].statsPanel.stat3,
+            ]
+            if not any(statList):
+                stats_dict = {
+                    "statLabels": ["N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"],
+                    "stat1": nums,
+                    "stat2": meds,
+                    "stat3": mads,
+                }
+            elif all(statList):
+                stat1 = [data[stat] for stat in self.panels[panel].statsPanel.stat1]
+                stat2 = [data[stat] for stat in self.panels[panel].statsPanel.stat2]
+                stat3 = [data[stat] for stat in self.panels[panel].statsPanel.stat3]
+                stats_dict = {
+                    "statLabels": self.panels[panel].statsPanel.statsLabels,
+                    "stat1": stat1,
+                    "stat2": stat2,
+                    "stat3": stat3,
+                }
+            else:
+                raise RuntimeError("Invalid configuration of HistStatPanel")
         else:
-            ylims[1] *= 1.1
-        ax.set_ylim(ylims[0], ylims[1])
-
-        # Draw a vertical line at a reference value, if given. If histDensity
-        # is True, also plot a reference PDF with mean = referenceValue and
-        # sigma = 1 for reference.
-        if self.panels[panel].referenceValue is not None:
-            ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
-
-        # Check if we should use the default stats panel or if a custom one
-        # has been created.
-        statList = [
-            self.panels[panel].statsPanel.stat1,
-            self.panels[panel].statsPanel.stat2,
-            self.panels[panel].statsPanel.stat3,
-        ]
-        if not any(statList):
-            stats_dict = {
-                "statLabels": ["N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"],
-                "stat1": nums,
-                "stat2": meds,
-                "stat3": mads,
-            }
-        elif all(statList):
-            stat1 = [data[stat] for stat in self.panels[panel].statsPanel.stat1]
-            stat2 = [data[stat] for stat in self.panels[panel].statsPanel.stat2]
-            stat3 = [data[stat] for stat in self.panels[panel].statsPanel.stat3]
-            stats_dict = {
-                "statLabels": self.panels[panel].statsPanel.statsLabels,
-                "stat1": stat1,
-                "stat2": stat2,
-                "stat3": stat3,
-            }
-        else:
-            raise RuntimeError("Invalid configuration of HistStatPanel")
-
+            stats_dict = {key: [] for key in ("stat1", "stat2", "stat3")}
+            stats_dict["statLabels"] = [""] * 3
         return nums, meds, mads, stats_dict
 
     def _getPanelRange(self, data, panel, mads=None, meds=None):
@@ -515,11 +518,14 @@ class HistPlot(PlotAction):
         """Determine panel x-axis range based on data percentile limits."""
         panel_range = [np.nan, np.nan]
         for hist in self.panels[panel].hists:
-            hist_range = np.nanpercentile(
-                data[hist], [self.panels[panel].lowerRange, self.panels[panel].upperRange]
-            )
-            panel_range[0] = np.nanmin([panel_range[0], hist_range[0]])
-            panel_range[1] = np.nanmax([panel_range[1], hist_range[1]])
+            data_hist = data[hist]
+            # TODO: Consider raising instead
+            if len(data_hist) > 0:
+                hist_range = np.nanpercentile(
+                    data[hist], [self.panels[panel].lowerRange, self.panels[panel].upperRange]
+                )
+                panel_range[0] = np.nanmin([panel_range[0], hist_range[0]])
+                panel_range[1] = np.nanmax([panel_range[1], hist_range[1]])
         return panel_range
 
     def _calcStats(self, data):

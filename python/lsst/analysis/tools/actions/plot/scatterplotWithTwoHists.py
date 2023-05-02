@@ -467,21 +467,20 @@ class ScatterPlotWithTwoHists(PlotAction):
             if n_xs == 0:
                 continue
             elif n_xs < 10:
-                xs = np.nanmedian(xs)
-                (medLine,) = ax.plot(
-                    xs, np.nanmedian(ys), color, label=f"Median: {np.nanmedian(ys):.2g}", lw=0.8
-                )
-                linesForLegend.append(medLine)
+                xs = [np.nanmedian(xs)]
                 sigMads = np.array([nansigmaMad(ys)])
+                ys = [np.nanmedian(ys)]
+                (medLine,) = ax.plot(xs, ys, color, label=f"Median: {ys[0]:.2g}", lw=0.8)
+                linesForLegend.append(medLine)
                 (sigMadLine,) = ax.plot(
                     xs,
-                    np.nanmedian(ys) + 1.0 * sigMads,
+                    ys + 1.0 * sigMads,
                     color,
                     alpha=0.8,
                     lw=0.8,
                     label=r"$\sigma_{MAD}$: " + f"{sigMads[0]:.2g}",
                 )
-                ax.plot(xs, np.nanmedian(ys) - 1.0 * sigMads, color, alpha=0.8)
+                ax.plot(xs, ys - 1.0 * sigMads, color, alpha=0.8)
                 linesForLegend.append(sigMadLine)
                 histIm = None
                 continue

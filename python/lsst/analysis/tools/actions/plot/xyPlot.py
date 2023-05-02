@@ -38,6 +38,8 @@ if TYPE_CHECKING:
 
 
 class XYPlot(PlotAction):
+    """Make a plot (with errorbars) of one quantity (X) vs another (Y)."""
+
     boolKwargs = DictField[str, bool](
         doc="Keyword arguments to ax.errorbar that take boolean values",
         default={},
@@ -136,6 +138,11 @@ class XYPlot(PlotAction):
             The catalog containing various rho statistics.
         **kwargs
             Additional keyword arguments to pass to the plot
+
+        Returns
+        -------
+        fig : `~matplotlib.figure.Figure`
+            The resulting figure.
         """
         # Allow for multiple curves to lie on the same plot.
         fig = kwargs.get("fig", None)

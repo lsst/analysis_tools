@@ -30,12 +30,16 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
 class CalcShapeSize(VectorAction):
-    """Calculate a size: (Ixx*Iyy - Ixy**2)**0.25 OR (0.5*(Ixx + Iyy))**0.5
+    r"""Calculate a size: :math:`(I_{xx}I_{yy}-I_{xy}^2)^{\frac{1}{4}}`
+    (determinant radius) or :math:`\sqrt{(I_{xx}+I_{yy})/2}`
+    (trace radius).
+
     The square of size measure is typically expressed either as the arithmetic
     mean of the eigenvalues of the moment matrix (trace radius) or as the
     geometric mean of the eigenvalues (determinant radius), which can be
-    specified using the ``sizeType`` parameter. Both of these measures give the
-    `sigma^2` parameter for a 2D Gaussian.
+    specified using the `sizeType` parameter. Both of these measures give the
+    :math:`\sigma^2` parameter for a 2D Gaussian.
+
     Since lensing preserves surface brightness, the determinant radius relates
     the magnification cleanly as it is derived from the area of isophotes, but
     have a slightly higher chance of being NaNs for noisy moment estimates.
@@ -67,8 +71,8 @@ class CalcShapeSize(VectorAction):
         default="determinant",
         optional=False,
         allowed={
-            "trace": "trace radius",
-            "determinant": "determinant radius",
+            "trace": r"Trace radius :math:`\sqrt{(I_{xx}+I_{yy})/2}`",
+            "determinant": r"Determinant radius :math:`(I_{xx}I_{yy}-I_{xy}^2)^{\frac{1}{4}}`",
         },
     )
 

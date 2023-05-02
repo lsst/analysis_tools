@@ -64,6 +64,8 @@ class ObjectTableSurveyAnalysisConfig(
 
 
 class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
+    """A specialized ``AnalysisPipelineTask`` for multiple tracts."""
+
     ConfigClass = ObjectTableSurveyAnalysisConfig
     _DefaultName = "objectTableSurveyAnalysis"
 

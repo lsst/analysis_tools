@@ -39,22 +39,25 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 class CalcE(VectorAction):
     r"""Calculate a complex value representation of the ellipticity.
 
-    The complex ellipticity is typically defined as
+    The complex ellipticity is typically defined as:
+
     .. math::
+        e &= |e|\exp{(\mathrm{i}2\theta)} = e_1+\mathrm{i}e_2, \\
+          &= \frac{(I_{xx} - I_{yy}) + \mathrm{i}2I_{xy}}{I_{xx} + I_{yy}},
 
-        e = |e|\exp{(j*2*theta)}
-        e = \\frac{((Ixx - Iyy) + j*(2*Ixy))}{(Ixx + Iyy)},
-
-    where j is the square root of -1 and Ixx, Iyy, Ixy are second-order
-    central moments. This is sometimes referred to as distortion, and denoted
-    by e = (e1, e2) in GalSim (see Eq. 4.4. of Bartelmann and Schneider, 2001).
+    where :math:`\mathrm{i}` is the square root of -1 and :math:`I_{xx}`,
+    :math:`I_{yy}`, and :math:`I_{xy}` are second-order central moments.
+    This is sometimes referred to as distortion, and denoted in GalSim by
+    :math:`e=(e_1,e_2)` (see Eq. 4.4. of Bartelmann and Schneider, 2001 [1]_).
     The other definition differs in normalization.
-    It is referred to as shear, and denoted by g = (g1, g2)
-    in GalSim (see Eq. 4.10 of Bartelmann and Schneider (2001). It is defined
-    as
+    It is referred to as shear, and denoted by :math:`g=(g_{1},g_{2})`
+    in GalSim (see Eq. 4.10 of Bartelmann and Schneider, 2001 [1]_).
+    It is defined as
+
     .. math::
 
-        g = \\frac{((Ixx-Iyy)+j*(2*Ixy))}{(Ixx+Iyy+2\sqrt{(Ixx*Iyy-Ixy^{2})})}.
+        g = \frac{(I_{xx} - I_{yy}) + \mathrm{i}2I_{xy}}
+                 {I_{xx} + I_{yy} + 2\sqrt{(I_{xx}I_{yy}-I_{xy}^{2})}}.
 
     The shear measure is unbiased in weak-lensing shear, but may exclude some
     objects in the presence of noisy moment estimates. The distortion measure
@@ -63,9 +66,10 @@ class CalcE(VectorAction):
 
     References
     ----------
-    [1] Bartelmann, M. and Schneider, P., “Weak gravitational lensing”,
-    Physics Reports, vol. 340, no. 4–5, pp. 291–472, 2001.
-    doi:10.1016/S0370-1573(00)00082-X; https://arxiv.org/abs/astro-ph/9912508
+    .. [1] Bartelmann, M. and Schneider, P., “Weak gravitational lensing”,
+           Physics Reports, vol. 340, no. 4–5, pp. 291–472, 2001.
+           doi:10.1016/S0370-1573(00)00082-X;
+           https://arxiv.org/abs/astro-ph/9912508
 
     Notes
     -----
@@ -73,9 +77,13 @@ class CalcE(VectorAction):
     1. This is a shape measurement used for doing QA on the ellipticity
     of the sources.
 
-    2. For plotting purposes we might want to plot :math:`|E|*\exp{(i*theta)}`.
-    If `halvePhaseAngle` config parameter is set to `True`, then
-    the returned quantity therefore corresponds to :math:`|E|*\exp{(i*theta)}`.
+    2. For plotting purposes we might want to plot quivers whose lengths
+    are proportional to :math:`|e|` and whose angles correspond to
+    :math:`\theta`.
+    If `halvePhaseAngle` config parameter is set to `True`, then the returned
+    quantity therefore corresponds to the complex quantity
+    :math:`|e|\exp{(\mathrm{i}\theta)}` or its real and imaginary parts
+    (depending on the `component`).
 
     See Also
     --------
@@ -101,8 +109,13 @@ class CalcE(VectorAction):
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
         allowed={
-            "distortion": ("Distortion, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy)"),
-            "shear": ("Shear, defined as (Ixx - Iyy + 2j*Ixy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "distortion": (
+                "Distortion, defined as " r":math:`(I_{xx}-I_{yy}+\mathrm{i}2I_{xy})/(I_{xx}+I_{yy})`"
+            ),
+            "shear": (
+                "Shear, defined as "
+                r":math:`(I_{xx}-I_{yy}+\mathrm{i}2I_{xy})/(I_{xx}+I_{yy}+2\sqrt{I_{xx}I_{yy}-I_{xy}^2})`"
+            ),
         },
         default="distortion",
         optional=False,
@@ -115,10 +128,11 @@ class CalcE(VectorAction):
 
     component = ChoiceField[str](
         doc="Which component of the ellipticity to return. If `None`, return complex ellipticity values.",
-        optional=True,
         allowed={
-            "1": "e1 or g1 (depending on `ellipticityType`)",
-            "2": "e2 or g2 (depending on `ellipticityType`)",
+            "1": r":math:`e_1` or :math:`g_1` (depending on `ellipticityType`)",
+            "2": r":math:`e_2` or :math:`g_2` (depending on `ellipticityType`)",
+            None: r":math:`e_1 + \mathrm{i}e_2` or :math:`g_1 + \mathrm{i}g_2`"
+            " (depending on `ellipticityType`)",
         },
     )
 
@@ -159,8 +173,10 @@ class CalcE(VectorAction):
 class CalcEDiff(VectorAction):
     r"""Calculate the difference of two ellipticities as a complex quantity.
 
-    The complex ellipticity difference between e_A and e_B is defined as
-    :math:`e_{A} - e_{B} = de = |de|\exp{(j*2*theta)}`.
+    The complex ellipticity (for both distortion-type and shear-type)
+    difference ( between :math:`e_A` and :math:`e_B` is defined as
+    :math:`e_{A}-e_{B}=\delta e=|\delta e|\exp{(\mathrm{i}2\theta_{\delta})}`
+
 
     See Also
     --------
@@ -172,12 +188,14 @@ class CalcEDiff(VectorAction):
     1. This is a shape measurement used for doing QA on the ellipticity
     of the sources.
 
-    2. For plotting purposes we might want to plot
+    2. The `ellipticityType` of `colA` and `colB` have to be the same.
 
-    .. math:: |de|*\exp{(j*theta)}.
-
-    If `halvePhaseAngle` config parameter is set to `True`, then
-    the returned quantity therefore corresponds to :math:`|e|*\exp{(j*theta)}`.
+    3. For plotting purposes we might want to plot quivers whose lengths
+    are proportional to :math:`|\delta e|` and whose angles correspond to
+    :math:`\theta_\delta`.
+    If `halvePhaseAngle` config parameter is set to `True`, then the returned
+    quantity therefore corresponds to the complex quantity
+    :math:`|\delta e|\exp{(\mathrm{i}\theta_\delta)}`.
     """
 
     colA = ConfigurableActionField[VectorAction](
@@ -198,10 +216,11 @@ class CalcEDiff(VectorAction):
 
     component = ChoiceField[str](
         doc="Which component of the ellipticity to return. If `None`, return complex ellipticity values.",
-        optional=True,
         allowed={
-            "1": "e1 or g1 (depending on the `ellipiticyType`)",
-            "2": "e2 or g2 (depending on the `ellipiticyType`)",
+            "1": r":math:`\delta e_1` or :math:`\delta g_1` (depending on the common `ellipiticityType`)",
+            "2": r":math:`\delta e_2` or :math:`\delta g_2` (depending on the common `ellipiticityType`)",
+            None: r":math:`\delta e_1+\mathrm{i}\delta e_2` or :math:`\delta g_1 \mathrm{i}\delta g_2`"
+            " (depending on the common `ellipticityType`)",
         },
     )
 
@@ -235,8 +254,13 @@ class CalcEDiff(VectorAction):
 
 
 class CalcE1(VectorAction):
-    """Calculate distortion-type :math:`e1 = (Ixx - Iyy)/(Ixx + Iyy)` or
-    shear-type :math:`g1 = (Ixx - Iyy)/(Ixx + Iyy + 2sqrt(Ixx*Iyy - Ixy^{2}))`.
+    r"""Calculate :math:`e_1` (distortion-type) or :math:`g_1` (shear-type).
+
+    The definitions are as follows:
+
+    .. math::
+        e_1&=(I_{xx}-I_{yy})/(I_{xx}+I_{yy}) \\
+        g_1&=(I_{xx}-I_{yy})/(I_{xx}+I_{yy}+2\sqrt{I_{xx}I_{yy}-I_{xy}^{2}}).
 
     See Also
     --------
@@ -269,8 +293,10 @@ class CalcE1(VectorAction):
         doc="The type of ellipticity to calculate",
         optional=False,
         allowed={
-            "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
-            "shear": ("Shear, measured as (Ixx - Iyy)/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "distortion": ("Distortion, measured as " r":math:`(I_{xx}-I_{yy})/(I_{xx}+I_{yy})`"),
+            "shear": (
+                "Shear, measured as " r":math:`(I_{xx}-I_{yy})/(I_{xx}+I_{yy}+2\sqrt{I_{xx}I_{yy}-I_{xy}^2})`"
+            ),
         },
         default="distortion",
     )
@@ -307,8 +333,13 @@ class CalcE1(VectorAction):
 
 
 class CalcE2(VectorAction):
-    r"""Calculate distortion-type :math:`e2 = 2Ixy/(Ixx+Iyy)` or
-    shear-type :math:`g2 = 2Ixy/(Ixx+Iyy+2\sqrt(Ixx*Iyy - Ixy^{2}))`.
+    r"""Calculate :math:`e_2` (distortion-type) or :math:`g_2` (shear-type).
+
+    The definitions are as follows:
+
+    .. math::
+        e_2 &= 2I_{xy}/(I_{xx}+I_{yy}) \\
+        g_2 &= 2I_{xy}/(I_{xx}+I_{yy}+2\sqrt{(I_{xx}I_{yy}-I_{xy}^{2})}).
 
     See Also
     --------
@@ -340,8 +371,8 @@ class CalcE2(VectorAction):
         doc="The type of ellipticity to calculate",
         optional=False,
         allowed={
-            "distortion": "Distortion, defined as 2*Ixy/(Ixx + Iyy)",
-            "shear": ("Shear, defined as 2*Ixy/" "(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "distortion": ("Distortion, defined as " r":math:`2I_{xy}/(I_{xx}+I_{yy})`"),
+            "shear": r"Shear, defined as :math:`2I_{xy}/(I_{xx}+I_{yy}+2\sqrt{I_{xx}I_{yy}-I_{xy}^2})`",
         },
         default="distortion",
     )

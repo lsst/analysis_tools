@@ -51,7 +51,8 @@ Package Layout
 ==============
 There are a bunch of files in analysis_tools but we are going to focus on two directories, 
 ``python/lsst/analysis/tools/`` and ``pipelines``, which contain the python code and the 
-pipelines that run it respecitvely.
+pipelines that run it respecitvely. Below is a brief overview of the layout, for more details 
+please see the :doc:`package layout guide<package-layout-guide>`.
 
 Pipelines
 ---------
@@ -110,12 +111,8 @@ python/lsst/analysis/tools
 
 **atools**
 
-| Metric classes go in here. One off metrics and very simple metrics go into analysisMetrics.py. Sets of metrics go into their own file, i.e. psfResidualMetrics.py
-
-| Shared code between plots and metric goes in here. Try to have as much of this as possible so that nothing changes between the plots and their associated metrics.
-| I.e. shapeSizeFractionalDiff.py.
-
-| Plotting classes go in here. One off plots and very simple plots go into analysisPlots.py Sets of plots go into their own file, i.e. skyObject.py.
+| Metrics and plots go in here. Similar plots and metrics should be grouped together into the same file, i.e.
+skyObject.py which contains various plots and metrics that use sky objects.
 
 **contexts**
 

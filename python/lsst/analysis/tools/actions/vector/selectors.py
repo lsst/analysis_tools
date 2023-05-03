@@ -76,9 +76,6 @@ class FlagSelector(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
 
-        Parameters
-        ----------
-        table : `Tabular`
 
         Returns
         -------

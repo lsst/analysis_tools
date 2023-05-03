@@ -108,22 +108,23 @@ python/lsst/analysis/tools
     this unless you have to add a new plot type. Try to use one of 
     the existing ones first rather than duplicating things.
 
-**analysisMetrics**
+**atools**
 
 | Metric classes go in here. One off metrics and very simple metrics go into analysisMetrics.py. Sets of metrics go into their own file, i.e. psfResidualMetrics.py
 
-**analysisParts**
-
 | Shared code between plots and metric goes in here. Try to have as much of this as possible so that nothing changes between the plots and their associated metrics.
 | I.e. shapeSizeFractionalDiff.py.
-
-**analysisPlots**
 
 | Plotting classes go in here. One off plots and very simple plots go into analysisPlots.py Sets of plots go into their own file, i.e. skyObject.py.
 
 **contexts**
 
 | Generic settings to be applied in a given circumstance. For example overrides that are specific to a coadd or visit level plot/metric such as the default flag selector which is different between coadd and visit analysis.
+
+**interfaces**
+
+| Interfaces are the framework level code which is used as a basis to build/interact with analysis tools
+package. You should not have to modify anything in here to be able to add new metrics or plots.
 
 **tasks**
 
@@ -134,6 +135,7 @@ python/lsst/analysis/tools
 
 A Simple Plotting Example
 =========================
+
 The first example we are going to look at is a very simple one and then we can build 
 up from there. We're going to start by adapting an existing plot to our needs, we'll use a 
 sky plot to show the on sky distribution of the values of a column in the table.
@@ -349,8 +351,9 @@ This example data id tells the processing that the instrument being used is HSC,
 in the g, r, i, z and y bands, that the skymap used is the hsc_rings_v1 map, that the tract is 9813 and that
 we only want to process data from patch 68 rather than all the data.
 
-Making A New Metric
--------------------
+Making a New Metric
+===================
+
 Metrics work in a very similar way to plots and we won't go through another full example of them. They can be
 added to the same pipelines as the plots and the pipeline is run as detailled above. Metrics follow the same
 structure and have a prep, process and produce step. If a plot and metric are going to be made of the same
@@ -366,6 +369,10 @@ Adding an Action
 ================
 
 Actions go in one of the sub folders of the actions directory depending on what type they are, this is covered in the package layout section. Before you add a new action check if it is already included before adding a duplicate. Sometimes it will probably be better to generalise an exisiting action rather than making a new one that is very similar to something that already exists. If the new action is long or specific to a given circumatance then add it to a new file, for example the ellipticity actions in `python/lsst/analysis/tools/actions/vector/ellipticity.py <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/actions/vector/ellipticity.py>`__.
+
+The current actions that are available are detailed :doc:`here<action-types>`. Most common requests are already coded up and
+please try to reuse actions that already exist before making your own. Please also try to make actions as
+reusable as possible so that other people can also use them.
 
 Let's look at some examples of actions. The first one is a scalar action.
 
@@ -472,19 +479,7 @@ should be enough information that anyone can recreate the plot and access the fu
 investigation. See the other plots for more information on how to do this. Also please add doc strings to the
 plot and then add documentation here for other users so that they can easily see what already exists.
 
-------------------
-
-Plot Types
-==========
 The current plot types that are available are detailed :doc:`here<plot-types>`. Most common plots are
 already coded up and please try to reuse them before making your own. Before adding a new plot type please
 think about if some of the already coded ones can be adapted to your needs rather than making multiple plots
 that are basically identical.
-
----------------
-
-Actions Types
-=============
-The current actions that are available are detailed :doc:`here<action-types>`. Most common requests are already coded up and
-please try to reuse actions that already exist before making your own. Please also try to make actions as
-reusable as possible so that other people can also use them.

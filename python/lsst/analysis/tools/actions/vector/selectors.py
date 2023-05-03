@@ -187,12 +187,12 @@ class VisitPlotFlagSelector(FlagSelector):
 class RangeSelector(VectorAction):
     """Selects rows within a range, inclusive of min/exclusive of max."""
 
-    key = Field[str](doc="Key to select from data")
+    vectorKey = Field[str](doc="Key to select from data")
     maximum = Field[float](doc="The maximum value", default=np.Inf)
     minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.Inf, 0.0))
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield self.key, Vector
+        yield self.vectorKey, Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Return a mask of rows with values within the specified range.
@@ -206,10 +206,11 @@ class RangeSelector(VectorAction):
         result : `Vector`
             A mask of the rows with values within the specified range.
         """
-        values = cast(Vector, data[self.key])
+        values = cast(Vector, data[self.vectorKey])
         mask = (values >= self.minimum) & (values < self.maximum)
 
-        return np.array(mask)
+        return cast(Vector, mask)
+        # return np.array(mask)
 
 
 class SnSelector(SelectorBase):

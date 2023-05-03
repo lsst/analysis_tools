@@ -20,10 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "StellarPhotometricRepeatability",
-    "StellarPhotometricResidualsFocalPlane",
-)
+__all__ = ("PhotometricRepeatability", "StellarPhotometricResidualsFocalPlane")
 
 from lsst.pex.config import Field
 
@@ -38,14 +35,15 @@ from ..actions.vector import (
     PerGroupStatistic,
     ResidualWithPerGroupStatistic,
     SnSelector,
+    RangeSelector,
     ThresholdSelector,
 )
 from ..interfaces import AnalysisTool
 
 
-class StellarPhotometricRepeatability(AnalysisTool):
+class PhotometricRepeatability(AnalysisTool):
     """Compute photometric repeatability from multiple measurements of a set of
-    stars. First, a set of per-source quality criteria are applied. Second,
+    sources. First, a set of per-source quality criteria are applied. Second,
     the individual source measurements are grouped together by object index
     and per-group quantities are computed (e.g., a representative S/N for the
     group based on the median of associated per-source measurements). Third,
@@ -93,10 +91,9 @@ class StellarPhotometricRepeatability(AnalysisTool):
             op="ge",
             threshold=3,
         )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
+        self.process.filterActions.perGroupStdevFiltered.selectors.sn = RangeSelector(
             vectorKey="perGroupSn",
-            op="ge",
-            threshold=200,
+            minimum=200,
         )
         self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
             vectorKey="perGroupExtendedness",
@@ -113,6 +110,8 @@ class StellarPhotometricRepeatability(AnalysisTool):
             percent=True,
         )
         self.process.calculateActions.photRepeatNsources = CountAction(vectorKey="perGroupStdevFiltered")
+
+        # import pdb; pdb.set_trace()
 
         self.produce.plot = HistPlot()
 

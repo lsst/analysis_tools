@@ -238,52 +238,66 @@ class CalcRhoStatistics(KeyedDataAction):
     Rho statistics refer to a collection of correlation functions involving
     PSF ellipticity and size residuals. They quantify the contribution from PSF
     leakage due to errors in PSF modeling to the weak lensing shear correlation
-    functions. The standard rho statistics are indexed from 1 to 5, and
-    this action calculates a sixth rho statistic, indexed 0.
+    functions.
 
-    Notes
-    -----
+    .. _rho_definitions:
+
     The exact definitions of rho statistics as defined in [1]_ are given below.
+
+    .. math::
+
+       \rho_1(\theta) &= \left\langle
+           \delta e^*_{PSF}(x)
+           \delta e_{PSF}(x+\theta)
+        \right\rangle
+
+       \rho_2(\theta) &= \left\langle
+            e^*_{PSF}(x)
+            \delta e_{PSF}(x+\theta
+        \right\rangle
+
+       \rho_3(\theta) &= \left\langle
+            (e^*_{PSF}\frac{\delta T_{PSF}}{T_{PSF}}(x))
+            (e_{PSF}\frac{\delta T_{PSF}}{T_{PSF}})(x+\theta)
+        \right\rangle
+
+       \rho_4(\theta) &= \left\langle
+            \delta e^*_{PSF}(x)
+            (e_{PSF}\frac{\delta T_{PSF}}{T_{PSF}})(x+\theta)
+        \right\rangle
+
+       \rho_5(\theta) &= \left\langle
+            e^*_{PSF}(x)
+            (e_{PSF}\frac{\delta T_{PSF}}{T_{PSF}})(x+\theta)
+        \right\rangle
+
+
     In addition to these five, we also compute the auto-correlation function of
-    the fractional size residuals and call it as the :math:`\rho_0( \theta )`.
+    the fractional size residuals and call it as the :math:`\rho'_3( \theta )`,
+    as referred to in Melchior et al. (2015) [2]_.
 
     .. math::
 
-       \rho_1(\theta) &= \langle \delta e^*_{PSF}(x) \delta e_{PSF}(x+\theta) \rangle  # noqa: W505
-
-       \rho_2(\theta) &= \langle e^*_{PSF}(x) \delta e_{PSF}(x+\theta) \rangle
-
-       \rho_3(\theta) &= \left\langle (e^*_{PSF}\frac{\delta T_{PSF}}{T_{PSF}}(x))
-                                      \delta e_{PSF}(x+\theta) \right\rangle
-
-       \rho_4(\theta) &= \left\langle (\delta e^*_{PSF}(x)
-                                      (e_{PSF}\frac{\delta T_{PSF}}{T_{PSF}}(x+\theta)) \right\rangle
-
-       \rho_5(\theta) &= \left\langle (e^*_{PSF}(x)
-                                      (e_{PSF}\frac{\delta T_{PSF}}{T_{PSF}}(x+\theta)) \right\rangle
-
-    There is a slightly different version for :math:`\rho_3( \theta )`, used in Melchior et al. (2015) [2]_.
-
-    .. math::
-
-        \rho'_3(\theta) &= \left\langle\frac{\delta T_{PSF}}{T_{PSF}}(x)
+        \rho'_3(\theta) = \left\langle\frac{\delta T_{PSF}}{T_{PSF}}(x)
                                        \frac{\delta T_{PSF}}{T_{PSF}}(x+\theta)
                            \right\rangle
 
 
-    The definition of ellipticity used in [1]_ correspond to ``shear``-type ellipticity, which is typically
-    smaller by a factor of 4 than using ``distortion``-type ellipticity.
+    The definition of ellipticity used in [1]_ correspond to shear-type,
+    which is typically smaller by a factor of 4 than using distortion-type.
 
     References
     ----------
-    .. [1] Jarvis, M., Sheldon, E., Zuntz, J., Kacprzak, T., Bridle, S. L., et. al (2016).  # noqa: W501
+
+    .. [1] Jarvis, M., Sheldon, E., Zuntz, J., Kacprzak, T., Bridle, S. L.,
+           et. al (2016).
            The DES Science Verification weak lensing shear catalogues
            MNRAS, 460, 2245–2281.
            https://doi.org/10.1093/mnras/stw990;
            https://arxiv.org/abs/1507.05603
     .. [2] Melchior, P., et. al (2015)
-           Mass and galaxy distributions of four massive galaxy clusters from Dark Energy Survey
-           Science Verification data
+           Mass and galaxy distributions of four massive galaxy clusters from
+           Dark Energy Survey Science Verification data
            MNRAS, 449, no. 3, pp. 2219–2238.
            https://doi:10.1093/mnras/stv398
            https://arxiv.org/abs/1405.4285
@@ -313,9 +327,12 @@ class CalcRhoStatistics(KeyedDataAction):
 
     ellipticityType = ChoiceField[str](
         doc="The type of ellipticity to calculate",
+        optional=False,
         allowed={
-            "distortion": "Distortion, measured as (Ixx - Iyy)/(Ixx + Iyy)",
-            "shear": ("Shear, measured as (Ixx - Iyy)/(Ixx + Iyy + 2*sqrt(Ixx*Iyy - Ixy**2))"),
+            "distortion": r"Distortion, measured as :math:`(I_{xx}-I_{yy})/(I_{xx}+I_{yy})`",
+            "shear": (
+                r"Shear, measured as :math:`(I_{xx}-I_{yy})/(I_{xx}+I_{yy}+2\sqrt{I_{xx}I_{yy}-I_{xy}^2})`"
+            ),
         },
         default="distortion",
     )

@@ -39,6 +39,13 @@ if TYPE_CHECKING:
 
 
 class RhoStatisticsPlotAction(PlotAction):
+    """Make multiple plots of rho statistics.
+
+    Rho statistics capture the spatial correlation amongst various PSF size and
+    shape residual quantities. For exact definitions, see
+    :ref:`here <rho_definitions>`.
+    """
+
     rhoPlots = ConfigDictField(
         doc="A configurable dict describing the rho statistics to plot.",
         keytype=str,
@@ -96,7 +103,7 @@ class RhoStatisticsPlotAction(PlotAction):
     def makePlot(
         self, data: KeyedData, plotInfo: Mapping[str, str] | None = None, **kwargs: Any
     ) -> Mapping[str, Figure]:
-        """Make the plot.
+        r"""Make the plot(s).
 
         Parameters
         ----------
@@ -114,6 +121,23 @@ class RhoStatisticsPlotAction(PlotAction):
                     The tract that the data comes from (`str`).
         **kwargs
             Additional keyword arguments to pass to the plot
+
+        Returns
+        -------
+        fig_dict : `dict` [`~matplotlib.figure.Figure`]
+            The resulting figures.
+            The figure corresponding :math:`\rho_1(\theta)` can be accessed
+            with the key `rho1` and similarly for the other rho statistics.
+            :math:`\rho_3'` is accessed with the key `rho3alt`.
+
+        Examples
+        --------
+        An example rho statistics plot may be seen below:
+
+        .. image:: /_static/analysis_tools/rhoPlotExample.png
+
+        For further details on how to generate a plot, please refer to the
+        :ref:`getting started guide<analysis-tools-getting-started>`.
         """
         # The prefix for the plot names must match the prefix in the pipeline.
         # This is therefore obtained from the plotInfo dict.

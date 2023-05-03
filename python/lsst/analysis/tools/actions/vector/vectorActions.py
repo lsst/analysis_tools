@@ -33,7 +33,6 @@ __all__ = (
     "MagDiff",
     "SNCalculator",
     "ExtinctionCorrectedMagDiff",
-    "AstromDiff",
     "PerGroupStatistic",
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
@@ -354,59 +353,6 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         return np.array(diff - correction.value)
 
 
-class AstromDiff(VectorAction):
-    """Calculate the difference between two columns, assuming their units
-    are degrees, and convert the difference to arcseconds.
-
-    Parameters
-    ----------
-    df : `pandas.core.frame.DataFrame`
-        The catalog to calculate the position difference from.
-
-    Returns
-    -------
-    angleDiffValue : `np.ndarray`
-        The difference between two columns, either in the input units or in
-        milliarcseconds.
-
-    Notes
-    -----
-    The columns need to be in units (specifiable in the radecUnits1 and 2
-    config options) that can be converted to arcseconds. This action doesn't
-    have any calibration information and assumes that the positions are already
-    calibrated.
-    """
-
-    col1 = Field[str](doc="Column to subtract from", dtype=str)
-    radecUnits1 = Field[str](doc="Units for col1", dtype=str, default="degree")
-    col2 = Field[str](doc="Column to subtract", dtype=str)
-    radecUnits2 = Field[str](doc="Units for col2", dtype=str, default="degree")
-    decCol = Field[str](doc="Declination column to use for RA differences", default=None, optional=True)
-    returnMilliArcsecs = Field[bool](doc="Use marcseconds or not?", dtype=bool, default=True)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        inputSchema = ((self.col1, Vector), (self.col2, Vector))
-        if self.decCol is not None:
-            inputSchema += ((self.decCol, Vector),)
-        return inputSchema
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        angle1 = np.array(data[self.col1.format(**kwargs)]) * u.Unit(self.radecUnits1)
-
-        angle2 = np.array(data[self.col2.format(**kwargs)]) * u.Unit(self.radecUnits2)
-
-        angleDiff = angle1 - angle2
-        if self.decCol is not None:
-            coord_dec = data[self.decCol]
-            angleDiff *= np.cos((coord_dec.to_numpy() * u.degree).to(u.radian).value)
-
-        if self.returnMilliArcsecs:
-            angleDiffValue = angleDiff.to(u.arcsec).value * 1000
-        else:
-            angleDiffValue = angleDiff.value
-        return angleDiffValue
-
-
 class PerGroupStatistic(VectorAction):
     """Compute per-group statistic values and return result as a vector with
     one element per group. The computed statistic can be any function accepted
@@ -461,7 +407,7 @@ class RAcosDec(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         ra = data[self.raKey]
         dec = data[self.decKey]
-        return ra * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
+        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
 
 
 class ConvertUnits(VectorAction):

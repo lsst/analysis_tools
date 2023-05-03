@@ -154,7 +154,7 @@ class AnalysisTool(AnalysisAction):
         for band in bands:
             kwargs["band"] = band
             if "plotInfo" in kwargs:
-                 kwargs["plotInfo"]["bands"] = band
+                kwargs["plotInfo"]["bands"] = band
             subResult = self._call_single(data, **kwargs)
             for key, value in subResult.items():
                 match value:

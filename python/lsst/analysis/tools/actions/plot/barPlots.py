@@ -28,12 +28,13 @@ from typing import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.analysis.tools.actions.plot.plotUtils import addPlotInfo
-from lsst.analysis.tools.interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from lsst.pex.config import Config, ConfigDictField, DictField, Field
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
+
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
+from .plotUtils import addPlotInfo
 
 
 class BarPanel(Config):

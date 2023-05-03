@@ -37,6 +37,8 @@ from matplotlib.patches import Rectangle
 
 
 class BarPanel(Config):
+    """A configurable class describing a panel in a bar plot."""
+
     label = Field[str](
         doc="Panel x-axis label.",
         default="label",

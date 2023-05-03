@@ -85,7 +85,7 @@ class SigmaMadAction(ScalarAction):
 
 
 class CountAction(ScalarAction):
-    """Returns the number of non nan entries in the given column,"""
+    """Returns the number of non-NaN entries in the given column."""
 
     vectorKey = Field[str]("Key of Vector to count")
 

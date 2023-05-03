@@ -44,6 +44,8 @@ log = logging.getLogger(__name__)
 
 
 class MultiVisitCoveragePlot(PlotAction):
+    """Plot the coverage for a set of visits."""
+
     plotName = Field[str](
         doc="The name for the plot.",
         optional=False,

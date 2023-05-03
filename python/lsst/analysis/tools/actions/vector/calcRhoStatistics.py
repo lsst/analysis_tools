@@ -233,7 +233,7 @@ class BinnedCorr2Config(Config):
 
 
 class CalcRhoStatistics(KeyedDataAction):
-    r"""Calculate rho statistics
+    r"""Calculate rho statistics.
 
     Rho statistics refer to a collection of correlation functions involving
     PSF ellipticity and size residuals. They quantify the contribution from PSF

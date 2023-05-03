@@ -159,7 +159,7 @@ class AnalysisBaseConnections(
 
 
 class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseConnections):
-    """Base class for all configs used to define an `AnalysisPipelineTask`
+    """Base class for all configs used to define an `AnalysisPipelineTask`.
 
     This base class defines two fields that should be used in all subclasses,
     atools, and bands.

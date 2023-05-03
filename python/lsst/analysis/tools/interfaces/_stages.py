@@ -44,6 +44,8 @@ from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vec
 
 
 class BasePrep(KeyedDataAction):
+    """Base class for actions which prepare data for processing."""
+
     vectorKeys = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
 
     selectors = ConfigurableActionStructField[VectorAction](
@@ -80,6 +82,8 @@ class BasePrep(KeyedDataAction):
 
 
 class BaseProcess(KeyedDataAction):
+    """Base class for actions which process data."""
+
     buildActions = ConfigurableActionStructField[VectorAction | KeyedDataAction](
         doc="Actions which compute a Vector which will be added to results"
     )
@@ -158,6 +162,8 @@ class BaseProcess(KeyedDataAction):
 
 
 class BaseMetricAction(MetricAction):
+    """Base class for actions which compute metrics."""
+
     units = DictField[str, str](doc="Mapping of scalar key to astropy unit string", default={})
     newNames = DictField[str, str](
         doc="Mapping of key to new name if needed prior to creating metric",
@@ -185,6 +191,8 @@ class BaseMetricAction(MetricAction):
 
 
 class BaseProduce(JointAction):
+    """Base class for actions which produce data."""
+
     def setDefaults(self):
         super().setDefaults()
         self.metric = BaseMetricAction()

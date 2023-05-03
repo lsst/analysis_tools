@@ -32,6 +32,8 @@ __all__ = (
     "PlotAction",
     "JointResults",
     "JointAction",
+    "NoMetric",
+    "NoPlot",
 )
 
 import warnings

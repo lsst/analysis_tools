@@ -125,22 +125,6 @@ class AnalysisTool(AnalysisAction):
     metric_tags = ListField[str](
         doc="List of tags which will be associated with metric measurement(s)", default=[]
     )
-    dataset_identifier = Field[str](doc="An identifier to be associated with output Metrics", optional=True)
-    reference_package = Field[str](
-        doc="A package who's version, at the time of metric upload to a "
-        "time series database, will be converted to a timestamp of when "
-        "that version was produced",
-        default="lsst_distrib",
-    )
-    timestamp_version = Field[str](
-        doc="Which time stamp should be used as the reference timestamp for a "
-        "metric in a time series database, valid values are; "
-        "reference_package_timestamp, run_timestamp, current_timestamp, "
-        "and dataset_timestamp",
-        default="run_timestamp",
-        check=lambda x: x
-        in ("reference_package_timestamp", "run_timestamp", "current_timestamp", "dataset_timestamp"),
-    )
 
     def __init_subclass__(cls: type[AnalysisTool], **kwargs):
         super().__init_subclass__(**kwargs)

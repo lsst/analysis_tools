@@ -28,13 +28,12 @@ from typing import Mapping, cast
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.analysis.tools import PlotAction
 from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from sklearn.neighbors import KernelDensity
 
-from ...interfaces import KeyedData, KeyedDataSchema, Scalar, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...statistics import sigmaMad
 from .plotUtils import addPlotInfo, mkColormap, perpDistance
 

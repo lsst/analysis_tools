@@ -208,12 +208,6 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
             for tool in self.atools:
                 for tag in self.metric_tags:
                     tool.metric_tags.insert(-1, tag)
-                if tool.dataset_identifier is None:
-                    tool.dataset_identifier = self.dataset_identifier
-                if tool.reference_package == "lsst_distrib":
-                    tool.reference_package = self.reference_package
-                if tool.timestamp_version == "run_timestamp":
-                    tool.timestamp_version = self.timestamp_version
         super().freeze()
 
     def validate(self):
@@ -245,7 +239,11 @@ class AnalysisPipelineTask(PipelineTask):
 
     def _runTools(self, data: KeyedData, **kwargs) -> Struct:
         results = Struct()
-        results.metrics = MetricMeasurementBundle()  # type: ignore
+        results.metrics = MetricMeasurementBundle(
+            dataset_identifier=self.config.dataset_identifier,
+            reference_package=self.config.reference_package,
+            timestamp_version=self.config.timestamp_version,
+        )
         # copy plot info to be sure each action sees its own copy
         plotInfo = kwargs.get("plotInfo")
         plotKey = f"{self.config.connections.outputName}_{{name}}"

@@ -1,0 +1,4 @@
+cls: lsst.analysis.tools.interfaces.datastore.SasquatchDatastore
+constraints:
+  accept:
+    - MetricMeasurementBundle

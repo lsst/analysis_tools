@@ -42,10 +42,10 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
     """
 
     def __init__(self, *args, **kwargs):
+        self.reference_package: str | None = kwargs.pop("reference_package", None)
+        self.timestamp_version: str | None = kwargs.pop("timestamp_version", None)
+        self.dataset_identifier: str | None = kwargs.pop("dataset_identifier", None)
         super().__init__(*args, **kwargs)
-        self.reference_package: str | None = None
-        self.timestamp_version: str | None = None
-        self.dataset_identifier: str | None = None
 
     def json(self) -> str:
         result = {}

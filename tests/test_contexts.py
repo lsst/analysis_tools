@@ -27,7 +27,9 @@ from unittest import TestCase, main
 import astropy.units as apu
 import lsst.utils.tests
 import numpy as np
-from lsst.analysis.tools import (
+from lsst.analysis.tools.actions.scalar import MeanAction, MedianAction
+from lsst.analysis.tools.contexts import Context
+from lsst.analysis.tools.interfaces import (
     AnalysisAction,
     AnalysisTool,
     KeyedData,
@@ -38,8 +40,6 @@ from lsst.analysis.tools import (
     ScalarAction,
     Vector,
 )
-from lsst.analysis.tools.actions.scalar import MeanAction, MedianAction
-from lsst.analysis.tools.contexts import Context
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 from lsst.verify import Measurement

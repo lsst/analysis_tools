@@ -111,8 +111,6 @@ class PhotometricRepeatability(AnalysisTool):
         )
         self.process.calculateActions.photRepeatNsources = CountAction(vectorKey="perGroupStdevFiltered")
 
-        # import pdb; pdb.set_trace()
-
         self.produce.plot = HistPlot()
 
         self.produce.plot.panels["panel_rms"] = HistPanel()

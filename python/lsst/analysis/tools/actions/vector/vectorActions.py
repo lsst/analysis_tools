@@ -120,7 +120,7 @@ class MagColumnNanoJansky(VectorAction):
 
 
 class FractionalDifference(VectorAction):
-    """Calculate (A-B)/B"""
+    """Calculate (A-B)/B."""
 
     actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
     actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
@@ -136,7 +136,7 @@ class FractionalDifference(VectorAction):
 
 
 class Sn(VectorAction):
-    """Compute signal-to-noise in the given flux type"""
+    """Compute signal-to-noise in the given flux type."""
 
     fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
     uncertaintySuffix = Field[str](
@@ -168,7 +168,7 @@ class Sn(VectorAction):
 
 
 class ConstantValue(VectorAction):
-    """Return a constant scalar value"""
+    """Return a constant scalar value."""
 
     value = Field[float](doc="A single constant value", optional=False)
 
@@ -180,7 +180,7 @@ class ConstantValue(VectorAction):
 
 
 class SubtractVector(VectorAction):
-    """Calculate (A-B)"""
+    """Calculate (A-B)."""
 
     actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
     actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
@@ -212,7 +212,7 @@ class DivideVector(VectorAction):
 
 
 class LoadVector(VectorAction):
-    """Load and return a Vector from KeyedData"""
+    """Load and return a Vector from KeyedData."""
 
     vectorKey = Field[str](doc="Key of vector which should be loaded")
 

@@ -220,13 +220,17 @@ class NoMetric(MetricAction):
 
 @dataclass
 class JointResults:
+    """The `JointResults` dataclass is a container for the results of a
+    `JointAction`.
+    """
+
     plot: PlotResultType | None
     metric: MetricResultType | None
 
 
 class JointAction(AnalysisAction):
     """A `JointAction` is an `AnalysisAction` that is a composite of a
-    `PlotAction` and a `MetricAction`
+    `PlotAction` and a `MetricAction`.
     """
 
     metric = ConfigurableActionField[MetricAction](doc="Action to run that will produce one or more metrics")

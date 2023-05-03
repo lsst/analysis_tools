@@ -65,6 +65,7 @@ class Scalar(Number, np.number, metaclass=ScalarMeta):  # type: ignore
 
 
 ScalarType = type[Scalar]
+"""A type alias for the Scalar interface."""
 
 Vector = NDArray
 """A Vector is an abstraction around the NDArray interface, things that 'quack'
@@ -88,14 +89,14 @@ r"""An interface that represents a type returned by `AnalysisAction`\ 's
 """
 
 PlotTypes = Figure
-"""An interface that represents the various plot types analysis tools supports
+"""An interface that represents the various plot types analysis tools supports.
 """
 
 KeyedResults = Mapping[str, PlotTypes | Measurement]
-"""A mapping of the return types for an analysisTool
-"""
+"""A mapping of the return types for an analysisTool."""
 
 MetricResultType: TypeAlias = Mapping[str, Measurement] | Measurement
-
+"""A type alias for the return type of a MetricAction."""
 
 PlotResultType: TypeAlias = Mapping[str, PlotTypes] | PlotTypes
+"""A type alias for the return type of a PlotAction."""

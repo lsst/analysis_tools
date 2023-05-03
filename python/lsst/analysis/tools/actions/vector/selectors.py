@@ -59,7 +59,7 @@ class SelectorBase(VectorAction):
 
 
 class FlagSelector(VectorAction):
-    """The base flag selector to use to select valid sources for QA"""
+    """The base flag selector to use to select valid sources for QA."""
 
     selectWhenFalse = ListField[str](
         doc="Names of the flag columns to select on when False", optional=False, default=[]
@@ -213,7 +213,7 @@ class RangeSelector(VectorAction):
 
 
 class SnSelector(SelectorBase):
-    """Selects points that have S/N > threshold in the given flux type"""
+    """Selects points that have S/N > threshold in the given flux type."""
 
     fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
     threshold = Field[float](doc="The S/N threshold to remove sources with.", default=500.0)
@@ -272,7 +272,7 @@ class SnSelector(SelectorBase):
 
 
 class SkyObjectSelector(FlagSelector):
-    """Selects sky objects in the given band(s)"""
+    """Selects sky objects in the given band(s)."""
 
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
@@ -310,7 +310,7 @@ class SkyObjectSelector(FlagSelector):
 
 
 class SkySourceSelector(FlagSelector):
-    """Selects sky sources from sourceTables"""
+    """Selects sky sources from sourceTables."""
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
@@ -332,7 +332,7 @@ class SkySourceSelector(FlagSelector):
 
 
 class GoodDiaSourceSelector(FlagSelector):
-    """Selects good DIA sources from diaSourceTables"""
+    """Selects good DIA sources from diaSourceTables."""
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()

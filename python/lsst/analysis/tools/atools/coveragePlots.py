@@ -28,6 +28,8 @@ from ..interfaces import AnalysisTool
 
 
 class BaseMultiVisitCoveragePlot(AnalysisTool):
+    """Base class for multi-visit coverage plots."""
+
     parameterizedBand: bool = False
 
     def setDefaults(self):
@@ -46,6 +48,8 @@ class BaseMultiVisitCoveragePlot(AnalysisTool):
 
 
 class FocalPlaneMultiVisitCoveragePlot(BaseMultiVisitCoveragePlot):
+    """Multi-visit coverage plot in focal plane coordinates."""
+
     def setDefaults(self):
         super().setDefaults()
         self.produce.plot.projection = "focalPlane"
@@ -53,6 +57,8 @@ class FocalPlaneMultiVisitCoveragePlot(BaseMultiVisitCoveragePlot):
 
 
 class RaDecMultiVisitCoveragePlot(BaseMultiVisitCoveragePlot):
+    """Multi-visit coverage plot in RA/Dec coordinates."""
+
     def setDefaults(self):
         super().setDefaults()
         self.produce.plot.plotName = "raDecMultiVisitCoverage"

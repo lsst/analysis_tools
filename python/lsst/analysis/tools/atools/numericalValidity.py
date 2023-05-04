@@ -50,7 +50,7 @@ class ValidFracColumnMetric(AnalysisTool):
         # Need to pass a mapping of new names so the default names get the
         # band prepended. Otherwise, each subsequent band's metric will
         # overwrite the current one.
-        self.produce.newNames = {  # type: ignore
+        self.produce.metric.newNames = {  # type: ignore
             "validFracColumn": "{band}_validFracColumn",
             "nanFracColumn": "{band}_nanFracColumn",
         }

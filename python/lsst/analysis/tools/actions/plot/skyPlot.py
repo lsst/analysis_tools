@@ -295,6 +295,17 @@ class SkyPlot(PlotAction):
                     )
 
         for i, (xs, ys, colorVals, cmap, label) in enumerate(toPlotList):
+            finite = np.isfinite(xs) & np.isfinite(ys)
+            xs = xs[finite]
+            ys = ys[finite]
+            n_xs = len(xs)
+            # colorVal column is unusable so zero it out
+            # This should be obvious on the plot
+            if not any(np.isfinite(colorVals)):
+                colorVals[:] = 0
+
+            if n_xs < 5:
+                continue
             if not self.plotOutlines or "tract" not in sumStats.keys():
                 minRa = np.min(xs)
                 maxRa = np.max(xs)

@@ -111,8 +111,7 @@ python/lsst/analysis/tools
 
 **atools**
 
-| Metrics and plots go in here. Similar plots and metrics should be grouped together into the same file, i.e.
-skyObject.py which contains various plots and metrics that use sky objects.
+| Metrics and plots go in here. Similar plots and metrics should be grouped together into the same file, i.e. skyObject.py which contains various plots and metrics that use sky objects.
 
 **contexts**
 
@@ -120,8 +119,7 @@ skyObject.py which contains various plots and metrics that use sky objects.
 
 **interfaces**
 
-| Interfaces are the framework level code which is used as a basis to build/interact with analysis tools
-package. You should not have to modify anything in here to be able to add new metrics or plots.
+| Interfaces are the framework level code which is used as a basis to build/interact with analysis tools package. You should not have to modify anything in here to be able to add new metrics or plots.
 
 **tasks**
 

@@ -25,6 +25,8 @@ For a tutorial on working with
    getting-started
    action-types
    plot-types
+   troubleshooting
+   package-layout-guide
 
 .. _lsst.analysis.tools-help:
 
@@ -32,6 +34,10 @@ Need Help?
 ==========
 
 If you have any questions regarding ``analysis_tools`` it is recommended that you post your question on `The Community Forum <https://community.lsst.org/>`_.
+
+A first place for more information is the :ref:`Hints, Tips and Troubleshooting <analysis-tools-troubleshooting>` page which
+contains some helpful hints. More will be added to this page over time, if you find something that you think
+should be added here then please do!
 
 .. _lsst.analysis_tools-pyapi:
 
@@ -52,6 +58,40 @@ Contributing
 The ``lsst.analysis.tools`` package is developed at
 `github.com/lsst/analysis_tools <https://github.com/lsst/analysis_tools>`_.
 
+<<<<<<< HEAD
 Jira issues relating to this package can be found using the
 `analysis_tools <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20analysis_tools>`_
 component.
+=======
+.. If there are topics related to developing this module (rather than using it), link to this from a toctree placed here.
+
+.. .. toctree::
+..    :maxdepth: 1
+
+.. .. _lsst.analysis.tools-scripts:
+
+.. Script reference
+.. ================
+
+.. .. TODO: Add an item to this toctree for each script reference topic in the scripts subdirectory.
+
+.. .. toctree::
+..    :maxdepth: 1
+
+.. .. _lsst.analysis.tools-pyapi:
+
+Python API reference
+====================
+
+.. NOTE: Skip the type definitions that cause the pipelines docs build to fail.
+.. automodapi:: lsst.analysis.tools
+   :no-main-docstr:
+   :no-inheritance-diagram:
+   :include-all-objects:
+.. automodapi:: lsst.analysis.tools.actions.plot
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.vector
+   :no-inheritance-diagram:
+.. automodapi:: lsst.analysis.tools.actions.scalar
+   :no-inheritance-diagram:
+>>>>>>> 2de19a1 (Add more pages to the docs)

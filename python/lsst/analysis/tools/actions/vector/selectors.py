@@ -210,7 +210,6 @@ class RangeSelector(VectorAction):
         mask = (values >= self.minimum) & (values < self.maximum)
 
         return cast(Vector, mask)
-        # return np.array(mask)
 
 
 class SnSelector(SelectorBase):

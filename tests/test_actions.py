@@ -22,8 +22,10 @@
 import unittest
 
 import astropy.units as u
+import lsst.utils.tests
 import numpy as np
 import pandas as pd
+from lsst.analysis.tools.actions.keyedData.calcDistances import CalcRelativeDistances
 from lsst.analysis.tools.actions.scalar.scalarActions import (
     ApproxFloor,
     CountAction,
@@ -544,3 +546,46 @@ class TestVectorSelectors(unittest.TestCase):
         truth = np.zeros(self.size, dtype=bool)
         truth[1] = True
         np.testing.assert_array_equal(result, truth)
+
+
+class TestKeyedDataActions(unittest.TestCase):
+    def testCalcRelativeDistances(self):
+        # To test CalcRelativeDistances, make a matched visit catalog with
+        # objects in a box slightly larger than the annulus used in calculating
+        # relative distances.
+        num_visits = 15
+        scatter_in_degrees = (5 * u.milliarcsecond).to(u.degree).value
+        obj_id = 0
+        visit_id = range(num_visits)
+        all_ras, all_decs, all_objs, all_visits = [], [], [], []
+        for ra in np.linspace(0, 6, 10):
+            for dec in np.linspace(0, 6, 10):
+                ra_degrees = (ra * u.arcmin).to(u.degree).value
+                dec_degrees = (dec * u.arcmin).to(u.degree).value
+                ra_meas = ra_degrees + np.random.rand(num_visits) * scatter_in_degrees
+                dec_meas = dec_degrees + np.random.rand(num_visits) * scatter_in_degrees
+                all_ras.append(ra_meas)
+                all_decs.append(dec_meas)
+                all_objs.append(np.ones(num_visits) * obj_id)
+                all_visits.append(visit_id)
+                obj_id += 1
+        data = pd.DataFrame(
+            {
+                "coord_ra": np.concatenate(all_ras),
+                "coord_dec": np.concatenate(all_decs),
+                "obj_index": np.concatenate(all_objs),
+                "visit": np.concatenate(all_visits),
+            }
+        )
+
+        task = CalcRelativeDistances()
+        res = task(data)
+
+        self.assertNotEqual(res["AMx"], np.nan)
+        self.assertNotEqual(res["ADx"], np.nan)
+        self.assertNotEqual(res["AFx"], np.nan)
+
+
+if __name__ == "__main__":
+    lsst.utils.tests.init()
+    unittest.main()

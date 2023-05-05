@@ -16,8 +16,8 @@ tasks:
       atools.xPerpCModel: XPerpCModel
       atools.yPerpPSF: YPerpPSF
       atools.yPerpCModel: YPerpCModel
-      atools.skyObjectSkyPlot: SkyObjectSkyPlot
-      atools.skyObjectHistPlot: SkyObjectHistPlot
+      atools.skyObjectSky: SkyObjectSkyPlot
+      atools.skyObjectFlux: SkyObjectHistPlot
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

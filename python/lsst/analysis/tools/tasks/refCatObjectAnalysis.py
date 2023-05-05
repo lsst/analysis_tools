@@ -40,7 +40,7 @@ class RefCatObjectAnalysisConnections(
     defaultTemplates={
         "targetCatalog": "objectTable_tract",
         "refCatalog": "gaia_dr2_20200414",
-        "outputName": "{targetCatalog}_{refCatalog}_match",
+        "outputName": "objectTable_tract_gaia_dr2_20200414_match",
     },
 ):
     data = ct.Input(

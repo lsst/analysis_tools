@@ -44,7 +44,6 @@ from ..actions.vector import (
     CalcShapeSize,
     CoaddPlotFlagSelector,
     DownselectVector,
-    FlagSelector,
     FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
@@ -197,7 +196,7 @@ class RhoStatistics(AnalysisTool):
         # pre-compute a stellar selector mask so it can be used in the filter
         # actions while only being computed once, alternatively the stellar
         # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = FlagSelector(selectWhenTrue=("{band}_calib_psf_used",))
+        self.process.buildActions.starSelector = StarSelector()
 
         self.process.filterActions.xStars = DownselectVector(
             vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")

@@ -216,9 +216,10 @@ class RhoStatistics(AnalysisTool):
 
         self.process.calculateActions.stars = CalcRhoStatistics()
 
-        self.process.calculateActions.stars.treecorr.nbins = 10
-        self.process.calculateActions.stars.treecorr.min_sep = 0.1
+        self.process.calculateActions.stars.treecorr.nbins = 21
+        self.process.calculateActions.stars.treecorr.min_sep = 0.01
         self.process.calculateActions.stars.treecorr.max_sep = 100.0
         self.process.calculateActions.stars.treecorr.sep_units = "arcmin"
+        self.process.calculateActions.stars.treecorr.metric = "Arc"
 
         self.produce.plot = RhoStatisticsPlot()

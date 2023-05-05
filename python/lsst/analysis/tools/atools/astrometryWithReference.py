@@ -32,12 +32,14 @@ from lsst.pex.config import Field
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.vector import (
-    AstromDiff,
+    ConvertUnits,
     DownselectVector,
     LoadVector,
     MagColumnNanoJansky,
+    RAcosDec,
     SnSelector,
     StarSelector,
+    SubtractVector,
     VectorSelector,
 )
 from ..interfaces import AnalysisTool
@@ -80,9 +82,8 @@ class TargetRefCatDelta(AnalysisTool):
         super().setDefaults()
 
         self.process.buildActions.starSelector = StarSelector()
-        coordStr = coordinate.lower()
-        self.process.buildActions.astromDiff = AstromDiff(
-            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        self.process.buildActions.astromDiff = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
         )
 
         self.process.filterActions.xStars = DownselectVector(
@@ -112,6 +113,12 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDelta):
 
     def setDefaults(self):
         super().setDefaults(coordinate="RA")
+        self.process.buildActions.astromDiff.buildAction.actionA = RAcosDec(
+            raKey="coord_ra_target", decKey="coord_dec_ref"
+        )
+        self.process.buildActions.astromDiff.buildAction.actionB = RAcosDec(
+            raKey="coord_ra_ref", decKey="coord_dec_ref"
+        )
 
 
 class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
@@ -121,6 +128,8 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDelta):
 
     def setDefaults(self):
         super().setDefaults(coordinate="Dec")
+        self.process.buildActions.astromDiff.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
+        self.process.buildActions.astromDiff.buildAction.actionB = LoadVector(vectorKey="coord_dec_ref")
 
 
 class TargetRefCatDeltaSkyPlot(AnalysisTool):
@@ -149,9 +158,8 @@ class TargetRefCatDeltaSkyPlot(AnalysisTool):
     def setDefaults(self, coordinate):
         super().setDefaults()
 
-        coordStr = coordinate.lower()
-        self.process.buildActions.zStars = AstromDiff(
-            col1=f"coord_{coordStr}_target", col2=f"coord_{coordStr}_ref"
+        self.process.buildActions.zStars = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
         )
         self.process.buildActions.xStars = LoadVector()
         self.process.buildActions.xStars.vectorKey = "coord_ra_target"
@@ -174,6 +182,12 @@ class TargetRefCatDeltaRASkyPlot(TargetRefCatDeltaSkyPlot):
 
     def setDefaults(self):
         super().setDefaults(coordinate="RA")
+        self.process.buildActions.zStars.buildAction.actionA = RAcosDec(
+            raKey="coord_ra_target", decKey="coord_dec_ref"
+        )
+        self.process.buildActions.zStars.buildAction.actionB = RAcosDec(
+            raKey="coord_ra_ref", decKey="coord_dec_ref"
+        )
 
 
 class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlot):
@@ -183,3 +197,7 @@ class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlot):
 
     def setDefaults(self):
         super().setDefaults(coordinate="Dec")
+
+        self.process.buildActions.zStars.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
+
+        self.process.buildActions.zStars.buildAction.actionB = LoadVector(vectorKey="coord_dec_ref")

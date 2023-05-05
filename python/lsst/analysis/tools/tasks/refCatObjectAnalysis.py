@@ -57,21 +57,21 @@ class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatO
         super().setDefaults()
 
         # set plots to run
-        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRAScatterPlot.parameterizedBand = True
-        self.plots.astromDiffRAScatterPlot.applyContext(CoaddContext)
+        self.atools.astromDiffRAMag = TargetRefCatDeltaRAScatterPlot()
+        self.atools.astromDiffRAMag.parameterizedBand = True
+        self.atools.astromDiffRAMag.applyContext(CoaddContext)
 
-        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDecScatterPlot.parameterizedBand = True
-        self.plots.astromDiffDecScatterPlot.applyContext(CoaddContext)
+        self.atools.astromDiffDecMag = TargetRefCatDeltaDecScatterPlot()
+        self.atools.astromDiffDecMag.parameterizedBand = True
+        self.atools.astromDiffDecMag.applyContext(CoaddContext)
 
-        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
-        self.plots.astromDiffRASkyPlot.parameterizedBand = True
-        self.plots.astromDiffRASkyPlot.applyContext(CoaddContext)
+        self.atools.astromDiffRA = TargetRefCatDeltaRASkyPlot()
+        self.atools.astromDiffRA.parameterizedBand = True
+        self.atools.astromDiffRA.applyContext(CoaddContext)
 
-        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
-        self.plots.astromDiffDecSkyPlot.parameterizedBand = True
-        self.plots.astromDiffDecSkyPlot.applyContext(CoaddContext)
+        self.atools.astromDiffDec = TargetRefCatDeltaDecSkyPlot()
+        self.atools.astromDiffDec.parameterizedBand = True
+        self.atools.astromDiffDec.applyContext(CoaddContext)
 
         # set metrics to run - none so far
 

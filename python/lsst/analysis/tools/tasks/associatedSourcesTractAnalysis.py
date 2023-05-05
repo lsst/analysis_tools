@@ -24,6 +24,7 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 
 import numpy as np
 import pandas as pd
+from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 
@@ -32,7 +33,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class AssociatedSourcesTractAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap", "tract"),
+    dimensions=("skymap", "tract", "instrument"),
     defaultTemplates={
         "outputName": "isolated_star_sources",
         "associatedSourcesInputName": "isolated_star_sources",
@@ -61,6 +62,14 @@ class AssociatedSourcesTractAnalysisConnections(
         storageClass="SkyMap",
         dimensions=("skymap",),
     )
+    camera = ct.PrerequisiteInput(
+        doc="Input camera to use for focal plane geometry.",
+        name="camera",
+        storageClass="Camera",
+        dimensions=("instrument",),
+        isCalibration=True,
+        lookupFunction=lookupStaticCalibration,
+    )
 
 
 class AssociatedSourcesTractAnalysisConfig(
@@ -72,7 +81,7 @@ class AssociatedSourcesTractAnalysisConfig(
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = AssociatedSourcesTractAnalysisConfig
-    _DefaultName = "associatedSourcesTractAnalysisTask"
+    _DefaultName = "associatedSourcesTractAnalysis"
 
     @staticmethod
     def getBoxWcs(skymap, tract):
@@ -136,6 +145,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         data = self.callback(inputs, dataId)
 
-        kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"]}
+        kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
         butlerQC.put(outputs, outputRefs)

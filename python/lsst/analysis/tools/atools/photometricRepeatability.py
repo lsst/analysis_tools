@@ -20,18 +20,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("StellarPhotometricRepeatability",)
+__all__ = (
+    "StellarPhotometricRepeatability",
+    "StellarPhotometricResidualsFocalPlane",
+)
 
 from lsst.pex.config import Field
 
+from ..actions.plot.focalPlanePlot import FocalPlanePlot
 from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,
+    LoadVector,
     MagColumnNanoJansky,
     MultiCriteriaDownselectVector,
     PerGroupStatistic,
+    ResidualWithPerGroupStatistic,
     Sn,
+    SnSelector,
     ThresholdSelector,
 )
 from ..interfaces import AnalysisTool
@@ -132,3 +139,47 @@ class StellarPhotometricRepeatability(AnalysisTool):
             "photRepeatOutlier": "{band}_stellarPhotRepeatOutlierFraction",
             "photRepeatNsources": "{band}_ct",
         }
+
+
+class StellarPhotometricResidualsFocalPlane(AnalysisTool):
+    """Plot mean photometric residuals as a function of the position on the
+    focal plane.
+
+    First, a set of per-source quality criteria are applied. Second, the
+    individual source measurements are grouped together by object index
+    and the per-group magnitude is computed. The residuals between the
+    individual sources and these magnitudes are then used to construct a plot
+    showing the mean residual as a function of the focal-plane position.
+    """
+
+    fluxType = Field[str](doc="Flux type to calculate repeatability with", default="psfFlux")
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Apply per-source selection criteria
+        self.prep.selectors.bandSelector = BandSelector()
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "psfFlux"
+        self.prep.selectors.snSelector.threshold = 50
+
+        self.process.buildActions.z = ResidualWithPerGroupStatistic()
+        self.process.buildActions.z.buildAction = MagColumnNanoJansky(
+            vectorKey=f"{self.fluxType}",
+            returnMillimags=True,
+        )
+        self.process.buildActions.z.func = "median"
+
+        self.process.buildActions.x = LoadVector(vectorKey="x")
+        self.process.buildActions.y = LoadVector(vectorKey="y")
+
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+
+        self.process.buildActions.statMask = SnSelector()
+        self.process.buildActions.statMask.threshold = 200
+        self.process.buildActions.statMask.fluxType = "psfFlux"
+
+        self.produce.plot = FocalPlanePlot()
+        self.produce.plot.xAxisLabel = "x (focal plane)"
+        self.produce.plot.yAxisLabel = "y (focal plane)"
+        self.produce.plot.zAxisLabel = "Mag - Mag$_{mean}$ (mmag)"

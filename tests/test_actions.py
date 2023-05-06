@@ -41,7 +41,12 @@ from lsst.analysis.tools.actions.vector.mathActions import (
     ConstantValue,
     DivideVector,
     FractionalDifference,
+    Log10Vector,
     MultiplyVector,
+    RaiseFromBaseVector,
+    RaiseToPowerVector,
+    SqrtVector,
+    SquareVector,
     SubtractVector,
 )
 from lsst.analysis.tools.actions.vector.selectors import (
@@ -206,12 +211,17 @@ class TestVectorActions(unittest.TestCase):
 
     # MathActions
 
-    def _testMath(self, ActionType, truth, compare_exact: bool = False):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        action = ActionType(actionA=actionA, actionB=actionB)
-        result = action(self.data, band1="r", band2="i")
-        self._checkSchema(action, [actionA.vectorKey, actionB.vectorKey])
+    def _testMath(self, ActionType, truth, num_vectors: int = 2, compare_exact: bool = False, **kwargs):
+        letters = ("A", "B")
+        bands = ("r", "i")
+        actions = {
+            f"action{letters[num]}": LoadVector(vectorKey=f"{{band{num+1}}}_vector")
+            for num in range(num_vectors)
+        }
+        action = ActionType(**actions, **kwargs)
+        kwargs_bands = {f"band{num+1}": bands[num] for num in range(num_vectors)}
+        result = action(self.data, **kwargs_bands)
+        self._checkSchema(action, [action.vectorKey for action in actions.values()])
         if compare_exact:
             np.testing.assert_array_equal(result, truth)
         else:
@@ -226,28 +236,47 @@ class TestVectorActions(unittest.TestCase):
 
     def testAdd(self):
         truth = [2.0, 6.0, 12.0, 20.0, 30.0]
-        self._testMath(AddVector, truth, True)
+        self._testMath(AddVector, truth, compare_exact=True)
 
     def testSubtract(self):
         truth = [0.0, -2.0, -6.0, -12.0, -20.0]
-        self._testMath(SubtractVector, truth, True)
+        self._testMath(SubtractVector, truth, compare_exact=True)
 
     def testMultiply(self):
         truth = [1.0, 8.0, 27.0, 64.0, 125.0]
-        self._testMath(MultiplyVector, truth, False)
+        self._testMath(MultiplyVector, truth, compare_exact=False)
 
     def testDivide(self):
         truth = 1 / np.arange(1, 6)
-        self._testMath(DivideVector, truth, False)
+        self._testMath(DivideVector, truth, compare_exact=False)
+
+    def testSqrt(self):
+        truth = np.sqrt(np.arange(1, 6))
+        self._testMath(SqrtVector, truth, compare_exact=False, num_vectors=1)
+
+    def testSquare(self):
+        truth = np.arange(1, 6) ** 2
+        self._testMath(SquareVector, truth, compare_exact=True, num_vectors=1)
+
+    def testRaiseFromBase(self):
+        power = np.arange(1, 6)
+        for base in (-2.3, 0.6):
+            truth = base**power
+            self._testMath(RaiseFromBaseVector, truth, compare_exact=False, base=base, num_vectors=1)
+
+    def testRaiseToPower(self):
+        base = np.arange(1, 6)
+        for power in (-2.3, 0.6):
+            truth = base**power
+            self._testMath(RaiseToPowerVector, truth, compare_exact=False, power=power, num_vectors=1)
+
+    def testLog10(self):
+        truth = np.log10(np.arange(1, 6))
+        self._testMath(Log10Vector, truth, compare_exact=False, num_vectors=1)
 
     def testFractionalDifference(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
         truth = [0.0, -0.5, -0.6666666666666666, -0.75, -0.8]
-        diff = FractionalDifference(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
-        np.testing.assert_array_almost_equal(result, truth)
+        self._testMath(FractionalDifference, truth, compare_exact=False)
 
     # Basic vectorActions
 

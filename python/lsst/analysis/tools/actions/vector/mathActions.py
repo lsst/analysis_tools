@@ -24,8 +24,13 @@ __all__ = (
     "ConstantValue",
     "AddVector",
     "SubtractVector",
-    "DivideVector",
     "MultiplyVector",
+    "DivideVector",
+    "SquareVector",
+    "SqrtVector",
+    "RaiseFromBaseVector",
+    "RaiseToPowerVector",
+    "Log10Vector",
     "FractionalDifference",
 )
 
@@ -114,6 +119,73 @@ class DivideVector(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return vecA / vecB
+
+
+class SqrtVector(VectorAction):
+    """Calculate sqrt(A)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return np.sqrt(vecA)
+
+
+class SquareVector(VectorAction):
+    """Calculate A**2"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return vecA * vecA
+
+
+class RaiseFromBaseVector(VectorAction):
+    """Calculate n**A"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    base = Field[float](doc="The base value to raise to the power of vector values")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return self.base**vecA
+
+
+class RaiseToPowerVector(VectorAction):
+    """Calculate A**n"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+    power = Field[float](doc="The power to raise the vector to")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return vecA**self.power
+
+
+class Log10Vector(VectorAction):
+    """Calculate log10(A)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return np.log10(vecA)
 
 
 class FractionalDifference(VectorAction):

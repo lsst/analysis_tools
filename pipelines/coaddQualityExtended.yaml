@@ -5,7 +5,6 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
       connections.outputName: objectTableExtended
-      # set plots to run
-      atools.ap12PsfSkyPlot: Ap12PsfSkyPlot
+      atools.ap12PsfSky: Ap12PsfSkyPlot
       python: |
         from lsst.analysis.tools.atools import *

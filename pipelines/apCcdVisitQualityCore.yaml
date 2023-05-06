@@ -9,6 +9,6 @@ tasks:
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
       connections.outputName: diaSourceTableCore
-      atools.simpleDiaPlot: SimpleDiaPlot
+      atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *

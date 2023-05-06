@@ -4,14 +4,11 @@ tasks:
   analyzeSourceTableCore:
     class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
     config:
-      # Add plots and metrics that work when we have some
-      # plots.label = APlotClass
-      # metrics.name = AMetricsClass
       connections.outputName: sourceTableCore
       atools.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
       atools.skyFluxVisitStatisticMetric.applyContext: VisitContext
-      atools.skySourceSkyPlot: SkySourceSkyPlot
-      atools.skySourceHistPlot: SkySourceHistPlot
+      atools.skySourceSky: SkySourceSkyPlot
+      atools.skySourceFlux: SkySourceHistPlot
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

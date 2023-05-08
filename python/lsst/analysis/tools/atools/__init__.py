@@ -5,7 +5,9 @@ from .astrometryWithReference import *
 from .coveragePlots import *
 from .diffMatched import *
 from .fluxMetrics import *
+from .genericBuild import *
 from .genericPrep import *
+from .genericProduce import *
 from .limitingMagnitudeMetric import *
 from .magDiff import *
 from .numericalValidity import *
@@ -14,6 +16,7 @@ from .photometry import *
 from .seeingMetric import *
 from .shapes import *
 from .simpleDiaPlot import *
+from .sizeMagnitude import *
 from .skyFluxStatisticMetrics import *
 from .skyObject import *
 from .skySource import *

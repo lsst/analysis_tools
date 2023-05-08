@@ -77,8 +77,14 @@ class TestDiffMatched(TestCase):
         # No more None key
         self.assertEquals(len(list(tester.getInputSchema())), n_input - 1)
 
-    def testMatchedRefCoaddCModelFluxMetric(self):
-        self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddCModelFluxMetric)
+    def testMatchedRefCoaddDiffMagMetric(self):
+        self._testMatchedRefCoaddMetricDerived(
+            MatchedRefCoaddDiffMagMetric,
+            fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
+            mag_y="cmodel",
+            name_prefix="",
+            unit="",
+        )
 
     def testMatchedRefCoaddPositionMetric(self):
         for variable in ("x", "y"):

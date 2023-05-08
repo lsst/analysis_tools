@@ -167,7 +167,7 @@ class SasquatchDispatcher:
     token: str
     """Authentication token used in communicating with the proxy server"""
 
-    namespace: str = "lsst.debug"
+    namespace: str = "lsst.dm"
     """The namespace in Sasquatch in which to write the uploaded metrics"""
 
     def __post_init__(self) -> None:

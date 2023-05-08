@@ -105,7 +105,7 @@ class SasquatchDatastore(GenericBaseDatastore):
 
         self.accessToken = self.config.get("accessToken", "na")
 
-        self.namespace = self.config.get("namespace", "lsst.debug")
+        self.namespace = self.config.get("namespace", "lsst.dm")
 
         self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
 

@@ -193,11 +193,6 @@ class ScatterPlotWithTwoHists(PlotAction):
             color="midnightblue",
             colormap=mkColormap(["paleturquoise", "midnightBlue"]),
         ),
-        "stars": DataTypeDefaults(
-            suffix_stat="Stars",
-            suffix_xy="Stars",
-            color="midnightblue",
-        ),
         "unknown": DataTypeDefaults(
             suffix_stat="Unknown",
             suffix_xy="Unknown",
@@ -406,7 +401,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 )
             )
 
-        xMin = None
+        xLims = self.xLims if self.xLims is not None else [np.Inf, -np.Inf]
         for j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats) in enumerate(toPlotList):
             highSn = cast(Vector, highSn)
             lowSn = cast(Vector, lowSn)
@@ -437,15 +432,21 @@ class ScatterPlotWithTwoHists(PlotAction):
                 histIm = None
                 continue
 
-            [xs1, xs25, xs50, xs75, xs95, xs97] = np.nanpercentile(xs, [1, 25, 50, 75, 95, 97])
-            xScale = (xs97 - xs1) / 20.0  # This is ~5% of the data range
+            if self.xLims:
+                xMin, xMax = self.xLims
+            else:
+                # Chop off 1/3% from only the finite xs values
+                # (there may be +/-np.Inf values)
+                # TODO: This should be configurable
+                # but is there a good way to avoid redundant config params
+                # without using slightly annoying subconfigs?
+                xs1, xs97 = np.nanpercentile(xs[np.isfinite(xs)], (1, 97))
+                xScale = (xs97 - xs1) / 20.0  # This is ~5% of the data range
+                xMin, xMax = (xs1 - xScale, xs97 + xScale)
+                xLims[0] = min(xLims[0], xMin)
+                xLims[1] = max(xLims[1], xMax)
 
-            # 40 was used as the default number of bins because it looked good
-            xEdges = np.arange(
-                np.nanmin(xs) - xScale,
-                np.nanmax(xs) + xScale,
-                (np.nanmax(xs) + xScale - (np.nanmin(xs) - xScale)) / self.nBins,
-            )
+            xEdges = np.arange(xMin, xMax, (xMax - xMin) / self.nBins)
             medYs = np.nanmedian(ys)
             fiveSigmaHigh = medYs + 5.0 * sigMadYs
             fiveSigmaLow = medYs - 5.0 * sigMadYs
@@ -573,7 +574,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                         label="High SN",
                     )
                     linesForLegend.append(highSnLine)
-                    xMin = np.min(cast(Vector, xs[highSn]))
                 else:
                     ax.axvline(highStats.approxMag, color=color, ls="--")
 
@@ -597,8 +597,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                         label="Low SN",
                     )
                     linesForLegend.append(lowSnLine)
-                    if xMin is None or xMin > np.min(cast(Vector, xs[lowSn])):
-                        xMin = np.min(cast(Vector, xs[lowSn]))
                 else:
                     ax.axvline(lowStats.approxMag, color=color, ls=":")
 
@@ -649,12 +647,10 @@ class ScatterPlotWithTwoHists(PlotAction):
             yLimMax = plotMed + numSig * sigMadYs  # type: ignore
             ax.set_ylim(yLimMin, yLimMax)
 
-        if self.xLims:
-            ax.set_xlim(self.xLims[0], self.xLims[1])  # type: ignore
-        elif len(xs) > 2:  # type: ignore
-            if xMin is None:
-                xMin = xs1 - 2 * xScale  # type: ignore
-            ax.set_xlim(xMin, xs97 + 2 * xScale)  # type: ignore
+        # This could be false if len(x) == 0 for xs in toPlotList
+        # ... in which case nothing was plotted and limits are irrelevant
+        if all(np.isfinite(xLims)):
+            ax.set_xlim(xLims)
 
         # Add a line legend
         ax.legend(

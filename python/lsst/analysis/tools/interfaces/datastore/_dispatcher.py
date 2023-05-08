@@ -354,7 +354,8 @@ class SasquatchDispatcher:
                 except ValueError:
                     # Could not extract package timestamp leaving empty
                     pass
-        meta["reference_package"] = ref_package
+        # explicit handle if None was set in the bundle for the package
+        meta["reference_package"] = ref_package or ""
         meta["reference_package_version"] = package_version
         meta["reference_package_timestamp"] = package_timestamp
 
@@ -687,7 +688,9 @@ class SasquatchDispatcher:
                 uploadFailed.append(True)
                 partialUpload = True
 
-        if all(uploadFailed):
+        # There may be no metrics to try to upload, and thus the uploadFailed
+        # list may be empty, check before issuing failure
+        if len(uploadFailed) > 0 and all(uploadFailed):
             raise SasquatchDispatchFailure("All records were unable to be uploaded.")
 
         if partialUpload or recordsTrimmed:

@@ -26,6 +26,7 @@ __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field
@@ -125,8 +126,8 @@ class ScatterPlotStatsAction(KeyedDataAction):
         return results
 
 
-def _validatePlotTypes(value):
-    return value in ("stars", "galaxies", "unknown", "any", "mag")
+def _validObjectTypes(value):
+    return value in ("stars", "galaxies", "unknown", "any")
 
 
 # ignore type because of conflicting name on tuple baseclass
@@ -135,6 +136,13 @@ class _StatsContainer(NamedTuple):
     sigmaMad: Scalar
     count: Scalar  # type: ignore
     approxMag: Scalar
+
+
+class DataTypeDefaults(NamedTuple):
+    suffix_stat: str
+    suffix_xy: str
+    color: str
+    colormap: matplotlib.colors.Colormap | None
 
 
 class ScatterPlotWithTwoHists(PlotAction):
@@ -162,9 +170,9 @@ class ScatterPlotWithTwoHists(PlotAction):
     )
     plotTypes = ListField[str](
         doc="Selection of types of objects to plot. Can take any combination of"
-        " stars, galaxies, unknown, mag, any",
+        " stars, galaxies, unknown, any",
         optional=False,
-        itemCheck=_validatePlotTypes,
+        itemCheck=_validObjectTypes,
     )
 
     addSummaryPlot = Field[bool](
@@ -173,45 +181,50 @@ class ScatterPlotWithTwoHists(PlotAction):
     )
 
     _stats = ("median", "sigmaMad", "count", "approxMag")
+    _datatypes = {
+        "galaxies": DataTypeDefaults(
+            suffix_stat="Galaxies",
+            suffix_xy="Galaxies",
+            color="firebrick",
+            colormap=mkColormap(["lemonchiffon", "firebrick"]),
+        ),
+        "stars": DataTypeDefaults(
+            suffix_stat="Stars",
+            suffix_xy="Stars",
+            color="midnightblue",
+            colormap=mkColormap(["paleturquoise", "midnightBlue"]),
+        ),
+        "stars": DataTypeDefaults(
+            suffix_stat="Stars",
+            suffix_xy="Stars",
+            color="midnightblue",
+        ),
+        "unknown": DataTypeDefaults(
+            suffix_stat="Unknown",
+            suffix_xy="Unknown",
+            color="green",
+            colormap=None,
+        ),
+        "any": DataTypeDefaults(
+            suffix_stat="Any",
+            suffix_xy="",
+            color="purple",
+            colormap=None,
+        ),
+    }
 
     def getInputSchema(self) -> KeyedDataSchema:
         base: list[tuple[str, type[Vector] | ScalarType]] = []
-        if "stars" in self.plotTypes:  # type: ignore
-            base.append(("xStars", Vector))
-            base.append(("yStars", Vector))
-            base.append(("starsHighSNMask", Vector))
-            base.append(("starsLowSNMask", Vector))
+        for name_datatype in self.plotTypes:
+            config_datatype = self._datatypes[name_datatype]
+            base.append((f"x{config_datatype.suffix_xy}", Vector))
+            base.append((f"y{config_datatype.suffix_xy}", Vector))
+            base.append((f"{name_datatype}HighSNMask", Vector))
+            base.append((f"{name_datatype}LowSNMask", Vector))
             # statistics
             for name in self._stats:
-                base.append((f"{{band}}_highSNStars_{name}", Scalar))
-                base.append((f"{{band}}_lowSNStars_{name}", Scalar))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            base.append(("xGalaxies", Vector))
-            base.append(("yGalaxies", Vector))
-            base.append(("galaxiesHighSNMask", Vector))
-            base.append(("galaxiesLowSNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNGalaxies_{name}", Scalar))
-                base.append((f"{{band}}_lowSNGalaxies_{name}", Scalar))
-        if "unknown" in self.plotTypes:  # type: ignore
-            base.append(("xUnknown", Vector))
-            base.append(("yUnknown", Vector))
-            base.append(("unknownHighSNMask", Vector))
-            base.append(("unknownLowSNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNUnknown_{name}", Scalar))
-                base.append((f"{{band}}_lowSNUnknown_{name}", Scalar))
-        if "any" in self.plotTypes:  # type: ignore
-            base.append(("x", Vector))
-            base.append(("y", Vector))
-            base.append(("anyHighSNMask", Vector))
-            base.append(("anySNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNAny_{name}", Scalar))
-                base.append((f"{{band}}_lowSNAny_{name}", Scalar))
+                base.append((f"{{band}}_highSN{config_datatype.suffix_stat}_{name}", Scalar))
+                base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}", Scalar))
         base.append(("lowSnThreshold", Scalar))
         base.append(("highSnThreshold", Scalar))
 
@@ -357,9 +370,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         # Main scatter plot
         ax = fig.add_subplot(gs[1:, :-1])
 
-        newBlues = mkColormap(["paleturquoise", "midnightBlue"])
-        newReds = mkColormap(["lemonchiffon", "firebrick"])
-
         binThresh = 5
 
         yBinsOut = []
@@ -369,86 +379,29 @@ class ScatterPlotWithTwoHists(PlotAction):
         histIm = None
         highStats: _StatsContainer
         lowStats: _StatsContainer
-        if "stars" in self.plotTypes:  # type: ignore
+
+        for name_datatype in self.plotTypes:
+            config_datatype = self._datatypes[name_datatype]
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNStars_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNStars_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["xStars"],
-                    data["yStars"],
-                    data["starsHighSNMask"],
-                    data["starsLowSNMask"],
-                    "midnightblue",
-                    newBlues,
-                    highStats,
-                    lowStats,
+                highArgs[name] = cast(
+                    Scalar, data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
                 )
-            )
-        if "galaxies" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNGalaxies_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["xGalaxies"],
-                    data["yGalaxies"],
-                    data["galaxiesHighSNMask"],
-                    data["galaxiesLowSNMask"],
-                    "firebrick",
-                    newReds,
-                    highStats,
-                    lowStats,
+                lowArgs[name] = cast(
+                    Scalar, data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
                 )
-            )
-        if "unknown" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
             toPlotList.append(
                 (
-                    data["xUnknown"],
-                    data["yUnknown"],
-                    data["unknownHighSNMask"],
-                    data["unknownLowSNMask"],
-                    "green",
-                    None,
-                    highStats,
-                    lowStats,
-                )
-            )
-        if "any" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["x"],
-                    data["y"],
-                    data["anyHighSNMask"],
-                    data["anyLowSNMask"],
-                    "purple",
-                    None,
+                    data[f"x{config_datatype.suffix_xy}"],
+                    data[f"y{config_datatype.suffix_xy}"],
+                    data[f"{name_datatype}HighSNMask"],
+                    data[f"{name_datatype}LowSNMask"],
+                    config_datatype.color,
+                    config_datatype.colormap,
                     highStats,
                     lowStats,
                 )
@@ -469,7 +422,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             elif n_xs < 10:
                 xs = [np.nanmedian(xs)]
                 sigMads = np.array([nansigmaMad(ys)])
-                ys = [np.nanmedian(ys)]
+                ys = np.array([np.nanmedian(ys)])
                 (medLine,) = ax.plot(xs, ys, color, label=f"Median: {ys[0]:.2g}", lw=0.8)
                 linesForLegend.append(medLine)
                 (sigMadLine,) = ax.plot(

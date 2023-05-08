@@ -7,67 +7,50 @@ tasks:
       connections.outputName: diff_matched_truth_summary_objectTable_tract
 
       # plots
-      atools.matchedRefCModelMagDiff: MatchedRefCoaddCModelFluxPlot
-      atools.matchedRefCModelMagDiff.applyContext: MatchedRefDiffContext
+      atools.matchedRefCModelMagDiffPlot: MatchedRefCoaddDiffMagPlot
 
-      atools.matchedRefCModelFluxChi: MatchedRefCoaddCModelFluxPlot
-      atools.matchedRefCModelFluxChi.applyContext: MatchedRefChiContext
+      atools.matchedRefMagChiPlot: MatchedRefCoaddDiffMagPlot
+      atools.matchedRefMagChiPlot.compute_chi: True
 
       # TODO: Can this be a one liner?
-      atools.matchedRefPositionXDiff: MatchedRefCoaddPositionPlot
-      # TODO: variable must be defined before applyContext; can this be enforced?
-      # (the resulting error if not is not very informative)
-      atools.matchedRefPositionXDiff.variable: x
-      atools.matchedRefPositionXDiff.applyContext: MatchedRefDiffContext
+      atools.matchedRefPositionXDiffPlot: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionXDiffPlot.variable: x
 
-      atools.matchedRefPositionXChi: MatchedRefCoaddPositionPlot
-      atools.matchedRefPositionXChi.variable: x
-      atools.matchedRefPositionXChi.applyContext: MatchedRefChiContext
+      atools.matchedRefPositionXChiPlot: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionXChiPlot.variable: x
+      atools.matchedRefPositionXChiPlot.compute_chi: True
 
-      atools.matchedRefPositionYDiff: MatchedRefCoaddPositionPlot
-      atools.matchedRefPositionYDiff.variable: y
-      atools.matchedRefPositionYDiff.applyContext: MatchedRefDiffContext
+      atools.matchedRefPositionYDiffPlot: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionYDiffPlot.variable: y
 
-      atools.matchedRefPositionYChi: MatchedRefCoaddPositionPlot
-      atools.matchedRefPositionYChi.variable: y
-      atools.matchedRefPositionYChi.applyContext: MatchedRefChiContext
+      atools.matchedRefPositionYChiPlot: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionYChiPlot.variable: y
+      atools.matchedRefPositionYChiPlot.compute_chi: True
 
       # metrics
-      atools.matchedRefCModelMagDiffMetric: MatchedRefCoaddCModelFluxMetric
-      atools.matchedRefCModelMagDiffMetric.applyContext: MatchedRefDiffContext
+      atools.matchedRefCModelMagDiffMetric: MatchedRefCoaddDiffMagMetric
 
-      atools.matchedRefCModelFluxChiMetric: MatchedRefCoaddCModelFluxMetric
-      atools.matchedRefCModelFluxChiMetric.applyContext: MatchedRefChiContext
+      atools.matchedRefMagChiMetric: MatchedRefCoaddDiffMagMetric
+      atools.matchedRefMagChiMetric.compute_chi: True
 
-      atools.matchedRefPositionXDiffMetric: MatchedRefCoaddPositionMetric
+      atools.matchedRefPositionXDiffMetric: MatchedRefCoaddDiffPositionMetric
       atools.matchedRefPositionXDiffMetric.variable: x
-      atools.matchedRefPositionXDiffMetric.applyContext: MatchedRefDiffContext
 
-      atools.matchedRefPositionXChiMetric: MatchedRefCoaddPositionMetric
+      atools.matchedRefPositionXChiMetric: MatchedRefCoaddDiffPositionMetric
       atools.matchedRefPositionXChiMetric.variable: x
-      atools.matchedRefPositionXChiMetric.applyContext: MatchedRefChiContext
+      atools.matchedRefPositionXChiMetric.compute_chi: True
 
-      atools.matchedRefPositionYDiffMetric: MatchedRefCoaddPositionMetric
+      atools.matchedRefPositionYDiffMetric: MatchedRefCoaddDiffPositionMetric
       atools.matchedRefPositionYDiffMetric.variable: y
-      atools.matchedRefPositionYDiffMetric.applyContext: MatchedRefDiffContext
 
-      atools.matchedRefPositionYChiMetric: MatchedRefCoaddPositionMetric
+      atools.matchedRefPositionYChiMetric: MatchedRefCoaddDiffPositionMetric
       atools.matchedRefPositionYChiMetric.variable: y
-      atools.matchedRefPositionYChiMetric.applyContext: MatchedRefChiContext
-
+      atools.matchedRefPositionYChiMetric.compute_chi: True
 
       python: |
         from lsst.analysis.tools.atools.diffMatched import (
-          MatchedRefCoaddCModelFluxMetric,
-          MatchedRefCoaddPositionMetric,
-        )
-
-        from lsst.analysis.tools.atools.diffMatched import (
-          MatchedRefCoaddCModelFluxPlot,
-          MatchedRefCoaddPositionPlot,
-        )
-
-        from lsst.analysis.tools.contexts._contexts import (
-          MatchedRefDiffContext,
-          MatchedRefChiContext,
+          MatchedRefCoaddDiffMagMetric,
+          MatchedRefCoaddDiffPositionMetric,
+          MatchedRefCoaddDiffMagPlot,
+          MatchedRefCoaddDiffPositionPlot,
         )

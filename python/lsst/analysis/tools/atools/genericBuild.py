@@ -25,14 +25,15 @@ __all__ = ("ExtendednessTool", "FluxConfig", "MagnitudeTool", "MagnitudeXTool", 
 import copy
 
 from lsst.pex.config import ChoiceField, Config, ConfigDictField, ConfigField, Field
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 
 from ..actions.vector import (
-    CalcMomentSize,
+    CalcShapeSize,
     ConstantValue,
+    ConvertFluxToMag,
     DownselectVector,
     LoadVector,
     Log10Vector,
-    MagColumnNanoJansky,
     MultiplyVector,
     VectorSelector,
 )
@@ -77,10 +78,12 @@ class ExtendednessTool(AnalysisTool):
 
 
 class FluxConfig(Config):
-    band_format = Field[str](default="{band}_{key}", doc="Format of band-dependent flux keys")
-    key_flux = Field[str](default=None, doc="Flux field to convert to magnitude on x-axis")
-    key_flux_error = Field[str](default="{key_flux}Err", doc="Flux error field", optional=True)
-    name_flux = Field[str](default=None, doc="Name of the flux/magnitude algorithm/model")
+    """Configuration for a flux vector to be loaded and potentially plotted."""
+
+    band_format = Field[str](default="{band}_{key}", doc="Format of band-dependent flux keys.")
+    key_flux = Field[str](default=None, doc="Flux field to convert to magnitude on x-axis.")
+    key_flux_error = Field[str](default="{key_flux}Err", doc="Flux error field.", optional=True)
+    name_flux = Field[str](default=None, doc="Name of the flux/magnitude algorithm/model.")
 
     def key_flux_band(self, band: str):
         return self.band_format.format(band=band, key=self.key_flux)
@@ -130,12 +133,29 @@ class MagnitudeTool(AnalysisTool):
             self._set_action(
                 self.process.buildActions, f"flux_err_{name}", LoadVector, vectorKey=key_flux_err
             )
-        self._set_action(self.process.buildActions, f"mag_{name}", MagColumnNanoJansky, vectorKey=key_flux)
+        self._set_action(self.process.buildActions, f"mag_{name}", ConvertFluxToMag, vectorKey=key_flux)
 
-    def _set_action(self, target, name, action, *args, **kwargs):
+    def _set_action(self, target: ConfigurableActionStructField, name: str, action, *args, **kwargs):
+        """Set an action attribute on a target tool's struct field.
+
+        Parameters
+        ----------
+        target
+            The ConfigurableActionStructField to set an attribute on.
+        name
+            The name of the attribute to set.
+        action
+            The action class to set the attribute to.
+        args
+            Arguments to pass when initialization the action.
+        kwargs
+            Keyword arguments to pass when initialization the action.
+        """
         if hasattr(target, name):
             attr = getattr(target, name)
+            # Setting an attr to a different action is a logic error
             assert isinstance(attr, action)
+            # Assert that the action's attributes are identical
             for key, value in kwargs.items():
                 if value.__class__.__module__ == "__builtin__":
                     assert getattr(attr, key) == value
@@ -143,21 +163,29 @@ class MagnitudeTool(AnalysisTool):
             setattr(target, name, action(*args, **kwargs))
 
     def _set_flux_default(self, attr):
+        """Set own config attr to appropriate string flux name."""
         name_mag = getattr(self, attr)
+        # Do nothing if already set - may have been called 2+ times
         if name_mag not in self.fluxes:
             name_found = None
             drop_err = False
+            # Check if the name with errors is a configured default
             if name_mag.endswith("_err"):
                 if hasattr(self.fluxes_default, name_mag):
                     name_found = name_mag
             else:
                 if hasattr(self.fluxes_default, name_mag):
                     name_found = name_mag
+                # Check if a config with errors exists but not without
                 elif hasattr(self.fluxes_default, f"{name_mag}_err"):
                     name_found = f"{name_mag}_err"
+                    # Don't load the errors - no _err suffix == unneeded
                     drop_err = True
             if name_found:
+                # Copy the config - we don't want to edit in place
+                # Other instances may use them
                 value = copy.copy(getattr(self.fluxes_default, name_found))
+                # Ensure no unneeded error columns are loaded
                 if drop_err:
                     value.key_flux_error = None
                 self.fluxes[name_found] = value
@@ -168,12 +196,8 @@ class MagnitudeTool(AnalysisTool):
                     f" and no default configuration found"
                 )
             if name_mag != name_found:
+                # Essentially appends _err to the name if needed
                 setattr(self, attr, name_found)
-
-    #    def getInputSchema(self):  # -> KeyedDataSchema:
-    #        # TODO: is this necessary?
-    #        # self.populatePrepFromProcess()
-    #        return self.prep.getInputSchema()
 
     def finalize(self):
         super().finalize()
@@ -182,10 +206,14 @@ class MagnitudeTool(AnalysisTool):
 
 
 class MagnitudeXTool(MagnitudeTool):
+    """A Tool metrics/plots with a magnitude as the dependent variable."""
+
     mag_x = Field[str](default="", doc="Flux (magnitude) field to bin metrics or plot on x-axis")
 
     @property
     def config_mag_x(self):
+        if self.mag_x not in self.fluxes:
+            raise KeyError(f"{self.mag_x=} not in {self.fluxes}; was finalize called?")
         # This is a logic error: it shouldn't be called before finalize
         assert self.mag_x in self.fluxes
         return self.fluxes[self.mag_x]
@@ -274,7 +302,7 @@ class SizeTool(AnalysisTool):
             raise RuntimeError(f"Can't re-set size build action with already-used {attr=} from {name_size=}")
 
     def _get_action_determinant(self, config):
-        action = CalcMomentSize(
+        action = CalcShapeSize(
             colXx=config.key_size.format(suffix="xx"),
             colYy=config.key_size.format(suffix="yy"),
             colXy=config.key_size.format(suffix="xy"),
@@ -282,7 +310,7 @@ class SizeTool(AnalysisTool):
         return action
 
     def _get_action_trace(self, config):
-        action = CalcMomentSize(
+        action = CalcShapeSize(
             colXx=config.key_size.format(suffix="xx"), colYy=config.key_size.format(suffix="yy")
         )
         return action

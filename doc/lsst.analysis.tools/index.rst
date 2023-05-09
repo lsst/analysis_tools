@@ -2,24 +2,21 @@
 
 .. _lsst.analysis.tools:
 
-###################
+===================
 lsst.analysis.tools
-###################
+===================
 
-.. Paragraph that describes what this Python module does and links to related modules and frameworks.
+The Analysis Tools package is designed to assist in the creation of quality assurance (QA) plots and metrics from the outputs of a data reduction pipeline.
+The intention is that users have the flexibility to construct complex data analysis tasks from a set of simple building blocks.
+In this sense, a series of consistent, repeatable and high-quality plots and metrics can be generated for any given dataset.
 
-``analysis_tools`` is the plotting and metric framework that is used to perform QA on the pipeline products.
-It is a very powerful way to explore and interact with the pipeline outputs.
+.. _lsst.analysis.tools-using:
 
-.. .. _lsst.analysis.tools-using:
-
-Using lsst.analysis.tools
-=========================
+Using Analysis Tools
+====================
 
 For a tutorial on working with
 ``analysis_tools`` please see the :ref:`getting started guide <analysis-tools-getting-started>`.
-
-.. toctree linking to topics related to using the module's APIs.
 
 .. toctree::
    :glob:
@@ -29,53 +26,32 @@ For a tutorial on working with
    action-types
    plot-types
 
+.. _lsst.analysis.tools-help:
+
 Need Help?
 ==========
 
-If you get stuck with ``analysis_tools`` then feel free to reach out to the ``#rubinobs-analysis-tools``
-channel on slack and hopefully someone will help you!
+If you have any questions regarding ``analysis_tools`` it is recommended that you post your question on `The Community Forum <https://community.lsst.org/>`_.
 
+.. _lsst.analysis_tools-pyapi:
 
-.. _lsst.analysis.tools-contributing:
+Python API Reference
+====================
+
+.. automodapi:: lsst.analysis.tools
+   :include-all-objects:
+.. automodapi:: lsst.analysis.tools.actions.plot
+.. automodapi:: lsst.analysis.tools.actions.vector
+.. automodapi:: lsst.analysis.tools.actions.scalar
+
+.. _lsst.analysis_tools-contributing:
 
 Contributing
 ============
 
-``lsst.analysis.tools`` is developed at https://github.com/lsst/analysis_tools.
-You can find Jira issues for this module under the `analysis_tools <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20analysis_tools>`_ component.
+The ``lsst.analysis.tools`` package is developed at
+`github.com/lsst/analysis_tools <https://github.com/lsst/analysis_tools>`_.
 
-.. If there are topics related to developing this module (rather than using it), link to this from a toctree placed here.
-
-.. .. toctree::
-..    :maxdepth: 1
-
-.. .. _lsst.analysis.tools-scripts:
-
-.. Script reference
-.. ================
-
-.. .. TODO: Add an item to this toctree for each script reference topic in the scripts subdirectory.
-
-.. .. toctree::
-..    :maxdepth: 1
-
-.. .. _lsst.analysis.tools-pyapi:
-
-Python API reference
-====================
-
-.. NOTE: Skip the type definitions that cause the pipelines docs build to fail.
-.. automodapi:: lsst.analysis.tools
-   :no-main-docstr:
-   :no-inheritance-diagram:
-   :include-all-objects:
-   :skip: Vector
-   :skip: KeyedData
-   :skip: KeyedDataSchema
-   :skip: KeyedDataTypes
-.. automodapi:: lsst.analysis.tools.actions.plot
-   :no-inheritance-diagram:
-.. automodapi:: lsst.analysis.tools.actions.vector
-   :no-inheritance-diagram:
-.. automodapi:: lsst.analysis.tools.actions.scalar
-   :no-inheritance-diagram:
+Jira issues relating to this package can be found using the
+`analysis_tools <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20analysis_tools>`_
+component.

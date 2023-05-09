@@ -18,22 +18,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-r"""This packages contains various analysis tools and PipelineTasks which
+r"""This package contains various analysis tools and the PipelineTasks which
 run them.
 
-There are two types of primary tools within this package; `AnalysisMetrics
-and `AnalysisPlots`, both of which are specialized subclasses of `AnalysisTool`.
+The primary tool in this package is the `AnalysisTool` class.
+An `AnalysisTool` class has three stages: prep, process, and produce.
+Creating a new `AnalysisTool` involves choosing (through configuration) one or
+more `AnalysisAction` classes to run for each of those stages.
 
-`AnalysisTool`\ s are objects that have three stages; prep, process, and
-post-process. Creating a new `AnalysisTool` is the process of choosing (though
-configuration) what `AnalysisAction` will run for each of those stages.
-
-`AnalysisTool`\ s and `AnalysisAction`\ s are subclasses of
-`~lsst.pex.config.configurableActions.ConfigurableAction`\ s. These objects are
-special types that are configured _prior_ to any code execution, and behave as
-functions at runtime. The configuration state of a
+Both `AnalysisTool` and `AnalysisAction` are subclasses of the
+`~lsst.pex.config.configurableActions.ConfigurableAction` class.
+These objects are special types that are configured *prior* to any code
+execution, and behave as functions at runtime.
+The configuration state of a
 `~lsst.pex.config.configurableActions.ConfigurableAction` is saved separately
-from the object itself, which allows
+from the object itself.
 """
 
 from .statistics import *

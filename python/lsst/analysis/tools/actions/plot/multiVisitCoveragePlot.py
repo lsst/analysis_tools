@@ -87,7 +87,7 @@ class MultiVisitCoveragePlot(PlotAction):
             "zenithDistance": "deg",
             "zeroPoint": "mag",
             "ra": "deg",
-            "decl": "deg",
+            "dec": "deg",
             "xFp": "mm",
             "yFp": "mm",
             "medianE": "",
@@ -118,7 +118,7 @@ class MultiVisitCoveragePlot(PlotAction):
             "detector",
             "band",
             "ra",
-            "decl",
+            "dec",
             "zeroPoint",
             "psfSigma",
             "skyBg",
@@ -341,7 +341,7 @@ class MultiVisitCoveragePlot(PlotAction):
             tractList: List[int] = []
         elif self.projection == "raDec":
             xKey = "ra"
-            yKey = "decl"
+            yKey = "dec"
             xScatLen, yScatLen = 0, 0
             # Use downselector without limits to get rid of any non-finite
             # RA/Dec entries.
@@ -350,7 +350,7 @@ class MultiVisitCoveragePlot(PlotAction):
                 tractList = self.tractsToPlotList
             else:
                 ras = data["ra"]
-                decs = data["decl"]
+                decs = data["dec"]
                 tractList = list(set(skymap.findTractIdArray(ras, decs, degrees=True)))  # type: ignore
             log.info("List of tracts overlapping data:  {}".format(tractList))
             tractLimitsDict = self._getTractLimitsDict(skymap, tractList)
@@ -370,7 +370,7 @@ class MultiVisitCoveragePlot(PlotAction):
 
         if self.doScatterInRaDec:
             raRange = max(cast(Vector, data["ra"])) - min(cast(Vector, data["ra"]))
-            decRange = max(cast(Vector, data["decl"])) - min(cast(Vector, data["decl"]))
+            decRange = max(cast(Vector, data["dec"])) - min(cast(Vector, data["dec"]))
             scatRad = max(0.05 * max(raRange, decRange), 0.12)  # min is of order of an LSSTCam detector
             log.info("Scattering data in RA/Dec within radius {:.3f} (deg)".format(scatRad))
 
@@ -555,7 +555,7 @@ class MultiVisitCoveragePlot(PlotAction):
                             )
                 if self.projection == "raDec":
                     raMin, raMax = min(cast(Vector, data["ra"])), max(cast(Vector, data["ra"]))
-                    decMin, decMax = min(cast(Vector, data["decl"])), max(cast(Vector, data["decl"]))
+                    decMin, decMax = min(cast(Vector, data["dec"])), max(cast(Vector, data["dec"]))
                     raMin, raMax, decMin, decMax = _setLimitsToEqualRatio(raMin, raMax, decMin, decMax)
                     pcm = plotProjectionWithBinning(
                         ax,
@@ -818,7 +818,7 @@ class MultiVisitCoveragePlot(PlotAction):
         yMin=np.nextafter(float("-inf"), 0),
         yMax=np.nextafter(float("inf"), 0),
         xKey="ra",
-        yKey="decl",
+        yKey="dec",
     ):
         """Helper function for downselecting on within an area on a plane.
 
@@ -885,7 +885,7 @@ class MultiVisitCoveragePlot(PlotAction):
             yMin=tractDecMin,
             yMax=tractDecMax,
             xKey="ra",
-            yKey="decl",
+            yKey="dec",
         )
         return downSelectedData
 

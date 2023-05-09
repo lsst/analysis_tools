@@ -183,12 +183,12 @@ class XYPlot(PlotAction):
 
         if self.xScale == "symlog":
             ax.set_xscale("symlog", linthresh=self.xLinThresh)
-            ax.fill_betweenx(y=data["y"], x1=-self.xLinThresh, x2=self.xLinThresh, color="gray", alpha=0.2)
+            ax.axvspan(-self.xLinThresh, self.xLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_xscale(self.xScale)  # type: ignore
         if self.yScale == "symlog":
             ax.set_yscale("symlog", linthresh=self.yLinThresh)
-            ax.fill_between(x=data["x"], y1=-self.yLinThresh, y2=self.yLinThresh, color="gray", alpha=0.2)
+            ax.axhspan(-self.yLinThresh, self.yLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_yscale(self.yScale)  # type: ignore
 

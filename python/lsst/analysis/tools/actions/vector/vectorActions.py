@@ -324,7 +324,7 @@ class ExtinctionCorrectedMagDiff(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         diff = self.magDiff(data, **kwargs)
         if not self.extinctionCoeffs:
-            _LOG.warning("No extinction Coefficients. Not applying extinction correction")
+            _LOG.debug("No extinction Coefficients. Not applying extinction correction")
             return diff
 
         col1Band = self.band1 if self.band1 else self.magDiff.col1.split("_")[0]

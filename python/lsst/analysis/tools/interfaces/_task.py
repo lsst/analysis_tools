@@ -32,10 +32,12 @@ connection classes and should specify a unique name
 
 __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTask")
 
+import weakref
 from collections.abc import Iterable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
+import matplotlib.pyplot as plt
 from lsst.verify import Measurement
 
 if TYPE_CHECKING:
@@ -54,6 +56,15 @@ from ._actions import JointAction, MetricAction, NoMetric
 from ._analysisTools import AnalysisTool
 from ._interfaces import KeyedData, PlotTypes
 from ._metricMeasurementBundle import MetricMeasurementBundle
+
+
+# TODO: This _plotCloser function assists in closing all open plots at the
+# conclusion of a PipelineTask. When DM-39114 is implemented, this function and
+# all associated usage thereof should be removed.
+def _plotCloser(*args):
+    """Close all the plots in the given list."""
+    for plot in args:
+        plt.close(plot)
 
 
 class AnalysisBaseConnections(
@@ -271,6 +282,7 @@ class AnalysisPipelineTask(PipelineTask):
         # copy plot info to be sure each action sees its own copy
         plotInfo = kwargs.get("plotInfo")
         plotKey = f"{self.config.connections.outputName}_{{name}}"
+        weakrefArgs = []
         for name, action in self.config.atools.items():
             kwargs["plotInfo"] = deepcopy(plotInfo)
             actionResult = action(data, **kwargs)
@@ -279,15 +291,22 @@ class AnalysisPipelineTask(PipelineTask):
                 match value:
                     case PlotTypes():
                         setattr(results, plotKey.format(name=resultName), value)
+                        weakrefArgs.append(value)
                     case Measurement():
                         metricAccumulate.append(value)
             # only add the metrics if there are some
             if metricAccumulate:
                 results.metrics[name] = metricAccumulate
+        # Wrap the return struct in a finalizer so that when results is
+        # garbage collected the plots will be closed.
+        # TODO: This finalize step closes all open plots at the conclusion of
+        # a task. When DM-39114 is implemented, this step should no longer be
+        # required and may be removed.
+        weakref.finalize(results, _plotCloser, *weakrefArgs)
         return results
 
     def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:
-        """Produce the outputs associated with this `PipelineTask`
+        """Produce the outputs associated with this `PipelineTask`.
 
         Parameters
         ----------
@@ -351,6 +370,10 @@ class AnalysisPipelineTask(PipelineTask):
             `lsst.daf.butler.DatasetRef` objects associated with the defined
             output connections.
         """
+        # TODO: This rcParams modification is a temporary solution, hiding
+        # a matplotlib warning indicating too many figures have been opened.
+        # When DM-39114 is implemented, this should be removed.
+        plt.rcParams.update({"figure.max_open_warning": 0})
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId)

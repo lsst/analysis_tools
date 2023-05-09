@@ -28,7 +28,7 @@ from lsst.pex.config import ChoiceField, Config, ConfigDictField, ConfigField, F
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 
 from ..actions.vector import (
-    CalcShapeSize,
+    CalcMomentSize,
     ConstantValue,
     ConvertFluxToMag,
     DownselectVector,
@@ -302,7 +302,7 @@ class SizeTool(AnalysisTool):
             raise RuntimeError(f"Can't re-set size build action with already-used {attr=} from {name_size=}")
 
     def _get_action_determinant(self, config):
-        action = CalcShapeSize(
+        action = CalcMomentSize(
             colXx=config.key_size.format(suffix="xx"),
             colYy=config.key_size.format(suffix="yy"),
             colXy=config.key_size.format(suffix="xy"),
@@ -310,7 +310,7 @@ class SizeTool(AnalysisTool):
         return action
 
     def _get_action_trace(self, config):
-        action = CalcShapeSize(
+        action = CalcMomentSize(
             colXx=config.key_size.format(suffix="xx"), colYy=config.key_size.format(suffix="yy")
         )
         return action

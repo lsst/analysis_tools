@@ -35,7 +35,7 @@ from lsst.analysis.tools.actions.scalar.scalarActions import (
     StdevAction,
 )
 from lsst.analysis.tools.actions.vector.calcBinnedStats import CalcBinnedStatsAction
-from lsst.analysis.tools.actions.vector.calcShapeSize import CalcShapeSize
+from lsst.analysis.tools.actions.vector.calcMomentSize import CalcMomentSize
 from lsst.analysis.tools.actions.vector.mathActions import (
     AddVector,
     ConstantValue,
@@ -66,6 +66,7 @@ from lsst.analysis.tools.actions.vector.vectorActions import (
     LoadVector,
     MagDiff,
 )
+from lsst.pex.config import FieldValidationError
 
 
 class TestScalarActions(unittest.TestCase):
@@ -175,13 +176,13 @@ class TestVectorActions(unittest.TestCase):
 
     # def testCalcRhoStatistics(self): TODO: implement
 
-    def testCalcShapeSize(self):
+    def testCalcMomentSize(self):
         xx = self.data["r_ixx"]
         yy = self.data["r_iyy"]
         xy = self.data["r_ixy"]
 
         # Test determinant with defaults
-        action = CalcShapeSize()
+        action = CalcMomentSize()
         result = action(self.data, band="r")
         schema = [col for col, colType in action.getInputSchema()]
         self.assertEqual(sorted(schema), ["{band}_ixx", "{band}_ixy", "{band}_iyy"])
@@ -189,7 +190,7 @@ class TestVectorActions(unittest.TestCase):
         np.testing.assert_array_almost_equal(result, truth)
 
         # Test trace with columns specified
-        action = CalcShapeSize(
+        action = CalcMomentSize(
             colXx="{band}_iixx",
             colYy="{band}_iiyy",
             colXy="{band}_iixy",
@@ -200,6 +201,10 @@ class TestVectorActions(unittest.TestCase):
         self.assertEqual(sorted(schema), ["{band}_iixx", "{band}_iiyy"])
         truth = np.sqrt(0.5 * (xx + yy))
         np.testing.assert_array_almost_equal(result, truth)
+
+        CalcMomentSize(sizeType="trace", colXy=None).validate()
+        with self.assertRaises(FieldValidationError):
+            CalcMomentSize(sizeType="determinant", colXy=None).validate()
 
     # def testCalcE(self): TODO: implement
 

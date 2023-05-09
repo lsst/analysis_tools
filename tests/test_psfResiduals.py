@@ -25,7 +25,7 @@ import galsim
 import lsst.utils.tests
 import numpy as np
 from lsst.afw.geom import Quadrupole
-from lsst.analysis.tools.actions.vector import CalcE, CalcE1, CalcE2, CalcEDiff, CalcShapeSize
+from lsst.analysis.tools.actions.vector import CalcE, CalcE1, CalcE2, CalcEDiff, CalcMomentSize
 from lsst.pex.config import FieldValidationError
 
 
@@ -48,9 +48,9 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
         cls.kwargs = {"band": "i"}
 
     def test_size(self):
-        """Test CalcShapeSize functor"""
-        traceSize = CalcShapeSize(sizeType="trace")(self.data, **self.kwargs)
-        determinantSize = CalcShapeSize(sizeType="determinant")(self.data, **self.kwargs)
+        """Test CalcMomentSize functor"""
+        traceSize = CalcMomentSize(sizeType="trace")(self.data, **self.kwargs)
+        determinantSize = CalcMomentSize(sizeType="determinant")(self.data, **self.kwargs)
 
         for idx, row in enumerate(self.data):
             shape = Quadrupole(ixx=row["i_ixx"], iyy=row["i_iyy"], ixy=row["i_ixy"])
@@ -68,7 +68,7 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
         """
         shear = CalcE(ellipticityType="shear")(self.data, **self.kwargs)
         distortion = CalcE(ellipticityType="distortion")(self.data, **self.kwargs)
-        size = CalcShapeSize(sizeType="determinant")(self.data, **self.kwargs)
+        size = CalcMomentSize(sizeType="determinant")(self.data, **self.kwargs)
         for idx, row in enumerate(self.data):
             galsim_shear = galsim.Shear(shear[idx])
             self.assertFloatsAlmostEqual(distortion[idx].real, galsim_shear.e1)
@@ -117,12 +117,6 @@ class ShapeSizeTestCase(lsst.utils.tests.TestCase):
         CalcE1(ellipticityType="distortion", colXy=None).validate()
         with self.assertRaises(FieldValidationError):
             CalcE1(ellipticityType="shear", colXy=None).validate()
-
-    def test_size_validation(self):
-        """Test that CalcShapeSize throws an exception when misconfigured."""
-        CalcShapeSize(sizeType="trace", colXy=None).validate()
-        with self.assertRaises(FieldValidationError):
-            CalcShapeSize(sizeType="determinant", colXy=None).validate()
 
     def test_ediff_validation(self):
         """Test that CalcEDiff takes ellipticities of same convention."""

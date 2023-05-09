@@ -100,6 +100,18 @@ class XYPlot(PlotAction):
         optional=True,
     )
 
+    xLine = Field[float](
+        doc=("The value of x where a vertical line is drawn."),
+        default=None,
+        optional=True,
+    )
+
+    yLine = Field[float](
+        doc=("The value of y where a horizontal line is drawn."),
+        default=None,
+        optional=True,
+    )
+
     def setDefaults(self):
         super().setDefaults()
         self.strKwargs = {"fmt": "o"}
@@ -163,6 +175,12 @@ class XYPlot(PlotAction):
         )
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
+
+        if self.xLine is not None:
+            ax.axvline(self.xLine, color="k", linestyle="--")
+        if self.yLine is not None:
+            ax.axhline(self.yLine, color="k", linestyle="--")
+
         if self.xScale == "symlog":
             ax.set_xscale("symlog", linthresh=self.xLinThresh)
             ax.fill_betweenx(y=data["y"], x1=-self.xLinThresh, x2=self.xLinThresh, color="gray", alpha=0.2)

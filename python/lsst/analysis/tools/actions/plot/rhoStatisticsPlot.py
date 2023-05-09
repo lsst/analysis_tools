@@ -72,6 +72,7 @@ class RhoStatisticsPlot(PlotAction):
             rhoPlot.xScale = "log"
             rhoPlot.yScale = "symlog"
             rhoPlot.yLinThresh = 1e-6
+            rhoPlot.yLine = 0.0
 
         self.rhoPlots["rho3alt"].yScale = "linear"  # type: ignore
 

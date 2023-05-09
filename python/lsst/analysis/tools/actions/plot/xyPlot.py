@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any, Mapping
 
 import matplotlib.pyplot as plt
 from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
+from matplotlib.ticker import SymmetricalLogLocator
 
 from ...interfaces import PlotAction, Vector
 from .plotUtils import addPlotInfo
@@ -183,14 +184,31 @@ class XYPlot(PlotAction):
 
         if self.xScale == "symlog":
             ax.set_xscale("symlog", linthresh=self.xLinThresh)
+            locator = SymmetricalLogLocator(
+                linthresh=self.xLinThresh, base=10, subs=[0.1 * ii for ii in range(1, 10)]
+            )
+            ax.xaxis.set_minor_locator(locator)
             ax.axvspan(-self.xLinThresh, self.xLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_xscale(self.xScale)  # type: ignore
+            ax.tick_params(axis="x", which="minor")
+
         if self.yScale == "symlog":
             ax.set_yscale("symlog", linthresh=self.yLinThresh)
+            locator = SymmetricalLogLocator(
+                linthresh=self.yLinThresh, base=10, subs=[0.1 * ii for ii in range(1, 10)]
+            )
+            ax.yaxis.set_minor_locator(locator)
             ax.axhspan(-self.yLinThresh, self.yLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_yscale(self.yScale)  # type: ignore
+            ax.tick_params(axis="y", which="minor")
+
+        if self.xScale == "symlog":
+            locator = SymmetricalLogLocator(linthresh=self.xLinThresh, base=10)
+            ax.xaxis.set_minor_locator(locator)
+        else:
+            ax.tick_params(axis="x", which="minor")
 
         if plotInfo is not None:
             fig = addPlotInfo(fig, plotInfo)

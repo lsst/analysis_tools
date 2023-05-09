@@ -25,17 +25,19 @@ For a tutorial on working with
    getting-started
    action-types
    plot-types
-   troubleshooting
-   package-layout-guide
+   faqs
+   detailed-package-layout
 
 .. _lsst.analysis.tools-help:
 
 Need Help?
 ==========
+If you have access to slack, project members and in kind contributers should have and get stuck with ``analysis_tools`` then feel free to reach out to the ``#rubinobs-analysis-tools``
+channel on slack and hopefully someone will help you!
 
-If you have any questions regarding ``analysis_tools`` it is recommended that you post your question on `The Community Forum <https://community.lsst.org/>`_.
+Another way to get help is to write a post on `The Community Forum <https://community.lsst.org/>`_.
 
-A first place for more information is the :ref:`Hints, Tips and Troubleshooting <analysis-tools-troubleshooting>` page which
+A first place for more information is the :ref:`FAQs <analysis-tools-faqs>` page which
 contains some helpful hints. More will be added to this page over time, if you find something that you think
 should be added here then please do!
 

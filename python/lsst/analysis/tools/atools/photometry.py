@@ -24,7 +24,7 @@ __all__ = ("Ap12PsfSkyPlot", "PsfApRatio")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import MedianAction, MeanAction, SigmaMadAction
+from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
 from ..actions.vector import (
     CoaddPlotFlagSelector,
     DivideVector,
@@ -70,7 +70,7 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.process.calculateActions.mean.vectorKey = "zStars"
 
         self.process.calculateActions.sigmaMad = SigmaMadAction()
-        self.process.calculateActions.sigmaMad.vectorKey = "xStars"
+        self.process.calculateActions.sigmaMad.vectorKey = "zStars"
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
@@ -80,11 +80,7 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.produce.plot.zAxisLabel = "Ap 12 - PSF [mag]"
         self.produce.plot.plotOutlines = False
 
-        self.produce.metric.units = {
-            "median": "mmag",
-            "sigmaMad": "mmag",
-            "mean": "mmag"
-        }
+        self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 
         self.produce.metric.newNames = {
             "median": "{band}_ap12-psf_median",

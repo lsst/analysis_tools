@@ -76,6 +76,9 @@ class FlagSelector(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
 
+        Parameters
+        ----------
+        data : `KeyedData`
 
         Returns
         -------
@@ -234,6 +237,7 @@ class SnSelector(SelectorBase):
         Parameters
         ----------
         data : `KeyedData`
+            The data to perform the selection on.
 
         Returns
         -------

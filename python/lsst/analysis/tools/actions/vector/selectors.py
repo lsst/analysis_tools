@@ -78,7 +78,7 @@ class FlagSelector(VectorAction):
 
         Parameters
         ----------
-        table : `Tabular`
+        data : `KeyedData`
 
         Returns
         -------
@@ -237,6 +237,7 @@ class SnSelector(SelectorBase):
         Parameters
         ----------
         data : `KeyedData`
+            The data to perform the selection on.
 
         Returns
         -------

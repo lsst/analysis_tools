@@ -51,89 +51,86 @@ Package Layout
 ==============
 There are a bunch of files in analysis_tools but we are going to focus on two directories, 
 ``python/lsst/analysis/tools/`` and ``pipelines``, which contain the python code and the 
-pipelines that run it respecitvely.
+pipelines that run it respecitvely. Below is a brief overview of the layout, for more details 
+please see the :doc:`package layout guide<detailed-package-layout>`.
 
 Pipelines
 ---------
 **visitQualityCore.yaml**
 
-| The core plots for analysing the quality of the visit level data. The core pipeline is run as standard as part of the regular reprocessing. The most helpful plots go into this pipeline.
+    The core plots for analysing the quality of the visit level data. The core pipeline is run as standard as part of the regular reprocessing. The most helpful plots go into this pipeline.
 
 **visitQualityExtended.yaml**
 
-| An extended pipeline of plots and metrics to study the visit level data. The extended pipeline is run when a problem comes up or we need to look deeper into the data quality. Useful plots that address specific issues but don't need to be run on a regular basis get added to this pipeline.
+    An extended pipeline of plots and metrics to study the visit level data. The extended pipeline is run when a problem comes up or we need to look deeper into the data quality. Useful plots that address specific issues but don't need to be run on a regular basis get added to this pipeline.
 
 **coaddQualityCore.yaml**
 
-| The core plots for analysing the quality of the coadd level data.
+    The core plots for analysing the quality of the coadd level data.
 
 **coaddQualityExtended.yaml**
 
-| The extended plots for analysing the coadd data.
+    The extended plots for analysing the coadd data.
 
 **matchedVisitQualityCore.yaml**
 
-| Plots and metrics that assess the repeatability of sources per tract by matching them between visits.
+    Plots and metrics that assess the repeatability of sources per tract by matching them between visits.
 
 **apCcdVisitQualityCore.yaml**
 
-| The core plots to assess the quality of the ccd visit dataset.
+    The core plots to assess the quality of the ccd visit dataset.
 
 python/lsst/analysis/tools
 --------------------------
 **actions**
 
-| This contains the actions that plot things and calculate things.
-| Check here before adding new actions to avoid duplication.
+    This contains the actions that plot things and calculate things.
+    Check here before adding new actions to avoid duplication.
 
     **scalar**
 
-    Contains a lot of useful actions that return scalar values.
-    E.g. median or sigma MAD.
+        Contains a lot of useful actions that return scalar values.
+        E.g. median or sigma MAD.
 
     **vector**
 
-    These actions run on vectors and return vectors.
-    E.g. the S/N selector which returns an array of bools.
+        These actions run on vectors and return vectors.
+        E.g. the S/N selector which returns an array of bools.
 
     **keyedData**
 
-    These actions are base classes for other actions. You 
-    shouldn't need to add stuff here. Use the scalar or 
-    vector actions.
+        These actions are base classes for other actions. You 
+        shouldn't need to add stuff here. Use the scalar or 
+        vector actions.
 
     **plots**
 
-    The plotting code lives in here. You shouldn't need to touch 
-    this unless you have to add a new plot type. Try to use one of 
-    the existing ones first rather than duplicating things.
+        The plotting code lives in here. You shouldn't need to touch 
+        this unless you have to add a new plot type. Try to use one of 
+        the existing ones first rather than duplicating things.
 
-**analysisMetrics**
+**atools**
 
-| Metric classes go in here. One off metrics and very simple metrics go into analysisMetrics.py. Sets of metrics go into their own file, i.e. psfResidualMetrics.py
-
-**analysisParts**
-
-| Shared code between plots and metric goes in here. Try to have as much of this as possible so that nothing changes between the plots and their associated metrics.
-| I.e. shapeSizeFractionalDiff.py.
-
-**analysisPlots**
-
-| Plotting classes go in here. One off plots and very simple plots go into analysisPlots.py Sets of plots go into their own file, i.e. skyObject.py.
+    Metrics and plots go in here. Similar plots and metrics should be grouped together into the same file, i.e. skyObject.py which contains various plots and metrics that use sky objects.
 
 **contexts**
 
-| Generic settings to be applied in a given circumstance. For example overrides that are specific to a coadd or visit level plot/metric such as the default flag selector which is different between coadd and visit analysis.
+    Generic settings to be applied in a given circumstance. For example overrides that are specific to a coadd or visit level plot/metric such as the default flag selector which is different between coadd and visit analysis.
+
+**interfaces**
+
+    Interfaces are the framework level code which is used as a basis to build/interact with analysis tools package. You should not have to modify anything in here to be able to add new metrics or plots.
 
 **tasks**
 
-| Each different dataset type requires its own task to handle the reading of the inputs.
-| For example: objectTableTractAnalysis.py which handles the reading in of object tables.
+    Each different dataset type requires its own task to handle the reading of the inputs.
+    For example: objectTableTractAnalysis.py which handles the reading in of object tables.
 
 -------------------------
 
-A Simple Plotting Example
-=========================
+A Simple Plotting And Metric Example
+====================================
+
 The first example we are going to look at is a very simple one and then we can build 
 up from there. We're going to start by adapting an existing plot to our needs, we'll use a 
 sky plot to show the on sky distribution of the values of a column in the table.
@@ -183,6 +180,15 @@ the plot type as well.
            self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
            self.process.buildActions.zStars.magDiff.col2 = "{band}_psfFlux"
 
+           self.process.calculateActions.median = MedianAction()
+           self.process.calculateActions.median.vectorKey = "zStars"
+
+           self.process.calculateActions.mean = MeanAction()
+           self.process.calculateActions.mean.vectorKey = "zStars"
+
+           self.process.calculateActions.sigmaMad = SigmaMadAction()
+           self.process.calculateActions.sigmaMad.vectorKey = "xStars"
+
            self.produce = SkyPlot()
            self.produce.plotTypes = ["stars"]
            self.produce.plotName = "ap12-psf_{band}"
@@ -190,6 +196,18 @@ the plot type as well.
            self.produce.yAxisLabel = "Dec. (degrees)"
            self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
            self.produce.plotOutlines = False
+
+           self.produce.metric.units = {
+               "median": "mmag",
+               "sigmaMad": "mmag",
+               "mean": "mmag"
+           }
+
+           self.produce.metric.newNames = {
+               "median": "{band}_ap12-psf_median",
+               "mean": "{band}_ap12-psf_mean",
+               "sigmaMad": "{band}_ap12-psf_sigmaMad",
+           }
 
 Let's look at what the bits do in more detail.
 
@@ -258,6 +276,22 @@ data then it defaults to a straight difference between them.
 
 .. code-block:: python
 
+           self.process.calculateActions.median = MedianAction()
+           self.process.calculateActions.median.vectorKey = "zStars"
+
+           self.process.calculateActions.mean = MeanAction()
+           self.process.calculateActions.mean.vectorKey = "zStars"
+
+           self.process.calculateActions.sigmaMad = SigmaMadAction()
+           self.process.calculateActions.sigmaMad.vectorKey = "zStars"
+
+Next we want to set some metrics, we are going to use the pre calculated zStars values and then calculate
+their median, mean and sigma MAD as metric values. Later we will rename these so that the names are specific
+to each band and more informative when displayed.
+
+
+.. code-block:: python
+
            self.produce = SkyPlot()
            self.produce.plotTypes = ["stars"]
            self.produce.plotName = "ap12-psf_{band}"
@@ -270,9 +304,28 @@ This final section declares the plot type and adds labels and things. We declare
 plot, that plots only objects of type star. Next we give the plot a name that is informative for later
 identification and add axis labels. The final option specifies if we want patch outlines plotted. The plot 
 
+.. code-block:: python
 
-This new class then needs to be added to a file in analysisPlots, one off and simple plots go into the
-analysisPlots file directly and the others are filed by category. For example all sky object related plots are
+           self.produce.metric.units = {
+               "median": "mmag",
+               "sigmaMad": "mmag",
+               "mean": "mmag"
+           }
+
+We have to set some units for the metrics, these ones are in milli mags.
+
+.. code-block:: python
+
+           self.produce.metric.newNames = {
+               "median": "{band}_ap12-psf_median",
+               "mean": "{band}_ap12-psf_mean",
+               "sigmaMad": "{band}_ap12-psf_sigmaMad",
+           }
+
+Finally we name the metrics so that the names are specific per band and informative when re-read later.
+
+This new class then needs to be added to a file in atools, where they go into a file by category, if there
+isn't one that suits the tool you are making then start a new file. For example all sky object related plots are
 in the skyObjects.py file.
 
 Once we have added the class to the relevant file we can now run it from the command line. To do this we need
@@ -349,23 +402,16 @@ This example data id tells the processing that the instrument being used is HSC,
 in the g, r, i, z and y bands, that the skymap used is the hsc_rings_v1 map, that the tract is 9813 and that
 we only want to process data from patch 68 rather than all the data.
 
-Making A New Metric
--------------------
-Metrics work in a very similar way to plots and we won't go through another full example of them. They can be
-added to the same pipelines as the plots and the pipeline is run as detailled above. Metrics follow the same
-structure and have a prep, process and produce step. If a plot and metric are going to be made of the same
-quantity then the shared code should be factored out into a shared class in ``analysisParts``, see
-the `stelllar locus base class <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/analysisParts/stellarLocus.py>`__ for examples on how to do this. The shared code
-is in ``analysisParts`` with very little code in ``analysisPlots.py`` and ``analysisMetrics.py``. The plots
-and metrics from these files are then called in `pipelines/coaddQualityCore.yaml <https://github.com/lsst/analysis_tools/blob/main/pipelines/coaddQualityCore.yaml>`__ and make a good reference
-for how to make new plots/metrics/combinations of plots and metrics.
-
-------------
+-----------
 
 Adding an Action
 ================
 
 Actions go in one of the sub folders of the actions directory depending on what type they are, this is covered in the package layout section. Before you add a new action check if it is already included before adding a duplicate. Sometimes it will probably be better to generalise an exisiting action rather than making a new one that is very similar to something that already exists. If the new action is long or specific to a given circumatance then add it to a new file, for example the ellipticity actions in `python/lsst/analysis/tools/actions/vector/ellipticity.py <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/actions/vector/ellipticity.py>`__.
+
+The current actions that are available are detailed :doc:`here<action-types>`. Most common requests are already coded up and
+please try to reuse actions that already exist before making your own. Please also try to make actions as
+reusable as possible so that other people can also use them.
 
 Let's look at some examples of actions. The first one is a scalar action.
 
@@ -472,19 +518,7 @@ should be enough information that anyone can recreate the plot and access the fu
 investigation. See the other plots for more information on how to do this. Also please add doc strings to the
 plot and then add documentation here for other users so that they can easily see what already exists.
 
-------------------
-
-Plot Types
-==========
 The current plot types that are available are detailed :doc:`here<plot-types>`. Most common plots are
 already coded up and please try to reuse them before making your own. Before adding a new plot type please
 think about if some of the already coded ones can be adapted to your needs rather than making multiple plots
 that are basically identical.
-
----------------
-
-Actions Types
-=============
-The current actions that are available are detailed :doc:`here<action-types>`. Most common requests are already coded up and
-please try to reuse actions that already exist before making your own. Please also try to make actions as
-reusable as possible so that other people can also use them.

@@ -190,36 +190,11 @@ class RhoStatistics(AnalysisTool):
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
         self.prep.selectors.starSelector = StarSelector()
 
-        self.process.buildActions.patchWhole = LoadVector()
-        self.process.buildActions.patchWhole.vectorKey = "patch"
-
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
-        # pre-compute a stellar selector mask so it can be used in the filter
-        # actions while only being computed once, alternatively the stellar
-        # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StarSelector()
-
-        self.process.filterActions.xStars = DownselectVector(
-            vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
-        )
-        # downselect the psfFlux as well
-        self.process.filterActions.psfFlux = DownselectVector(
-            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.process.filterActions.psfFluxErr = DownselectVector(
-            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
-        )
-
-        self.process.filterActions.patch = DownselectVector(
-            vectorKey="patchWhole", selector=VectorSelector(vectorKey="starSelector")
-        )
-
-        self.process.calculateActions.stars = CalcRhoStatistics()
-
-        self.process.calculateActions.stars.treecorr.nbins = 21
-        self.process.calculateActions.stars.treecorr.min_sep = 0.01
-        self.process.calculateActions.stars.treecorr.max_sep = 100.0
-        self.process.calculateActions.stars.treecorr.sep_units = "arcmin"
-        self.process.calculateActions.stars.treecorr.metric = "Arc"
+        self.process.calculateActions.rho = CalcRhoStatistics()
+        self.process.calculateActions.rho.treecorr.nbins = 21
+        self.process.calculateActions.rho.treecorr.min_sep = 0.01
+        self.process.calculateActions.rho.treecorr.max_sep = 100.0
+        self.process.calculateActions.rho.treecorr.sep_units = "arcmin"
+        self.process.calculateActions.rho.treecorr.metric = "Arc"
 
         self.produce.plot = RhoStatisticsPlot()

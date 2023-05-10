@@ -34,7 +34,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ..actions.keyedData import KeyedScalars
-from ..actions.plot.rhoStatisticsPlot import RhoStatisticsPlotAction
+from ..actions.plot.rhoStatisticsPlot import RhoStatisticsPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
 from ..actions.vector import (
@@ -221,4 +221,4 @@ class RhoStatistics(AnalysisTool):
         self.process.calculateActions.stars.treecorr.max_sep = 100.0
         self.process.calculateActions.stars.treecorr.sep_units = "arcmin"
 
-        self.produce.plot = RhoStatisticsPlotAction()
+        self.produce.plot = RhoStatisticsPlot()

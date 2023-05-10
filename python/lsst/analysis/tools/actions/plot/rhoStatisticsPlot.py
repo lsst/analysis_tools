@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
-__all__ = ("RhoStatisticsPlotAction",)
+__all__ = ("RhoStatisticsPlot",)
 
 import numpy as np
 from lsst.pex.config import ConfigDictField
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from ...interfaces import KeyedData, KeyedDataSchema
 
 
-class RhoStatisticsPlotAction(PlotAction):
+class RhoStatisticsPlot(PlotAction):
     """Make multiple plots of rho statistics.
 
     Rho statistics capture the spatial correlation amongst various PSF size and

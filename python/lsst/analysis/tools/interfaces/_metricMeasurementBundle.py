@@ -64,7 +64,7 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
         inst = cls()
         inst.dataset_identifier = data.pop("__dataset_identifier", None)
         inst.timestamp_version = data.pop("__timestamp_version", None)
-        inst.reference_package = data.pop("__reference_pacakge", None)
+        inst.reference_package = data.pop("__reference_package", None)
 
         for key, value in data.items():
             inst[key] = [Measurement.deserialize(**element) for element in value]

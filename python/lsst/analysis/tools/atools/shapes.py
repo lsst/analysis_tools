@@ -188,6 +188,7 @@ class RhoStatistics(AnalysisTool):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
+        self.prep.selectors.starSelector = StarSelector()
 
         self.process.buildActions.patchWhole = LoadVector()
         self.process.buildActions.patchWhole.vectorKey = "patch"

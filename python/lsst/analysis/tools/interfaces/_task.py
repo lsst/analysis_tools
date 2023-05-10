@@ -32,8 +32,9 @@ connection classes and should specify a unique name
 
 __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTask")
 
+from collections.abc import Iterable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, MutableMapping, cast
+from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
 from lsst.verify import Measurement
 
@@ -43,10 +44,11 @@ if TYPE_CHECKING:
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
-from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
+from lsst.pipe.base import Instrument, PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.base.butlerQuantumContext import ButlerQuantumContext
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
+from lsst.pipe.base.pipelineIR import ConfigIR, ParametersIR
 
 from ._actions import JointAction, MetricAction, NoMetric
 from ._analysisTools import AnalysisTool
@@ -200,6 +202,28 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         check=lambda x: x
         in ("reference_package_timestamp", "run_timestamp", "current_timestamp", "dataset_timestamp"),
     )
+
+    def applyConfigOverrides(
+        self,
+        instrument: Instrument | None,
+        taskDefaultName: str,
+        pipelineConfigs: Iterable[ConfigIR] | None,
+        parameters: ParametersIR,
+        label: str,
+    ) -> None:
+        extraConfig = {}
+        if (value := parameters.mapping.get("sasquatch_dataset_identifier", None)) is not None:
+            extraConfig["dataset_identifier"] = value
+        if (value := parameters.mapping.get("sasquatch_reference_package", None)) is not None:
+            extraConfig["reference_package"] = value
+        if (value := parameters.mapping.get("sasquatch_timestamp_version", None)) is not None:
+            extraConfig["timestamp_version"] = value
+        if extraConfig:
+            newPipelineConfigs = [ConfigIR(rest=extraConfig)]
+            if pipelineConfigs is not None:
+                newPipelineConfigs.extend(pipelineConfigs)
+            pipelineConfigs = newPipelineConfigs
+        return super().applyConfigOverrides(instrument, taskDefaultName, pipelineConfigs, parameters, label)
 
     def freeze(self):
         # Copy the meta configuration values to each of the configured tools

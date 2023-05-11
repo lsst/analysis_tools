@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
-__all__ = ("RhoStatisticsPlotAction",)
+__all__ = ("RhoStatisticsPlot",)
 
 import numpy as np
 from lsst.pex.config import ConfigDictField
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from ...interfaces import KeyedData, KeyedDataSchema
 
 
-class RhoStatisticsPlotAction(PlotAction):
+class RhoStatisticsPlot(PlotAction):
     """Make multiple plots of rho statistics.
 
     Rho statistics capture the spatial correlation amongst various PSF size and
@@ -72,6 +72,7 @@ class RhoStatisticsPlotAction(PlotAction):
             rhoPlot.xScale = "log"
             rhoPlot.yScale = "symlog"
             rhoPlot.yLinThresh = 1e-6
+            rhoPlot.yLine = 0.0
 
         self.rhoPlots["rho3alt"].yScale = "linear"  # type: ignore
 
@@ -139,15 +140,9 @@ class RhoStatisticsPlotAction(PlotAction):
         For further details on how to generate a plot, please refer to the
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
-        # The prefix for the plot names must match the prefix in the pipeline.
-        # This is therefore obtained from the plotInfo dict.
-        default_prefix = "rhoStatisticsPlot"
-        prefix = plotInfo.get("plotName", default_prefix) if plotInfo else default_prefix
-
         fig_dict: dict[str, Figure] = {}
         for rho_name in ("rho1", "rho2", "rho3", "rho4", "rho5"):
             rho: XYPlot = self.rhoPlots[rho_name]
-            rhoPlot_name = f"{prefix}_{rho_name}"
 
             subdata = {
                 "x": data[rho_name].meanr,  # type: ignore
@@ -157,7 +152,7 @@ class RhoStatisticsPlotAction(PlotAction):
             }
             fig = rho(subdata, **kwargs)
             if plotInfo is not None:
-                fig_dict[rhoPlot_name] = addPlotInfo(fig, plotInfo)
+                fig_dict[rho_name] = addPlotInfo(fig, plotInfo)
 
         # rho3alt is handled differently because its attributes differ.
         subdata = {
@@ -168,6 +163,6 @@ class RhoStatisticsPlotAction(PlotAction):
         }
         fig = self.rhoPlots["rho3alt"](subdata, **kwargs)  # type: ignore[misc]
         if plotInfo is not None:
-            fig_dict["rhoStatisticsPlot_rho3alt"] = addPlotInfo(fig, plotInfo)
+            fig_dict["rho3alt"] = addPlotInfo(fig, plotInfo)
 
         return fig_dict

@@ -25,7 +25,7 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:
       connections.outputName: objectTableSurvey
-      plots.rhoStatistics: RhoStatistics
+      atools.rhoStatistics: RhoStatistics
       bands: ["i"]
       python: |
         from lsst.analysis.tools.atools import *

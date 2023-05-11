@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any, Mapping
 
 import matplotlib.pyplot as plt
 from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
+from matplotlib.ticker import SymmetricalLogLocator
 
 from ...interfaces import PlotAction, Vector
 from .plotUtils import addPlotInfo
@@ -100,6 +101,18 @@ class XYPlot(PlotAction):
         optional=True,
     )
 
+    xLine = Field[float](
+        doc=("The value of x where a vertical line is drawn."),
+        default=None,
+        optional=True,
+    )
+
+    yLine = Field[float](
+        doc=("The value of y where a horizontal line is drawn."),
+        default=None,
+        optional=True,
+    )
+
     def setDefaults(self):
         super().setDefaults()
         self.strKwargs = {"fmt": "o"}
@@ -163,16 +176,39 @@ class XYPlot(PlotAction):
         )
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
+
+        if self.xLine is not None:
+            ax.axvline(self.xLine, color="k", linestyle="--")
+        if self.yLine is not None:
+            ax.axhline(self.yLine, color="k", linestyle="--")
+
         if self.xScale == "symlog":
             ax.set_xscale("symlog", linthresh=self.xLinThresh)
-            ax.fill_betweenx(y=data["y"], x1=-self.xLinThresh, x2=self.xLinThresh, color="gray", alpha=0.2)
+            locator = SymmetricalLogLocator(
+                linthresh=self.xLinThresh, base=10, subs=[0.1 * ii for ii in range(1, 10)]
+            )
+            ax.xaxis.set_minor_locator(locator)
+            ax.axvspan(-self.xLinThresh, self.xLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_xscale(self.xScale)  # type: ignore
+            ax.tick_params(axis="x", which="minor")
+
         if self.yScale == "symlog":
             ax.set_yscale("symlog", linthresh=self.yLinThresh)
-            ax.fill_between(x=data["x"], y1=-self.yLinThresh, y2=self.yLinThresh, color="gray", alpha=0.2)
+            locator = SymmetricalLogLocator(
+                linthresh=self.yLinThresh, base=10, subs=[0.1 * ii for ii in range(1, 10)]
+            )
+            ax.yaxis.set_minor_locator(locator)
+            ax.axhspan(-self.yLinThresh, self.yLinThresh, color="gray", alpha=0.1)
         else:
             ax.set_yscale(self.yScale)  # type: ignore
+            ax.tick_params(axis="y", which="minor")
+
+        if self.xScale == "symlog":
+            locator = SymmetricalLogLocator(linthresh=self.xLinThresh, base=10)
+            ax.xaxis.set_minor_locator(locator)
+        else:
+            ax.tick_params(axis="x", which="minor")
 
         if plotInfo is not None:
             fig = addPlotInfo(fig, plotInfo)

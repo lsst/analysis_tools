@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 
-from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.colors
@@ -679,39 +678,28 @@ class ScatterPlotWithTwoHists(PlotAction):
         self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
     ) -> None:
         # Top histogram
-        totalX: list[Vector] = []
-        if "stars" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xStars"]))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xGalaxies"]))
-        if "unknown" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xUknown"]))
-        if "any" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["x"]))
-
-        totalXChained = [x for x in chain.from_iterable(totalX) if x == x]
-
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
-        topHist.hist(
-            totalXChained, bins=100, color="grey", alpha=0.3, log=True, label=f"All ({len(totalXChained)})"
-        )
-        if "galaxies" in self.plotTypes:  # type: ignore
+
+        if "all" in self.plotTypes:
+            x_all = f"x{self._datatypes['all'].suffix_xy}"
+            keys_notall = [x for x in self.plotTypes if x != "all"]
+        else:
+            x_all = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notall = self.plotTypes
+
+        x_min, x_max = ax.get_xlim()
+        bins = np.linspace(x_min, x_max, 100)
+        topHist.hist(x_all, bins=bins, color="grey", alpha=0.3, log=True, label=f"All ({len(x_all)})")
+        for key in keys_notall:
+            config_datatype = self._datatypes[key]
+            vector = data[f"x{config_datatype.suffix_xy}"]
             topHist.hist(
-                data["xGalaxies"],
-                bins=100,
-                color="firebrick",
+                vector,
+                bins=bins,
+                color=config_datatype.color,
                 histtype="step",
                 log=True,
-                label=f"Galaxies ({len(cast(Vector, data['xGalaxies']))})",
-            )
-        if "stars" in self.plotTypes:  # type: ignore
-            topHist.hist(
-                data["xStars"],
-                bins=100,
-                color="midnightblue",
-                histtype="step",
-                log=True,
-                label=f"Stars ({len(cast(Vector, data['xStars']))})",
+                label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
         topHist.set_ylabel("Number", fontsize=8)
@@ -728,83 +716,43 @@ class ScatterPlotWithTwoHists(PlotAction):
         histIm: Optional[PolyCollection],
         **kwargs,
     ) -> None:
+        # Side histogram
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
 
-        totalY: dict[str, Vector] = {}
-        if "stars" in self.plotTypes and "yStars" in data:  # type: ignore
-            totalY["stars"] = cast(Vector, data["yStars"])
-        if "galaxies" in self.plotTypes and "yGalaxies" in data:  # type: ignore
-            totalY["galaxies"] = cast(Vector, data["yGalaxies"])
-        if "unknown" in self.plotTypes and "yUnknown" in data:  # type: ignore
-            totalY["unknown"] = cast(Vector, data["yUnknown"])
-        if "any" in self.plotTypes and "y" in data:  # type: ignore
-            totalY["y"] = cast(Vector, data["y"])
-        totalYChained = [y for y in chain.from_iterable(totalY.values()) if y == y]
+        if "all" in self.plotTypes:
+            y_all = f"y{self._datatypes['all'].suffix_xy}"
+            keys_notall = [x for x in self.plotTypes if x != "all"]
+        else:
+            y_all = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notall = self.plotTypes
 
-        # cheat to get the total count while iterating once
-        yLimMin, yLimMax = ax.get_ylim()
-        bins = np.linspace(yLimMin, yLimMax)
-        sideHist.hist(
-            totalYChained,
+        y_min, y_max = ax.get_ylim()
+        bins = np.linspace(y_min, y_max, 100)
+        sideHist.hist(y_all, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        kwargs_hist = dict(
             bins=bins,
-            color="grey",
-            alpha=0.3,
-            orientation="horizontal",
+            histtype="step",
             log=True,
+            orientation="horizontal",
         )
-        if "galaxies" in totalY:  # type: ignore
+        for key in keys_notall:
+            config_datatype = self._datatypes[key]
+            vector = data[f"y{config_datatype.suffix_xy}"]
             sideHist.hist(
-                [g for g in cast(Vector, data["yGalaxies"]) if g == g],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector,
+                color=config_datatype.color,
+                **kwargs_hist,
             )
             sideHist.hist(
-                cast(Vector, data["yGalaxies"])[cast(Vector, data["galaxiesHighSNMask"])],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector[cast(Vector, data[f"{key}HighSNMask"])],
+                color=config_datatype.color,
                 ls="--",
+                **kwargs_hist,
             )
             sideHist.hist(
-                cast(Vector, data["yGalaxies"])[cast(Vector, data["galaxiesLowSNMask"])],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-                ls=":",
-            )
-
-        if "stars" in totalY:  # type: ignore
-            sideHist.hist(
-                [s for s in cast(Vector, data["yStars"]) if s == s],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-            )
-            sideHist.hist(
-                cast(Vector, data["yStars"])[cast(Vector, data["starsHighSNMask"])],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-                ls="--",
-            )
-            sideHist.hist(
-                cast(Vector, data["yStars"])[cast(Vector, data["starsLowSNMask"])],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector[cast(Vector, data[f"{key}LowSNMask"])],
+                color=config_datatype.color,
+                **kwargs_hist,
                 ls=":",
             )
 

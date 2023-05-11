@@ -250,7 +250,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         data: KeyedData,
         skymap: BaseSkyMap,
         plotInfo: Mapping[str, str],
-        sumStats: Optional[Mapping] = None,
         **kwargs,
     ) -> Figure:
         """Makes a generic plot with a 2D histogram and collapsed histograms of
@@ -273,10 +272,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 The filter used for this data (`str`).
             * ``"tract"``
                 The tract that the data comes from (`str`).
-        sumStats : `dict`
-            A dictionary where the patchIds are the keys which store the R.A.
-            and dec of the corners of the patch, along with a summary
-            statistic for each patch.
 
         Returns
         -------
@@ -296,7 +291,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         If this function is being used within the pipetask framework
         that takes care of making sure that data has all the required
-        elements but if you are runnign this as a standalone function
+        elements but if you are running this as a standalone function
         then you will need to provide the following things in the
         input data.
 

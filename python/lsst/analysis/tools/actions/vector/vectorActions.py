@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "LoadVector",
     "DownselectVector",
     "MultiCriteriaDownselectVector",
     "MagColumnNanoJansky",
@@ -29,7 +30,6 @@ __all__ = (
     "ConstantValue",
     "SubtractVector",
     "DivideVector",
-    "LoadVector",
     "MagDiff",
     "SNCalculator",
     "ExtinctionCorrectedMagDiff",
@@ -52,6 +52,20 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
+
+# Basic vector manipulation
+
+
+class LoadVector(VectorAction):
+    """Load and return a Vector from KeyedData."""
+
+    vectorKey = Field[str](doc="Key of vector which should be loaded")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        return np.array(cast(Vector, data[self.vectorKey.format(**kwargs)]))
 
 
 class DownselectVector(VectorAction):
@@ -99,6 +113,21 @@ class MultiCriteriaDownselectVector(VectorAction):
             else:
                 mask *= subMask  # type: ignore
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+
+
+class ConvertUnits(VectorAction):
+    """Convert the units of a vector."""
+
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    inUnit = Field[str](doc="input Astropy unit")
+    outUnit = Field[str](doc="output Astropy unit")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return tuple(self.buildAction.getInputSchema())
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
+        return dataWithUnit.to(self.outUnit).value
 
 
 class MagColumnNanoJansky(VectorAction):
@@ -211,18 +240,6 @@ class DivideVector(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return vecA / vecB
-
-
-class LoadVector(VectorAction):
-    """Load and return a Vector from KeyedData."""
-
-    vectorKey = Field[str](doc="Key of vector which should be loaded")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.vectorKey, Vector),)
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return np.array(cast(Vector, data[self.vectorKey.format(**kwargs)]))
 
 
 class MagDiff(VectorAction):
@@ -408,18 +425,3 @@ class RAcosDec(VectorAction):
         ra = data[self.raKey]
         dec = data[self.decKey]
         return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
-
-
-class ConvertUnits(VectorAction):
-    """Convert the units of a vector."""
-
-    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
-    inUnit = Field[str](doc="input Astropy unit")
-    outUnit = Field[str](doc="output Astropy unit")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return tuple(self.buildAction.getInputSchema())
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
-        return dataWithUnit.to(self.outUnit).value

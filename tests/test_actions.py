@@ -130,12 +130,22 @@ class TestVectorActions(unittest.TestCase):
         schema = sorted([col for col, colType in action.getInputSchema()])
         self.assertEqual(schema, truth)
 
+    # Basic vector manipulation
+
+    # def testLoadVector(self): TODO: implement
+
+    # def MultiCriteriaDownselectVector(self): TODO: implement
+
     def testDownselectVector(self):
         selector = FlagSelector(selectWhenTrue=["{band}_flag"])
         action = DownselectVector(vectorKey="{band}_vector", selector=selector)
         result = action(self.data, band="r")
         self._checkSchema(action, ["{band}_flag", "{band}_vector"])
         np.testing.assert_array_equal(result, np.array([1, 3, 4, 5]))
+
+    # def MultiCriteriaDownselectVector(self): TODO: implement
+
+    # def ConvertUnits(self): TODO: implement
 
     def testMagColumnNanoJansky(self):
         truth = [

@@ -23,9 +23,9 @@ from __future__ import annotations
 
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 
-from itertools import chain
 from typing import Mapping, NamedTuple, Optional, cast
 
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field
@@ -125,8 +125,8 @@ class ScatterPlotStatsAction(KeyedDataAction):
         return results
 
 
-def _validatePlotTypes(value):
-    return value in ("stars", "galaxies", "unknown", "any", "mag")
+def _validObjectTypes(value):
+    return value in ("stars", "galaxies", "unknown", "any")
 
 
 # ignore type because of conflicting name on tuple baseclass
@@ -135,6 +135,13 @@ class _StatsContainer(NamedTuple):
     sigmaMad: Scalar
     count: Scalar  # type: ignore
     approxMag: Scalar
+
+
+class DataTypeDefaults(NamedTuple):
+    suffix_stat: str
+    suffix_xy: str
+    color: str
+    colormap: matplotlib.colors.Colormap | None
 
 
 class ScatterPlotWithTwoHists(PlotAction):
@@ -162,9 +169,9 @@ class ScatterPlotWithTwoHists(PlotAction):
     )
     plotTypes = ListField[str](
         doc="Selection of types of objects to plot. Can take any combination of"
-        " stars, galaxies, unknown, mag, any",
+        " stars, galaxies, unknown, any",
         optional=False,
-        itemCheck=_validatePlotTypes,
+        itemCheck=_validObjectTypes,
     )
 
     addSummaryPlot = Field[bool](
@@ -173,45 +180,45 @@ class ScatterPlotWithTwoHists(PlotAction):
     )
 
     _stats = ("median", "sigmaMad", "count", "approxMag")
+    _datatypes = {
+        "galaxies": DataTypeDefaults(
+            suffix_stat="Galaxies",
+            suffix_xy="Galaxies",
+            color="firebrick",
+            colormap=mkColormap(["lemonchiffon", "firebrick"]),
+        ),
+        "stars": DataTypeDefaults(
+            suffix_stat="Stars",
+            suffix_xy="Stars",
+            color="midnightblue",
+            colormap=mkColormap(["paleturquoise", "midnightBlue"]),
+        ),
+        "unknown": DataTypeDefaults(
+            suffix_stat="Unknown",
+            suffix_xy="Unknown",
+            color="green",
+            colormap=None,
+        ),
+        "any": DataTypeDefaults(
+            suffix_stat="Any",
+            suffix_xy="",
+            color="purple",
+            colormap=None,
+        ),
+    }
 
     def getInputSchema(self) -> KeyedDataSchema:
         base: list[tuple[str, type[Vector] | ScalarType]] = []
-        if "stars" in self.plotTypes:  # type: ignore
-            base.append(("xStars", Vector))
-            base.append(("yStars", Vector))
-            base.append(("starsHighSNMask", Vector))
-            base.append(("starsLowSNMask", Vector))
+        for name_datatype in self.plotTypes:
+            config_datatype = self._datatypes[name_datatype]
+            base.append((f"x{config_datatype.suffix_xy}", Vector))
+            base.append((f"y{config_datatype.suffix_xy}", Vector))
+            base.append((f"{name_datatype}HighSNMask", Vector))
+            base.append((f"{name_datatype}LowSNMask", Vector))
             # statistics
             for name in self._stats:
-                base.append((f"{{band}}_highSNStars_{name}", Scalar))
-                base.append((f"{{band}}_lowSNStars_{name}", Scalar))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            base.append(("xGalaxies", Vector))
-            base.append(("yGalaxies", Vector))
-            base.append(("galaxiesHighSNMask", Vector))
-            base.append(("galaxiesLowSNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNGalaxies_{name}", Scalar))
-                base.append((f"{{band}}_lowSNGalaxies_{name}", Scalar))
-        if "unknown" in self.plotTypes:  # type: ignore
-            base.append(("xUnknown", Vector))
-            base.append(("yUnknown", Vector))
-            base.append(("unknownHighSNMask", Vector))
-            base.append(("unknownLowSNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNUnknown_{name}", Scalar))
-                base.append((f"{{band}}_lowSNUnknown_{name}", Scalar))
-        if "any" in self.plotTypes:  # type: ignore
-            base.append(("x", Vector))
-            base.append(("y", Vector))
-            base.append(("anyHighSNMask", Vector))
-            base.append(("anySNMask", Vector))
-            # statistics
-            for name in self._stats:
-                base.append((f"{{band}}_highSNAny_{name}", Scalar))
-                base.append((f"{{band}}_lowSNAny_{name}", Scalar))
+                base.append((f"{{band}}_highSN{config_datatype.suffix_stat}_{name}", Scalar))
+                base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}", Scalar))
         base.append(("lowSnThreshold", Scalar))
         base.append(("highSnThreshold", Scalar))
 
@@ -243,7 +250,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         data: KeyedData,
         skymap: BaseSkyMap,
         plotInfo: Mapping[str, str],
-        sumStats: Optional[Mapping] = None,
         **kwargs,
     ) -> Figure:
         """Makes a generic plot with a 2D histogram and collapsed histograms of
@@ -266,10 +272,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 The filter used for this data (`str`).
             * ``"tract"``
                 The tract that the data comes from (`str`).
-        sumStats : `dict`
-            A dictionary where the patchIds are the keys which store the R.A.
-            and dec of the corners of the patch, along with a summary
-            statistic for each patch.
 
         Returns
         -------
@@ -289,7 +291,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         If this function is being used within the pipetask framework
         that takes care of making sure that data has all the required
-        elements but if you are runnign this as a standalone function
+        elements but if you are running this as a standalone function
         then you will need to provide the following things in the
         input data.
 
@@ -357,9 +359,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         # Main scatter plot
         ax = fig.add_subplot(gs[1:, :-1])
 
-        newBlues = mkColormap(["paleturquoise", "midnightBlue"])
-        newReds = mkColormap(["lemonchiffon", "firebrick"])
-
         binThresh = 5
 
         yBinsOut = []
@@ -369,92 +368,35 @@ class ScatterPlotWithTwoHists(PlotAction):
         histIm = None
         highStats: _StatsContainer
         lowStats: _StatsContainer
-        if "stars" in self.plotTypes:  # type: ignore
+
+        for name_datatype in self.plotTypes:
+            config_datatype = self._datatypes[name_datatype]
             highArgs = {}
             lowArgs = {}
             for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNStars_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNStars_{name}".format(**kwargs)])
+                highArgs[name] = cast(
+                    Scalar, data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
+                )
+                lowArgs[name] = cast(
+                    Scalar, data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
+                )
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
             toPlotList.append(
                 (
-                    data["xStars"],
-                    data["yStars"],
-                    data["starsHighSNMask"],
-                    data["starsLowSNMask"],
-                    "midnightblue",
-                    newBlues,
-                    highStats,
-                    lowStats,
-                )
-            )
-        if "galaxies" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNGalaxies_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNGalaxies_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["xGalaxies"],
-                    data["yGalaxies"],
-                    data["galaxiesHighSNMask"],
-                    data["galaxiesLowSNMask"],
-                    "firebrick",
-                    newReds,
-                    highStats,
-                    lowStats,
-                )
-            )
-        if "unknown" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["xUnknown"],
-                    data["yUnknown"],
-                    data["unknownHighSNMask"],
-                    data["unknownLowSNMask"],
-                    "green",
-                    None,
-                    highStats,
-                    lowStats,
-                )
-            )
-        if "any" in self.plotTypes:  # type: ignore
-            highArgs = {}
-            lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(Scalar, data[f"{{band}}_highSNUnknown_{name}".format(**kwargs)])
-                lowArgs[name] = cast(Scalar, data[f"{{band}}_lowSNUnknown_{name}".format(**kwargs)])
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
-
-            toPlotList.append(
-                (
-                    data["x"],
-                    data["y"],
-                    data["anyHighSNMask"],
-                    data["anyLowSNMask"],
-                    "purple",
-                    None,
+                    data[f"x{config_datatype.suffix_xy}"],
+                    data[f"y{config_datatype.suffix_xy}"],
+                    data[f"{name_datatype}HighSNMask"],
+                    data[f"{name_datatype}LowSNMask"],
+                    config_datatype.color,
+                    config_datatype.colormap,
                     highStats,
                     lowStats,
                 )
             )
 
-        xMin = None
+        xLims = self.xLims if self.xLims is not None else [np.Inf, -np.Inf]
         for j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats) in enumerate(toPlotList):
             highSn = cast(Vector, highSn)
             lowSn = cast(Vector, lowSn)
@@ -469,7 +411,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             elif n_xs < 10:
                 xs = [np.nanmedian(xs)]
                 sigMads = np.array([nansigmaMad(ys)])
-                ys = [np.nanmedian(ys)]
+                ys = np.array([np.nanmedian(ys)])
                 (medLine,) = ax.plot(xs, ys, color, label=f"Median: {ys[0]:.2g}", lw=0.8)
                 linesForLegend.append(medLine)
                 (sigMadLine,) = ax.plot(
@@ -485,15 +427,21 @@ class ScatterPlotWithTwoHists(PlotAction):
                 histIm = None
                 continue
 
-            [xs1, xs25, xs50, xs75, xs95, xs97] = np.nanpercentile(xs, [1, 25, 50, 75, 95, 97])
-            xScale = (xs97 - xs1) / 20.0  # This is ~5% of the data range
+            if self.xLims:
+                xMin, xMax = self.xLims
+            else:
+                # Chop off 1/3% from only the finite xs values
+                # (there may be +/-np.Inf values)
+                # TODO: This should be configurable
+                # but is there a good way to avoid redundant config params
+                # without using slightly annoying subconfigs?
+                xs1, xs97 = np.nanpercentile(xs[np.isfinite(xs)], (1, 97))
+                xScale = (xs97 - xs1) / 20.0  # This is ~5% of the data range
+                xMin, xMax = (xs1 - xScale, xs97 + xScale)
+                xLims[0] = min(xLims[0], xMin)
+                xLims[1] = max(xLims[1], xMax)
 
-            # 40 was used as the default number of bins because it looked good
-            xEdges = np.arange(
-                np.nanmin(xs) - xScale,
-                np.nanmax(xs) + xScale,
-                (np.nanmax(xs) + xScale - (np.nanmin(xs) - xScale)) / self.nBins,
-            )
+            xEdges = np.arange(xMin, xMax, (xMax - xMin) / self.nBins)
             medYs = np.nanmedian(ys)
             fiveSigmaHigh = medYs + 5.0 * sigMadYs
             fiveSigmaLow = medYs - 5.0 * sigMadYs
@@ -621,7 +569,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                         label="High SN",
                     )
                     linesForLegend.append(highSnLine)
-                    xMin = np.min(cast(Vector, xs[highSn]))
                 else:
                     ax.axvline(highStats.approxMag, color=color, ls="--")
 
@@ -645,8 +592,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                         label="Low SN",
                     )
                     linesForLegend.append(lowSnLine)
-                    if xMin is None or xMin > np.min(cast(Vector, xs[lowSn])):
-                        xMin = np.min(cast(Vector, xs[lowSn]))
                 else:
                     ax.axvline(lowStats.approxMag, color=color, ls=":")
 
@@ -697,12 +642,10 @@ class ScatterPlotWithTwoHists(PlotAction):
             yLimMax = plotMed + numSig * sigMadYs  # type: ignore
             ax.set_ylim(yLimMin, yLimMax)
 
-        if self.xLims:
-            ax.set_xlim(self.xLims[0], self.xLims[1])  # type: ignore
-        elif len(xs) > 2:  # type: ignore
-            if xMin is None:
-                xMin = xs1 - 2 * xScale  # type: ignore
-            ax.set_xlim(xMin, xs97 + 2 * xScale)  # type: ignore
+        # This could be false if len(x) == 0 for xs in toPlotList
+        # ... in which case nothing was plotted and limits are irrelevant
+        if all(np.isfinite(xLims)):
+            ax.set_xlim(xLims)
 
         # Add a line legend
         ax.legend(
@@ -726,39 +669,28 @@ class ScatterPlotWithTwoHists(PlotAction):
         self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
     ) -> None:
         # Top histogram
-        totalX: list[Vector] = []
-        if "stars" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xStars"]))
-        if "galaxies" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xGalaxies"]))
-        if "unknown" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["xUknown"]))
-        if "any" in self.plotTypes:  # type: ignore
-            totalX.append(cast(Vector, data["x"]))
-
-        totalXChained = [x for x in chain.from_iterable(totalX) if x == x]
-
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
-        topHist.hist(
-            totalXChained, bins=100, color="grey", alpha=0.3, log=True, label=f"All ({len(totalXChained)})"
-        )
-        if "galaxies" in self.plotTypes:  # type: ignore
+
+        if "all" in self.plotTypes:
+            x_all = f"x{self._datatypes['all'].suffix_xy}"
+            keys_notall = [x for x in self.plotTypes if x != "all"]
+        else:
+            x_all = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notall = self.plotTypes
+
+        x_min, x_max = ax.get_xlim()
+        bins = np.linspace(x_min, x_max, 100)
+        topHist.hist(x_all, bins=bins, color="grey", alpha=0.3, log=True, label=f"All ({len(x_all)})")
+        for key in keys_notall:
+            config_datatype = self._datatypes[key]
+            vector = data[f"x{config_datatype.suffix_xy}"]
             topHist.hist(
-                data["xGalaxies"],
-                bins=100,
-                color="firebrick",
+                vector,
+                bins=bins,
+                color=config_datatype.color,
                 histtype="step",
                 log=True,
-                label=f"Galaxies ({len(cast(Vector, data['xGalaxies']))})",
-            )
-        if "stars" in self.plotTypes:  # type: ignore
-            topHist.hist(
-                data["xStars"],
-                bins=100,
-                color="midnightblue",
-                histtype="step",
-                log=True,
-                label=f"Stars ({len(cast(Vector, data['xStars']))})",
+                label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
         topHist.set_ylabel("Number", fontsize=8)
@@ -775,83 +707,43 @@ class ScatterPlotWithTwoHists(PlotAction):
         histIm: Optional[PolyCollection],
         **kwargs,
     ) -> None:
+        # Side histogram
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
 
-        totalY: dict[str, Vector] = {}
-        if "stars" in self.plotTypes and "yStars" in data:  # type: ignore
-            totalY["stars"] = cast(Vector, data["yStars"])
-        if "galaxies" in self.plotTypes and "yGalaxies" in data:  # type: ignore
-            totalY["galaxies"] = cast(Vector, data["yGalaxies"])
-        if "unknown" in self.plotTypes and "yUnknown" in data:  # type: ignore
-            totalY["unknown"] = cast(Vector, data["yUnknown"])
-        if "any" in self.plotTypes and "y" in data:  # type: ignore
-            totalY["y"] = cast(Vector, data["y"])
-        totalYChained = [y for y in chain.from_iterable(totalY.values()) if y == y]
+        if "all" in self.plotTypes:
+            y_all = f"y{self._datatypes['all'].suffix_xy}"
+            keys_notall = [x for x in self.plotTypes if x != "all"]
+        else:
+            y_all = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notall = self.plotTypes
 
-        # cheat to get the total count while iterating once
-        yLimMin, yLimMax = ax.get_ylim()
-        bins = np.linspace(yLimMin, yLimMax)
-        sideHist.hist(
-            totalYChained,
+        y_min, y_max = ax.get_ylim()
+        bins = np.linspace(y_min, y_max, 100)
+        sideHist.hist(y_all, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        kwargs_hist = dict(
             bins=bins,
-            color="grey",
-            alpha=0.3,
-            orientation="horizontal",
+            histtype="step",
             log=True,
+            orientation="horizontal",
         )
-        if "galaxies" in totalY:  # type: ignore
+        for key in keys_notall:
+            config_datatype = self._datatypes[key]
+            vector = data[f"y{config_datatype.suffix_xy}"]
             sideHist.hist(
-                [g for g in cast(Vector, data["yGalaxies"]) if g == g],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector,
+                color=config_datatype.color,
+                **kwargs_hist,
             )
             sideHist.hist(
-                cast(Vector, data["yGalaxies"])[cast(Vector, data["galaxiesHighSNMask"])],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector[cast(Vector, data[f"{key}HighSNMask"])],
+                color=config_datatype.color,
                 ls="--",
+                **kwargs_hist,
             )
             sideHist.hist(
-                cast(Vector, data["yGalaxies"])[cast(Vector, data["galaxiesLowSNMask"])],
-                bins=bins,
-                color="firebrick",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-                ls=":",
-            )
-
-        if "stars" in totalY:  # type: ignore
-            sideHist.hist(
-                [s for s in cast(Vector, data["yStars"]) if s == s],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-            )
-            sideHist.hist(
-                cast(Vector, data["yStars"])[cast(Vector, data["starsHighSNMask"])],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
-                ls="--",
-            )
-            sideHist.hist(
-                cast(Vector, data["yStars"])[cast(Vector, data["starsLowSNMask"])],
-                bins=bins,
-                color="midnightblue",
-                histtype="step",
-                orientation="horizontal",
-                log=True,
+                vector[cast(Vector, data[f"{key}LowSNMask"])],
+                color=config_datatype.color,
+                **kwargs_hist,
                 ls=":",
             )
 

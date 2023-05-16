@@ -83,8 +83,8 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             yAxisLabel="mag meas - ref",
             magLabel="mag",
             plotTypes=[
-                "stars",
                 "galaxies",
+                "stars",
             ],
             xLims=(20, 30),
             yLims=(-1000, 1000),

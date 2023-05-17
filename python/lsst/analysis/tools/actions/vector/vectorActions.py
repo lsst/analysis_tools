@@ -129,7 +129,8 @@ class ConvertUnits(VectorAction):
 class ConvertFluxToMag(VectorAction):
     """Turn nano janskies into magnitudes."""
 
-    vectorKey = Field[str](doc="column key to use for this transformation")
+    vectorKey = Field[str](doc="Key of flux vector to convert to mags")
+    fluxUnit = Field[str](doc="Astropy unit of flux vector", default="nJy")
     returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -140,7 +141,7 @@ class ConvertFluxToMag(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mags = (np.array(vec) * u.nJy).to(u.ABmag).value  # type: ignore
+            mags = (np.array(vec) * u.Unit(self.fluxUnit)).to(u.ABmag).value  # type: ignore
             if self.returnMillimags:
                 mags *= 1000
             return mags

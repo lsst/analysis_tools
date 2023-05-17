@@ -22,8 +22,10 @@ from __future__ import annotations
 
 __all__ = (
     "ConstantValue",
+    "AddVector",
     "SubtractVector",
     "DivideVector",
+    "MultiplyVector",
     "FractionalDifference",
 )
 
@@ -50,6 +52,22 @@ class ConstantValue(VectorAction):
         return np.array([self.value])
 
 
+class AddVector(VectorAction):
+    """Calculate (A+B)."""
+
+    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
+    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA + vecB
+
+
 class SubtractVector(VectorAction):
     """Calculate (A-B)."""
 
@@ -64,6 +82,22 @@ class SubtractVector(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return vecA - vecB
+
+
+class MultiplyVector(VectorAction):
+    """Calculate (A*B)"""
+
+    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
+    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+        yield from self.actionB.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        vecB = self.actionB(data, **kwargs)  # type: ignore
+        return vecA * vecB
 
 
 class DivideVector(VectorAction):

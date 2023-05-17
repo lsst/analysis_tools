@@ -43,10 +43,10 @@ from ..actions.vector import (
     CalcRhoStatistics,
     CalcShapeSize,
     CoaddPlotFlagSelector,
+    ConvertFluxToMag,
     DownselectVector,
     FractionalDifference,
     LoadVector,
-    MagColumnNanoJansky,
     SnSelector,
     StarSelector,
     VectorSelector,
@@ -93,7 +93,7 @@ class BasePsfResidual(AnalysisTool):
         self.process.buildActions.patchWhole = LoadVector()
         self.process.buildActions.patchWhole.vectorKey = "patch"
 
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="{band}_psfFlux")
 
         self.process.buildActions.fracDiff = FractionalDifference(
             actionA=CalcShapeSize(colXx="{band}_ixx", colYy="{band}_iyy", colXy="{band}_ixy"),

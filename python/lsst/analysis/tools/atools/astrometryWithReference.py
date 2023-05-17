@@ -32,10 +32,10 @@ from lsst.pex.config import Field
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.vector import (
+    ConvertFluxToMag,
     ConvertUnits,
     DownselectVector,
     LoadVector,
-    MagColumnNanoJansky,
     RAcosDec,
     SnSelector,
     StarSelector,
@@ -58,7 +58,7 @@ class TargetRefCatDelta(AnalysisTool):
     def coaddContext(self) -> None:
         self.prep = CoaddPrep()
         self.process.buildActions.starSelector.vectorKey = "{band}_extendedness"
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="{band}_psfFlux")
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="{band}_psfFlux")
         self.process.filterActions.psfFlux = DownselectVector(
             vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
         )
@@ -70,7 +70,7 @@ class TargetRefCatDelta(AnalysisTool):
         self.parameterizedBand = False
         self.prep = VisitPrep()
         self.process.buildActions.starSelector.vectorKey = "extendedness"
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
         self.process.filterActions.psfFlux = DownselectVector(
             vectorKey="psfFlux", selector=VectorSelector(vectorKey="starSelector")
         )

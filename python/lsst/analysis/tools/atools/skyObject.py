@@ -24,7 +24,7 @@ __all__ = ("SkyObjectSkyPlot", "SkyObjectHistPlot")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.vector import LoadVector, SNCalculator
+from ..actions.vector import CalcSn, LoadVector
 from ..actions.vector.selectors import SkyObjectSelector, SnSelector
 from ..interfaces import AnalysisTool
 
@@ -63,9 +63,9 @@ class SkyObjectHistPlot(AnalysisTool):
         self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="{band}_psfFlux")
         self.process.buildActions.hist_ap09_flux = LoadVector(vectorKey="{band}_ap09Flux")
         self.process.buildActions.hist_gaap1p0_flux = LoadVector(vectorKey="{band}_gaap1p0Flux")
-        self.process.buildActions.hist_psf_sn = SNCalculator(fluxType="{band}_psfFlux")
-        self.process.buildActions.hist_ap09_sn = SNCalculator(fluxType="{band}_ap09Flux")
-        self.process.buildActions.hist_gaap1p0_sn = SNCalculator(fluxType="{band}_gaap1p0Flux")
+        self.process.buildActions.hist_psf_sn = CalcSn(fluxType="{band}_psfFlux")
+        self.process.buildActions.hist_ap09_sn = CalcSn(fluxType="{band}_ap09Flux")
+        self.process.buildActions.hist_gaap1p0_sn = CalcSn(fluxType="{band}_gaap1p0Flux")
 
         self.produce.plot = HistPlot()
 

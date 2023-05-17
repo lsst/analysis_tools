@@ -21,22 +21,17 @@
 from __future__ import annotations
 
 __all__ = (
+    "LoadVector",
     "DownselectVector",
     "MultiCriteriaDownselectVector",
-    "MagColumnNanoJansky",
-    "FractionalDifference",
-    "Sn",
-    "ConstantValue",
-    "SubtractVector",
-    "DivideVector",
-    "LoadVector",
+    "ConvertFluxToMag",
+    "ConvertUnits",
+    "CalcSn",
     "MagDiff",
-    "SNCalculator",
     "ExtinctionCorrectedMagDiff",
     "PerGroupStatistic",
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
-    "ConvertUnits",
 )
 
 import logging
@@ -52,6 +47,20 @@ from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
+
+# Basic vectorActions
+
+
+class LoadVector(VectorAction):
+    """Load and return a Vector from KeyedData."""
+
+    vectorKey = Field[str](doc="Key of vector which should be loaded")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        return np.array(cast(Vector, data[self.vectorKey.format(**kwargs)]))
 
 
 class DownselectVector(VectorAction):
@@ -101,10 +110,34 @@ class MultiCriteriaDownselectVector(VectorAction):
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
 
 
-class MagColumnNanoJansky(VectorAction):
+# Astronomical vectorActions
+
+
+class CalcSn(VectorAction):
+    """Calculate the signal-to-noise ratio from a single flux vector."""
+
+    fluxType = Field[str](doc="Flux type (vector key) to calculate the S/N.", default="{band}_psfFlux")
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.fluxType, Vector
+        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        signal = np.array(data[self.fluxType.format(**kwargs)])
+        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
+        sn = signal / noise
+
+        return np.array(sn)
+
+
+class ConvertFluxToMag(VectorAction):
     """Turn nano janskies into magnitudes."""
 
-    vectorKey = Field[str](doc="column key to use for this transformation")
+    vectorKey = Field[str](doc="Key of flux vector to convert to mags")
+    fluxUnit = Field[str](doc="Astropy unit of flux vector", default="nJy")
     returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -115,114 +148,25 @@ class MagColumnNanoJansky(VectorAction):
             np.warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
             np.warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mags = (np.array(vec) * u.nJy).to(u.ABmag).value  # type: ignore
+            mags = (np.array(vec) * u.Unit(self.fluxUnit)).to(u.ABmag).value  # type: ignore
             if self.returnMillimags:
                 mags *= 1000
             return mags
 
 
-class FractionalDifference(VectorAction):
-    """Calculate (A-B)/B."""
+class ConvertUnits(VectorAction):
+    """Convert the units of a vector."""
 
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return (vecA - vecB) / vecB
-
-
-class Sn(VectorAction):
-    """Compute signal-to-noise in the given flux type."""
-
-    fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
-    uncertaintySuffix = Field[str](
-        doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
-    )
-    band = Field[str](doc="Band to calculate the S/N in.", default="i")
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    inUnit = Field[str](doc="input Astropy unit")
+    outUnit = Field[str](doc="output Astropy unit")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield (fluxCol := self.fluxType), Vector
-        yield f"{fluxCol}{self.uncertaintySuffix}", Vector
+        return tuple(self.buildAction.getInputSchema())
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        """Computes S/N in self.fluxType
-
-        Parameters
-        ----------
-        df : `Tabular`
-
-        Returns
-        -------
-        result : `Vector`
-            Computed signal-to-noise ratio.
-        """
-        fluxCol = self.fluxType.format(**(kwargs | dict(band=self.band)))
-        errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-        result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
-
-        return np.array(cast(Vector, result))
-
-
-class ConstantValue(VectorAction):
-    """Return a constant scalar value."""
-
-    value = Field[float](doc="A single constant value", optional=False)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ()
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return np.array([self.value])
-
-
-class SubtractVector(VectorAction):
-    """Calculate (A-B)."""
-
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return vecA - vecB
-
-
-class DivideVector(VectorAction):
-    """Calculate (A/B)"""
-
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return vecA / vecB
-
-
-class LoadVector(VectorAction):
-    """Load and return a Vector from KeyedData."""
-
-    vectorKey = Field[str](doc="Key of vector which should be loaded")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.vectorKey, Vector),)
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return np.array(cast(Vector, data[self.vectorKey.format(**kwargs)]))
+        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
+        return dataWithUnit.to(self.outUnit).value
 
 
 class MagDiff(VectorAction):
@@ -265,26 +209,6 @@ class MagDiff(VectorAction):
             magDiff = magDiff.to(u.mmag)
 
         return np.array(magDiff.value)
-
-
-class SNCalculator(VectorAction):
-    """Calculate the signal-to-noise."""
-
-    fluxType = Field[str](doc="Flux type to calculate the S/N.", default="{band}_psfFlux")
-    uncertaintySuffix = Field[str](
-        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
-    )
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield self.fluxType, Vector
-        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        signal = np.array(data[self.fluxType.format(**kwargs)])
-        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
-        sn = signal / noise
-
-        return np.array(sn)
 
 
 class ExtinctionCorrectedMagDiff(VectorAction):
@@ -353,6 +277,25 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         return np.array(diff - correction.value)
 
 
+class RAcosDec(VectorAction):
+    """Construct a vector of RA*cos(Dec) in order to have commensurate values
+    between RA and Dec."""
+
+    raKey = Field[str](doc="RA coordinate", default="coord_ra")
+    decKey = Field[str](doc="Dec coordinate", default="coord_dec")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.decKey, Vector), (self.raKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        ra = data[self.raKey]
+        dec = data[self.decKey]
+        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
+
+
+# Statistical vectorActions
+
+
 class PerGroupStatistic(VectorAction):
     """Compute per-group statistic values and return result as a vector with
     one element per group. The computed statistic can be any function accepted
@@ -392,34 +335,3 @@ class ResidualWithPerGroupStatistic(VectorAction):
 
         result = joinedDf["value_individual"] - joinedDf["value_group"]
         return np.array(result)
-
-
-class RAcosDec(VectorAction):
-    """Construct a vector of RA*cos(Dec) in order to have commensurate values
-    between RA and Dec."""
-
-    raKey = Field[str](doc="RA coordinate", default="coord_ra")
-    decKey = Field[str](doc="Dec coordinate", default="coord_dec")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.decKey, Vector), (self.raKey, Vector))
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        ra = data[self.raKey]
-        dec = data[self.decKey]
-        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
-
-
-class ConvertUnits(VectorAction):
-    """Convert the units of a vector."""
-
-    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
-    inUnit = Field[str](doc="input Astropy unit")
-    outUnit = Field[str](doc="output Astropy unit")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return tuple(self.buildAction.getInputSchema())
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
-        return dataWithUnit.to(self.outUnit).value

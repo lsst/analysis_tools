@@ -34,6 +34,14 @@ from lsst.analysis.tools.actions.scalar.scalarActions import (
 )
 from lsst.analysis.tools.actions.vector.calcBinnedStats import CalcBinnedStatsAction
 from lsst.analysis.tools.actions.vector.calcShapeSize import CalcShapeSize
+from lsst.analysis.tools.actions.vector.mathActions import (
+    AddVector,
+    ConstantValue,
+    DivideVector,
+    FractionalDifference,
+    MultiplyVector,
+    SubtractVector,
+)
 from lsst.analysis.tools.actions.vector.selectors import (
     CoaddPlotFlagSelector,
     FlagSelector,
@@ -45,15 +53,11 @@ from lsst.analysis.tools.actions.vector.selectors import (
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
-    ConstantValue,
-    DivideVector,
+    ConvertFluxToMag,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
-    FractionalDifference,
     LoadVector,
-    MagColumnNanoJansky,
     MagDiff,
-    SubtractVector,
 )
 
 
@@ -130,25 +134,107 @@ class TestVectorActions(unittest.TestCase):
         schema = sorted([col for col, colType in action.getInputSchema()])
         self.assertEqual(schema, truth)
 
-    def testDownselectVector(self):
-        selector = FlagSelector(selectWhenTrue=["{band}_flag"])
-        action = DownselectVector(vectorKey="{band}_vector", selector=selector)
-        result = action(self.data, band="r")
-        self._checkSchema(action, ["{band}_flag", "{band}_vector"])
-        np.testing.assert_array_equal(result, np.array([1, 3, 4, 5]))
+    # VectorActions with their own files
 
-    def testMagColumnNanoJansky(self):
-        truth = [
-            31.4,
-            29.89485002168,
-            29.0143937264,
-            28.38970004336,
-            27.90514997832,
-        ]
-        action = MagColumnNanoJansky(vectorKey="{band}_vector")
-        result = action(self.data, band="i")
-        self._checkSchema(action, ["{band}_vector"])
+    def testCalcBinnedStats(self):
+        selector = RangeSelector(key="r_vector", minimum=0, maximum=self.size + 1)
+        prefix = "a_"
+        stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
+        result = stats(self.data)
+        median = (1 + self.size) / 2.0
+        truth = {
+            stats.name_mask: np.ones(self.size),
+            stats.name_median: median,
+            stats.name_sigmaMad: 1.482602218505602 * np.median(np.abs(self.data["r_vector"] - median)),
+            stats.name_count: self.size,
+            stats.name_select_maximum: self.size,
+            stats.name_select_median: median,
+            stats.name_select_minimum: 1,
+            "range_maximum": self.size + 1,
+            "range_minimum": 0,
+        }
+        self.assertEqual(list(result.keys()), list(truth.keys()))
+
+        self.assertAlmostEqual(result[stats.name_sigmaMad], truth[stats.name_sigmaMad])
+        del truth[stats.name_sigmaMad]
+
+        np.testing.assert_array_equal(result[stats.name_mask], truth[stats.name_mask])
+        del truth[stats.name_mask]
+
+        for key, value in truth.items():
+            self.assertEqual(result[key], value, key)
+
+    # def testCalcRhoStatistics(self): TODO: implement
+
+    def testCalcShapeSize(self):
+        xx = self.data["r_ixx"]
+        yy = self.data["r_iyy"]
+        xy = self.data["r_ixy"]
+
+        # Test determinant with defaults
+        action = CalcShapeSize()
+        result = action(self.data, band="r")
+        schema = [col for col, colType in action.getInputSchema()]
+        self.assertEqual(sorted(schema), ["{band}_ixx", "{band}_ixy", "{band}_iyy"])
+        truth = 0.25 * (xx * yy - xy**2)
         np.testing.assert_array_almost_equal(result, truth)
+
+        # Test trace with columns specified
+        action = CalcShapeSize(
+            colXx="{band}_iixx",
+            colYy="{band}_iiyy",
+            colXy="{band}_iixy",
+            sizeType="trace",
+        )
+        result = action(self.data, band="g")
+        schema = [col for col, colType in action.getInputSchema()]
+        self.assertEqual(sorted(schema), ["{band}_iixx", "{band}_iiyy"])
+        truth = np.sqrt(0.5 * (xx + yy))
+        np.testing.assert_array_almost_equal(result, truth)
+
+    # def testCalcE(self): TODO: implement
+
+    # def testCalcEDiff(self): TODO: implement
+
+    # def testCalcE1(self): TODO: implement
+
+    # def testCalcE2(self): TODO: implement
+
+    # MathActions
+
+    def _testMath(self, ActionType, truth, compare_exact: bool = False):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        action = ActionType(actionA=actionA, actionB=actionB)
+        result = action(self.data, band1="r", band2="i")
+        self._checkSchema(action, [actionA.vectorKey, actionB.vectorKey])
+        if compare_exact:
+            np.testing.assert_array_equal(result, truth)
+        else:
+            np.testing.assert_array_almost_equal(result, truth)
+
+    def testConstant(self):
+        truth = [42.0]
+        action = ConstantValue(value=truth[0])
+        self._checkSchema(action, [])
+        result = action({})
+        np.testing.assert_array_equal(result, truth)
+
+    def testAdd(self):
+        truth = [2.0, 6.0, 12.0, 20.0, 30.0]
+        self._testMath(AddVector, truth, True)
+
+    def testSubtract(self):
+        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
+        self._testMath(SubtractVector, truth, True)
+
+    def testMultiply(self):
+        truth = [1.0, 8.0, 27.0, 64.0, 125.0]
+        self._testMath(MultiplyVector, truth, False)
+
+    def testDivide(self):
+        truth = 1 / np.arange(1, 6)
+        self._testMath(DivideVector, truth, False)
 
     def testFractionalDifference(self):
         actionA = LoadVector(vectorKey="{band1}_vector")
@@ -159,30 +245,37 @@ class TestVectorActions(unittest.TestCase):
         self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
         np.testing.assert_array_almost_equal(result, truth)
 
-    def testConstant(self):
-        truth = [42.0]
-        action = ConstantValue(value=truth[0])
-        self._checkSchema(action, [])
-        result = action({})
-        np.testing.assert_array_equal(result, truth)
+    # Basic vectorActions
 
-    def testSubtract(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
-        diff = SubtractVector(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+    # def testLoadVector(self): TODO: implement
+
+    def testDownselectVector(self):
+        selector = FlagSelector(selectWhenTrue=["{band}_flag"])
+        action = DownselectVector(vectorKey="{band}_vector", selector=selector)
+        result = action(self.data, band="r")
+        self._checkSchema(action, ["{band}_flag", "{band}_vector"])
+        np.testing.assert_array_equal(result, np.array([1, 3, 4, 5]))
+
+    # def testMultiCriteriaDownselectVector(self): TODO: implement
+
+    # Astronomical vectorActions
+
+    # def testCalcSn(self): TODO: implement
+
+    def testConvertFluxToMag(self):
+        truth = [
+            31.4,
+            29.89485002168,
+            29.0143937264,
+            28.38970004336,
+            27.90514997832,
+        ]
+        action = ConvertFluxToMag(vectorKey="{band}_vector")
+        result = action(self.data, band="i")
+        self._checkSchema(action, ["{band}_vector"])
         np.testing.assert_array_almost_equal(result, truth)
 
-    def testDivide(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        truth = 1 / np.arange(1, 6)
-        diff = DivideVector(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
-        np.testing.assert_array_almost_equal(result, truth)
+    # def testConvertUnits(self): TODO: implement
 
     def testMagDiff(self):
         # Use the same units as the data so that we know the difference exactly
@@ -252,59 +345,13 @@ class TestVectorActions(unittest.TestCase):
         self._checkSchema(action, ["E(B-V)", "g_vector", "r_vector"])
         np.testing.assert_array_almost_equal(result, truth.value)
 
-    def testCalcBinnedStats(self):
-        selector = RangeSelector(key="r_vector", minimum=0, maximum=self.size + 1)
-        prefix = "a_"
-        stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
-        result = stats(self.data)
-        median = (1 + self.size) / 2.0
-        truth = {
-            stats.name_mask: np.ones(self.size),
-            stats.name_median: median,
-            stats.name_sigmaMad: 1.482602218505602 * np.median(np.abs(self.data["r_vector"] - median)),
-            stats.name_count: self.size,
-            stats.name_select_maximum: self.size,
-            stats.name_select_median: median,
-            stats.name_select_minimum: 1,
-            "range_maximum": self.size + 1,
-            "range_minimum": 0,
-        }
-        self.assertEqual(list(result.keys()), list(truth.keys()))
+    # def testRAcosDec(self): TODO: implement
 
-        self.assertAlmostEqual(result[stats.name_sigmaMad], truth[stats.name_sigmaMad])
-        del truth[stats.name_sigmaMad]
+    # Statistical vectorActions
 
-        np.testing.assert_array_equal(result[stats.name_mask], truth[stats.name_mask])
-        del truth[stats.name_mask]
+    # def testPerGroupStatistic(self): TODO: implement
 
-        for key, value in truth.items():
-            self.assertEqual(result[key], value, key)
-
-    def testCalcShapeSize(self):
-        xx = self.data["r_ixx"]
-        yy = self.data["r_iyy"]
-        xy = self.data["r_ixy"]
-
-        # Test determinant with defaults
-        action = CalcShapeSize()
-        result = action(self.data, band="r")
-        schema = [col for col, colType in action.getInputSchema()]
-        self.assertEqual(sorted(schema), ["{band}_ixx", "{band}_ixy", "{band}_iyy"])
-        truth = 0.25 * (xx * yy - xy**2)
-        np.testing.assert_array_almost_equal(result, truth)
-
-        # Test trace with columns specified
-        action = CalcShapeSize(
-            colXx="{band}_iixx",
-            colYy="{band}_iiyy",
-            colXy="{band}_iixy",
-            sizeType="trace",
-        )
-        result = action(self.data, band="g")
-        schema = [col for col, colType in action.getInputSchema()]
-        self.assertEqual(sorted(schema), ["{band}_iixx", "{band}_iiyy"])
-        truth = np.sqrt(0.5 * (xx + yy))
-        np.testing.assert_array_almost_equal(result, truth)
+    # def testResidualWithPerGroupStatistic(self): TODO: implement
 
 
 class TestVectorSelectors(unittest.TestCase):

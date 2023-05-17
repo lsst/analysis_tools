@@ -32,12 +32,12 @@ from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,
+    CalcSn,
+    ConvertFluxToMag,
     LoadVector,
-    MagColumnNanoJansky,
     MultiCriteriaDownselectVector,
     PerGroupStatistic,
     ResidualWithPerGroupStatistic,
-    Sn,
     SnSelector,
     ThresholdSelector,
 )
@@ -69,7 +69,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute per-group quantities
         self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = Sn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.buildAction = CalcSn(fluxType=f"{self.fluxType}")
         self.process.buildActions.perGroupSn.func = "median"
         self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
         self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
@@ -79,7 +79,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
         self.process.buildActions.perGroupCount.func = "count"
         # Use mmag units
         self.process.buildActions.perGroupStdev = PerGroupStatistic()
-        self.process.buildActions.perGroupStdev.buildAction = MagColumnNanoJansky(
+        self.process.buildActions.perGroupStdev.buildAction = ConvertFluxToMag(
             vectorKey=f"{self.fluxType}",
             returnMillimags=True,
         )
@@ -164,7 +164,7 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.prep.selectors.snSelector.threshold = 50
 
         self.process.buildActions.z = ResidualWithPerGroupStatistic()
-        self.process.buildActions.z.buildAction = MagColumnNanoJansky(
+        self.process.buildActions.z.buildAction = ConvertFluxToMag(
             vectorKey=f"{self.fluxType}",
             returnMillimags=True,
         )

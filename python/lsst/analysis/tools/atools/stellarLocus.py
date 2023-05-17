@@ -35,8 +35,8 @@ from ..actions.plot.colorColorFitPlot import ColorColorFitPlot
 from ..actions.scalar import ApproxFloor
 from ..actions.vector import (
     CoaddPlotFlagSelector,
+    ConvertFluxToMag,
     ExtinctionCorrectedMagDiff,
-    MagColumnNanoJansky,
     SnSelector,
     StarSelector,
 )
@@ -79,7 +79,7 @@ class WPerpPSF(StellarLocusBase):
         self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
         self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_psfFlux")
 
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
@@ -115,7 +115,7 @@ class WPerpCModel(WPerpPSF):
         self.process.buildActions.y.magDiff.col1 = "r_cModelFlux"
         self.process.buildActions.y.magDiff.col2 = "i_cModelFlux"
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_cModelFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_cModelFlux")
 
         self.process.calculateActions.wPerp_cmodelFlux = StellarLocusFitAction()
         self.process.calculateActions.wPerp_cmodelFlux.stellarLocusFitDict = {
@@ -156,7 +156,7 @@ class XPerpPSF(StellarLocusBase):
         self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
         self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_psfFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_psfFlux")
 
         self.process.calculateActions.xPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.xPerp_psfFlux.stellarLocusFitDict = {
@@ -202,7 +202,7 @@ class XPerpCModel(XPerpPSF):
             "bHW": -15.54,
         }
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="r_cModelFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_cModelFlux")
 
         self.produce.metric.units = {  # type: ignore
             "xPerp_cmodelFlux_sigmaMAD": "mmag",
@@ -231,7 +231,7 @@ class YPerpPSF(StellarLocusBase):
         self.process.buildActions.y.magDiff.col1 = "i_psfFlux"
         self.process.buildActions.y.magDiff.col2 = "z_psfFlux"
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="i_psfFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="i_psfFlux")
 
         self.process.calculateActions.yPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.yPerp_psfFlux.stellarLocusFitDict = {
@@ -268,7 +268,7 @@ class YPerpCModel(YPerpPSF):
         self.process.buildActions.y.magDiff.col1 = "i_cModelFlux"
         self.process.buildActions.y.magDiff.col2 = "z_cModelFlux"
 
-        self.process.buildActions.mag = MagColumnNanoJansky(vectorKey="i_cModelFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="i_cModelFlux")
 
         self.process.calculateActions.yPerp_cmodelFlux = StellarLocusFitAction()
         self.process.calculateActions.yPerp_cmodelFlux.stellarLocusFitDict = {

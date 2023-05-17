@@ -35,7 +35,8 @@ from sklearn.neighbors import KernelDensity
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...statistics import sigmaMad
-from .plotUtils import addPlotInfo, mkColormap, perpDistance
+from ..keyedData.stellarLocusFit import perpDistance
+from .plotUtils import addPlotInfo, mkColormap
 
 
 class ColorColorFitPlot(PlotAction):

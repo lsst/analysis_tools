@@ -22,7 +22,8 @@ import unittest
 
 import lsst.utils.tests
 import numpy as np
-from lsst.analysis.tools.actions.plot.plotUtils import perpDistance, shorten_list, stellarLocusFit
+from lsst.analysis.tools.actions.keyedData.stellarLocusFit import perpDistance, stellarLocusFit
+from lsst.analysis.tools.actions.plot.plotUtils import shorten_list
 
 
 class FitTest(lsst.utils.tests.TestCase):

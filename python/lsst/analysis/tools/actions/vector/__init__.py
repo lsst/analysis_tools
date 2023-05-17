@@ -1,8 +1,8 @@
-# TODO: Any way to avoid this causing a circular import?
-# from .calcBinnedStats import CalcBinnedStatsAction
+from .calcBinnedStats import *
 from .calcRhoStatistics import *
-from .calcShapeSize import CalcShapeSize
+from .calcShapeSize import *
 from .ellipticity import *
 from .mathActions import *
 from .selectors import *
 from .vectorActions import *
+

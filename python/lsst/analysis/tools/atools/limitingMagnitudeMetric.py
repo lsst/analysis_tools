@@ -24,7 +24,7 @@ __all__ = ("FiveSigmaPointSourceDepthMetric",)
 
 from ..actions.scalar.scalarActions import MeanAction, MedianAction
 from ..actions.vector.selectors import SnSelector, StarSelector
-from ..actions.vector.vectorActions import MagColumnNanoJansky
+from ..actions.vector.vectorActions import ConvertFluxToMag
 from ..interfaces import AnalysisTool
 
 
@@ -50,7 +50,7 @@ class FiveSigmaPointSourceDepthMetric(AnalysisTool):
         self.prep.selectors.snSelector.threshold = 4.75
         self.prep.selectors.snSelector.maxSN = 5.25
 
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
         self.process.calculateActions.median5sigmaDepth = MedianAction(vectorKey="mags")
         self.process.calculateActions.mean5sigmaDepth = MeanAction(vectorKey="mags")
 

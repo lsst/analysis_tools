@@ -43,7 +43,7 @@ from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotActio
 from ...statistics import nansigmaMad, sigmaMad
 from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
-from ..vector import MagColumnNanoJansky, SnSelector
+from ..vector import ConvertFluxToMag, SnSelector
 from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
 
 # ignore because coolwarm is actually part of module
@@ -105,7 +105,7 @@ class ScatterPlotStatsAction(KeyedDataAction):
         statAction.setDefaults()
 
         medianAction = MedianAction(vectorKey="mag")
-        magAction = MagColumnNanoJansky(vectorKey="flux")
+        magAction = ConvertFluxToMag(vectorKey="flux")
 
         for maskKey, binName in ((lowMaskKey, "low"), (highMaskKey, "high")):
             name = f"{prefix}{binName}SN{self.identity.capitalize() if self.identity else ''}"

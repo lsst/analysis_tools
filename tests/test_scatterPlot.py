@@ -42,7 +42,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     StarSelector,
     VectorSelector,
 )
-from lsst.analysis.tools.actions.vector.vectorActions import DownselectVector, LoadVector, MagColumnNanoJansky
+from lsst.analysis.tools.actions.vector.vectorActions import ConvertFluxToMag, DownselectVector, LoadVector
 from lsst.analysis.tools.interfaces import AnalysisTool
 
 matplotlib.use("Agg")
@@ -91,13 +91,13 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
         plot.process.buildActions.fluxes_meas = LoadVector(vectorKey=key_flux)
         plot.process.buildActions.fluxes_err = LoadVector(vectorKey=f"{key_flux}Err")
         plot.process.buildActions.fluxes_ref = LoadVector(vectorKey="ref_Flux")
-        plot.process.buildActions.mags_ref = MagColumnNanoJansky(
+        plot.process.buildActions.mags_ref = ConvertFluxToMag(
             vectorKey=plot.process.buildActions.fluxes_ref.vectorKey
         )
 
         # Compute the y-axis quantity
         plot.process.buildActions.diff = SubtractVector(
-            actionA=MagColumnNanoJansky(
+            actionA=ConvertFluxToMag(
                 vectorKey=plot.process.buildActions.fluxes_meas.vectorKey, returnMillimags=True
             ),
             actionB=DivideVector(

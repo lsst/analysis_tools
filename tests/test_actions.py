@@ -53,10 +53,10 @@ from lsst.analysis.tools.actions.vector.selectors import (
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
+    ConvertFluxToMag,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
     LoadVector,
-    MagColumnNanoJansky,
     MagDiff,
 )
 
@@ -196,7 +196,7 @@ class TestVectorActions(unittest.TestCase):
 
     # def ConvertUnits(self): TODO: implement
 
-    def testMagColumnNanoJansky(self):
+    def testConvertFluxToMag(self):
         truth = [
             31.4,
             29.89485002168,
@@ -204,7 +204,7 @@ class TestVectorActions(unittest.TestCase):
             28.38970004336,
             27.90514997832,
         ]
-        action = MagColumnNanoJansky(vectorKey="{band}_vector")
+        action = ConvertFluxToMag(vectorKey="{band}_vector")
         result = action(self.data, band="i")
         self._checkSchema(action, ["{band}_vector"])
         np.testing.assert_array_almost_equal(result, truth)

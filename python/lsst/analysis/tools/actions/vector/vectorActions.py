@@ -24,7 +24,7 @@ __all__ = (
     "LoadVector",
     "DownselectVector",
     "MultiCriteriaDownselectVector",
-    "MagColumnNanoJansky",
+    "ConvertFluxToMag",
     "Sn",
     "MagDiff",
     "SNCalculator",
@@ -126,7 +126,7 @@ class ConvertUnits(VectorAction):
         return dataWithUnit.to(self.outUnit).value
 
 
-class MagColumnNanoJansky(VectorAction):
+class ConvertFluxToMag(VectorAction):
     """Turn nano janskies into magnitudes."""
 
     vectorKey = Field[str](doc="column key to use for this transformation")

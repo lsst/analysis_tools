@@ -35,7 +35,7 @@ from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, Scatt
 from ..actions.vector.calcBinnedStats import CalcBinnedStatsAction
 from ..actions.vector.mathActions import ConstantValue, DivideVector, SubtractVector
 from ..actions.vector.selectors import GalaxySelector, RangeSelector, StarSelector
-from ..actions.vector.vectorActions import DownselectVector, LoadVector, MagColumnNanoJansky, VectorSelector
+from ..actions.vector.vectorActions import ConvertFluxToMag, DownselectVector, LoadVector, VectorSelector
 from ..interfaces import AnalysisTool, KeyedData
 
 
@@ -57,7 +57,7 @@ class MatchedRefCoaddToolBase(AnalysisTool):
         self.process.buildActions.fluxes_ref = LoadVector(vectorKey="refcat_flux_{band}")
         # TODO: Why won't vectorKey="fluxes_ref" work?
         # Does it need to be a filterAction?
-        self.process.buildActions.mags_ref = MagColumnNanoJansky(
+        self.process.buildActions.mags_ref = ConvertFluxToMag(
             vectorKey=self.process.buildActions.fluxes_ref.vectorKey
         )
 
@@ -192,7 +192,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddToolBase):
 
     def matchedRefDiffContext(self):
         self.process.buildActions.diff = SubtractVector(
-            actionA=MagColumnNanoJansky(
+            actionA=ConvertFluxToMag(
                 vectorKey=self.process.buildActions.fluxes_meas.vectorKey, returnMillimags=True
             ),
             actionB=DivideVector(

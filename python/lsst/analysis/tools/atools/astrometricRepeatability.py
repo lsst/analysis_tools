@@ -33,10 +33,10 @@ from ..actions.plot.focalPlanePlot import FocalPlanePlot
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.vector import (
     BandSelector,
+    ConvertFluxToMag,
     ConvertUnits,
     DownselectVector,
     LoadVector,
-    MagColumnNanoJansky,
     RAcosDec,
     ResidualWithPerGroupStatistic,
     SnSelector,
@@ -60,7 +60,7 @@ class StellarAstrometricResidualsBase(AnalysisTool):
         # Apply per-source selection criteria
         self.prep.selectors.bandSelector = BandSelector()
 
-        self.process.buildActions.mags = MagColumnNanoJansky(vectorKey="psfFlux")
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
         self.process.buildActions.residual = ConvertUnits()
         self.process.buildActions.residual.inUnit = "degree"
         self.process.buildActions.residual.outUnit = "marcsec"

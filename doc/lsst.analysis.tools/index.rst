@@ -48,6 +48,16 @@ The ``lsst.analysis.tools`` package is developed at `github.com/lsst/analysis_to
 
 Jira issues relating to this package can be found using the `analysis_tools <https://jira.lsstcorp.org/issues/?jql=project%20%3D%20DM%20AND%20component%20%3D%20analysis_tools>`_ component.
 
+.. _lsst.analysis_tools-scripts:
+
+Script reference
+================
+
+.. toctree::
+   :maxdepth: 1
+
+   scripts/verify_to_sasquatch.py
+
 .. _lsst.analysis_tools-pyapi:
 
 Python API Reference

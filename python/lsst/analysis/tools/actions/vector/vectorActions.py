@@ -25,13 +25,13 @@ __all__ = (
     "DownselectVector",
     "MultiCriteriaDownselectVector",
     "ConvertFluxToMag",
+    "ConvertUnits",
     "CalcSn",
     "MagDiff",
     "ExtinctionCorrectedMagDiff",
     "PerGroupStatistic",
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
-    "ConvertUnits",
 )
 
 import logging
@@ -48,7 +48,7 @@ from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
 
-# Basic vector manipulation
+# Basic vectorActions
 
 
 class LoadVector(VectorAction):
@@ -110,19 +110,27 @@ class MultiCriteriaDownselectVector(VectorAction):
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
 
 
-class ConvertUnits(VectorAction):
-    """Convert the units of a vector."""
+# Astronomical vectorActions
 
-    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
-    inUnit = Field[str](doc="input Astropy unit")
-    outUnit = Field[str](doc="output Astropy unit")
+
+class CalcSn(VectorAction):
+    """Calculate the signal-to-noise ratio from a single flux vector."""
+
+    fluxType = Field[str](doc="Flux type (vector key) to calculate the S/N.", default="{band}_psfFlux")
+    uncertaintySuffix = Field[str](
+        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
+    )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return tuple(self.buildAction.getInputSchema())
+        yield self.fluxType, Vector
+        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
-        return dataWithUnit.to(self.outUnit).value
+        signal = np.array(data[self.fluxType.format(**kwargs)])
+        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
+        sn = signal / noise
+
+        return np.array(sn)
 
 
 class ConvertFluxToMag(VectorAction):
@@ -146,24 +154,19 @@ class ConvertFluxToMag(VectorAction):
             return mags
 
 
-class CalcSn(VectorAction):
-    """Calculate the signal-to-noise ratio from a single flux vector."""
+class ConvertUnits(VectorAction):
+    """Convert the units of a vector."""
 
-    fluxType = Field[str](doc="Flux type (vector key) to calculate the S/N.", default="{band}_psfFlux")
-    uncertaintySuffix = Field[str](
-        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
-    )
+    buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
+    inUnit = Field[str](doc="input Astropy unit")
+    outUnit = Field[str](doc="output Astropy unit")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield self.fluxType, Vector
-        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
+        return tuple(self.buildAction.getInputSchema())
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        signal = np.array(data[self.fluxType.format(**kwargs)])
-        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
-        sn = signal / noise
-
-        return np.array(sn)
+        dataWithUnit = self.buildAction(data, **kwargs) * u.Unit(self.inUnit)
+        return dataWithUnit.to(self.outUnit).value
 
 
 class MagDiff(VectorAction):
@@ -274,6 +277,25 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         return np.array(diff - correction.value)
 
 
+class RAcosDec(VectorAction):
+    """Construct a vector of RA*cos(Dec) in order to have commensurate values
+    between RA and Dec."""
+
+    raKey = Field[str](doc="RA coordinate", default="coord_ra")
+    decKey = Field[str](doc="Dec coordinate", default="coord_dec")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.decKey, Vector), (self.raKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        ra = data[self.raKey]
+        dec = data[self.decKey]
+        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
+
+
+# Statistical vectorActions
+
+
 class PerGroupStatistic(VectorAction):
     """Compute per-group statistic values and return result as a vector with
     one element per group. The computed statistic can be any function accepted
@@ -313,19 +335,3 @@ class ResidualWithPerGroupStatistic(VectorAction):
 
         result = joinedDf["value_individual"] - joinedDf["value_group"]
         return np.array(result)
-
-
-class RAcosDec(VectorAction):
-    """Construct a vector of RA*cos(Dec) in order to have commensurate values
-    between RA and Dec."""
-
-    raKey = Field[str](doc="RA coordinate", default="coord_ra")
-    decKey = Field[str](doc="Dec coordinate", default="coord_dec")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.decKey, Vector), (self.raKey, Vector))
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        ra = data[self.raKey]
-        dec = data[self.decKey]
-        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)

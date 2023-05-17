@@ -56,5 +56,6 @@ Python API Reference
 .. automodapi:: lsst.analysis.tools
    :include-all-objects:
 .. automodapi:: lsst.analysis.tools.actions.plot
-.. automodapi:: lsst.analysis.tools.actions.vector
 .. automodapi:: lsst.analysis.tools.actions.scalar
+.. automodapi:: lsst.analysis.tools.actions.vector
+.. automodapi:: lsst.analysis.tools.actions.keyedData

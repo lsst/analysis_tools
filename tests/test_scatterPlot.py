@@ -35,20 +35,14 @@ from lsst.analysis.tools.actions.plot.scatterplotWithTwoHists import (
     ScatterPlotStatsAction,
     ScatterPlotWithTwoHists,
 )
+from lsst.analysis.tools.actions.vector.mathActions import ConstantValue, DivideVector, SubtractVector
 from lsst.analysis.tools.actions.vector.selectors import (
     GalaxySelector,
     SnSelector,
     StarSelector,
     VectorSelector,
 )
-from lsst.analysis.tools.actions.vector.vectorActions import (
-    ConstantValue,
-    DivideVector,
-    DownselectVector,
-    LoadVector,
-    MagColumnNanoJansky,
-    SubtractVector,
-)
+from lsst.analysis.tools.actions.vector.vectorActions import DownselectVector, LoadVector, MagColumnNanoJansky
 from lsst.analysis.tools.interfaces import AnalysisTool
 
 matplotlib.use("Agg")

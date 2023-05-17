@@ -36,7 +36,7 @@ from lsst.pex.config import ChoiceField, Config, ConfigField, Field, FieldValida
 from ...interfaces import KeyedData, KeyedDataAction, Vector
 from .calcShapeSize import CalcShapeSize
 from .ellipticity import CalcE, CalcEDiff
-from .vectorActions import FractionalDifference
+from .mathActions import FractionalDifference
 
 if TYPE_CHECKING:
     from treecorr import GGCorrelation, KKCorrelation

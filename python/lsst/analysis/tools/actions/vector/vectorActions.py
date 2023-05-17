@@ -25,11 +25,7 @@ __all__ = (
     "DownselectVector",
     "MultiCriteriaDownselectVector",
     "MagColumnNanoJansky",
-    "FractionalDifference",
     "Sn",
-    "ConstantValue",
-    "SubtractVector",
-    "DivideVector",
     "MagDiff",
     "SNCalculator",
     "ExtinctionCorrectedMagDiff",
@@ -150,22 +146,6 @@ class MagColumnNanoJansky(VectorAction):
             return mags
 
 
-class FractionalDifference(VectorAction):
-    """Calculate (A-B)/B."""
-
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return (vecA - vecB) / vecB
-
-
 class Sn(VectorAction):
     """Compute signal-to-noise in the given flux type."""
 
@@ -196,50 +176,6 @@ class Sn(VectorAction):
         result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
 
         return np.array(cast(Vector, result))
-
-
-class ConstantValue(VectorAction):
-    """Return a constant scalar value."""
-
-    value = Field[float](doc="A single constant value", optional=False)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ()
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        return np.array([self.value])
-
-
-class SubtractVector(VectorAction):
-    """Calculate (A-B)."""
-
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return vecA - vecB
-
-
-class DivideVector(VectorAction):
-    """Calculate (A/B)"""
-
-    actionA = ConfigurableActionField[VectorAction](doc="Action which supplies vector A")
-    actionB = ConfigurableActionField[VectorAction](doc="Action which supplies vector B")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.actionA.getInputSchema()  # type: ignore
-        yield from self.actionB.getInputSchema()  # type: ignore
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        vecA = self.actionA(data, **kwargs)  # type: ignore
-        vecB = self.actionB(data, **kwargs)  # type: ignore
-        return vecA / vecB
 
 
 class MagDiff(VectorAction):

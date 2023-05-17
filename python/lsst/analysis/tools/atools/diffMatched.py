@@ -33,16 +33,9 @@ from lsst.pex.config import ChoiceField, Field
 
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.vector.calcBinnedStats import CalcBinnedStatsAction
+from ..actions.vector.mathActions import ConstantValue, DivideVector, SubtractVector
 from ..actions.vector.selectors import GalaxySelector, RangeSelector, StarSelector
-from ..actions.vector.vectorActions import (
-    ConstantValue,
-    DivideVector,
-    DownselectVector,
-    LoadVector,
-    MagColumnNanoJansky,
-    SubtractVector,
-    VectorSelector,
-)
+from ..actions.vector.vectorActions import DownselectVector, LoadVector, MagColumnNanoJansky, VectorSelector
 from ..interfaces import AnalysisTool, KeyedData
 
 

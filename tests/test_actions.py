@@ -34,6 +34,12 @@ from lsst.analysis.tools.actions.scalar.scalarActions import (
 )
 from lsst.analysis.tools.actions.vector.calcBinnedStats import CalcBinnedStatsAction
 from lsst.analysis.tools.actions.vector.calcShapeSize import CalcShapeSize
+from lsst.analysis.tools.actions.vector.mathActions import (
+    ConstantValue,
+    DivideVector,
+    FractionalDifference,
+    SubtractVector,
+)
 from lsst.analysis.tools.actions.vector.selectors import (
     CoaddPlotFlagSelector,
     FlagSelector,
@@ -45,15 +51,11 @@ from lsst.analysis.tools.actions.vector.selectors import (
     VectorSelector,
 )
 from lsst.analysis.tools.actions.vector.vectorActions import (
-    ConstantValue,
-    DivideVector,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
-    FractionalDifference,
     LoadVector,
     MagColumnNanoJansky,
     MagDiff,
-    SubtractVector,
 )
 
 
@@ -130,6 +132,42 @@ class TestVectorActions(unittest.TestCase):
         schema = sorted([col for col, colType in action.getInputSchema()])
         self.assertEqual(schema, truth)
 
+    # Math
+
+    def testConstant(self):
+        truth = [42.0]
+        action = ConstantValue(value=truth[0])
+        self._checkSchema(action, [])
+        result = action({})
+        np.testing.assert_array_equal(result, truth)
+
+    def testSubtract(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
+        diff = SubtractVector(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testDivide(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = 1 / np.arange(1, 6)
+        diff = DivideVector(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
+    def testFractionalDifference(self):
+        actionA = LoadVector(vectorKey="{band1}_vector")
+        actionB = LoadVector(vectorKey="{band2}_vector")
+        truth = [0.0, -0.5, -0.6666666666666666, -0.75, -0.8]
+        diff = FractionalDifference(actionA=actionA, actionB=actionB)
+        result = diff(self.data, band1="r", band2="i")
+        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
+        np.testing.assert_array_almost_equal(result, truth)
+
     # Basic vector manipulation
 
     # def testLoadVector(self): TODO: implement
@@ -158,40 +196,6 @@ class TestVectorActions(unittest.TestCase):
         action = MagColumnNanoJansky(vectorKey="{band}_vector")
         result = action(self.data, band="i")
         self._checkSchema(action, ["{band}_vector"])
-        np.testing.assert_array_almost_equal(result, truth)
-
-    def testFractionalDifference(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        truth = [0.0, -0.5, -0.6666666666666666, -0.75, -0.8]
-        diff = FractionalDifference(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
-        np.testing.assert_array_almost_equal(result, truth)
-
-    def testConstant(self):
-        truth = [42.0]
-        action = ConstantValue(value=truth[0])
-        self._checkSchema(action, [])
-        result = action({})
-        np.testing.assert_array_equal(result, truth)
-
-    def testSubtract(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        truth = [0.0, -2.0, -6.0, -12.0, -20.0]
-        diff = SubtractVector(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
-        np.testing.assert_array_almost_equal(result, truth)
-
-    def testDivide(self):
-        actionA = LoadVector(vectorKey="{band1}_vector")
-        actionB = LoadVector(vectorKey="{band2}_vector")
-        truth = 1 / np.arange(1, 6)
-        diff = DivideVector(actionA=actionA, actionB=actionB)
-        result = diff(self.data, band1="r", band2="i")
-        self._checkSchema(diff, ["{band1}_vector", "{band2}_vector"])
         np.testing.assert_array_almost_equal(result, truth)
 
     def testMagDiff(self):

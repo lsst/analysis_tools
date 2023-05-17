@@ -32,12 +32,12 @@ from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,
+    CalcSn,
     ConvertFluxToMag,
     LoadVector,
     MultiCriteriaDownselectVector,
     PerGroupStatistic,
     ResidualWithPerGroupStatistic,
-    Sn,
     SnSelector,
     ThresholdSelector,
 )
@@ -69,7 +69,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute per-group quantities
         self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = Sn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.buildAction = CalcSn(fluxType=f"{self.fluxType}")
         self.process.buildActions.perGroupSn.func = "median"
         self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
         self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"

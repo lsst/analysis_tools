@@ -25,9 +25,8 @@ __all__ = (
     "DownselectVector",
     "MultiCriteriaDownselectVector",
     "ConvertFluxToMag",
-    "Sn",
+    "CalcSn",
     "MagDiff",
-    "SNCalculator",
     "ExtinctionCorrectedMagDiff",
     "PerGroupStatistic",
     "ResidualWithPerGroupStatistic",
@@ -147,36 +146,24 @@ class ConvertFluxToMag(VectorAction):
             return mags
 
 
-class Sn(VectorAction):
-    """Compute signal-to-noise in the given flux type."""
+class CalcSn(VectorAction):
+    """Calculate the signal-to-noise ratio from a single flux vector."""
 
-    fluxType = Field[str](doc="Flux type to calculate the S/N in.", default="{band}_psfFlux")
+    fluxType = Field[str](doc="Flux type (vector key) to calculate the S/N.", default="{band}_psfFlux")
     uncertaintySuffix = Field[str](
-        doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
+        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
     )
-    band = Field[str](doc="Band to calculate the S/N in.", default="i")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield (fluxCol := self.fluxType), Vector
-        yield f"{fluxCol}{self.uncertaintySuffix}", Vector
+        yield self.fluxType, Vector
+        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        """Computes S/N in self.fluxType
+        signal = np.array(data[self.fluxType.format(**kwargs)])
+        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
+        sn = signal / noise
 
-        Parameters
-        ----------
-        df : `Tabular`
-
-        Returns
-        -------
-        result : `Vector`
-            Computed signal-to-noise ratio.
-        """
-        fluxCol = self.fluxType.format(**(kwargs | dict(band=self.band)))
-        errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-        result = cast(Vector, data[fluxCol]) / data[errCol]  # type: ignore
-
-        return np.array(cast(Vector, result))
+        return np.array(sn)
 
 
 class MagDiff(VectorAction):
@@ -219,26 +206,6 @@ class MagDiff(VectorAction):
             magDiff = magDiff.to(u.mmag)
 
         return np.array(magDiff.value)
-
-
-class SNCalculator(VectorAction):
-    """Calculate the signal-to-noise."""
-
-    fluxType = Field[str](doc="Flux type to calculate the S/N.", default="{band}_psfFlux")
-    uncertaintySuffix = Field[str](
-        doc="Suffix to add to fluxType to specify the uncertainty column", default="Err"
-    )
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        yield self.fluxType, Vector
-        yield f"{self.fluxType}{self.uncertaintySuffix}", Vector
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        signal = np.array(data[self.fluxType.format(**kwargs)])
-        noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
-        sn = signal / noise
-
-        return np.array(sn)
 
 
 class ExtinctionCorrectedMagDiff(VectorAction):

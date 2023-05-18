@@ -27,7 +27,6 @@ from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.odr as scipyODR
 from lsst.geom import Box2D, SpherePoint, degrees
 from lsst.pex.config import Config, Field
 from matplotlib import colors
@@ -44,15 +43,27 @@ null_formatter = matplotlib.ticker.NullFormatter()
 
 
 def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
-    """Parse plot info from the dataId
+    """Parse plot info from the dataId.
+
     Parameters
     ----------
-    dataId : `lsst.daf.butler.core.dimensions.`
-             `_coordinate._ExpandedTupleDataCoordinate`
+    dataId : `dict`
+        The dataId of the data to be plotted.
     runName : `str`
+        The name of the run.
+    tableName : `str`
+        The name of the table.
+    bands : `list` [`str`]
+        The bands to be plotted.
+    plotName : `str`
+        The name of the plot.
+    SN : `str`
+        The signal to noise of the data.
+
     Returns
     -------
     plotInfo : `dict`
+        A dictionary of the plot information.
     """
     plotInfo = {"run": runName, "tableName": tableName, "plotName": plotName, "SN": SN}
 
@@ -73,18 +84,22 @@ def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
 
 
 def generateSummaryStats(data, skymap, plotInfo):
-    """Generate a summary statistic in each patch or detector
+    """Generate a summary statistic in each patch or detector.
+
     Parameters
     ----------
     data : `dict`
+        A dictionary of the data to be plotted.
     skymap : `lsst.skymap.ringsSkyMap.RingsSkyMap`
+        The skymap associated with the data.
     plotInfo : `dict`
+        A dictionary of the plot information.
 
     Returns
     -------
     patchInfoDict : `dict`
+        A dictionary of the patch information.
     """
-
     # TODO: what is the more generic type of skymap?
     tractInfo = skymap.generateTract(plotInfo["tract"])
     tractWcs = tractInfo.getWcs()
@@ -132,19 +147,23 @@ def generateSummaryStats(data, skymap, plotInfo):
     return patchInfoDict
 
 
-def generateSummaryStatsVisit(cat, colName, visitSummaryTable, plotInfo):
-    """Generate a summary statistic in each patch or detector
+def generateSummaryStatsVisit(cat, colName, visitSummaryTable):
+    """Generate a summary statistic in each patch or detector.
+
     Parameters
     ----------
     cat : `pandas.core.frame.DataFrame`
+        A dataframe of the data to be plotted.
     colName : `str`
+        The name of the column to be plotted.
     visitSummaryTable : `pandas.core.frame.DataFrame`
-    plotInfo : `dict`
+        A dataframe of the visit summary table.
+
     Returns
     -------
     visitInfoDict : `dict`
+        A dictionary of the visit information.
     """
-
     visitInfoDict = {}
     for ccd in cat.detector.unique():
         if ccd is None:
@@ -167,10 +186,12 @@ def generateSummaryStatsVisit(cat, colName, visitSummaryTable, plotInfo):
 # Inspired by matplotlib.testing.remove_ticks_and_titles
 def get_and_remove_axis_text(ax) -> Tuple[List[str], List[np.ndarray]]:
     """Remove text from an Axis and its children and return with line points.
+
     Parameters
     ----------
     ax : `plt.Axis`
         A matplotlib figure axis.
+
     Returns
     -------
     texts : `List[str]`
@@ -214,10 +235,12 @@ def get_and_remove_axis_text(ax) -> Tuple[List[str], List[np.ndarray]]:
 
 def get_and_remove_figure_text(figure: Figure):
     """Remove text from a Figure and its Axes and return with line points.
+
     Parameters
     ----------
     figure : `matplotlib.pyplot.Figure`
         A matplotlib figure.
+
     Returns
     -------
     texts : `List[str]`
@@ -241,16 +264,20 @@ def get_and_remove_figure_text(figure: Figure):
 
 
 def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
-    """Add useful information to the plot
+    """Add useful information to the plot.
+
     Parameters
     ----------
     fig : `matplotlib.figure.Figure`
+        The figure to add the information to.
     plotInfo : `dict`
+        A dictionary of the plot information.
+
     Returns
     -------
     fig : `matplotlib.figure.Figure`
+        The figure with the information added.
     """
-
     # TO DO: figure out how to get this information
     photocalibDataset = "None"
     astroDataset = "None"
@@ -278,179 +305,19 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     return fig
 
 
-def stellarLocusFit(xs, ys, paramDict):
-    """Make a fit to the stellar locus
-    Parameters
-    ----------
-    xs : `numpy.ndarray`
-        The color on the xaxis
-    ys : `numpy.ndarray`
-        The color on the yaxis
-    paramDict : lsst.pex.config.dictField.Dict
-        A dictionary of parameters for line fitting
-        xMin : `float`
-            The minimum x edge of the box to use for initial fitting
-        xMax : `float`
-            The maximum x edge of the box to use for initial fitting
-        yMin : `float`
-            The minimum y edge of the box to use for initial fitting
-        yMax : `float`
-            The maximum y edge of the box to use for initial fitting
-        mHW : `float`
-            The hardwired gradient for the fit
-        bHW : `float`
-            The hardwired intercept of the fit
-    Returns
-    -------
-    paramsOut : `dict`
-        A dictionary of the calculated fit parameters
-        xMin : `float`
-            The minimum x edge of the box to use for initial fitting
-        xMax : `float`
-            The maximum x edge of the box to use for initial fitting
-        yMin : `float`
-            The minimum y edge of the box to use for initial fitting
-        yMax : `float`
-            The maximum y edge of the box to use for initial fitting
-        mHW : `float`
-            The hardwired gradient for the fit
-        bHW : `float`
-            The hardwired intercept of the fit
-        mODR : `float`
-            The gradient calculated by the ODR fit
-        bODR : `float`
-            The intercept calculated by the ODR fit
-        yBoxMin : `float`
-            The y value of the fitted line at xMin
-        yBoxMax : `float`
-            The y value of the fitted line at xMax
-        bPerpMin : `float`
-            The intercept of the perpendicular line that goes through xMin
-        bPerpMax : `float`
-            The intercept of the perpendicular line that goes through xMax
-        mODR2 : `float`
-            The gradient from the second round of fitting
-        bODR2 : `float`
-            The intercept from the second round of fitting
-        mPerp : `float`
-            The gradient of the line perpendicular to the line from the
-            second fit
-    Notes
-    -----
-    The code does two rounds of fitting, the first is initiated using the
-    hardwired values given in the `paramDict` parameter and is done using
-    an Orthogonal Distance Regression fit to the points defined by the
-    box of xMin, xMax, yMin and yMax. Once this fitting has been done a
-    perpendicular bisector is calculated at either end of the line and
-    only points that fall within these lines are used to recalculate the fit.
-    """
-
-    # Points to use for the fit
-    fitPoints = np.where(
-        (xs > paramDict["xMin"])
-        & (xs < paramDict["xMax"])
-        & (ys > paramDict["yMin"])
-        & (ys < paramDict["yMax"])
-    )[0]
-
-    linear = scipyODR.polynomial(1)
-
-    data = scipyODR.Data(xs[fitPoints], ys[fitPoints])
-    odr = scipyODR.ODR(data, linear, beta0=[paramDict["bHW"], paramDict["mHW"]])
-    params = odr.run()
-    mODR = float(params.beta[1])
-    bODR = float(params.beta[0])
-
-    paramsOut = {
-        "xMin": paramDict["xMin"],
-        "xMax": paramDict["xMax"],
-        "yMin": paramDict["yMin"],
-        "yMax": paramDict["yMax"],
-        "mHW": paramDict["mHW"],
-        "bHW": paramDict["bHW"],
-        "mODR": mODR,
-        "bODR": bODR,
-    }
-
-    # Having found the initial fit calculate perpendicular ends
-    mPerp = -1.0 / mODR
-    # When the gradient is really steep we need to use
-    # the y limits of the box rather than the x ones
-
-    if np.abs(mODR) > 1:
-        yBoxMin = paramDict["yMin"]
-        xBoxMin = (yBoxMin - bODR) / mODR
-        yBoxMax = paramDict["yMax"]
-        xBoxMax = (yBoxMax - bODR) / mODR
-    else:
-        yBoxMin = mODR * paramDict["xMin"] + bODR
-        xBoxMin = paramDict["xMin"]
-        yBoxMax = mODR * paramDict["xMax"] + bODR
-        xBoxMax = paramDict["xMax"]
-
-    bPerpMin = yBoxMin - mPerp * xBoxMin
-
-    paramsOut["yBoxMin"] = yBoxMin
-    paramsOut["bPerpMin"] = bPerpMin
-
-    bPerpMax = yBoxMax - mPerp * xBoxMax
-
-    paramsOut["yBoxMax"] = yBoxMax
-    paramsOut["bPerpMax"] = bPerpMax
-
-    # Use these perpendicular lines to chose the data and refit
-    fitPoints = (ys > mPerp * xs + bPerpMin) & (ys < mPerp * xs + bPerpMax)
-    data = scipyODR.Data(xs[fitPoints], ys[fitPoints])
-    odr = scipyODR.ODR(data, linear, beta0=[bODR, mODR])
-    params = odr.run()
-    mODR = float(params.beta[1])
-    bODR = float(params.beta[0])
-
-    paramsOut["mODR2"] = float(params.beta[1])
-    paramsOut["bODR2"] = float(params.beta[0])
-
-    paramsOut["mPerp"] = -1.0 / paramsOut["mODR2"]
-
-    return paramsOut
-
-
-def perpDistance(p1, p2, points):
-    """Calculate the perpendicular distance to a line from a point
-    Parameters
-    ----------
-    p1 : `numpy.ndarray`
-        A point on the line
-    p2 : `numpy.ndarray`
-        Another point on the line
-    points : `zip`
-        The points to calculate the distance to
-    Returns
-    -------
-    dists : `list`
-        The distances from the line to the points. Uses the cross
-        product to work this out.
-    """
-    dists = []
-    for point in points:
-        point = np.array(point)
-        distToLine = np.cross(p2 - p1, point - p1) / np.linalg.norm(p2 - p1)
-        dists.append(distToLine)
-
-    return dists
-
-
 def mkColormap(colorNames):
     """Make a colormap from the list of color names.
+
     Parameters
     ----------
     colorNames : `list`
-        A list of strings that correspond to matplotlib
-        named colors.
+        A list of strings that correspond to matplotlib named colors.
+
     Returns
     -------
     cmap : `matplotlib.colors.LinearSegmentedColormap`
+        A colormap stepping through the supplied list of names.
     """
-
     nums = np.linspace(0, 1, len(colorNames))
     blues = []
     greens = []
@@ -467,17 +334,18 @@ def mkColormap(colorNames):
 
 
 def extremaSort(xs):
-    """Return the ids of the points reordered so that those
-    furthest from the median, in absolute terms, are last.
+    """Return the IDs of the points reordered so that those furthest from the
+    median, in absolute terms, are last.
+
     Parameters
     ----------
     xs : `np.array`
         An array of the values to sort
+
     Returns
     -------
     ids : `np.array`
     """
-
     med = np.nanmedian(xs)
     dists = np.abs(xs - med)
     ids = np.argsort(dists)
@@ -524,12 +392,13 @@ def addSummaryPlot(fig, loc, sumStats, label):
         A dictionary where the patchIds are the keys which store the R.A.
         and the dec of the corners of the patch, along with a summary
         statistic for each patch.
+    label : `str`
+        The label to be used for the colorbar.
 
     Returns
     -------
     fig : `matplotlib.figure.Figure`
     """
-
     # Add the subplot to the relevant place in the figure
     # and sort the axis out
     axCorner = fig.add_subplot(loc)
@@ -626,7 +495,6 @@ def shorten_list(numbers: Iterable[int], *, range_indicator: str = "-", range_se
     >>> shorten_list(range(4), range_indicator="..")
     "0..3"
     """
-
     # Sort the list in ascending order.
     numbers = sorted(numbers)
 

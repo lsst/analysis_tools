@@ -134,7 +134,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
 
 
 class KeyedScalars(KeyedDataAction):
-    """Creates an output of type KeyedData, where the keys are given byt the
+    """Creates an output of type KeyedData, where the keys are given by the
     identifiers in `scalarActions` and the values are the results of the
     corresponding `ScalarAction`.
     """

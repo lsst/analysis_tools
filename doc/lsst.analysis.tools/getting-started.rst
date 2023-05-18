@@ -52,7 +52,8 @@ Package Layout
 There are a bunch of files in analysis_tools but we are going to focus on two directories, 
 ``python/lsst/analysis/tools/`` and ``pipelines``, which contain the python code and the 
 pipelines that run it respecitvely. Below is a brief overview of the layout, for more details 
-please see the :doc:`package layout guide<detailed-package-layout>`.
+please see the :doc:`package layout guide<detailed-package-layout>` (still under development).
+
 
 Pipelines
 ---------
@@ -132,34 +133,33 @@ A Simple Plotting And Metric Example
 ====================================
 
 The first example we are going to look at is a very simple one and then we can build 
-up from there. We're going to start by adapting an existing plot to our needs, we'll use a 
+up from there. We're going to start by adapting an existing plot and metric to our needs, we'll use a 
 sky plot to show the on sky distribution of the values of a column in the table.
 
-We use ‘actions’ to tell the code what to plot on the axis, these can be defined by anyone 
+The plot/metric is an example of an analysis tool, these are composed of actions which do the actual work of
+selection and calculation.
+
+We use ‘actions’ to tell the code what to plot on the z axis, these can be defined by anyone 
 but standard ones exist already. This example will showcase some of these standard ones and 
 then we’ll look more into how to define them. One of the great things about actions is that 
 they allow us to only read in the columns we need from large tables.
 
-Each plot or metric is its own class, each one has a prep, process and produce section. 
+Each plot and/or metric is its own class, each one has a prep, process and produce section. 
 The prep section applies things like flag cuts and signal to noise cuts to the data. 
-The process section builds the data required for the plot, for example if the plot 
+The process section builds the data required for the plot/metric, for example if the plot 
 is of a magnitude difference against a magnitude then the actions defined in the 
 process section will identify which flux column needs to be read in and turned into a magnitude. 
 Then another will take the fluxes needed, turn them into magnitudes and then calculate their 
-difference. The produce section takes the prepared and pre calculated data and plots it on 
-the graph. The plot options, such as axis labels, are set in this section.
-
-When naming new classes it is recommended to have the word Plot in the name and that the name of the classes
-matches the one that is used in the pipeline (detailed later). This name can be further expanded to include
-the plot type as well.
+difference. The produce section takes the prepared and pre calculated data, plots it on 
+the graph and creates the metrics from it. The plot options, such as axis labels, are set in this section.
 
 .. code-block:: python
 
-   class newPlot(AnalysisPlot):
+   class newPlotMetric(AnalysisTool):
        def setDefaults(self):
            super().setDefaults()
            self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-           self.prep.selectors.flagSelector.bands = ["{band}"]
+           self.prep.selectors.flagSelector.bands = []
 
            self.prep.selectors.snSelector = SnSelector()
            self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
@@ -189,13 +189,13 @@ the plot type as well.
            self.process.calculateActions.sigmaMad = SigmaMadAction()
            self.process.calculateActions.sigmaMad.vectorKey = "xStars"
 
-           self.produce = SkyPlot()
-           self.produce.plotTypes = ["stars"]
-           self.produce.plotName = "ap12-psf_{band}"
-           self.produce.xAxisLabel = "R.A. (degrees)"
-           self.produce.yAxisLabel = "Dec. (degrees)"
-           self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
-           self.produce.plotOutlines = False
+           self.produce.plot = SkyPlot()
+           self.produce.plot.plotTypes = ["stars"]
+           self.produce.plot.plotName = "ap12-psf_{band}"
+           self.produce.plot.xAxisLabel = "R.A. (degrees)"
+           self.produce.plot.yAxisLabel = "Dec. (degrees)"
+           self.produce.plot.zAxisLabel = "Ap 12 - PSF [mag]"
+           self.produce.plot.plotOutlines = False
 
            self.produce.metric.units = {
                "median": "mmag",
@@ -214,13 +214,13 @@ Let's look at what the bits do in more detail.
 .. code-block:: python
 
            self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-           self.prep.selectors.flagSelector.bands = ["{band}"]
+           self.prep.selectors.flagSelector.bands = []
 
 The flag selector option lets us apply selectors based on flags to cut the data down. Multiple can be applied
 at once and any flag that is in the input can be used. However pre built selectors already exist for the
 common and recommended flag combinations.
 
-CoaddPlotFlagSelector - this is the standard set of flags for coadd plots. The “{band}” syntax means it gets applied in the band the plot is being made in.
+CoaddPlotFlagSelector - this is the standard set of flags for coadd plots. The [] syntax means it gets applied in the band the plot is being made in.
 
 .. code-block:: python
 
@@ -292,17 +292,17 @@ to each band and more informative when displayed.
 
 .. code-block:: python
 
-           self.produce = SkyPlot()
-           self.produce.plotTypes = ["stars"]
-           self.produce.plotName = "ap12-psf_{band}"
-           self.produce.xAxisLabel = "R.A. (degrees)"
-           self.produce.yAxisLabel = "Dec. (degrees)"
-           self.produce.zAxisLabel = "Ap 12 - PSF [mag]"
-           self.produce.plotOutlines = False
+           self.produce.plot = SkyPlot()
+           self.produce.plot.plotTypes = ["stars"]
+           self.produce.plot.plotName = "ap12-psf_{band}"
+           self.produce.plot.xAxisLabel = "R.A. (degrees)"
+           self.produce.plot.yAxisLabel = "Dec. (degrees)"
+           self.produce.plot.zAxisLabel = "Ap 12 - PSF [mag]"
+           self.produce.plot.plotOutlines = False
 
-This final section declares the plot type and adds labels and things. We declare that we want to make a sky
+This section declares the plot type and adds labels and things. We declare that we want to make a sky
 plot, that plots only objects of type star. Next we give the plot a name that is informative for later
-identification and add axis labels. The final option specifies if we want patch outlines plotted. The plot 
+identification and add axis labels. The final option specifies if we want patch outlines plotted.
 
 .. code-block:: python
 
@@ -323,6 +323,10 @@ We have to set some units for the metrics, these ones are in milli mags.
            }
 
 Finally we name the metrics so that the names are specific per band and informative when re-read later.
+The resulting plot looks a bit like the one here:
+
+.. image:: /_static/analysis_tools/skyPlotExample.png
+
 
 This new class then needs to be added to a file in atools, where they go into a file by category, if there
 isn't one that suits the tool you are making then start a new file. For example all sky object related plots are
@@ -337,15 +341,15 @@ to add the class to a pipeline.
      An example pipeline to run our new plot
    tasks:
      testNewPlot:
-   class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
-   config:
-     connections.outputName: testNewPlot
-     plots.newPlot: newPlot
-   python: |
-     from lsst.analysis.tools.analysisPlots import *
+     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+     config:
+       connections.outputName: testNewPlot
+       plots.newPlot: newPlotMetric
+     python: |
+       from lsst.analysis.tools.analysisPlots import *
 
 The class line assumes that we want to run the plot on an objectTable_tract. Each different dataset type has
-its own assocaited task. Many tasks already exist for different dataset types but depending on what you want
+its own associated task. Many tasks already exist for different dataset types but depending on what you want
 to look at you might need to make your own.
 
 Once we have the pipeline we can run it, the same as we would run other pipetasks.
@@ -511,7 +515,7 @@ Adding a Plot Type
 Hopefully there will be very few instances where you will need to add a new plot type and if you do please
 check open ticket branches to make sure that you are not duplicating someone else's work. Try to use already
 existant plot types so that we don't end up with lots of very similar plot types. Hopefully you won't really
-need to touch the ploting code and can just define new classes and actions.
+need to touch the plotting code and can just define new classes and actions.
 
 If you add a new plot then please make sure that you include enough providence information on the plot. There
 should be enough information that anyone can recreate the plot and access the full dataset for further

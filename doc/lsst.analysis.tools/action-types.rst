@@ -12,9 +12,11 @@ Vector Actions
 
 .. automodapi:: lsst.analysis.tools.actions.vector
     :no-inherited-members:
+    :no-main-docstr:
 
 Scalar Actions
 ==============
 
 .. automodapi:: lsst.analysis.tools.actions.scalar
     :no-inherited-members:
+    :no-main-docstr:

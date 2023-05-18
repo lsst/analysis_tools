@@ -9,6 +9,7 @@ can all be found on `GitHub <https://github.com/lsst/analysis_tools/blob/main/py
 
 .. automodapi:: lsst.analysis.tools.actions.plot
    :no-inherited-members:
+   :no-main-docstr:
    :skip: BarPanel
    :skip: DiaSkyPanel
    :skip: HistPanel

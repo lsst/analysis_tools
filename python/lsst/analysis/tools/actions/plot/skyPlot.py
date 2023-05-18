@@ -191,6 +191,16 @@ class SkyPlot(PlotAction):
 
         These options are not exclusive and multiple can be specified
         and thus need to be present in data.
+
+        Examples
+        --------
+        An example of the plot produced from this code is here:
+
+        .. image:: /_static/analysis_tools/skyPlotExample.png
+
+        For a detailed example of how to make a plot from the command line
+        please see the
+        :ref:`getting started guide<analysis-tools-getting-started>`.
         """
 
         fig = plt.figure(dpi=300)

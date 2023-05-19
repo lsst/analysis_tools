@@ -24,6 +24,7 @@ __all__ = [
 ]
 
 import argparse
+import datetime
 import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
@@ -70,6 +71,13 @@ def makeParser():
     )
     parser.add_argument(
         "--where", default="", help="Butler query to select metric values for upload (default: all values)."
+    )
+    parser.add_argument(
+        "--date-created",
+        type=datetime.datetime.fromisoformat,
+        help="ISO8601 formatted datetime in UTC for the Measurement creation "
+        "date, e.g. 2021-06-30T22:28:25Z. If not provided, the run time or "
+        "current time is used.",
     )
 
     api_group = parser.add_argument_group("Sasquatch API arguments")
@@ -156,6 +164,7 @@ def main():
             bundle,
             run=run,
             datasetType=datasetType,
+            timestamp=args.date_created,
             datasetIdentifier=args.dataset,
             identifierFields=dataId,
         )

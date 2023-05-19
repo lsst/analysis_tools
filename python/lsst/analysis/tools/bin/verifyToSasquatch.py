@@ -24,16 +24,59 @@ __all__ = [
 ]
 
 import argparse
+import logging
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 
 import lsst.verify
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
+from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher
 from lsst.daf.butler import Butler, DataCoordinate, DatasetRef
+
+logging.basicConfig()
+_LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.INFO)
+
+
+_BASE_URL = "https://usdf-rsp-dev.slac.stanford.edu/sasquatch-rest-proxy/"
 
 
 def makeParser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="""Upload Measurement datasets from a Butler repository to Sasquatch.
+
+                    This script handles metric values persisted directly using
+                    lsst.verify tooling. It is neither necessary nor useful for
+                    MetricMeasurementBundles created using analysis_tools
+                    tooling, and is provided solely for backwards compatibility
+                    with the older system.
+                    """,
+        add_help=True,
+    )
+    parser.add_argument("repo", help="The Butler repository from which to upload metric values.")
+    parser.add_argument(
+        "collections",
+        action="extend",
+        nargs="+",
+        help="The collection(s) in which to search for metric values. These can "
+        "be specified in any notation recognized by Middleware.",
+    )
+    parser.add_argument("--dataset", required=True, help="The dataset on which the metrics were measured.")
+
+    api_group = parser.add_argument_group("Sasquatch API arguments")
+    api_group.add_argument(
+        "--namespace",
+        default="lsst.dm",
+        help="The Sasquatch namespace to which to upload the metric values (default: lsst.dm)",
+    )
+    api_group.add_argument(
+        "--url",
+        dest="base_url",
+        default=_BASE_URL,
+        help=f"Root URL of Sasquatch proxy server (default: {_BASE_URL}).",
+    )
+    api_group.add_argument("--token", default="na", help="Authentication token for the proxy server.")
+
     return parser
 
 
@@ -87,4 +130,20 @@ def _bundle_metrics(
 
 
 def main():
-    makeParser().parse_args()
+    args = makeParser().parse_args()
+    butler = Butler(args.repo, collections=args.collections, writeable=False)
+    metricTypes = {t for t in butler.registry.queryDatasetTypes() if t.storageClass_name == "MetricValue"}
+    metricValues = butler.registry.queryDatasets(metricTypes, findFirst=True)
+    _LOG.info("Found %d metric values in %s.", metricValues.count(), args.collections)
+
+    bundles = _bundle_metrics(butler, metricValues)
+    dispatcher = SasquatchDispatcher(url=args.base_url, token=args.token, namespace=args.namespace)
+    _LOG.info("Uploading to %s @ %s...", args.namespace, args.base_url)
+    for (run, datasetType, dataId), bundle in bundles.items():
+        dispatcher.dispatch(
+            bundle,
+            run=run,
+            datasetType=datasetType,
+            datasetIdentifier=args.dataset,
+            identifierFields=dataId,
+        )

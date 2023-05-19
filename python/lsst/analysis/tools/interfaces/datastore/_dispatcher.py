@@ -214,7 +214,9 @@ class SasquatchDispatcher:
         topic_name : `str`
             The name of the kafka topic to create
 
-        returns : `bool`
+        Returns
+        -------
+        status : `bool`
             If this does not encounter an error it will return a True success
             code, else it will return a False code.
 
@@ -446,7 +448,7 @@ class SasquatchDispatcher:
             in the record, and used in creating a unique tag for the uploaded
             dataset type. I.e. the timestamp, and the tag will be unique, and
             each record will belong to one combination of such.
-        datasetIdentifier : `str`
+        datasetIdentifier : `str` or `None`
             A string which will be used in creating unique identifier tags.
         bundle : `MetricMeasurementBundle`
             The bundle containing metric values to upload.
@@ -492,22 +494,22 @@ class SasquatchDispatcher:
         datasetType : `str`
             The dataset type name associated with this
             `MetricMeasurementBundle`
-        timestamp : `str` or `None`
+        timestamp : `datetime.datetime`, optional
             The timestamp to be associated with the measurements in the ingress
             database. If this value is None, timestamp will be set by the run
             time or current time.
-        id : `UUID` or `None`
+        id : `UUID`, optional
             The UUID of the `MetricMeasurementBundle` within the butler. If
             `None`, a new random UUID will be generated so that each record in
             Sasquatch will have a unique value.
-        datasetIdentifier : `str`
-            A string which will be used in creating unique identifier tags.
-        identifierFields: `Mapping` or `None`
+        identifierFields: `Mapping`, optional
             The keys and values in this mapping will be both added as fields
             in the record, and used in creating a unique tag for the uploaded
             dataset type. I.e. the timestamp, and the tag will be unique, and
             each record will belong to one combination of such.
-        extraFields: `Mapping`
+        datasetIdentifier : `str`, optional
+            A string which will be used in creating unique identifier tags.
+        extraFields: `Mapping`, optional
             Extra mapping keys and values that will be added as fields to the
             dispatched record.
 
@@ -617,24 +619,24 @@ class SasquatchDispatcher:
         datasetType : `str`
             The dataset type name associated with this
             `MetricMeasurementBundle`.
-        timestamp : `str` or `None`
+        timestamp : `datetime.datetime`, optional
             The timestamp to be associated with the measurements in the ingress
             database. If this value is None, timestamp will be set by the run
             time or current time.
-        id : `UUID` or `None`
+        id : `UUID`, optional
             The UUID of the `MetricMeasurementBundle` within the Butler. If
             `None`, a new random UUID will be generated so that each record in
             Sasquatch will have a unique value.
-        datasetIdentifier : `str` or `None`
+        datasetIdentifier : `str`, optional
             A string which will be used in creating unique identifier tags. If
             `None`, a default value will be inserted.
-        identifierFields: `Mapping` or `None`
+        identifierFields: `Mapping`, optional
             The keys and values in this mapping will be both added as fields
             in the record, and used in creating a unique tag for the uploaded
             dataset type. I.e. the timestamp, and the tag will be unique, and
             each record will belong to one combination of such. Examples of
             entries would be things like visit or tract.
-        extraFields: `Mapping`
+        extraFields: `Mapping`, optional
             Extra mapping keys and values that will be added as fields to the
             dispatched record.
 
@@ -714,14 +716,14 @@ class SasquatchDispatcher:
         ref : `DatasetRef`
             The `Butler` dataset ref corresponding to the input
             `MetricMeasurementBundle`.
-        timestamp : `str` or `None`
+        timestamp : `datetime.datetime`, optional
             The timestamp to be associated with the measurements in the ingress
             database. If this value is None, timestamp will be set by the run
             time or current time.
-        extraFields: `Mapping` or `None`
+        extraFields: `Mapping`, optional
             Extra mapping keys and values that will be added as fields to the
             dispatched record if not None.
-        datasetIdentifier : `str` or `None`
+        datasetIdentifier : `str`, optional
             A string which will be used in creating unique identifier tags. If
             None, a default value will be inserted.
 

@@ -6,10 +6,10 @@ tasks:
     config:
       connections.outputName: matchedVisitCore
       atools.stellarPhotometricRepeatability: StellarPhotometricRepeatability
-      # atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
-      # atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
-      # atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
-      # atools.stellarAstrometricResidualStdDevRA: StellarAstrometricResidualStdDevRAFocalPlanePlot
-      # atools.stellarAstrometricResidualStdDevDec: StellarAstrometricResidualStdDevDecFocalPlanePlot
+      atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
+      atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
+      atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
+      atools.stellarAstrometricResidualStdDevRA: StellarAstrometricResidualStdDevRAFocalPlanePlot
+      atools.stellarAstrometricResidualStdDevDec: StellarAstrometricResidualStdDevDecFocalPlanePlot
       python: |
         from lsst.analysis.tools.atools import *

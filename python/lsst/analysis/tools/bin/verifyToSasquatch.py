@@ -68,6 +68,9 @@ def makeParser():
         help="Run this command while uploading to the lsst.debug test "
         "namespace. Any --namespace argument is ignored.",
     )
+    parser.add_argument(
+        "--where", default="", help="Butler query to select metric values for upload (default: all values)."
+    )
 
     api_group = parser.add_argument_group("Sasquatch API arguments")
     api_group.add_argument(
@@ -142,7 +145,7 @@ def main():
 
     butler = Butler(args.repo, collections=args.collections, writeable=False)
     metricTypes = {t for t in butler.registry.queryDatasetTypes() if t.storageClass_name == "MetricValue"}
-    metricValues = butler.registry.queryDatasets(metricTypes, findFirst=True)
+    metricValues = butler.registry.queryDatasets(metricTypes, where=args.where, findFirst=True)
     _LOG.info("Found %d metric values in %s.", metricValues.count(), args.collections)
 
     bundles = _bundle_metrics(butler, metricValues)

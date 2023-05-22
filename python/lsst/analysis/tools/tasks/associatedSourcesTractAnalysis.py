@@ -93,7 +93,15 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
     @classmethod
     def callback(cls, inputs, dataId):
-        """Callback function to be used with reconstructor."""
+        """Callback function to be used with reconstructor.
+           Loads only index and sourceID columns from the associatedSources 
+           input and merges the sourceCatalogs using the associatedSources 
+           matches
+        """
+        
+        # TODO: make key used for object index configurable
+        inputs["associatedSources"]=cls.loadData(cls,inputs["associatedSources"], ["obj_index", "sourceId"])
+        
         return cls.prepareAssociatedSources(
             inputs["skyMap"],
             dataId["tract"],
@@ -139,9 +147,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")
-
-        # TODO: make key used for object index configurable
-        inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
 
         data = self.callback(inputs, dataId)
 

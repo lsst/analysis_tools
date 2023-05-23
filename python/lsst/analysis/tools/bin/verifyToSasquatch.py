@@ -62,6 +62,12 @@ def makeParser():
         "be specified in any notation recognized by Middleware.",
     )
     parser.add_argument("--dataset", required=True, help="The dataset on which the metrics were measured.")
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Run this command while uploading to the lsst.debug test "
+        "namespace. Any --namespace argument is ignored.",
+    )
 
     api_group = parser.add_argument_group("Sasquatch API arguments")
     api_group.add_argument(
@@ -131,6 +137,9 @@ def _bundle_metrics(
 
 def main():
     args = makeParser().parse_args()
+    if args.test:
+        args.namespace = "lsst.debug"
+
     butler = Butler(args.repo, collections=args.collections, writeable=False)
     metricTypes = {t for t in butler.registry.queryDatasetTypes() if t.storageClass_name == "MetricValue"}
     metricValues = butler.registry.queryDatasets(metricTypes, findFirst=True)

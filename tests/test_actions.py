@@ -247,7 +247,11 @@ class TestVectorActions(unittest.TestCase):
 
     # Basic vectorActions
 
-    # def testLoadVector(self): TODO: implement
+    def testLoadVector(self):
+        action = LoadVector(vectorKey="vector")
+        inputData = {"vector": np.arange(5)}
+        result = action(inputData)
+        np.testing.assert_array_equal(result, inputData["vector"])
 
     def testDownselectVector(self):
         selector = FlagSelector(selectWhenTrue=["{band}_flag"])

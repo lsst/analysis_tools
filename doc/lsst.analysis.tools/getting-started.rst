@@ -32,9 +32,10 @@ then you can git clone the package from https://github.com/lsst/analysis_tools.
 
 ``git clone git@github.com:lsst/analysis_tools.git``
 
-Once the package has been closed it needs to be setup and scons needs to be run.
+Once the package has been cloned, it needs to be setup and scons needs to be run to build the package.
 
 ``setup -j -r repos/analyis_tools``
+
 ``scons repos/analysis_tools``
 
 More details can be found here:

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate, DeferredDatasetHandle
 
 from lsst.pipe.base import connectionTypes as ct
+from lsst.skymap import BaseSkyMap
 
 from ..actions.plot.plotUtils import shorten_list
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, KeyedData
@@ -42,7 +43,7 @@ class ObjectTableSurveyAnalysisConnections(
 ):
     skymap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",
-        name="skyMap",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
         dimensions=("skymap",),
     )

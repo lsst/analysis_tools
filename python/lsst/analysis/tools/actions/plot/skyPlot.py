@@ -36,8 +36,6 @@ from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...statistics import nansigmaMad
 from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays
 
-# from .plotUtils import generateSummaryStats, parsePlotInfo
-
 
 class SkyPlot(PlotAction):
     """Plots the on sky distribution of a parameter.

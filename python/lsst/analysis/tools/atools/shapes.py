@@ -28,6 +28,7 @@ __all__ = (
     "E1Diff",
     "E2Diff",
     "RhoStatistics",
+    "PsfSizeResidualFocalPlane",
 )
 
 from lsst.pex.config import Field
@@ -45,12 +46,15 @@ from ..actions.vector import (
     CoaddPlotFlagSelector,
     ConvertFluxToMag,
     DownselectVector,
+    FlagSelector,
     FractionalDifference,
     LoadVector,
     SnSelector,
     StarSelector,
     VectorSelector,
+    VisitPlotFlagSelector,
 )
+from ..actions.plot.focalPlanePlot import FocalPlanePlot
 from ..interfaces import AnalysisTool, KeyedData, VectorAction
 
 
@@ -198,3 +202,42 @@ class RhoStatistics(AnalysisTool):
         self.process.calculateActions.rho.treecorr.metric = "Arc"
 
         self.produce.plot = RhoStatisticsPlot()
+
+
+class PsfSizeResidualFocalPlane(AnalysisTool):
+    """Make a plot of the PSF size residuals over the focal plane.
+
+    The residual is defined as (T_star - T_psf) / T_psf,
+    where T = Ixx + Iyy is a measure of the PSF/stellar size.
+
+    Currently, T is in pixel coordinates, not sky coordinates.
+
+    The default selection is to use the calib_psf_reserved stars.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+
+        self.prep.selectors.snSelector = SnSelector(fluxType='psfFlux', threshold=50)
+
+        self.prep.selectors.starSelector = FlagSelector(selectWhenTrue=["calib_psf_reserved"])
+
+        self.process.buildActions.x = LoadVector(vectorKey='x')
+        self.process.buildActions.y = LoadVector(vectorKey='y')
+
+        self.process.buildActions.z = FractionalDifference(
+            actionA=CalcMomentSize(colXx="ixx", colYy="iyy", colXy="ixy", sizeType="trace"),
+            actionB=CalcMomentSize(colXx="ixxPSF", colYy="iyyPSF", colXy="ixyPSF", sizeType="trace"),
+        )
+
+        self.process.buildActions.statMask = SnSelector(threshold=0, fluxType='psfFlux')
+
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+
+        self.produce.plot = FocalPlanePlot()
+        self.produce.plot.xAxisLabel = "Focal X"
+        self.produce.plot.yAxisLabel = "Focal Y"
+        self.produce.plot.zAxisLabel = "(T_star - T_psf)/T_psf"
+
+        self.produce.plot.nBins = 200

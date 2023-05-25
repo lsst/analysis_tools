@@ -11,7 +11,7 @@ config.log
 
 # Built by sconsUtils
 version.py
-bin/
+/bin/
 
 # Pytest
 tests/.tests

@@ -151,6 +151,8 @@ class MatchedRefCoaddMetric(MatchedRefCoaddToolBase):
                 )
 
                 action.name_prefix = name_prefix.format(name_class=name_class)
+                if self.parameterizedBand:
+                    action.name_prefix = f"{{band}}_{action.name_prefix}"
                 action.name_suffix = name_suffix.format(minimum=minimum)
 
                 units.update(
@@ -178,7 +180,6 @@ class MatchedRefCoaddMetric(MatchedRefCoaddToolBase):
                 )
 
     def __call__(self, data: KeyedData, **kwargs):
-        self._validate()
         return super().__call__(data=data, **kwargs)
 
 

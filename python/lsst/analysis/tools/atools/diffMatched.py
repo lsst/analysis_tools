@@ -103,7 +103,7 @@ class MatchedRefCoaddMetric(MatchedRefCoaddToolBase):
         self,
         unit: str | None = None,
         name_prefix: str | None = None,
-        name_suffix: str = "_mad_ref_mag{minimum}",
+        name_suffix: str = "_ref_mag{minimum}",
         unit_select: str = "mag",
     ):
         """Configure metric actions and return units.

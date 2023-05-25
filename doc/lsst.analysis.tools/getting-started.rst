@@ -15,7 +15,7 @@ and cloning analysis_tools. Then an overview of the package and follow that
 with walking through a series of examples of increasing complexity.
 
 Analysis tools is designed to work with any sort of keyed data but to make it 
-more intuitive initially we’ll talk about tables and column names.
+more intuitive initially we'll talk about tables and column names.
 
 Setting Up the Package and Getting Started With The Stack
 ---------------------------------------------------------

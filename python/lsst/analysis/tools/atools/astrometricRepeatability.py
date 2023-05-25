@@ -29,8 +29,7 @@ __all__ = (
     "StellarAstrometricResidualsDecSkyPlot",
 )
 
-from ..actions.plot.focalPlanePlot import FocalPlanePlot
-from ..actions.plot.skyPlot import SkyPlot
+from ..actions.plot import FocalPlanePlot, SkyPlot
 from ..actions.vector import (
     BandSelector,
     ConvertFluxToMag,

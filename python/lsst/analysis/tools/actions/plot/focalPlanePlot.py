@@ -150,11 +150,17 @@ class FocalPlanePlot(PlotAction):
         fig : `matplotlib.figure.Figure`
             The resulting figure.
         """
-        fig = plt.figure(dpi=300)
-        ax = fig.add_subplot(111)
-
         if plotInfo is None:
             plotInfo = {}
+
+        if len(data["x"]) == 0:
+            noDataFig = Figure()
+            noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
+            noDataFig = addPlotInfo(noDataFig, plotInfo)
+            return noDataFig
+
+        fig = plt.figure(dpi=300)
+        ax = fig.add_subplot(111)
 
         detectorIds = np.unique(data["detector"])
         focalPlane_x = np.zeros(len(data["x"]))
@@ -170,8 +176,10 @@ class FocalPlanePlot(PlotAction):
             focalPlane_x[detectorInd] = fp_x
             focalPlane_y[detectorInd] = fp_y
 
-        binsx = np.linspace(focalPlane_x.min(), focalPlane_x.max(), self.nBins)
-        binsy = np.linspace(focalPlane_y.min(), focalPlane_y.max(), self.nBins)
+        # Add an arbitrary small offset to bins to ensure that the minimum does
+        # not equal the maximum.
+        binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, self.nBins)
+        binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, self.nBins)
 
         statistic, x_edge, y_edge, binnumber = binned_statistic_2d(
             focalPlane_x, focalPlane_y, data["z"], statistic=self.statistic, bins=[binsx, binsy]

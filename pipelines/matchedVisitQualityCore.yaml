@@ -26,56 +26,27 @@ tasks:
   analyzeMatchedVisitExtended:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
-      bands: ['g', 'r', 'i', 'z', 'y']
       connections.outputName: matchedVisitExtended
-      atools.modelPhotRepGalSn5to10: PhotometricRepeatability
-      atools.modelPhotRepGalSn5to10.fluxType: cModelFlux
-      atools.modelPhotRepGalSn5to10.process.filterActions.perGroupStdevFiltered.selectors.extendedness.op: gt
-      atools.modelPhotRepGalSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
-      atools.modelPhotRepGalSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
-      atools.modelPhotRepGalSn5to10.produce.plot: NoPlot
-
-      atools.modelPhotRepGalSn10to20: PhotometricRepeatability
-      atools.modelPhotRepGalSn10to20.fluxType: cModelFlux
-      atools.modelPhotRepGalSn10to20.process.filterActions.perGroupStdevFiltered.selectors.extendedness.op: gt
-      atools.modelPhotRepGalSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
-      atools.modelPhotRepGalSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
-      atools.modelPhotRepGalSn10to20.produce.plot: NoPlot
-
-      atools.modelPhotRepGalSn20to40: PhotometricRepeatability
-      atools.modelPhotRepGalSn20to40.fluxType: cModelFlux
-      atools.modelPhotRepGalSn20to40.process.filterActions.perGroupStdevFiltered.selectors.extendedness.op: gt
-      atools.modelPhotRepGalSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
-      atools.modelPhotRepGalSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
-      atools.modelPhotRepGalSn20to40.produce.plot: NoPlot
-
-      atools.modelPhotRepGalSn40to80: PhotometricRepeatability
-      atools.modelPhotRepGalSn40to80.fluxType: cModelFlux
-      atools.modelPhotRepGalSn40to80.process.filterActions.perGroupStdevFiltered.selectors.extendedness.op: gt
-      atools.modelPhotRepGalSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
-      atools.modelPhotRepGalSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
-      atools.modelPhotRepGalSn40to80.produce.plot: NoPlot
-
       atools.modelPhotRepStarSn5to10: PhotometricRepeatability
-      atools.modelPhotRepStarSn5to10.fluxType: cModelFlux
+      atools.modelPhotRepStarSn5to10.fluxType: gaussianFlux
       atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
       atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
       atools.modelPhotRepStarSn5to10.produce.plot: NoPlot
 
       atools.modelPhotRepStarSn10to20: PhotometricRepeatability
-      atools.modelPhotRepStarSn10to20.fluxType: cModelFlux
+      atools.modelPhotRepStarSn10to20.fluxType: gaussianFlux
       atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
       atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
       atools.modelPhotRepStarSn10to20.produce.plot: NoPlot
 
       atools.modelPhotRepStarSn20to40: PhotometricRepeatability
-      atools.modelPhotRepStarSn20to40.fluxType: cModelFlux
+      atools.modelPhotRepStarSn20to40.fluxType: gaussianFlux
       atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
       atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
       atools.modelPhotRepStarSn20to40.produce.plot: NoPlot
 
       atools.modelPhotRepStarSn40to80: PhotometricRepeatability
-      atools.modelPhotRepStarSn40to80.fluxType: cModelFlux
+      atools.modelPhotRepStarSn40to80.fluxType: gaussianFlux
       atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
       atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
       atools.modelPhotRepStarSn40to80.produce.plot: NoPlot

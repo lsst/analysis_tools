@@ -33,9 +33,9 @@ from ..actions.vector import (
     LoadVector,
     MultiCriteriaDownselectVector,
     PerGroupStatistic,
+    RangeSelector,
     ResidualWithPerGroupStatistic,
     SnSelector,
-    RangeSelector,
     ThresholdSelector,
 )
 from ..interfaces import AnalysisTool

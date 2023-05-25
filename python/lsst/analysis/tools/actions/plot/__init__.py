@@ -1,6 +1,7 @@
 from .barPlots import *
 from .colorColorFitPlot import *
 from .diaSkyPlot import *
+from .focalPlanePlot import *
 from .histPlot import *
 from .multiVisitCoveragePlot import *
 from .rhoStatisticsPlot import *

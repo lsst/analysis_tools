@@ -27,8 +27,7 @@ __all__ = (
 
 from lsst.pex.config import Field
 
-from ..actions.plot.focalPlanePlot import FocalPlanePlot
-from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
+from ..actions.plot import FocalPlanePlot, HistPanel, HistPlot, HistStatsPanel
 from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
 from ..actions.vector import (
     BandSelector,

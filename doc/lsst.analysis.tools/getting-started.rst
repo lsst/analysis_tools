@@ -133,7 +133,7 @@ python/lsst/analysis/tools
 A Simple Plotting And Metric Example
 ====================================
 
-The first example we are going to look at is a very simple one and then we can build 
+We will start with a simple example and build
 up from there. We're going to start by adapting an existing plot and metric to our needs, we'll use a 
 sky plot to show the on sky distribution of the values of a column in the table.
 

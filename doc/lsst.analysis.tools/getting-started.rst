@@ -146,7 +146,7 @@ then we’ll look more into how to define them. One of the great things about ac
 they allow us to only read in the columns we need from large tables.
 
 Each plot and/or metric is its own class, each one has a prep, process and produce section. 
-The prep section applies things like flag cuts and signal to noise cuts to the data. 
+The prep section manipulates input data, for example by performing flag cuts and signal to noise cuts.
 The process section builds the data required for the plot/metric, for example if the plot 
 is of a magnitude difference against a magnitude then the actions defined in the 
 process section will identify which flux column needs to be read in and turned into a magnitude. 

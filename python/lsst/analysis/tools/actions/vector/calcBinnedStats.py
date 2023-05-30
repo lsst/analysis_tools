@@ -86,9 +86,15 @@ class CalcBinnedStatsAction(KeyedDataAction):
         return f"{self.name_prefix}sigmaMad{self.name_suffix}"
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        has_band = "band" in kwargs
+        kwargs_format = {}
+        if has_band:
+            kwargs_format["band"] = kwargs["band"]
+        prefix_band = f"{kwargs['band']}_" if has_band else ""
+
         results = {}
         mask = self.selector_range(data, **kwargs)
-        results[self.name_mask] = mask
+        results[self.name_mask.format(**kwargs_format)] = mask
         kwargs["mask"] = mask
 
         action = SummaryStatisticAction(vectorKey=self.key_vector)
@@ -97,14 +103,21 @@ class CalcBinnedStatsAction(KeyedDataAction):
         action.setDefaults()
 
         for name, value in action(data, **kwargs).items():
-            results[getattr(self, f"name_{name}")] = value
+            results[getattr(self, f"name_{name}").format(**kwargs_format)] = value
 
         values = cast(Vector, data[self.selector_range.key][mask])  # type: ignore
         valid = np.sum(np.isfinite(values)) > 0
-        results[self.name_select_maximum] = cast(Scalar, float(np.nanmax(values)) if valid else np.nan)
-        results[self.name_select_median] = cast(Scalar, float(np.nanmedian(values)) if valid else np.nan)
-        results[self.name_select_minimum] = cast(Scalar, float(np.nanmin(values)) if valid else np.nan)
-        results["range_maximum"] = self.selector_range.maximum
-        results["range_minimum"] = self.selector_range.minimum
+
+        results[self.name_select_maximum.format(**kwargs_format)] = cast(
+            Scalar, float(np.nanmax(values)) if valid else np.nan
+        )
+        results[self.name_select_median.format(**kwargs_format)] = cast(
+            Scalar, float(np.nanmedian(values)) if valid else np.nan
+        )
+        results[self.name_select_minimum.format(**kwargs_format)] = cast(
+            Scalar, float(np.nanmin(values)) if valid else np.nan
+        )
+        results[f"{prefix_band}range_maximum"] = self.selector_range.maximum
+        results[f"{prefix_band}range_minimum"] = self.selector_range.minimum
 
         return results

@@ -137,25 +137,27 @@ class TestVectorActions(unittest.TestCase):
     # VectorActions with their own files
 
     def testCalcBinnedStats(self):
-        selector = RangeSelector(key="r_vector", minimum=0, maximum=self.size + 1)
+        selector = RangeSelector(key="r_vector", minimum=0, maximum=self.size)
         prefix = "a_"
         stats = CalcBinnedStatsAction(name_prefix=prefix, selector_range=selector, key_vector="r_vector")
         result = stats(self.data)
-        median = (1 + self.size) / 2.0
+        mask = selector(self.data)
+        values = self.data["r_vector"][mask]
+        median = np.median(values)
         truth = {
-            stats.name_mask: np.ones(self.size),
+            stats.name_mask: mask,
             stats.name_median: median,
-            stats.name_sigmaMad: 1.482602218505602 * np.median(np.abs(self.data["r_vector"] - median)),
-            stats.name_count: self.size,
-            stats.name_select_maximum: self.size,
+            stats.name_sigmaMad: 1.482602218505602 * np.median(np.abs(values - median)),
+            stats.name_count: np.sum(mask),
+            stats.name_select_maximum: np.max(values),
             stats.name_select_median: median,
-            stats.name_select_minimum: 1,
-            "range_maximum": self.size + 1,
+            stats.name_select_minimum: np.min(values),
+            "range_maximum": self.size,
             "range_minimum": 0,
         }
         self.assertEqual(list(result.keys()), list(truth.keys()))
 
-        self.assertAlmostEqual(result[stats.name_sigmaMad], truth[stats.name_sigmaMad])
+        np.testing.assert_array_almost_equal(result[stats.name_sigmaMad], truth[stats.name_sigmaMad])
         del truth[stats.name_sigmaMad]
 
         np.testing.assert_array_equal(result[stats.name_mask], truth[stats.name_mask])

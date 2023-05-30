@@ -51,16 +51,31 @@ class TestDiffMatched(TestCase):
             self.assertGreater(len(tester(data)), 0)
 
     def testMatchedRefCoaddMetric(self):
-        tester = MatchedRefCoaddMetric(unit="")
+        kwargs = {key: "" for key in ("unit", "name_prefix")}
+        for kwarg in kwargs:
+            kwargs_init = {kwarg: ""}
+            tester = MatchedRefCoaddMetric(**kwargs_init)
+            # Validation will fail because configureMetrics hasn't been called
+            with self.assertRaises(ValueError):
+                tester.validate()
+            # Failing to find any of the required keys
+            with self.assertRaises(KeyError):
+                tester({})
+        tester = MatchedRefCoaddMetric(**kwargs)
         with self.assertRaises(ValueError):
-            tester({})
-        tester = MatchedRefCoaddMetric(name_prefix="")
-        with self.assertRaises(ValueError):
-            tester({})
-        tester = MatchedRefCoaddMetric(unit="", name_prefix="")
+            tester.validate()
+
         tester.finalize()
-        self.assertGreater(len(list(tester.getInputSchema())), 0)
+        # This works, although it leaves none keys in the schema
+        # Should maybe be caught in populatePrepFromProcess
+        inputs = list(tester.getInputSchema())
+        n_input = len(inputs)
+        self.assertGreater(n_input, 0)
         self.assertGreater(len(list(tester.configureMetrics())), 0)
+
+        tester.finalize()
+        # No more None key
+        self.assertEquals(len(list(tester.getInputSchema())), n_input - 1)
 
     def testMatchedRefCoaddCModelFluxMetric(self):
         self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddCModelFluxMetric)

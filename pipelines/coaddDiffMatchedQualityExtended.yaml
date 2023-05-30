@@ -41,7 +41,7 @@ tasks:
 
       atools.matchedRefPositionXDiffMetric: MatchedRefCoaddPositionMetric
       atools.matchedRefPositionXDiffMetric.variable: x
-      atools.matchedRefPositionXDiffMetric.applyContext: MatchedRefChiContext
+      atools.matchedRefPositionXDiffMetric.applyContext: MatchedRefDiffContext
 
       atools.matchedRefPositionXChiMetric: MatchedRefCoaddPositionMetric
       atools.matchedRefPositionXChiMetric.variable: x

@@ -33,7 +33,7 @@ from lsst.pex.config import ChoiceField, Field
 
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.vector.calcBinnedStats import CalcBinnedStatsAction
-from ..actions.vector.mathActions import ConstantValue, DivideVector, SubtractVector
+from ..actions.vector.mathActions import ConstantValue, DivideVector, MultiplyVector, SubtractVector
 from ..actions.vector.selectors import GalaxySelector, RangeSelector, StarSelector
 from ..actions.vector.vectorActions import ConvertFluxToMag, DownselectVector, LoadVector, VectorSelector
 from ..interfaces import AnalysisTool, KeyedData
@@ -250,6 +250,10 @@ class MatchedRefCoaddCModelFluxMetric(MatchedRefCoaddDiffMagTool, MatchedRefCoad
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddToolBase):
     """Base tool for diffs between reference and measured coadd astrometry."""
 
+    scale_factor = Field[float](
+        doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
+        default=200,
+    )
     variable = ChoiceField[str](
         doc="The astrometric variable to compute metrics for",
         allowed={
@@ -269,9 +273,12 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddToolBase):
 
     def matchedRefDiffContext(self):
         self._setPos()
-        self.process.buildActions.diff = SubtractVector(
-            actionA=self.process.buildActions.pos_meas,
-            actionB=self.process.buildActions.pos_ref,
+        self.process.buildActions.diff = MultiplyVector(
+            actionA=ConstantValue(value=self.scale_factor),
+            actionB=SubtractVector(
+                actionA=self.process.buildActions.pos_meas,
+                actionB=self.process.buildActions.pos_ref,
+            ),
         )
 
     def matchedRefChiContext(self):
@@ -303,14 +310,14 @@ class MatchedRefCoaddPositionMetric(MatchedRefCoaddDiffPositionTool, MatchedRefC
 
     def matchedRefDiffContext(self):
         super().matchedRefDiffContext()
-        self.unit = "pix"
+        self.unit = "mas"
         self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
         self.produce.metric.units = self.configureMetrics()
 
     def matchedRefChiContext(self):
         super().matchedRefChiContext()
         self.unit = ""
-        self.name_prefix = f"astrom_{self.variable}_{{name_class}}_diff_"
+        self.name_prefix = f"astrom_{self.variable}_{{name_class}}_chi_"
         self.produce.metric.units = self.configureMetrics()
 
     def setDefaults(self):

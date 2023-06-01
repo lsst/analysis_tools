@@ -151,7 +151,6 @@ class BasePsfResidual(AnalysisTool):
         self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
         self.produce.plot.magLabel = "PSF Magnitude (mag)"
-        self.produce.plot.addSummaryPlot = True
 
 
 class ShapeSizeFractionalDiff(BasePsfResidual):

@@ -178,7 +178,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     addSummaryPlot = Field[bool](
         doc="Add a summary plot to the figure?",
-        default=False,
+        default=True,
     )
 
     _stats = ("median", "sigmaMad", "count", "approxMag")

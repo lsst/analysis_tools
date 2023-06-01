@@ -178,7 +178,7 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     extraColumns = pexConfig.ListField[str](
         doc="Other catalog columns to persist to downstream tasks",
-        default=["i_cModelFlux", "x", "y"],
+        default=["i_cModelFlux", "x", "y", "patch"],
     )
 
     requireProperMotion = pexConfig.Field[bool](

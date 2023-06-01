@@ -456,8 +456,8 @@ class SasquatchDispatcher:
         identifier: str
         if datasetIdentifier is not None:
             identifier = datasetIdentifier
-        elif hasattr(bundle, "datasetIdentifier") and bundle.datasetIdentifier is not None:
-            identifier = bundle.datasetIdentifier
+        elif hasattr(bundle, "dataset_identifier") and bundle.dataset_identifier is not None:
+            identifier = bundle.dataset_identifier
         else:
             identifier = "Generic"
 

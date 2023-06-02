@@ -9,14 +9,14 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class SourceTableVisitAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("visit", "band"),
+    dimensions=("visit", "detector", "band"),
     defaultTemplates={"inputName": "sourceTable_visit"},
 ):
     data = ct.Input(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
         storageClass="DataFrame",
-        dimensions=("visit", "band"),
+        dimensions=("visit", "detector", "band"),
         deferLoad=True,
     )
 

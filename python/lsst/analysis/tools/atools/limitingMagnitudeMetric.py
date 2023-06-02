@@ -27,7 +27,7 @@ from lsst.pex.config import Field
 from ..actions.keyedData.limitingMagnitude import depthCalculation
 from ..actions.scalar.scalarActions import MeanAction, MedianAction
 from ..actions.vector.selectors import SnSelector, StarSelector
-from ..actions.vector.vectorActions import ConvertFluxToMag
+from ..actions.vector.vectorActions import ConvertFluxToMag, ConvertFluxErrToMagErr
 from ..interfaces import AnalysisTool
 
 
@@ -63,7 +63,7 @@ class FiveSigmaPointSourceDepthMetric(AnalysisTool):
         }
 
 
-class PointSourceDepthMetric(AnalysisMetric):
+class PointSourceDepthMetric(AnalysisTool):
     """Calculate the point source depth of a visit to a signal to nosie specified by signalToNoise,"""
 
     signalToNoise = Field[float](
@@ -84,7 +84,7 @@ class PointSourceDepthMetric(AnalysisMetric):
 
         self.process.calculateActions.medianDepth = depthCalculation(signalToNoise=self.signalToNoise)
 
-        self.produce.newNames = {
+        self.produce.metric.newNames = {
             "medianDepth": "median{:0.2g}SigmaDepth".format(self.signalToNoise),
         }
-        self.produce.units = {"medianDepth": "mag"}
+        self.produce.metric.units = {"medianDepth": "mag"}

@@ -11,5 +11,15 @@ tasks:
       atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
       atools.stellarAstrometricResidualStdDevRA: StellarAstrometricResidualStdDevRAFocalPlanePlot
       atools.stellarAstrometricResidualStdDevDec: StellarAstrometricResidualStdDevDecFocalPlanePlot
+      atools.stellarAstrometricRepeatability1: AstrometricRelativeRepeatability
+      atools.stellarAstrometricRepeatability1.xValue: 1
+      atools.stellarAstrometricRepeatability1.process.calculateActions.rms.annulus: 5
+      atools.stellarAstrometricRepeatability2: AstrometricRelativeRepeatability
+      atools.stellarAstrometricRepeatability2.xValue: 2
+      atools.stellarAstrometricRepeatability2.process.calculateActions.rms.annulus: 20
+      atools.stellarAstrometricRepeatability3: AstrometricRelativeRepeatability
+      atools.stellarAstrometricRepeatability3.xValue: 3
+      atools.stellarAstrometricRepeatability3.process.calculateActions.rms.annulus: 200
+      atools.stellarAstrometricRepeatability3.process.calculateActions.rms.threshAD: 30
       python: |
         from lsst.analysis.tools.atools import *

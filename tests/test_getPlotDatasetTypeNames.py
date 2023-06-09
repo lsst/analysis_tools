@@ -48,28 +48,28 @@ class TestGetPlotDatasetTypeNames(TestCase):
             "plot1Label_config",
             dimensions=(),
             storageClass="Config",
-            universe=self.butler.registry.dimensions,
+            universe=self.butler.dimensions,
         )
         self.butler.registry.registerDatasetType(self.datasetTypePlot)
         self.datasetTypePlot = DatasetType(
             "plot2Label_config",
             dimensions=(),
             storageClass="Config",
-            universe=self.butler.registry.dimensions,
+            universe=self.butler.dimensions,
         )
         self.butler.registry.registerDatasetType(self.datasetTypePlot)
         self.datasetTypeBase = DatasetType(
             "baseLabel_config",
             dimensions=(),
             storageClass="Config",
-            universe=self.butler.registry.dimensions,
+            universe=self.butler.dimensions,
         )
         self.butler.registry.registerDatasetType(self.datasetTypeBase)
         self.datasetTypeOther = DatasetType(
             "otherLabel_config",
             dimensions=(),
             storageClass="Config",
-            universe=self.butler.registry.dimensions,
+            universe=self.butler.dimensions,
         )
         self.butler.registry.registerDatasetType(self.datasetTypeOther)
 

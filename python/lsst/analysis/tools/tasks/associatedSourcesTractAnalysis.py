@@ -27,6 +27,7 @@ import pandas as pd
 from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
+from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -58,7 +59,7 @@ class AssociatedSourcesTractAnalysisConnections(
 
     skyMap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",
-        name="skyMap",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
         dimensions=("skymap",),
     )

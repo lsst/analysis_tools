@@ -46,9 +46,15 @@ if TYPE_CHECKING:
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
-from lsst.pipe.base import Instrument, PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
+from lsst.pipe.base import (
+    ButlerQuantumContext,
+    Instrument,
+    PipelineTask,
+    PipelineTaskConfig,
+    PipelineTaskConnections,
+    Struct,
+)
 from lsst.pipe.base import connectionTypes as ct
-from lsst.pipe.base.butlerQuantumContext import ButlerQuantumContext
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
 from lsst.pipe.base.pipelineIR import ConfigIR, ParametersIR
 

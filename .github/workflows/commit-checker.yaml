@@ -63,12 +63,3 @@ jobs:
           accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
           pattern: ^(?!Merge branch 'main' into)
           error: 'Ticket branch needs to be rebased onto main'
-
-  check-commit-message-style:
-    name: Check commit message style
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check
-        uses: mristin/opinionated-commit-message@v3.0.0
-        with:
-          allow-one-liners: true

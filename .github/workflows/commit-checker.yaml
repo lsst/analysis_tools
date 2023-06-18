@@ -52,6 +52,7 @@ jobs:
           pattern: '^.+(\n.{0,72})*$'
           error: 'Body line too long (max 72)'
       - name: Check that main was not merged
+        if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2
         with:
           excludeDescription: 'true' # optional: this excludes the description body of a pull request

@@ -21,6 +21,16 @@ jobs:
           accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
           pattern: '^.{0,50}(\n.*)*$'
           error: 'Subject too long (max 50)'
+      - name: Check Subject Line Capitalization
+        if: ${{ success() || failure() }}
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: '^[A-Z]'
+          error: 'Subject line must begin with an imperative, capitalized'
       - name: Check Body Line Length
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2

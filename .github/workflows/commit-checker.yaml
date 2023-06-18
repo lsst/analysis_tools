@@ -1,0 +1,42 @@
+name: 'Commit Message Check'
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  check-commit-message:
+    name: Check Commit Message
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Subject Line Length
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: '^.{0,50}(\n.*)*$'
+          error: 'Subject too long (max 50)'
+      - name: Check Body Line Length
+        if: ${{ success() || failure() }}
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: '^.+(\n.{0,72})*$'
+          error: 'Body line too long (max 72)'
+      - name: Check that main was not merged
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: ^(?!Merge branch 'main' into)
+          error: 'Ticket branch needs to be rebased onto main'

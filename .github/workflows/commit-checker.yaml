@@ -7,8 +7,6 @@ on:
       - reopened
       - synchronize
 
-  push:
-
 jobs:
   check-commit-message:
     name: Check Commit Message

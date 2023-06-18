@@ -63,3 +63,13 @@ jobs:
           accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
           pattern: ^(?!Merge branch 'main' into)
           error: 'Ticket branch needs to be rebased onto main'
+      - name: Check overall commit Message
+        if: ${{ success() || failure() }}
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: '^(?![A-Z].*\.)[A-Z].{0,49}\r?\n\r?\n(?:.{0,71}\r?\n)*(?:.{0,71}\.)?\r?\n?$'
+          error: "Something is not right"

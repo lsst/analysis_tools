@@ -31,6 +31,16 @@ jobs:
           accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
           pattern: '^[A-Z]'
           error: 'Subject line must begin with an imperative, capitalized'
+      - name: Check Subject Line Ending
+        if: ${{ success() || failure() }}
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true' # optional: this excludes the description body of a pull request
+          excludeTitle: 'true' # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          pattern: '(?<!\.)$'
+          error: 'Subject line must not end with a period'
       - name: Check Body Line Length
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2

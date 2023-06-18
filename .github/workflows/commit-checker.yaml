@@ -49,7 +49,7 @@ jobs:
           excludeTitle: 'true' # optional: this excludes the title of a pull request
           checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
           accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
-          pattern: '^.+(\n.{0,72})*$'
+          pattern: '^.+(\n.{0,72}\n)*$'
           error: 'Body line too long (max 72)'
       - name: Check that main was not merged
         if: ${{ success() || failure() }}

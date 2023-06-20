@@ -145,9 +145,9 @@ class ConvertFluxToMag(VectorAction):
         return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        with warnings.catch_warnings():  # type: ignore
-            warnings.filterwarnings("ignore", r"invalid value encountered")  # type: ignore
-            warnings.filterwarnings("ignore", r"divide by zero")  # type: ignore
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r"invalid value encountered")
+            warnings.filterwarnings("ignore", r"divide by zero")
             vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
             mags = (np.array(vec) * u.Unit(self.fluxUnit)).to(u.ABmag).value  # type: ignore
             if self.returnMillimags:

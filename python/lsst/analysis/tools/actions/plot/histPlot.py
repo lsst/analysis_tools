@@ -80,7 +80,7 @@ class HistStatsPanel(Config):
     statsLabels = ListField[str](
         doc="list specifying the labels for stats",
         length=3,
-        default={"N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"},
+        default=("N$_{{data}}$", "Med", "${{\\sigma}}_{{MAD}}$"),
     )
     stat1 = ListField[str](
         doc="A list specifying the vector keys of the first scalar statistic to be shown in this panel."

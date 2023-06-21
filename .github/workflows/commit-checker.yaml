@@ -8,6 +8,20 @@ on:
       - synchronize
 
 jobs:
+  check-commit-organization:
+    name: Check if 'main' was merged to the ticket branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that main was not merged
+        uses: gsactions/commit-message-checker@v2
+        with:
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
+          pattern: ^(?!Merge branch 'main' into)
+          error: 'Ticket branch needs to be rebased onto main'
+
   check-commit-message:
     name: Check Commit Message
     runs-on: ubuntu-latest

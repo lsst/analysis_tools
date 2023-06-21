@@ -15,60 +15,60 @@ jobs:
       - name: Check Subject Line Length
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
           pattern: '^.{0,50}(\n.*)*$'
-          error: 'Subject too long (max 50)'
+          error: 'Subject line was too long, exceeding 50 characters. Continue in the body of the commit message'
       - name: Check Subject Line Capitalization
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
           pattern: '^[A-Z]'
-          error: 'Subject line must begin with an imperative, capitalized'
+          error: 'Subject line must begin with an imperative verb in present tense and first letter in uppercase'
       - name: Check Subject Line Ending
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
-          pattern: '(?<!\.)$'
-          error: 'Subject line must not end with a period'
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
+          pattern: '(?<![\.\?\!])$'
+          error: 'Subject line must not end with a period, question mark or exclamation!'
       - name: Check Body Line Length
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
-          pattern: '^.+(\n.{0,72}\n)*$'
-          error: 'Body line too long (max 72)'
-      - name: Check that main was not merged
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
+          pattern: '^.+((\n*.{0,72}\n)*)*$'
+          error: 'The body must not exceed 72 characters per line and must have end with a newline character.'
+      - name: Check body ends with an appropriate punctuation (. or ? or !)
         if: ${{ success() || failure() }}
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
-          pattern: ^(?!Merge branch 'main' into)
-          error: 'Ticket branch needs to be rebased onto main'
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
+          pattern: '^.+(\n*(.+[\.\!\?])*)*$'
+          error: 'The text of the body must end with a period, question mark or exclamation!'
       # Check the full pattern, now that we covered more common mistakes.
       - name: Check overall commit Message
-        if: ${{ success() || failure() }}
+        if: ${{ success() }}
         uses: gsactions/commit-message-checker@v2
         with:
-          excludeDescription: 'true' # optional: this excludes the description body of a pull request
-          excludeTitle: 'true' # optional: this excludes the title of a pull request
-          checkAllCommitMessages: 'true' # optional: this checks all commits associated with a pull request
-          accessToken: ${{ secrets.GITHUB_TOKEN }} # github access token is only required if checkAllCommitMessages is true
+          excludeDescription: 'true'  # optional: this excludes the description body of a pull request
+          excludeTitle: 'true'  # optional: this excludes the title of a pull request
+          checkAllCommitMessages: 'true'  # optional: this checks all commits associated with a pull request
+          accessToken: ${{ secrets.GITHUB_TOKEN }}  # github access token is only required if checkAllCommitMessages is true
           pattern: '^(?![A-Z].*\.)[A-Z].{0,49}(\r?|\r?\n(?:.{0,71}\r?\n)*(?:.{0,71}\.)?\r?\n?)$'
           error: "The commit messages do not follow "

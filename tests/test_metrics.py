@@ -25,64 +25,73 @@ from unittest import TestCase, main
 import lsst.utils.tests
 import numpy as np
 from lsst.analysis.tools.atools import (
-    MatchedRefCoaddCModelFluxMetric,
-    MatchedRefCoaddMetric,
-    MatchedRefCoaddPositionMetric,
+    MagnitudeTool,
+    MatchedRefCoaddDiffMagMetric,
+    MatchedRefCoaddDiffMetric,
+    MatchedRefCoaddDiffPositionMetric,
 )
-from lsst.analysis.tools.contexts import MatchedRefChiContext, MatchedRefDiffContext
 
 
 class TestDiffMatched(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.band_default = "analysisTools"
-        self.contexts = (MatchedRefChiContext, MatchedRefDiffContext)
 
-    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddMetric], **kwargs):
-        for context in self.contexts:
-            tester = type_metric(**kwargs)
-            tester.applyContext(context)
+    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffMetric], **kwargs):
+        for compute_chi in (False, True):
+            tester = type_metric(**kwargs, compute_chi=compute_chi)
+            # tester.getInputSchema won't work properly before finalizing
             tester.finalize()
 
-            keys = list(k[0] for k in tester.getInputSchema())
+            keys = set(k[0] for k in tester.getInputSchema())
             self.assertGreater(len(keys), 0)
             self.assertGreater(len(list(tester.configureMetrics())), 0)
             data = {key.format(band=self.band_default): np.arange(5) for key in keys}
-            self.assertGreater(len(tester(data)), 0)
+            output = tester(data)
+            self.assertGreater(len(output), 0)
 
     def testMatchedRefCoaddMetric(self):
         kwargs = {key: "" for key in ("unit", "name_prefix")}
+        # The metric can now be set up with default kwargs
+        # Pass one at a time to test
         for kwarg in kwargs:
             kwargs_init = {kwarg: ""}
-            tester = MatchedRefCoaddMetric(**kwargs_init)
-            # Validation will fail because configureMetrics hasn't been called
-            with self.assertRaises(ValueError):
-                tester.validate()
+            tester = MatchedRefCoaddDiffMetric(**kwargs_init)
+            tester.validate()
+            with self.assertRaises(KeyError):
+                tester.configureMetrics()
+            tester.finalize()
+            tester.configureMetrics()
             # Failing to find any of the required keys
             with self.assertRaises(KeyError):
                 tester({})
-        tester = MatchedRefCoaddMetric(**kwargs)
-        with self.assertRaises(ValueError):
-            tester.validate()
-
+        tester = MatchedRefCoaddDiffMetric(**kwargs)
+        tester.validate()
+        with self.assertRaises(KeyError):
+            tester.configureMetrics()
         tester.finalize()
-        # This works, although it leaves none keys in the schema
-        # Should maybe be caught in populatePrepFromProcess
         inputs = list(tester.getInputSchema())
         n_input = len(inputs)
         self.assertGreater(n_input, 0)
         self.assertGreater(len(list(tester.configureMetrics())), 0)
 
-        tester.finalize()
-        # No more None key
-        self.assertEquals(len(list(tester.getInputSchema())), n_input - 1)
+        self.assertEquals(len(inputs), n_input)
+        data = {key.format(band="analysisTools"): np.array([0.0]) for key, *_ in inputs}
+        # There's no metric or plot so it just returns an empty dict
+        self.assertEquals(len(tester(data)), 0)
 
-    def testMatchedRefCoaddCModelFluxMetric(self):
-        self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddCModelFluxMetric)
+    def testMatchedRefCoaddDiffMagMetric(self):
+        self._testMatchedRefCoaddMetricDerived(
+            MatchedRefCoaddDiffMagMetric,
+            fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
+            mag_y="cmodel",
+            name_prefix="",
+            unit="",
+        )
 
-    def testMatchedRefCoaddPositionMetric(self):
+    def testMatchedRefCoaddDiffPositionMetric(self):
         for variable in ("x", "y"):
-            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddPositionMetric, variable=variable)
+            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddDiffPositionMetric, variable=variable)
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

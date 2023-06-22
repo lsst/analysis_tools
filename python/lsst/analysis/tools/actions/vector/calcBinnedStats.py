@@ -36,8 +36,8 @@ from .selectors import RangeSelector
 
 class CalcBinnedStatsAction(KeyedDataAction):
     key_vector = Field[str](doc="Vector on which to compute statistics")
-    name_prefix = Field[str](doc="Field name to append stat names to")
-    name_suffix = Field[str](doc="Field name to append to stat names")
+    name_prefix = Field[str](default="", doc="Field name to append stat names to")
+    name_suffix = Field[str](default="", doc="Field name to append to stat names")
     selector_range = ConfigurableActionField[RangeSelector](doc="Range selector")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:

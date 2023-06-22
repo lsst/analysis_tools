@@ -42,18 +42,12 @@ from lsst.verify import Measurement
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DeferredDatasetHandle
+    from lsst.pipe.base import QuantumContext
 
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
-from lsst.pipe.base import (
-    ButlerQuantumContext,
-    Instrument,
-    PipelineTask,
-    PipelineTaskConfig,
-    PipelineTaskConnections,
-    Struct,
-)
+from lsst.pipe.base import Instrument, PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
 from lsst.pipe.base.pipelineIR import ConfigIR, ParametersIR
@@ -351,7 +345,7 @@ class AnalysisPipelineTask(PipelineTask):
 
     def runQuantum(
         self,
-        butlerQC: ButlerQuantumContext,
+        butlerQC: QuantumContext,
         inputRefs: InputQuantizedConnection,
         outputRefs: OutputQuantizedConnection,
     ) -> None:
@@ -360,7 +354,7 @@ class AnalysisPipelineTask(PipelineTask):
 
         Parameters
         ----------
-        butlerQC : `ButlerQuantumContext`
+        butlerQC : `~lsst.pipe.base.QuantumContext`
             A butler which is specialized to operate in the context of a
             `lsst.daf.butler.Quantum`.
         inputRefs : `InputQuantizedConnection`

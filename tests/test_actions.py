@@ -26,7 +26,7 @@ import lsst.utils.tests
 import numpy as np
 import pandas as pd
 from lsst.analysis.tools.actions.keyedData.calcDistances import CalcRelativeDistances
-from lsst.analysis.tools.actions.scalar.scalarActions import (
+from lsst.analysis.tools.actions.scalar import (
     ApproxFloor,
     CountAction,
     MeanAction,
@@ -34,8 +34,15 @@ from lsst.analysis.tools.actions.scalar.scalarActions import (
     SigmaMadAction,
     StdevAction,
 )
-from lsst.analysis.tools.actions.vector.calcBinnedStats import CalcBinnedStatsAction
-from lsst.analysis.tools.actions.vector.calcMomentSize import CalcMomentSize
+from lsst.analysis.tools.actions.vector import (
+    CalcBinnedStatsAction,
+    CalcMomentSize,
+    ConvertFluxToMag,
+    DownselectVector,
+    ExtinctionCorrectedMagDiff,
+    LoadVector,
+    MagDiff,
+)
 from lsst.analysis.tools.actions.vector.mathActions import (
     AddVector,
     ConstantValue,
@@ -58,13 +65,6 @@ from lsst.analysis.tools.actions.vector.selectors import (
     SnSelector,
     StarSelector,
     VectorSelector,
-)
-from lsst.analysis.tools.actions.vector.vectorActions import (
-    ConvertFluxToMag,
-    DownselectVector,
-    ExtinctionCorrectedMagDiff,
-    LoadVector,
-    MagDiff,
 )
 from lsst.pex.config import FieldValidationError
 

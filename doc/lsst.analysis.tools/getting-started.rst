@@ -9,9 +9,9 @@ Analysis tools is a package for the creation of plots and metrics. It allows
 them to be created from the same code to ensure that they are consistent
 and repeatable.
 
-It has a lot of very powerful and flexible functionality but can be a little
-bit overwhelming at first. We are going to cover getting the stack set up 
-and cloning analysis_tools. Then an overview of the package and follow that 
+It has powerful and flexible functionality but can be somewhat
+overwhelming at first. We are going to cover getting the stack set up 
+and cloning analysis_tools. Then an overview of the package and follow that
 with walking through a series of examples of increasing complexity.
 
 Analysis tools is designed to work with any sort of keyed data but to make it 

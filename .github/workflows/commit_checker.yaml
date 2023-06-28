@@ -1,7 +1,7 @@
 name: Check commit messages
 
 on:
-  pull_request: null
+  pull_request:
 
 jobs:
   call-workflow:

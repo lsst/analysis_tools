@@ -1,0 +1,8 @@
+name: Check commit messages
+
+on:
+  pull_request: null
+
+jobs:
+  call-workflow:
+    uses: lsst/rubin_workflows/.github/workflows/commit_command_checker.yaml@tickets/DM-39820

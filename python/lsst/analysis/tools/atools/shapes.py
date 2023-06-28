@@ -40,8 +40,8 @@ from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
 from ..actions.vector import (
     CalcE,
     CalcEDiff,
+    CalcMomentSize,
     CalcRhoStatistics,
-    CalcShapeSize,
     CoaddPlotFlagSelector,
     ConvertFluxToMag,
     DownselectVector,
@@ -96,8 +96,8 @@ class BasePsfResidual(AnalysisTool):
         self.process.buildActions.mags = ConvertFluxToMag(vectorKey="{band}_psfFlux")
 
         self.process.buildActions.fracDiff = FractionalDifference(
-            actionA=CalcShapeSize(colXx="{band}_ixx", colYy="{band}_iyy", colXy="{band}_ixy"),
-            actionB=CalcShapeSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
+            actionA=CalcMomentSize(colXx="{band}_ixx", colYy="{band}_iyy", colXy="{band}_ixy"),
+            actionB=CalcMomentSize(colXx="{band}_ixxPSF", colYy="{band}_iyyPSF", colXy="{band}_ixyPSF"),
         )
         # Define an eDiff action and let e1Diff and e2Diff differ only in
         # component.

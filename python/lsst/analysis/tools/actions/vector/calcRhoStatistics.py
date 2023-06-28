@@ -34,7 +34,7 @@ import treecorr  # type: ignore[import]
 from lsst.pex.config import ChoiceField, Config, ConfigField, Field, FieldValidationError
 
 from ...interfaces import KeyedData, KeyedDataAction, Vector
-from .calcShapeSize import CalcShapeSize
+from .calcMomentSize import CalcMomentSize
 from .ellipticity import CalcE, CalcEDiff
 from .mathActions import FractionalDifference
 
@@ -385,13 +385,13 @@ class CalcRhoStatistics(KeyedDataAction):
         calcEDiff = CalcEDiff(colA=calcEMeas, colB=calcEpsf)
 
         calcSizeResidual = FractionalDifference(
-            actionA=CalcShapeSize(
+            actionA=CalcMomentSize(
                 colXx=self.colXx,
                 colYy=self.colYy,
                 colXy=self.colXy,
                 sizeType=self.sizeType,
             ),
-            actionB=CalcShapeSize(
+            actionB=CalcMomentSize(
                 colXx=self.colPsfXx,
                 colYy=self.colPsfYy,
                 colXy=self.colPsfXy,

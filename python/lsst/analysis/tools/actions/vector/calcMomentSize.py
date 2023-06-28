@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CalcShapeSize",)
+__all__ = ("CalcMomentSize",)
 
 import numpy as np
 from lsst.pex.config import Field, FieldValidationError
@@ -29,25 +29,26 @@ from lsst.pex.config.choiceField import ChoiceField
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
 
 
-class CalcShapeSize(VectorAction):
-    r"""Calculate a size: :math:`(I_{xx}I_{yy}-I_{xy}^2)^{\frac{1}{4}}`
-    (determinant radius) or :math:`\sqrt{(I_{xx}+I_{yy})/2}`
-    (trace radius).
+class CalcMomentSize(VectorAction):
+    r"""Calculate a size based on 2D moments.
+
+    Given a 2x2 matrix of moments (i.e. moment of inertia), two sizes can be
+    defined as follows:
+
+    Determinant radius: :math:`(I_{xx}I_{yy}-I_{xy}^2)^{\frac{1}{4}}`
+    Trace radius: :math:`\sqrt{(I_{xx}+I_{yy})/2}`
 
     The square of size measure is typically expressed either as the arithmetic
     mean of the eigenvalues of the moment matrix (trace radius) or as the
     geometric mean of the eigenvalues (determinant radius), which can be
-    specified using the `sizeType` parameter. Both of these measures give the
-    :math:`\sigma^2` parameter for a 2D Gaussian.
-
-    Since lensing preserves surface brightness, the determinant radius relates
-    the magnification cleanly as it is derived from the area of isophotes, but
-    have a slightly higher chance of being NaNs for noisy moment estimates.
+    specified using the `sizeType` parameter. Both of these measures
+    correspond to the :math:`\sigma^2` parameter for a 2D Gaussian.
 
     Notes
     -----
-    This is a size measurement used for doing QA on the ellipticity
-    of the sources.
+    Since lensing preserves surface brightness, the determinant radius relates
+    the magnification cleanly as it is derived from the area of isophotes, but
+    have a slightly higher chance of being NaNs for noisy moment estimates.
     """
 
     colXx = Field[str](
@@ -91,12 +92,8 @@ class CalcShapeSize(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         if self.sizeType == "trace":
-            size = np.power(
-                0.5
-                * (
-                    data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)]  # type: ignore
-                ),  # type: ignore
-                0.5,
+            size = np.sqrt(
+                0.5 * (data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)])  # type: ignore
             )
         else:
             size = np.power(

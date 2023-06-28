@@ -161,6 +161,8 @@ class ScatterPlotWithTwoHists(PlotAction):
     xAxisLabel = Field[str](doc="Label to use for the x axis", optional=False)
     yAxisLabel = Field[str](doc="Label to use for the y axis", optional=False)
     magLabel = Field[str](doc="Label to use for the magnitudes used for SNR", optional=False)
+
+    legendLocation = Field[str](doc="Legend position within main plot", default="upper left")
     nBins = Field[float](doc="Number of bins on x axis", default=40.0)
     plot2DHist = Field[bool](
         doc="Plot a 2D histogram in dense areas of points on the scatter plot."
@@ -652,7 +654,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             handles=linesForLegend,
             ncol=4,
             fontsize=6,
-            loc="upper left",
+            loc=self.legendLocation,
             framealpha=0.9,
             edgecolor="k",
             borderpad=0.4,

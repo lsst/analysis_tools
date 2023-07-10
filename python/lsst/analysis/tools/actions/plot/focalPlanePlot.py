@@ -353,16 +353,17 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
             minX, minY = detector.getBBox().getMin()
             maxX, maxY = detector.getBBox().getMax()
 
-            if self.level.lower() == 'detector':
+            if self.level.lower() == "detector":
                 detectorInd = data["detector"] == detectorId
 
                 # This does the appropriate statistic for this
                 # detector's data.
-                statistic, _, _ = binned_statistic_dd([focalPlane_x[detectorInd],
-                                                       focalPlane_y[detectorInd]],
-                                                      data["z"][detectorInd],
-                                                      statistic=self.statistic,
-                                                      bins=[1, 1])
+                statistic, _, _ = binned_statistic_dd(
+                    [focalPlane_x[detectorInd], focalPlane_y[detectorInd]],
+                    data["z"][detectorInd],
+                    statistic=self.statistic,
+                    bins=[1, 1],
+                )
                 patches.append(Polygon(corners, True))
                 values.append(statistic.ravel()[0])
             else:
@@ -375,10 +376,10 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
 
                 # Calculate the rotation matrix between X/Y and U/V
                 # coordinates.
-                scaleUX = alpha * (maxU - minU)/(maxX - minX)
-                scaleVX = beta * (maxV - minV)/(maxX - minX)
-                scaleVY = alpha * (maxV - minV)/(maxY - minY)
-                scaleUY = beta * (maxU - minU)/(maxY - minY)
+                scaleUX = alpha * (maxU - minU) / (maxX - minX)
+                scaleVX = beta * (maxV - minV) / (maxX - minX)
+                scaleVY = alpha * (maxV - minV) / (maxY - minY)
+                scaleUY = beta * (maxU - minU) / (maxY - minY)
 
                 # After the rotation, some of the corners may have
                 # negative offsets.  This corresponds to corners that
@@ -400,23 +401,40 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                     # The corners are rotated into U/V coordinates,
                     # and the appropriate offset added.
                     ampCorners = []
-                    ampCorners.append((scaleUX * (ampMinX - minX) + scaleUY * (ampMinY - minY) + baseU,
-                                       scaleVY * (ampMinY - minY) + scaleVX * (ampMinX - minX) + baseV))
-                    ampCorners.append((scaleUX * (ampMaxX - minX) + scaleUY * (ampMaxY - minY) + baseU,
-                                       scaleVY * (ampMinY - minY) + scaleVX * (ampMinX - minX) + baseV))
-                    ampCorners.append((scaleUX * (ampMaxX - minX) + scaleUY * (ampMaxY - minY) + baseU,
-                                       scaleVY * (ampMaxY - minY) + scaleVX * (ampMaxX - minX) + baseV))
-                    ampCorners.append((scaleUX * (ampMinX - minX) + scaleUY * (ampMinY - minY) + baseU,
-                                       scaleVY * (ampMaxY - minY) + scaleVX * (ampMaxX - minX) + baseV))
+                    ampCorners.append(
+                        (
+                            scaleUX * (ampMinX - minX) + scaleUY * (ampMinY - minY) + baseU,
+                            scaleVY * (ampMinY - minY) + scaleVX * (ampMinX - minX) + baseV,
+                        )
+                    )
+                    ampCorners.append(
+                        (
+                            scaleUX * (ampMaxX - minX) + scaleUY * (ampMaxY - minY) + baseU,
+                            scaleVY * (ampMinY - minY) + scaleVX * (ampMinX - minX) + baseV,
+                        )
+                    )
+                    ampCorners.append(
+                        (
+                            scaleUX * (ampMaxX - minX) + scaleUY * (ampMaxY - minY) + baseU,
+                            scaleVY * (ampMaxY - minY) + scaleVX * (ampMaxX - minX) + baseV,
+                        )
+                    )
+                    ampCorners.append(
+                        (
+                            scaleUX * (ampMinX - minX) + scaleUY * (ampMinY - minY) + baseU,
+                            scaleVY * (ampMaxY - minY) + scaleVX * (ampMaxX - minX) + baseV,
+                        )
+                    )
                     patches.append(Polygon(ampCorners, True))
                     # This does the appropriate statistic for this
                     # amplifier's data.
                     if len(data["z"][detectorInd]) > 0:
-                        statistic, _, _ = binned_statistic_dd([focalPlane_x[detectorInd],
-                                                               focalPlane_y[detectorInd]],
-                                                              data["z"][detectorInd],
-                                                              statistic=self.statistic,
-                                                              bins=[1, 1])
+                        statistic, _, _ = binned_statistic_dd(
+                            [focalPlane_x[detectorInd], focalPlane_y[detectorInd]],
+                            data["z"][detectorInd],
+                            statistic=self.statistic,
+                            bins=[1, 1],
+                        )
                         values.append(statistic.ravel()[0])
                     else:
                         values.append(np.nan)
@@ -430,7 +448,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
         ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
 
-        patchCollection = PatchCollection(patches, alpha=0.4, edgecolor='black')
+        patchCollection = PatchCollection(patches, alpha=0.4, edgecolor="black")
         patchCollection.set_array(values)
         ax.add_collection(patchCollection)
 

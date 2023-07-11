@@ -80,6 +80,14 @@ def makeParser():
         "date, e.g. 2021-06-30T22:28:25Z. If not provided, the run time or "
         "current time is used.",
     )
+    parser.add_argument(
+        "--extra",
+        action=_AppendDict,
+        help="Extra field (in the form key=value) to be added to any records "
+        "uploaded to Sasquatch. See SasquatchDispatcher.dispatch and "
+        ".dispatchRef for more details. The --extra argument can be passed "
+        "multiple times.",
+    )
 
     api_group = parser.add_argument_group("Sasquatch API arguments")
     api_group.add_argument(
@@ -223,4 +231,5 @@ def main():
             timestamp=args.date_created,
             datasetIdentifier=args.dataset,
             identifierFields=dataId,
+            extraFields=args.extra,
         )

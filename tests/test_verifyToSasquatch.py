@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import argparse
 import tempfile
 import unittest
 
 import astropy.units as u
 import lsst.daf.butler.tests as butlerTests
-from lsst.analysis.tools.bin.verifyToSasquatch import _bundle_metrics
+from lsst.analysis.tools.bin.verifyToSasquatch import _AppendDict, _bundle_metrics
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
 from lsst.daf.butler import CollectionType, DataCoordinate
 from lsst.verify import Measurement
@@ -175,3 +176,103 @@ class VerifyToSasquatchTestSuite(unittest.TestCase):
         refs = self.butler.registry.queryDatasets("metricvalue_nopackage_notAMetric", collections=...)
         with self.assertRaises(ValueError):
             _bundle_metrics(self.butler, refs)
+
+
+class AppendDictTestSuite(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.testbed = argparse.ArgumentParser()
+
+    def test_default_none_positional(self):
+        self.testbed.add_argument("test", action=_AppendDict, nargs="*")
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {})
+
+        namespace = self.testbed.parse_args("baz=bak".split())
+        self.assertEqual(namespace.test, {"baz": "bak"})
+
+    def test_default_none_keyword(self):
+        self.testbed.add_argument("--test", action=_AppendDict)
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {})
+
+        namespace = self.testbed.parse_args("--test baz=bak".split())
+        self.assertEqual(namespace.test, {"baz": "bak"})
+
+    def test_default_empty_positional(self):
+        self.testbed.add_argument("test", action=_AppendDict, default={}, nargs="*")
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {})
+
+        namespace = self.testbed.parse_args("baz=bak".split())
+        self.assertEqual(namespace.test, {"baz": "bak"})
+
+    def test_default_empty_keyword(self):
+        self.testbed.add_argument("--test", action=_AppendDict, default={})
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {})
+
+        namespace = self.testbed.parse_args("--test baz=bak".split())
+        self.assertEqual(namespace.test, {"baz": "bak"})
+
+    def test_default_non_empty_positional(self):
+        self.testbed.add_argument("test", action=_AppendDict, default={"foo": "bar"}, nargs="*")
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {"foo": "bar"})
+
+        namespace = self.testbed.parse_args("baz=bak".split())
+        self.assertEqual(namespace.test, {"foo": "bar", "baz": "bak"})
+
+        namespace = self.testbed.parse_args("foo=fum".split())
+        self.assertEqual(namespace.test, {"foo": "fum"})
+
+    def test_default_non_empty_keyword(self):
+        self.testbed.add_argument("--test", action=_AppendDict, default={"foo": "bar"})
+
+        namespace = self.testbed.parse_args([])
+        self.assertEqual(namespace.test, {"foo": "bar"})
+
+        namespace = self.testbed.parse_args("--test baz=bak".split())
+        self.assertEqual(namespace.test, {"foo": "bar", "baz": "bak"})
+
+        namespace = self.testbed.parse_args("--test foo=fum".split())
+        self.assertEqual(namespace.test, {"foo": "fum"})
+
+    def test_default_invalid(self):
+        with self.assertRaises(TypeError):
+            self.testbed.add_argument("test", action=_AppendDict, default="bovine")
+        with self.assertRaises(TypeError):
+            self.testbed.add_argument("test", action=_AppendDict, default=[])
+
+    def test_multi_append(self):
+        self.testbed.add_argument("--test", action=_AppendDict)
+
+        namespace = self.testbed.parse_args("--test foo=bar --test baz=bak".split())
+        self.assertEqual(namespace.test, {"foo": "bar", "baz": "bak"})
+
+    def test_multi_nargs_append(self):
+        self.testbed.add_argument("--test", action=_AppendDict, nargs="*")
+
+        namespace = self.testbed.parse_args("--test foo=bar fee=fum --test baz=bak --test".split())
+        self.assertEqual(namespace.test, {"foo": "bar", "fee": "fum", "baz": "bak"})
+
+    def test_emptyvalue(self):
+        self.testbed.add_argument("test", action=_AppendDict)
+
+        namespace = self.testbed.parse_args("foo=".split())
+        self.assertEqual(namespace.test, {"foo": ""})
+
+    def test_nopair(self):
+        self.testbed.add_argument("test", action=_AppendDict)
+
+        with self.assertRaises(ValueError):
+            self.testbed.parse_args("foo".split())
+
+        with self.assertRaises(ValueError):
+            self.testbed.parse_args("assertion=beauty=truth".split())

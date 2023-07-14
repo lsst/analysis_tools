@@ -289,9 +289,9 @@ class RAcosDec(VectorAction):
         return ((self.decKey, Vector), (self.raKey, Vector))
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        ra = data[self.raKey]
-        dec = data[self.decKey]
-        return ra.to_numpy() * np.cos((dec.to_numpy() * u.degree).to(u.radian).value)
+        ra = np.array(data[self.raKey])
+        dec = np.array(data[self.decKey])
+        return ra * np.cos((dec * u.degree).to(u.radian).value)
 
 
 # Statistical vectorActions

@@ -454,7 +454,7 @@ class AnalysisPipelineTask(PipelineTask):
             The dataset with only the specified keys loaded.
         """
         if names is None:
-            names = self.collectInputNames()
+            names = list(self.collectInputNames())
         return cast(KeyedData, handle.get(parameters={"columns": names}))
 
     def collectInputNames(self) -> Iterable[str]:

@@ -127,6 +127,16 @@ class CoaddPlotFlagSelector(FlagSelector):
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
 
+    def refMatchContext(self):
+        self.selectWhenFalse = [
+            "{band}_psfFlux_flag_target",
+            "{band}_pixelFlags_saturatedCenter_target",
+            "{band}_extendedness_flag_target",
+            "xy_flag_target",
+        ]
+        self.selectWhenTrue = ["detect_isPatchInner_target",
+                               "detect_isDeblendedSource_target"]
+
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
         bands: tuple[str, ...]
@@ -154,7 +164,8 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_extendedness_flag",
             "xy_flag",
         ]
-        self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
+        self.selectWhenTrue = ["detect_isPatchInner",
+                               "detect_isDeblendedSource"]
 
 
 class VisitPlotFlagSelector(FlagSelector):
@@ -162,8 +173,20 @@ class VisitPlotFlagSelector(FlagSelector):
     (i.e., using sourceTable_visit catalogs).
     """
 
+    catalogSuffix = Field[str](
+        doc="The suffix to apply to all the keys.", default="")
+
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
+
+    def refMatchContext(self):
+        self.selectWhenFalse = [
+            "psfFlux_flag_target",
+            "pixelFlags_saturatedCenter_target",
+            "extendedness_flag_target",
+            "centroid_flag_target",
+        ]
+
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
@@ -227,8 +250,11 @@ class SnSelector(SelectorBase):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield (fluxCol := self.fluxType), Vector
-        yield f"{fluxCol}{self.uncertaintySuffix}", Vector
+        fluxCol = self.fluxType
+        fluxInd = fluxCol.find("lux") + len("lux")
+        errCol = f"{fluxCol}"[:fluxInd] + f"{self.uncertaintySuffix}" + f"{fluxCol}"[fluxInd:]
+        yield fluxCol, Vector
+        yield errCol, Vector
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Makes a mask of objects that have S/N greater than
@@ -260,8 +286,9 @@ class SnSelector(SelectorBase):
                 bands = ("",)
         for band in bands:
             fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
-            errCol = f"{fluxCol}{self.uncertaintySuffix.format(**kwargs)}"
-            vec = cast(Vector, data[fluxCol]) / cast(Vector, data[errCol])
+            fluxInd = fluxCol.find("lux") + len("lux")
+            errCol = f"{fluxCol}"[:fluxInd] + f"{self.uncertaintySuffix.format(**kwargs)}" + f"{fluxCol}"[fluxInd:]
+            vec = cast(Vector, data[fluxCol]) / data[errCol]
             temp = (vec > self.threshold) & (vec < self.maxSN)
             if mask is not None:
                 mask &= temp  # type: ignore

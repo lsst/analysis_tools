@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from astropy.table import vstack
 
 from ..actions.plot.plotUtils import shorten_list
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, KeyedData
@@ -51,7 +52,7 @@ class ObjectTableSurveyAnalysisConnections(
     data = ct.Input(
         doc="Input catalog of objects",
         name="objectTable_tract",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         multiple=True,
         dimensions=("tract", "skymap"),
@@ -122,4 +123,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         if names is None:
             names = self.collectInputNames()
 
-        return cast(KeyedData, pd.concat(h.get(parameters={"columns": names}) for h in handle))
+        cats = []
+        for h in handle:
+            cats.append(h.get(parameters={"columns": names}))
+        return vstack(cats)

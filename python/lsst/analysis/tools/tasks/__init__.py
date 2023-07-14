@@ -7,3 +7,4 @@ from .diffMatchedAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .sourceTableVisitAnalysis import *
+from .refCatObjectPhotometricAnalysis import *

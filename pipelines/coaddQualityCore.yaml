@@ -32,6 +32,30 @@ tasks:
         from lsst.analysis.tools.contexts import *
         from lsst.analysis.tools.actions.plot import *
   catalogMatchTract:
-    class: lsst.analysis.tools.tasks.catalogMatch.CatalogMatchTask
+    class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
+    config:
+      connections.refCatalog: gaia_dr2_20200414
   refCatObjectTract:
     class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
+    config:
+      atools.astromDiffRAScatterPlot: TargetRefCatDeltaRAScatterPlot
+      atools.astromDiffDecScatterPlot: TargetRefCatDeltaDecScatterPlot
+      atools.astromDiffRASkyPlot: TargetRefCatDeltaRASkyPlot
+      atools.astromDiffDecSkyPlot: TargetRefCatDeltaDecSkyPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+
+    ## Perform photometric comparison to the reference catalog
+  photometricCatalogMatch:
+    class: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask
+    config:
+      connections.refCatalog: ps1_pv3_3pi_20170110
+  photometricRefCatObjectTract:
+    class: lsst.analysis.tools.tasks.refCatObjectPhotometricAnalysis.RefCatObjectPhotometricAnalysisTask
+    config:
+      atools.targetRefCatDeltaPsfScatterPlot: TargetRefCatDeltaPsfScatterPlot
+      atools.targetRefCatDeltaCModelScatterPlot: TargetRefCatDeltaCModelScatterPlot
+      atools.targetRefCatDeltaPsfSkyPlot: TargetRefCatDeltaPsfSkyPlot
+      atools.targetRefCatDeltaCModelSkyPlot: TargetRefCatDeltaCModelSkyPlot
+      python: |
+        from lsst.analysis.tools.atools import *

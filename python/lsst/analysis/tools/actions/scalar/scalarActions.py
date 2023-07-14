@@ -35,8 +35,12 @@ class MedianAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return cast(Scalar, float(np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+        if data[self.vectorKey.format(**kwargs)][mask] != []:
+            med = cast(Scalar, float(np.nanmedian(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+        else:
+            med = np.NaN
 
+        return med
 
 class MeanAction(ScalarAction):
     """Calculates the mean of the given data."""
@@ -48,7 +52,12 @@ class MeanAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return cast(Scalar, float(np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+        if data[self.vectorKey.format(**kwargs)][mask] != []:
+            mean = cast(Scalar, float(np.nanmean(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+        else:
+            mean = np.NaN
+
+        return mean
 
 
 class StdevAction(ScalarAction):

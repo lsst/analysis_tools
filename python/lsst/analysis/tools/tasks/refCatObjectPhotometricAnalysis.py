@@ -20,36 +20,28 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("RefCatObjectAnalysisConfig", "RefCatObjectAnalysisTask")
+__all__ = ("RefCatObjectPhotometricAnalysisConfig", "RefCatObjectPhotometricAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
-from ..atools.refCatMatchPlots import (
-    TargetRefCatDeltaDecScatterPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaRAScatterPlot,
-    TargetRefCatDeltaRASkyPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaPsfScatterPlot,
-    TargetRefCatDeltaPsfSkyPlot,
-)
-from ..contexts import CoaddContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..atools.refCatMatchPlots import (
+    TargetRefCatDeltaPsfScatterPlot,
+    TargetRefCatDeltaCModelScatterPlot,
+    TargetRefCatDeltaPsfSkyPlot,
+    TargetRefCatDeltaCModelSkyPlot,
+)
 
 
-class RefCatObjectAnalysisConnections(
+class RefCatObjectPhotometricAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={
-        "targetCatalog": "objectTable_tract",
-        "refCatalog": "gaia_dr2_20200414",
-        "outputName": "objectTable_tract_gaia_dr2_20200414_match",
-    },
+    defaultTemplates={"outputName": "objectTable_tract_ps1_pv3_3pi_20170110_match"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="objectTable_tract_ps1_pv3_3pi_20170110_match",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),
@@ -63,13 +55,16 @@ class RefCatObjectAnalysisConnections(
     )
 
 
-class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatObjectAnalysisConnections):
+class RefCatObjectPhotometricAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=RefCatObjectPhotometricAnalysisConnections
+):
     pass
 
-class RefCatObjectAnalysisTask(AnalysisPipelineTask):
-    """Make plots and metrics using a table of objects matched to reference
-    catalog sources.
+class RefCatObjectPhotometricAnalysisTask(AnalysisPipelineTask):
+    """Make plots and metrics using a table of objects matched to photometric
+    reference catalog sources. These plots compare the photometry in each of the
+    specified bands.
     """
 
-    ConfigClass = RefCatObjectAnalysisConfig
-    _DefaultName = "refCatObjectAnalysisTask"
+    ConfigClass = RefCatObjectPhotometricAnalysisConfig
+    _DefaultName = "refCatObjectPhotometricAnalysisTask"

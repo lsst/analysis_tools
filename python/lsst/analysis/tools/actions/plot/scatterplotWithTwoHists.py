@@ -721,7 +721,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         y_min, y_max = ax.get_ylim()
         bins = np.linspace(y_min, y_max, 100)
-        sideHist.hist(y_all, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        sideHist.hist(np.array(y_all), bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
         kwargs_hist = dict(
             bins=bins,
             histtype="step",

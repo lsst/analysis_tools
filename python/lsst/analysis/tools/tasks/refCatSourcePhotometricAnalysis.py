@@ -20,43 +20,38 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("RefCatSourceAnalysisConfig", "RefCatSourceAnalysisTask")
+__all__ = ("RefCatSourcePhotometricAnalysisConfig", "RefCatSourcePhotometricAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
+from lsst.skymap import BaseSkyMap
 
-from ..atools.astrometryWithReference import (
-    TargetRefCatDeltaDecScatterPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaRAScatterPlot,
-    TargetRefCatDeltaRASkyPlot,
-)
-from ..contexts import VisitContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class RefCatSourceAnalysisConnections(
+class RefCatSourcePhotometricAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("visit",),
-    defaultTemplates={"outputName": "sourceTable_visit_gaia_dr2_20200414_match"},
+    dimensions=("skymap", "tract"),
+    defaultTemplates={"outputName": "sourceTable_visit_ps1_pv3_3pi_20170110_match"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="sourceTable_visit_gaia_dr2_20200414_match",
-        storageClass="DataFrame",
+        name="sourceTable_visit_ps1_pv3_3pi_20170110_match",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),
     )
 
 
-class RefCatSourceAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatSourceAnalysisConnections):
-    def setDefaults(self):
-        super().setDefaults()
+class RefCatSourcePhotometricAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=RefCatSourcePhotometricAnalysisConnections
+):
+    pass
 
-
-class RefCatSourceAnalysisTask(AnalysisPipelineTask):
-    """Make plots and metrics using a table of objects matched to reference
-    catalog sources.
+class RefCatSourcePhotometricAnalysisTask(AnalysisPipelineTask):
+    """Make plots and metrics using a table of objects matched to photometric
+    reference catalog sources. These plots compare the photometry in each of the
+    specified bands.
     """
 
-    ConfigClass = RefCatSourceAnalysisConfig
-    _DefaultName = "refCatSourceAnalysisTask"
+    ConfigClass = RefCatSourcePhotometricAnalysisConfig
+    _DefaultName = "refCatSourcePhotometricAnalysisTask"

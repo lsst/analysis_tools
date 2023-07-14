@@ -60,4 +60,3 @@ class RefMatchContext(Context):
     """A context which indicates that `AnalysisActions` are being computed
     on HSC data matched to the Gaia or PS reference catalogues.
     """
->>>>>>> 2b4c130 (Somewhere in the middle)

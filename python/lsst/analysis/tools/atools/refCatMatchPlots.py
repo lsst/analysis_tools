@@ -30,8 +30,12 @@ __all__ = (
     "TargetRefCatDeltaSkyPlotPhotom",
     "TargetRefCatDeltaPsfScatterPlot",
     "TargetRefCatDeltaCModelScatterPlot",
+    "TargetRefCatDeltaCModelSkyPlot",
     "TargetRefCatDeltaPsfSkyPlot",
     "TargetRefCatDeltaRASkyVisitPlot",
+    "TargetRefCatDeltaAp09ScatterVisitPlot",
+    "TargetRefCatDeltaPsfScatterVisitPlot",
+    "TargetRefCatDeltaAp09SkyVisitPlot",
     "TargetRefCatDeltaPsfSkyVisitPlot",
     "TargetRefCatDeltaDecSkyVisitPlot",
     "TargetRefCatDeltaRAScatterVisitPlot",
@@ -47,7 +51,7 @@ from ..actions.vector import (
     CoaddPlotFlagSelector,
     VisitPlotFlagSelector,
     DownselectVector,
-    ExtinctionCorrectedMagDiff,
+    MagDiff,
     LoadVector,
     ConvertFluxToMag,
     SnSelector,
@@ -173,11 +177,10 @@ class TargetRefCatDeltaScatterPhotom(TargetRefCatDelta):
     def setDefaults(self, vectorKey):
         super().setDefaults(vectorKey)
 
-        self.process.buildActions.yStars = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.yStars.magDiff.col1 = "{band}" + f"_{vectorKey}"
-        self.process.buildActions.yStars.magDiff.col2 ="{band}_mag_ref"
-        self.process.buildActions.yStars.magDiff.fluxUnits2 = "mag(AB)"
-        self.process.buildActions.yStars.ebvCol = "ebv_target"
+        self.process.buildActions.yStars = MagDiff()
+        self.process.buildActions.yStars.col1 = "{band}" + f"_{vectorKey}"
+        self.process.buildActions.yStars.col2 ="{band}_mag_ref"
+        self.process.buildActions.yStars.fluxUnits2 = "mag(AB)"
 
         self.process.buildActions.xStars = ConvertFluxToMag()
         self.process.buildActions.xStars.vectorKey = "{band}_psfFlux_target"
@@ -193,6 +196,36 @@ class TargetRefCatDeltaScatterPhotom(TargetRefCatDelta):
         self.produce.xAxisLabel = "PSF Magnitude (mag)"
         self.produce.yAxisLabel = f"Output Mag - Ref Mag (mmag)"
         self.applyContext(CoaddContext)
+        self.applyContext(RefMatchContext)
+
+class TargetRefCatDeltaScatterPhotomVisit(TargetRefCatDelta):
+    """Plot the difference in millimags between a target catalog and a
+    reference catalog for the flux type set in `setDefaults`.
+    """
+
+    def setDefaults(self, vectorKey):
+        super().setDefaults(vectorKey)
+
+        self.process.buildActions.yStars = MagDiff()
+        self.process.buildActions.yStars.col1 = f"{vectorKey}"
+        self.process.buildActions.yStars.col2 = "mag_ref"
+        self.process.buildActions.yStars.fluxUnits2 = "mag(AB)"
+
+        self.process.buildActions.xStars = ConvertFluxToMag()
+        self.process.buildActions.xStars.vectorKey = "psfFlux_target"
+
+        self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="yStars")
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux_target"
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux_target"
+        self.process.calculateActions.stars.fluxType = "psfFlux_target"
+
+        self.produce = ScatterPlotWithTwoHists()
+        self.produce.addSummaryPlot = False
+        self.produce.plotTypes = ["stars"]
+        self.produce.magLabel = "PSF Magnitude (mag)"
+        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.yAxisLabel = f"Output Mag - Ref Mag (mmag)"
+        self.applyContext(VisitContext)
         self.applyContext(RefMatchContext)
 
 
@@ -211,6 +244,23 @@ class TargetRefCatDeltaCModelScatterPlot(TargetRefCatDeltaScatterPhotom):
 
     def setDefaults(self):
         super().setDefaults(vectorKey="cModelFlux_target")
+
+
+class TargetRefCatDeltaPsfScatterVisitPlot(TargetRefCatDeltaScatterPhotomVisit):
+    """Plot the difference in millimags between the PSF flux
+    of a target catalog and a reference catalog
+    """
+
+    def setDefaults(self):
+        super().setDefaults(vectorKey="psfFlux_target")
+
+class TargetRefCatDeltaAp09ScatterVisitPlot(TargetRefCatDeltaScatterPhotomVisit):
+    """Plot the difference in millimags between the CModel flux
+    of a target catalog and a reference catalog.
+    """
+
+    def setDefaults(self):
+        super().setDefaults(vectorKey="ap09Flux_target")
 
 
 class TargetRefCatDeltaRAScatterPlot(TargetRefCatDeltaScatterAstrom):
@@ -298,18 +348,18 @@ class TargetRefCatDeltaSkyPlotAstrom(TargetRefCatDeltaSkyPlot):
         coordStr = vectorKey.lower()
         self.process.buildActions.zStars = ConvertUnits(
             buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond")
-        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux_target"
 
         self.produce.plotName = f"astromDiffSky_{vectorKey}"
         self.produce.zAxisLabel = f"${vectorKey}_{{target}} - {vectorKey}_{{ref}}$ (marcsec)"
         self.applyContext(CoaddContext)
         self.applyContext(RefMatchContext)
 
+        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux_target"
 
 class TargetRefCatDeltaSkyPlotAstromVisit(TargetRefCatDeltaSkyPlot):
-    """Base class for plotting the RA/Dec distribution of stars, with the
-    difference between the RA or Dec of the target and reference catalog as
-    the color.
+    """Base class for plotting the RA/Dec distribution of stars at 
+    the visit level, with the difference between the RA or Dec of 
+    the target and reference catalog as the color.
     """
 
     def setDefaults(self, vectorKey):
@@ -336,11 +386,10 @@ class TargetRefCatDeltaSkyPlotPhotomVisit(TargetRefCatDeltaSkyPlot):
 
         self.applyContext(RefMatchContext)
 
-        self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.zStars.magDiff.col1 = f"{vectorKey}"
-        self.process.buildActions.zStars.magDiff.col2 = "mag_ref"
-        self.process.buildActions.zStars.magDiff.fluxUnits2= "mag(AB)"
-        self.process.buildActions.zStars.ebvCol = "ebv_target"
+        self.process.buildActions.zStars = MagDiff()
+        self.process.buildActions.zStars.col1 = f"{vectorKey}"
+        self.process.buildActions.zStars.col2 = "mag_ref"
+        self.process.buildActions.zStars.fluxUnits2= "mag(AB)"
 
         self.produce.plotName = "photomDiffSky"
         self.produce.zAxisLabel = "Output Mag - Ref Mag (mmag)"
@@ -358,11 +407,10 @@ class TargetRefCatDeltaSkyPlotPhotom(TargetRefCatDeltaSkyPlot):
 
         self.applyContext(RefMatchContext)
 
-        self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.zStars.magDiff.col1 = "{band}" + f"_{vectorKey}"
-        self.process.buildActions.zStars.magDiff.col2 = "{band}_mag_ref"
-        self.process.buildActions.zStars.magDiff.fluxUnits2= "mag(AB)"
-        self.process.buildActions.zStars.ebvCol = "ebv_target"
+        self.process.buildActions.zStars = MagDiff()
+        self.process.buildActions.zStars.col1 = "{band}" + f"_{vectorKey}"
+        self.process.buildActions.zStars.col2 = "{band}_mag_ref"
+        self.process.buildActions.zStars.fluxUnits2= "mag(AB)"
 
         self.produce.plotName = "photomDiffSky_{band}"
         self.produce.zAxisLabel = "Output Mag - Ref Mag (mmag)"
@@ -389,6 +437,17 @@ class TargetRefCatDeltaPsfSkyVisitPlot(TargetRefCatDeltaSkyPlotPhotomVisit):
 
     def setDefaults(self):
         super().setDefaults(vectorKey="psfFlux_target")
+
+
+class TargetRefCatDeltaAp09SkyVisitPlot(TargetRefCatDeltaSkyPlotPhotomVisit):
+    """Plot the RA/Dec distribution of stars, with the
+    difference between the Ap09 photometry of the target and reference catalog as
+    the color.
+    """
+
+    def setDefaults(self):
+        super().setDefaults(vectorKey="ap09Flux_target")
+
 
 
 class TargetRefCatDeltaCModelSkyPlot(TargetRefCatDeltaSkyPlotPhotom):

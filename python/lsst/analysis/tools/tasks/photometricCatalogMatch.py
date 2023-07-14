@@ -193,7 +193,6 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         # The matcher adds the band to the front of the columns
         # but the visit plots aren't expecting it
-        matchedCat = outputs.matchedCatalog
         cols = list(outputs.matchedCatalog.columns)
         for col in cols:
             if col[:2] == bands[0] + "_":

@@ -23,7 +23,6 @@ from __future__ import annotations
 __all__ = ("RefCatSourcePhotometricAnalysisConfig", "RefCatSourcePhotometricAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
-from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -47,9 +46,11 @@ class RefCatSourcePhotometricAnalysisConfig(
 ):
     pass
 
+
 class RefCatSourcePhotometricAnalysisTask(AnalysisPipelineTask):
-    """Make plots and metrics using a table of objects matched to photometric
-    reference catalog sources. These plots compare the photometry in each of the
+    """Make plots and metrics using a table of objects
+    matched to photometric reference catalog sources.
+    These plots compare the photometry in each of the
     specified bands.
     """
 

@@ -43,6 +43,7 @@ class MedianAction(ScalarAction):
 
         return med
 
+
 class MeanAction(ScalarAction):
     """Calculates the mean of the given data."""
 

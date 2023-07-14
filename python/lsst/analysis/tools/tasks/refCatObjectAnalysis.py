@@ -25,16 +25,6 @@ __all__ = ("RefCatObjectAnalysisConfig", "RefCatObjectAnalysisTask")
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
-from ..atools.refCatMatchPlots import (
-    TargetRefCatDeltaDecScatterPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaRAScatterPlot,
-    TargetRefCatDeltaRASkyPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaPsfScatterPlot,
-    TargetRefCatDeltaPsfSkyPlot,
-)
-from ..contexts import CoaddContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -55,7 +45,7 @@ class RefCatObjectAnalysisConnections(
         dimensions=("skymap", "tract"),
     )
 
-    skymap  = ct.Input(
+    skymap = ct.Input(
         doc="The skymap that covers the tract that the data is from.",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
@@ -65,6 +55,7 @@ class RefCatObjectAnalysisConnections(
 
 class RefCatObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatObjectAnalysisConnections):
     pass
+
 
 class RefCatObjectAnalysisTask(AnalysisPipelineTask):
     """Make plots and metrics using a table of objects matched to reference

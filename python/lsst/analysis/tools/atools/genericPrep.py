@@ -27,7 +27,6 @@ from ..interfaces import BasePrep
 
 
 class CoaddPrep(BasePrep):
-
     def setDefaults(self):
         super().setDefaults()
 
@@ -40,7 +39,6 @@ class CoaddPrep(BasePrep):
 
 
 class VisitPrep(BasePrep):
-
     def setDefaults(self):
         super().setDefaults()
 

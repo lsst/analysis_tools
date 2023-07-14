@@ -26,12 +26,6 @@ from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-from ..atools.refCatMatchPlots import (
-    TargetRefCatDeltaPsfScatterPlot,
-    TargetRefCatDeltaCModelScatterPlot,
-    TargetRefCatDeltaPsfSkyPlot,
-    TargetRefCatDeltaCModelSkyPlot,
-)
 
 
 class RefCatObjectPhotometricAnalysisConnections(
@@ -47,7 +41,7 @@ class RefCatObjectPhotometricAnalysisConnections(
         dimensions=("skymap", "tract"),
     )
 
-    skymap  = ct.Input(
+    skymap = ct.Input(
         doc="The skymap that covers the tract that the data is from.",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
@@ -60,9 +54,11 @@ class RefCatObjectPhotometricAnalysisConfig(
 ):
     pass
 
+
 class RefCatObjectPhotometricAnalysisTask(AnalysisPipelineTask):
-    """Make plots and metrics using a table of objects matched to photometric
-    reference catalog sources. These plots compare the photometry in each of the
+    """Make plots and metrics using a table of objects
+    matched to photometric reference catalog sources.
+    These plots compare the photometry in each of the
     specified bands.
     """
 

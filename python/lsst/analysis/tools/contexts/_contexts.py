@@ -56,6 +56,7 @@ class MatchedRefChiContext(Context):
     differences between matches to reference objects.
     """
 
+
 class RefMatchContext(Context):
     """A context which indicates that `AnalysisActions` are being computed
     on HSC data matched to the Gaia or PS reference catalogues.

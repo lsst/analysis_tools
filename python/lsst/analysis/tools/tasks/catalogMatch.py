@@ -22,25 +22,18 @@
 __all__ = ("CatalogMatchConfig", "CatalogMatchTask")
 
 
-import numpy as np
-from astropy.time import Time
-from astropy.table import Table, hstack
-from smatch import Matcher
-import os.path
-
+import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
+import numpy as np
+from astropy.table import Table, hstack
+from astropy.time import Time
+from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 from lsst.skymap import BaseSkyMap
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
-import lsst.geom
-from ..actions.vector import (
-    CoaddPlotFlagSelector,
-    GalaxySelector,
-    SnSelector,
-    StarSelector,
-    VisitPlotFlagSelector,
-)
+from smatch import Matcher
+
+from ..actions.vector import CoaddPlotFlagSelector, GalaxySelector, SnSelector, StarSelector
 from ..interfaces import VectorAction
 
 
@@ -81,10 +74,7 @@ class CatalogMatchConnections(
     )
 
 
-class CatalogMatchConfig(
-    pipeBase.PipelineTaskConfig, pipelineConnections=CatalogMatchConnections
-):
-
+class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=CatalogMatchConnections):
     referenceCatalogLoader = pexConfig.ConfigurableField(
         target=LoadReferenceCatalogTask,
         doc="Reference catalog loader",
@@ -139,13 +129,11 @@ class CatalogMatchConfig(
     decColumn = pexConfig.Field[str](doc="Dec column.", default="coord_dec")
     patchColumn = pexConfig.Field[str](doc="Patch column.", default="patch")
 
-    # in the validation, we need to confirm that all of the filter names are in the filter map.
-
-    # do a setDefaults and set however you like.
     def setDefaults(self):
         super().setDefaults()
         self.referenceCatalogLoader.doReferenceSelection = False
         self.referenceCatalogLoader.doApplyColorTerms = False
+
 
 class CatalogMatchTask(pipeBase.PipelineTask):
     """The base task for matching catalogs. Figures out which columns
@@ -153,6 +141,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
     two tables together and returns the matched and joined table
     including the extra columns.
     """
+
     ConfigClass = CatalogMatchConfig
     _DefaultName = "analysisToolsCatalogMatch"
 
@@ -199,8 +188,9 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             # Run the matcher.
 
             # This all assumes that everything is in degrees.
-            # Which I think is okay, but the current task allows different units.
-            # Need to configure match radius, either in this task or a subtask.
+            # Which I think is okay, but the current task
+            # allows different units. Need to configure match
+            # radius, either in this task or a subtask.
             with Matcher(loadedRefCat["ra"], loadedRefCat["dec"]) as m:
                 idx, refMatchIndices, targetMatchIndices, dists = m.query_radius(
                     targetCatalog[self.config.raColumn],
@@ -222,7 +212,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         for col in refCols:
             loadedRefCatMatched.rename_column(col, col + "_ref")
 
-        for (i, band) in enumerate(bands):
+        for i, band in enumerate(bands):
             loadedRefCatMatched[band + "_mag_ref"] = loadedRefCatMatched["refMag_ref"][:, i]
             loadedRefCatMatched[band + "_magErr_ref"] = loadedRefCatMatched["refMagErr_ref"][:, i]
         loadedRefCatMatched.remove_column("refMag_ref")
@@ -243,12 +233,16 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             for col in self.config.extraPerBandColumns:
                 bandColumns.append(band + "_" + col)
 
-        columns = [
-            self.config.raColumn,
-            self.config.decColumn,
-        ] + self.config.extraColumns.list() + bandColumns
+        columns = (
+            [
+                self.config.raColumn,
+                self.config.decColumn,
+            ]
+            + self.config.extraColumns.list()
+            + bandColumns
+        )
 
-        if self.config.patchColumn is not "":
+        if self.config.patchColumn != "":
             columns.append(self.config.patchColumn)
 
         selectorBands = list(set(list(bands) + self.config.selectorBands.list()))
@@ -270,7 +264,8 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         Parameters
         ----------
-        `loaderTask` : lsst.pipe.tasks.loadReferenceCatalog.loadReferenceCatalogTask
+        `loaderTask` :
+            lsst.pipe.tasks.loadReferenceCatalog.loadReferenceCatalogTask
         `tractInfo` : lsst.skymap.tractInfo.ExplicitTractInfo
             The tract information to get the sky location from
 

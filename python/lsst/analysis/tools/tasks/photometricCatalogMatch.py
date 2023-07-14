@@ -35,6 +35,7 @@ from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 import lsst.geom
 from ..actions.vector import (
     CoaddPlotFlagSelector,
+    VisitPlotFlagSelector,
     GalaxySelector,
     SnSelector,
     StarSelector,
@@ -116,14 +117,14 @@ class PhotometricCatalogMatchVisitConnections(
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="ArrowAstropy",
-        name="sourceTable_visit",
+        name="{targetCatalog}",
         dimensions=("visit",),
         deferLoad=True,
     )
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
         doc="The photometric reference catalog to match to.",
-        name="ps1_pv3_3pi_20170110",
+        name="{refCatalog}",
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,
@@ -137,21 +138,28 @@ class PhotometricCatalogMatchVisitConnections(
         dimensions=("visit",),
     )
 
+    matchedCatalog = pipeBase.connectionTypes.Output(
+        doc="Catalog with matched target and reference objects with separations",
+        name="{targetCatalog}_{refCatalog}_match",
+        storageClass="ArrowAstropy",
+        dimensions=("visit",),
+    )
+
+
 
 class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
 
-    filterNames = pexConfig.ListField[str](
-        doc="Physical filter names to persist downstream.",
-        default=[],
-    )
-
     def setDefaults(self):
+        self.filterNames = []
         self.extraPerBandColumns = []
         self.patchColumn = ""
-        self.extraColumns = ["x", "y"]
         self.selectorBands = []
+        self.selectorActions.flagSelector = VisitPlotFlagSelector
+        self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector1.fluxType = "psfFlux"
+        self.extraColumnSelectors.selector2.vectorKey = "extendedness"
 
 class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
     """A wrapper task to provide the information that
@@ -173,11 +181,21 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         """
 
         inputs = butlerQC.get(inputRefs)
-        bands = []
-        for filterName in self.config.filterNames:
-            bands.append(self.config.referenceCatalogLoader.refObjLoader.filterMap[filterName])
+        physicalFilter = inputs["catalog"].dataId["physical_filter"]
+        bands = [self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter]]
+        # No bands needed for visit tables
+        # but we do need them later for the matching
+        columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()
+        for selectorAction in [
+            self.config.selectorActions,
+            self.config.sourceSelectorActions,
+            self.config.extraColumnSelectors,
+        ]:
+            for selector in selectorAction:
+                selectorSchema = selector.getFormattedInputSchema()
+                columns += [s[0] for s in selectorSchema]
 
-        columns = self.prepColumns(bands)
+
         table = inputs["catalog"].get(parameters={"columns": columns})
         inputs["catalog"] = table
 
@@ -189,7 +207,44 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         )
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
-        loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
+        loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable, physicalFilter)
         outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=bands)
 
+        # The matcher adds the band to the front of the columns
+        # but the visit plots aren't expecting it
+        matchedCat = outputs.matchedCatalog
+        cols = list(outputs.matchedCatalog.columns)
+        for col in cols:
+            if col[:2] == bands[0] + "_":
+                outputs.matchedCatalog.rename_column(col, col[2:])
+
         butlerQC.put(outputs, outputRefs)
+
+    def _loadRefCat(self, loaderTask, visitSummaryTable, physicalFilter):
+        """Make a reference catalog with coordinates in degrees
+
+        Parameters
+        ----------
+        visitSummaryTable : `lsst.afw.table.ExposureCatalog`
+            The table of visit information
+        """
+        # Get convex hull around the detectors, then get its center and radius
+        corners = []
+        for visSum in visitSummaryTable:
+            for (ra, dec) in zip(visSum["raCorners"], visSum["decCorners"]):
+                corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
+        visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
+        center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
+        radius = visitBoundingCircle.getOpeningAngle()
+
+        # Get the observation date of the visit
+        obsDate = visSum.getVisitInfo().getDate()
+        epoch = Time(obsDate.toPython())
+
+        # Load the reference catalog in the skyCircle of the detectors, then
+        # convert the coordinates to degrees and convert the catalog to a
+        # dataframe
+
+        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, [physicalFilter], epoch=epoch)
+
+        return Table(loadedRefCat)

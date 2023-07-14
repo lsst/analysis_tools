@@ -177,8 +177,8 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
                 selectorSchema = selector.getFormattedInputSchema()
                 columns += [s[0] for s in selectorSchema]
 
-        dataFrame = inputs["catalog"].get(parameters={"columns": columns})
-        inputs["catalog"] = dataFrame
+        table = inputs["catalog"].get(parameters={"columns": columns})
+        inputs["catalog"] = table
 
         loaderTask = LoadReferenceCatalogTask(
             config=self.config.referenceCatalogLoader,

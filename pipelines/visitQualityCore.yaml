@@ -12,3 +12,28 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
+  catalogMatchVisit:
+    class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
+    config:
+      connections.refCatalog: gaia_dr2_20200414
+  astrometricRefCatSourceVisit:
+    class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
+    config:
+      atools.astromDiffRASkyVisitPlot: TargetRefCatDeltaRASkyVisitPlot
+      atools.astromDiffDecSkyVisitPlot: TargetRefCatDeltaDecSkyVisitPlot
+      atools.astromDiffRAScatterVisitPlot: TargetRefCatDeltaRAScatterVisitPlot
+      atools.astromDiffDecScatterVisitPlot: TargetRefCatDeltaDecScatterVisitPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+  photometricMatchVisit:
+    class: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchVisitTask
+    config:
+      extraColumns: ["x", "y", "ap09Flux", "ap09FluxErr"]
+  photometricRefCatSourceVisit:
+    class: lsst.analysis.tools.tasks.refCatSourcePhotometricAnalysis.RefCatSourcePhotometricAnalysisTask
+    config:
+      atools.photomDiffPsfSkyVisitPlot: TargetRefCatDeltaPsfSkyVisitPlot
+      atools.photomDiffAp09SkyVisitPlot: TargetRefCatDeltaAp09SkyVisitPlot
+      atools.photoDiffPsfScatterVisitPlot: TargetRefCatDeltaPsfScatterVisitPlot
+      atools.photoDiffCModelScatterVisitPlot: TargetRefCatDeltaAp09ScatterVisitPlot
+      python: from lsst.analysis.tools.atools import *

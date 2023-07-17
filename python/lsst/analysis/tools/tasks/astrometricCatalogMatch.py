@@ -19,34 +19,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ("AstrometricCatalogMatchConfig", "AstrometricCatalogMatchTask", "AstrometricCatalogMatchVisitConfig", "AstrometricCatalogMatchVisitTask")
+__all__ = (
+    "AstrometricCatalogMatchConfig",
+    "AstrometricCatalogMatchTask",
+    "AstrometricCatalogMatchVisitConfig",
+    "AstrometricCatalogMatchVisitTask",
+)
 
-import astropy.units as units
 import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
-import numpy as np
-import pandas as pd
-from astropy.coordinates import SkyCoord
-from astropy.time import Time
 from astropy.table import Table
-from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
-from lsst.meas.algorithms import ReferenceObjectLoader
+from astropy.time import Time
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
-from lsst.skymap import BaseSkyMap
+from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
-from ..actions.vector import (
-    CoaddPlotFlagSelector,
-    GalaxySelector,
-    SnSelector,
-    StarSelector,
-    VisitPlotFlagSelector,
-)
+from ..actions.vector import VisitPlotFlagSelector
+from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
-from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchTask, CatalogMatchConnections
 
 class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=CatalogMatchConnections):
-
     bands = pexConfig.ListField[str](
         doc="The bands to persist downstream",
         default=["g", "r", "i", "z", "y"],
@@ -58,12 +50,12 @@ class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=Cata
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = False
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"
 
+
 class AstrometricCatalogMatchTask(CatalogMatchTask):
     """Match a tract-level catalog to a reference catalog"""
 
     ConfigClass = AstrometricCatalogMatchConfig
     _DefaultName = "analysisToolsAstrometricCatalogMatch"
-
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         # Docs inherited from base class
@@ -94,7 +86,6 @@ class AstrometricCatalogMatchVisitConnections(
     dimensions=("visit",),
     defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr2_20200414"},
 ):
-
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="ArrowAstropy",
@@ -127,7 +118,9 @@ class AstrometricCatalogMatchVisitConnections(
     )
 
 
-class AstrometricCatalogMatchVisitConfig(AstrometricCatalogMatchConfig, pipelineConnections=AstrometricCatalogMatchVisitConnections):
+class AstrometricCatalogMatchVisitConfig(
+    AstrometricCatalogMatchConfig, pipelineConnections=AstrometricCatalogMatchVisitConnections
+):
     selectorActions = ConfigurableActionStructField(
         doc="Which selectors to use to narrow down the data for QA plotting.",
         default={"flagSelector": VisitPlotFlagSelector},
@@ -142,7 +135,6 @@ class AstrometricCatalogMatchVisitConfig(AstrometricCatalogMatchConfig, pipeline
         doc="The bands to persist downstream",
         default=[],
     )
-
 
     def setDefaults(self):
         # sourceSelectorActions.sourceSelector is StarSelector
@@ -204,7 +196,7 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         # Get convex hull around the detectors, then get its center and radius
         corners = []
         for visSum in visitSummaryTable:
-            for (ra, dec) in zip(visSum["raCorners"], visSum["decCorners"]):
+            for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
@@ -220,12 +212,4 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         filterName = self.config.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis
         loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
-        #if self.config.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis is not None:
-        #else:
-        #    filterName = "i"
-        #skyCircle = self.refObjLoader.loadSkyCircle(center, radius, filterName, epoch=epoch)
-        #refCat = skyCircle.refCat
-
-        #refCat["coord_ra"] = (refCat["coord_ra"] * units.radian).to(units.degree).to_value()
-        #refCat["coord_dec"] = (refCat["coord_dec"] * units.radian).to(units.degree).to_value()
         return Table(loadedRefCat)

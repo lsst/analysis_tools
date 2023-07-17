@@ -22,42 +22,29 @@
 __all__ = ("PhotometricCatalogMatchConfig", "PhotometricCatalogMatchTask")
 
 
-import numpy as np
-from astropy.time import Time
-from astropy.table import Table, hstack
-from smatch import Matcher
-
+import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
+from astropy.table import Table
+from astropy.time import Time
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
-from lsst.skymap import BaseSkyMap
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
-import lsst.geom
-from ..actions.vector import (
-    CoaddPlotFlagSelector,
-    VisitPlotFlagSelector,
-    GalaxySelector,
-    SnSelector,
-    StarSelector,
-)
 
-from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchTask, CatalogMatchConnections
+from ..actions.vector import VisitPlotFlagSelector
+from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
+
 
 class PhotometricCatalogMatchConnections(CatalogMatchConnections):
     pass
 
+
 class PhotometricCatalogMatchConfig(
     CatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchConnections
 ):
-
     filterNames = pexConfig.ListField[str](
         doc="Physical filter names to persist downstream.",
         default=["HSC-G", "HSC-R", "HSC-I", "HSC-Z", "HSC-Y"],
     )
 
-    # in the validation, we need to confirm that all of the filter names are in the filter map.
-
-    # do a setDefaults and set however you like.
     def setDefaults(self):
         super().setDefaults()
         self.referenceCatalogLoader.doReferenceSelection = False
@@ -68,6 +55,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
     """A wrapper task to provide the information that
     is specific to the photometric reference catalog.
     """
+
     ConfigClass = PhotometricCatalogMatchConfig
     _DefaultName = "analysisToolsPhotometricCatalogMatch"
 
@@ -112,8 +100,7 @@ class PhotometricCatalogMatchVisitConnections(
     CatalogMatchConnections,
     dimensions=("visit",),
     defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "ps1_pv3_3pi_20170110"},
-    ):
-    
+):
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="ArrowAstropy",
@@ -146,11 +133,9 @@ class PhotometricCatalogMatchVisitConnections(
     )
 
 
-
 class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
-
     def setDefaults(self):
         self.filterNames = []
         self.extraPerBandColumns = []
@@ -161,10 +146,12 @@ class PhotometricCatalogMatchVisitConfig(
         self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         self.extraColumnSelectors.selector2.vectorKey = "extendedness"
 
+
 class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
     """A wrapper task to provide the information that
     is specific to the photometric reference catalog.
     """
+
     ConfigClass = PhotometricCatalogMatchVisitConfig
     _DefaultName = "analysisToolsPhotometricCatalogMatchVisit"
 
@@ -195,7 +182,6 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
                 selectorSchema = selector.getFormattedInputSchema()
                 columns += [s[0] for s in selectorSchema]
 
-
         table = inputs["catalog"].get(parameters={"columns": columns})
         inputs["catalog"] = table
 
@@ -212,7 +198,6 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         # The matcher adds the band to the front of the columns
         # but the visit plots aren't expecting it
-        matchedCat = outputs.matchedCatalog
         cols = list(outputs.matchedCatalog.columns)
         for col in cols:
             if col[:2] == bands[0] + "_":
@@ -231,7 +216,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         # Get convex hull around the detectors, then get its center and radius
         corners = []
         for visSum in visitSummaryTable:
-            for (ra, dec) in zip(visSum["raCorners"], visSum["decCorners"]):
+            for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())

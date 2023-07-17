@@ -134,8 +134,7 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_extendedness_flag_target",
             "xy_flag_target",
         ]
-        self.selectWhenTrue = ["detect_isPatchInner_target",
-                               "detect_isDeblendedSource_target"]
+        self.selectWhenTrue = ["detect_isPatchInner_target", "detect_isDeblendedSource_target"]
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
@@ -164,8 +163,7 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_extendedness_flag",
             "xy_flag",
         ]
-        self.selectWhenTrue = ["detect_isPatchInner",
-                               "detect_isDeblendedSource"]
+        self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
 
 
 class VisitPlotFlagSelector(FlagSelector):
@@ -173,8 +171,7 @@ class VisitPlotFlagSelector(FlagSelector):
     (i.e., using sourceTable_visit catalogs).
     """
 
-    catalogSuffix = Field[str](
-        doc="The suffix to apply to all the keys.", default="")
+    catalogSuffix = Field[str](doc="The suffix to apply to all the keys.", default="")
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
@@ -186,7 +183,6 @@ class VisitPlotFlagSelector(FlagSelector):
             "extendedness_flag_target",
             "centroid_flag_target",
         ]
-
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result: Optional[Vector] = None
@@ -287,7 +283,9 @@ class SnSelector(SelectorBase):
         for band in bands:
             fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
             fluxInd = fluxCol.find("lux") + len("lux")
-            errCol = f"{fluxCol}"[:fluxInd] + f"{self.uncertaintySuffix.format(**kwargs)}" + f"{fluxCol}"[fluxInd:]
+            errCol = (
+                f"{fluxCol}"[:fluxInd] + f"{self.uncertaintySuffix.format(**kwargs)}" + f"{fluxCol}"[fluxInd:]
+            )
             vec = cast(Vector, data[fluxCol]) / data[errCol]
             temp = (vec > self.threshold) & (vec < self.maxSN)
             if mask is not None:

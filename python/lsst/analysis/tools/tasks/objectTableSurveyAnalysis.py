@@ -22,16 +22,14 @@ from __future__ import annotations
 __all__ = ("ObjectTableSurveyAnalysisTask",)
 
 
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, cast
-
-import pandas as pd
+from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate, DeferredDatasetHandle
 
+from astropy.table import vstack
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
-from astropy.table import vstack
 
 from ..actions.plot.plotUtils import shorten_list
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, KeyedData

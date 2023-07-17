@@ -1,7 +1,6 @@
 from .apDiaSourceMetrics import *
 from .apSsoMetrics import *
 from .astrometricRepeatability import *
-from .astrometryWithReference import *
 from .coveragePlots import *
 from .diffMatched import *
 from .fluxMetrics import *
@@ -13,6 +12,7 @@ from .magDiff import *
 from .numericalValidity import *
 from .photometricRepeatability import *
 from .photometry import *
+from .refCatMatchPlots import *
 from .seeingMetric import *
 from .shapes import *
 from .simpleDiaPlot import *
@@ -22,4 +22,3 @@ from .skyObject import *
 from .skySource import *
 from .sources import *
 from .stellarLocus import *
-from .refCatMatchPlots import *

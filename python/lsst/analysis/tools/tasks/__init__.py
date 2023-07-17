@@ -1,4 +1,5 @@
 from .associatedSourcesTractAnalysis import *
+from .astrometricCatalogMatch import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectTableAssocAnalysis import *
@@ -6,5 +7,9 @@ from .diaSourceTableVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
-from .sourceTableVisitAnalysis import *
+from .photometricCatalogMatch import *
+from .refCatObjectAnalysis import *
 from .refCatObjectPhotometricAnalysis import *
+from .refCatSourceAnalysis import *
+from .refCatSourcePhotometricAnalysis import *
+from .sourceTableVisitAnalysis import *

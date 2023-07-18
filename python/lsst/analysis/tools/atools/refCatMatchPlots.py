@@ -94,11 +94,11 @@ class TargetRefCatDelta(AnalysisTool):
         self.prep.selectors.flagSelector = VisitPlotFlagSelector()
         self.prep.selectors.starSelector.vectorKey = "extendedness_target"
         self.prep.selectors.snSelector.fluxType = "psfFlux_target"
+        self.prep.selectors.snSelector.threshold = 50
 
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "psfFlux_target"
-        self.process.buildActions.starStatMask = SnSelector()
-        self.process.buildActions.starStatMask.fluxType = "psfFlux_target"
+        self.process.buildActions.starStatMask.threshold = 200
 
     def setDefaults(self, vectorKey):
         super().setDefaults()
@@ -383,8 +383,6 @@ class TargetRefCatDeltaSkyPlotPhotomVisit(TargetRefCatDeltaSkyPlot):
     def setDefaults(self, vectorKey):
         super().setDefaults(vectorKey)
 
-        self.applyContext(RefMatchContext)
-
         self.process.buildActions.zStars = MagDiff()
         self.process.buildActions.zStars.col1 = f"{vectorKey}"
         self.process.buildActions.zStars.col2 = "mag_ref"
@@ -404,8 +402,6 @@ class TargetRefCatDeltaSkyPlotPhotom(TargetRefCatDeltaSkyPlot):
 
     def setDefaults(self, vectorKey):
         super().setDefaults(vectorKey)
-
-        self.applyContext(RefMatchContext)
 
         self.process.buildActions.zStars = MagDiff()
         self.process.buildActions.zStars.col1 = "{band}" + f"_{vectorKey}"

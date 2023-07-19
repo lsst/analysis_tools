@@ -5,7 +5,7 @@ tasks:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
       connections.outputName: matchedVisitCore
-      atools.PhotometricRepeatabilityMetric: PhotometricRepeatability
+      atools.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatability
       atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
       atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
       atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
@@ -27,46 +27,46 @@ tasks:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
       connections.outputName: matchedVisitExtended
-      atools.modelPhotRepStarSn5to10: PhotometricRepeatability
+      atools.modelPhotRepStarSn5to10: StellarPhotometricRepeatability
       atools.modelPhotRepStarSn5to10.fluxType: gaussianFlux
       atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
       atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
       atools.modelPhotRepStarSn5to10.produce.plot: NoPlot
 
-      atools.modelPhotRepStarSn10to20: PhotometricRepeatability
+      atools.modelPhotRepStarSn10to20: StellarPhotometricRepeatability
       atools.modelPhotRepStarSn10to20.fluxType: gaussianFlux
       atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
       atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
       atools.modelPhotRepStarSn10to20.produce.plot: NoPlot
 
-      atools.modelPhotRepStarSn20to40: PhotometricRepeatability
+      atools.modelPhotRepStarSn20to40: StellarPhotometricRepeatability
       atools.modelPhotRepStarSn20to40.fluxType: gaussianFlux
       atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
       atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
       atools.modelPhotRepStarSn20to40.produce.plot: NoPlot
 
-      atools.modelPhotRepStarSn40to80: PhotometricRepeatability
+      atools.modelPhotRepStarSn40to80: StellarPhotometricRepeatability
       atools.modelPhotRepStarSn40to80.fluxType: gaussianFlux
       atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
       atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
       atools.modelPhotRepStarSn40to80.produce.plot: NoPlot
 
-      atools.psfPhotRepStarSn5to10: PhotometricRepeatability
+      atools.psfPhotRepStarSn5to10: StellarPhotometricRepeatability
       atools.psfPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
       atools.psfPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
       atools.psfPhotRepStarSn5to10.produce.plot: NoPlot
 
-      atools.psfPhotRepStarSn10to20: PhotometricRepeatability
+      atools.psfPhotRepStarSn10to20: StellarPhotometricRepeatability
       atools.psfPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
       atools.psfPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
       atools.psfPhotRepStarSn10to20.produce.plot: NoPlot
 
-      atools.psfPhotRepStarSn20to40: PhotometricRepeatability
+      atools.psfPhotRepStarSn20to40: StellarPhotometricRepeatability
       atools.psfPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
       atools.psfPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
       atools.psfPhotRepStarSn20to40.produce.plot: NoPlot
 
-      atools.psfPhotRepStarSn40to80: PhotometricRepeatability
+      atools.psfPhotRepStarSn40to80: StellarPhotometricRepeatability
       atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
       atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
       atools.psfPhotRepStarSn40to80.produce.plot: NoPlot

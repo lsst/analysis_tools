@@ -20,7 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("PhotometricRepeatability", "StellarPhotometricResidualsFocalPlane")
+__all__ = (
+    
+    "StellarPhotometricRepeatability", 
+    "StellarPhotometricResidualsFocalPlane",
+)
 
 from lsst.pex.config import Field
 
@@ -41,9 +45,9 @@ from ..actions.vector import (
 from ..interfaces import AnalysisTool
 
 
-class PhotometricRepeatability(AnalysisTool):
+class StellarPhotometricRepeatability(AnalysisTool):
     """Compute photometric repeatability from multiple measurements of a set of
-    sources. First, a set of per-source quality criteria are applied. Second,
+    stars. First, a set of per-source quality criteria are applied. Second,
     the individual source measurements are grouped together by object index
     and per-group quantities are computed (e.g., a representative S/N for the
     group based on the median of associated per-source measurements). Third,

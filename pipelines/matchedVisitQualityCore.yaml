@@ -5,7 +5,7 @@ tasks:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
       connections.outputName: matchedVisitCore
-      atools.stellarPhotometricRepeatabilityMetric: StellarPhotometricRepeatability
+      atools.stellarPhotometricRepeatability: StellarPhotometricRepeatability
       atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
       atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
       atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot

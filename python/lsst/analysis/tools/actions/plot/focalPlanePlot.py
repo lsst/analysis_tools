@@ -336,24 +336,24 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
 
         for detectorId in detectorIds:
             detector = camera[detectorId]
+
             # We can go stright to fp coordinates.
             corners = [(c.getX(), c.getY()) for c in detector.getCorners(FOCAL_PLANE)]
             corners = np.array(corners)
 
-            # See if the plot bounding box needs to be extended:
-            for corner in corners:
-                if corner[0] < plotLimit_x[0]:
-                    plotLimit_x[0] = corner[0]
-                if corner[0] > plotLimit_x[1]:
-                    plotLimit_x[1] = corner[0]
-                if corner[1] < plotLimit_y[0]:
-                    plotLimit_y[0] = corner[1]
-                if corner[1] > plotLimit_y[1]:
-                    plotLimit_y[1] = corner[1]
-
             # U/V coordinates represent focal plane locations.
             minU, minV = corners.min(axis=0)
             maxU, maxV = corners.max(axis=0)
+
+            # See if the plot bounding box needs to be extended:
+            if minU < plotLimit_x[0]:
+                plotLimit_x[0] = minU
+            if minV < plotLimit_y[0]:
+                plotLimit_y[0] = minV
+            if maxU > plotLimit_x[1]:
+                plotLimit_x[1] = maxU
+            if maxV > plotLimit_y[1]:
+                plotLimit_y[1] = maxV
 
             # X/Y coordinates represent detector internal coordinates.
             # Detector extent in detector coordinates

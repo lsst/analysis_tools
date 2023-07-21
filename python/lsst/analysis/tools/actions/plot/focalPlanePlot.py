@@ -314,7 +314,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         if plotInfo is None:
             plotInfo = {}
 
-        if len(data["x"]) == 0:
+        if len(data["z"]) == 0:
             noDataFig = Figure()
             noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
             noDataFig = addPlotInfo(noDataFig, plotInfo)
@@ -324,8 +324,8 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         ax = fig.add_subplot(111)
 
         detectorIds = np.unique(data["detector"])
-        focalPlane_x = np.zeros(len(data["x"]))
-        focalPlane_y = np.zeros(len(data["y"]))
+        focalPlane_x = np.zeros(len(data["z"]))
+        focalPlane_y = np.zeros(len(data["z"]))
 
         patches = []
         values = []
@@ -398,8 +398,8 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                 for amplifier in detector:
                     ampName = amplifier.getName()
                     detectorInd = data["detector"] == detectorId
-                    ampInd = data["x"] == ampName
-                    detectorInd &= ampInd
+                    ampInd = data["amplifier"] == ampName
+                    ampInd &= detectorInd
 
                     # Determine amplifier extent in X/Y coordinates.
                     ampMinX, ampMinY = amplifier.getBBox().getMin()
@@ -435,10 +435,10 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                     patches.append(Polygon(ampCorners, True))
                     # This does the appropriate statistic for this
                     # amplifier's data.
-                    if len(data["z"][detectorInd]) > 0:
+                    if len(data["z"][ampInd]) > 0:
                         statistic, _, _ = binned_statistic_dd(
-                            [focalPlane_x[detectorInd], focalPlane_y[detectorInd]],
-                            data["z"][detectorInd],
+                            [focalPlane_x[ampInd], focalPlane_y[ampInd]],
+                            data["z"][ampInd],
                             statistic=self.statistic,
                             bins=[1, 1],
                         )

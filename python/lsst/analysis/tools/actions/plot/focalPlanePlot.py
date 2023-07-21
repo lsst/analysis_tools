@@ -235,19 +235,18 @@ class FocalPlanePlot(PlotAction):
 
 
 class FocalPlaneGeometryPlot(FocalPlanePlot):
-    """Plots the focal plane distribution of a parameter in camera
-    geometry units.
+    """Plots the focal plane distribution of a parameter in afw camera
+    geometry units: amplifiers and detectors.
 
     Given the detector positions in x and y, the focal plane positions
     are calculated using the camera model. A 2d binned statistic
     (default is mean) is then calculated and plotted for the parameter
     z as a function of the camera geometry segment the input points
     fall upon.
-    """
 
-    xAxisLabel = Field[str](doc="Label to use for the x axis.", optional=False)
-    yAxisLabel = Field[str](doc="Label to use for the y axis.", optional=False)
-    zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
+    The ``xAxisLabel``, ``yAxisLabel``, ``zAxisLabel``, and
+    ``statistic`` variables are inherited from the parent class.
+    """
 
     level = ChoiceField[str](
         doc="Which geometry level should values be plotted?",
@@ -256,10 +255,6 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
             "amplifier": "Plot values per readout amplifier.",
             "detector": "Plot values per detector.",
         },
-    )
-    statistic = Field[str](
-        doc="Operation to perform in binned_statistic_2d",
-        default="mean",
     )
 
     def makePlot(
@@ -283,7 +278,19 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         Parameters
         ----------
         data : `pandas.core.frame.DataFrame`
-            The catalog to plot the points from.
+            The catalog to plot the points from.  This is expected to
+            have the following columns/keys:
+                ``"detector"``
+                    The integer detector id for the points.
+                ``"amplifier"``
+                    The string amplifier name for the points.
+                ``"z"``
+                    The numerical value that will be combined via
+                    ``statistic`` to the binned value.
+                ``"x"``
+                    Focal plane x position, optional.
+                ``"y"``
+                    Focal plane y position, optional.
         camera : `lsst.afw.cameraGeom.Camera`
             The camera used to map from pixel to focal plane positions.
         plotInfo : `dict`

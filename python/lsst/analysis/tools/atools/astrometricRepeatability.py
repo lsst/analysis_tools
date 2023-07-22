@@ -231,7 +231,9 @@ class AstrometricRelativeRepeatability(AnalysisTool):
 
         # Select only sources with magnitude between 17 and 21.5
         self.process.filterActions.coord_ra = DownselectVector(vectorKey="coord_ra")
-        self.process.filterActions.coord_ra.selector = RangeSelector(key="mags", minimum=17, maximum=21.5)
+        self.process.filterActions.coord_ra.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
         self.process.filterActions.coord_dec = DownselectVector(
             vectorKey="coord_dec", selector=self.process.filterActions.coord_ra.selector
         )

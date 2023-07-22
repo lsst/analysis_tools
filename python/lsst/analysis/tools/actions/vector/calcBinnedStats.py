@@ -105,7 +105,7 @@ class CalcBinnedStatsAction(KeyedDataAction):
         for name, value in action(data, **kwargs).items():
             results[getattr(self, f"name_{name}").format(**kwargs_format)] = value
 
-        values = cast(Vector, data[self.selector_range.key][mask])  # type: ignore
+        values = cast(Vector, data[self.selector_range.vectorKey][mask])  # type: ignore
         valid = np.sum(np.isfinite(values)) > 0
 
         results[self.name_select_maximum.format(**kwargs_format)] = cast(

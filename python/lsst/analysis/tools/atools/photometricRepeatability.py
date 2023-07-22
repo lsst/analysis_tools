@@ -36,7 +36,6 @@ from ..actions.vector import (
     LoadVector,
     MultiCriteriaDownselectVector,
     PerGroupStatistic,
-    RangeSelector,
     ResidualWithPerGroupStatistic,
     SnSelector,
     ThresholdSelector,
@@ -94,9 +93,10 @@ class StellarPhotometricRepeatability(AnalysisTool):
             op="ge",
             threshold=3,
         )
-        self.process.filterActions.perGroupStdevFiltered.selectors.sn = RangeSelector(
+        self.process.filterActions.perGroupStdevFiltered.selectors.sn = ThresholdSelector(
             vectorKey="perGroupSn",
-            minimum=200,
+            op="ge",
+            threshold=200,
         )
         self.process.filterActions.perGroupStdevFiltered.selectors.extendedness = ThresholdSelector(
             vectorKey="perGroupExtendedness",

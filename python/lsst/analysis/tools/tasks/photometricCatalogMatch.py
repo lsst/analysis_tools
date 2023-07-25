@@ -42,7 +42,7 @@ class PhotometricCatalogMatchConfig(
 ):
     filterNames = pexConfig.ListField[str](
         doc="Physical filter names to persist downstream.",
-        default=["HSC-G", "HSC-R", "HSC-I", "HSC-Z", "HSC-Y"],
+        default=["HSC-G", "HSC-R2", "HSC-I2", "HSC-Z", "HSC-Y"],
     )
 
     def setDefaults(self):

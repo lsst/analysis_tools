@@ -457,7 +457,6 @@ class HistPlot(PlotAction):
             # If histDensity is True, also plot a reference PDF with
             # mean = referenceValue and sigma = 1 for reference.
             if self.panels[panel].referenceValue is not None:
-                # if self.panels[panel].refRelativeToMedian:
                 ax = self._addReferenceLines(ax, panel, panel_range, meds, legend_font_size=legend_font_size)
 
             # Check if we should use the default stats panel or if a custom one
@@ -556,10 +555,10 @@ class HistPlot(PlotAction):
         else:
             if self.panels[panel].refRelativeToMedian:
                 reference_value = self.panels[panel].referenceValue + meds[0]
-                reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue + meds[0])
+                reference_label = "${{\\mu_{{ref}}}}$: {}".format(reference_value)
             else:
                 reference_value = self.panels[panel].referenceValue
-                reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue)
+                reference_label = "${{\\mu_{{ref}}}}$: {}".format(reference_value)
         ax2.axvline(reference_value, ls="-", lw=1, c="black", zorder=0, label=reference_label)
         if self.panels[panel].histDensity:
             ref_x = np.arange(panel_range[0], panel_range[1], (panel_range[1] - panel_range[0]) / 100.0)

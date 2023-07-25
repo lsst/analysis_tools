@@ -106,7 +106,6 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute summary statistics on filtered groups
         self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
-        # import pdb; pdb.set_trace()
         self.process.calculateActions.photRepeatOutlier = FracThreshold(
             vectorKey="perGroupStdevFiltered",
             op="ge",

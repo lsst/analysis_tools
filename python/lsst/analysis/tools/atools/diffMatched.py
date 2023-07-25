@@ -146,7 +146,7 @@ class MatchedRefCoaddDiffMetric(MatchedRefCoaddDiffTool):
             for minimum in range(self._mag_low_min, self._mag_low_max + 1):
                 action = getattr(self.process.calculateActions, f"{name}{minimum}")
                 action.selector_range = RangeSelector(
-                    key=x_key,
+                    vectorKey=x_key,
                     minimum=minimum,
                     maximum=minimum + self._mag_interval,
                 )
@@ -180,7 +180,7 @@ class MatchedRefCoaddDiffMetric(MatchedRefCoaddDiffTool):
                     CalcBinnedStatsAction(
                         key_vector=key,
                         selector_range=RangeSelector(
-                            key=key,
+                            vectorKey=key,
                             minimum=minimum,
                             maximum=minimum + self._mag_interval,
                         ),

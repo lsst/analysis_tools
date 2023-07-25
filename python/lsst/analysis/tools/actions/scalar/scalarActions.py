@@ -159,6 +159,7 @@ class FracThreshold(ScalarAction):
     threshold = Field[float](doc="Threshold to apply.")
     vectorKey = Field[str](doc="Name of column")
     percent = Field[bool](doc="Express result as percentage", default=False)
+    relative_to_median = Field[bool](doc="Calculate threshold relative to " "the median?", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
         return ((self.vectorKey, Vector),)
@@ -168,9 +169,14 @@ class FracThreshold(ScalarAction):
         values = data[self.vectorKey.format(**kwargs)]
         values = values[mask]  # type: ignore
         values = values[np.logical_not(np.isnan(values))]
+        # If relative_to_median is set, shift the threshold to be median+thresh
+        if self.relative_to_median:
+            threshold = self.threshold + np.median(values)
+        else:
+            threshold = self.threshold
         result = cast(
             Scalar,
-            float(np.sum(getattr(operator, self.op)(values, self.threshold)) / len(values)),  # type: ignore
+            float(np.sum(getattr(operator, self.op)(values, threshold)) / len(values)),  # type: ignore
         )
         if self.percent:
             return 100.0 * result

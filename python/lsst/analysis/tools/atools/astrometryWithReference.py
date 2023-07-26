@@ -165,6 +165,8 @@ class TargetRefCatDeltaSkyPlot(AnalysisTool):
         self.process.buildActions.xStars.vectorKey = "coord_ra_target"
         self.process.buildActions.yStars = LoadVector()
         self.process.buildActions.yStars.vectorKey = "coord_dec_target"
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
 
         self.produce = SkyPlot()
         self.produce.plotTypes = ["stars"]

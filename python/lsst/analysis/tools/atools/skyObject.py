@@ -44,6 +44,8 @@ class SkyObjectSkyPlot(AnalysisTool):
         self.process.buildActions.statMask = SnSelector()
         self.process.buildActions.statMask.threshold = -1e12
         self.process.buildActions.statMask.fluxType = "{band}_psfFlux"
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["any"]
@@ -51,7 +53,7 @@ class SkyObjectSkyPlot(AnalysisTool):
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
         self.produce.plot.zAxisLabel = "Sky Object ap09Flux (nJy)"
-        self.produce.plot.plotOutlines = False
+        self.produce.plot.plotOutlines = True
         self.produce.plot.fixAroundZero = True
 
 

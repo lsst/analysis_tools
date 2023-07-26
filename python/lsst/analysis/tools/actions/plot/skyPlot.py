@@ -29,12 +29,13 @@ import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field, ListField
+from lsst.skymap import BaseSkyMap
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...statistics import nansigmaMad
-from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays
+from .plotUtils import addPlotInfo, generateSummaryStats, mkColormap, plotProjectionWithBinning, sortAllArrays
 
 
 class SkyPlot(PlotAction):
@@ -92,6 +93,9 @@ class SkyPlot(PlotAction):
             base.append(("z", Vector))
             base.append(("statMask", Vector))
 
+        if self.plotOutlines:
+            base.append(("patch", Vector))
+
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
@@ -136,6 +140,7 @@ class SkyPlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
+        skymap: BaseSkyMap,
         plotInfo: Optional[Mapping[str, str]] = None,
         sumStats: Optional[Mapping] = None,
         **kwargs,
@@ -204,8 +209,8 @@ class SkyPlot(PlotAction):
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 
-        if sumStats is None:
-            sumStats = {}
+        if self.plotOutlines:
+            sumStats = generateSummaryStats(data, skymap, plotInfo)
 
         if plotInfo is None:
             plotInfo = {}

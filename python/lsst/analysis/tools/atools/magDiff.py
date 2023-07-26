@@ -52,6 +52,8 @@ class CModelSubPsfMagMeasSkyGalaxies(AnalysisTool):
         self.process.buildActions.xGalaxies.vectorKey = "coord_ra"
         self.process.buildActions.yGalaxies = LoadVector()
         self.process.buildActions.yGalaxies.vectorKey = "coord_dec"
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
         self.process.buildActions.galaxyStatMask = SnSelector()
         self.process.buildActions.galaxyStatMask.fluxType = "{band}_psfFlux"
 

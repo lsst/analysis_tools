@@ -36,6 +36,7 @@ class SimpleDiaPlot(AnalysisTool):
         self.process.buildActions.ras.vectorKey = "ra"
         self.process.buildActions.decs = LoadVector()
         self.process.buildActions.decs.vectorKey = "decl"
+
         # TODO: update column name to 'dec' once column names are standardized,
         # i.e., RFC-863
 

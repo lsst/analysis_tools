@@ -32,13 +32,14 @@ connection classes and should specify a unique name
 
 __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTask")
 
-import weakref
+import pickle
 from collections.abc import Iterable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
 import matplotlib.pyplot as plt
 from lsst.verify import Measurement
+from matplotlib.figure import Figure
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DeferredDatasetHandle
@@ -56,15 +57,6 @@ from ._actions import JointAction, MetricAction, NoMetric
 from ._analysisTools import AnalysisTool
 from ._interfaces import KeyedData, PlotTypes
 from ._metricMeasurementBundle import MetricMeasurementBundle
-
-
-# TODO: This _plotCloser function assists in closing all open plots at the
-# conclusion of a PipelineTask. When DM-39114 is implemented, this function and
-# all associated usage thereof should be removed.
-def _plotCloser(*args):
-    """Close all the plots in the given list."""
-    for plot in args:
-        plt.close(plot)
 
 
 class AnalysisBaseConnections(
@@ -289,9 +281,13 @@ class AnalysisPipelineTask(PipelineTask):
             metricAccumulate = []
             for resultName, value in actionResult.items():
                 match value:
+                    # specially catch matplotlib figures and serialize them,
+                    # so they don't build up with too many open figures.
+                    case Figure():
+                        setattr(results, plotKey.format(name=resultName), pickle.dumps(value))
+                        plt.close(value)
                     case PlotTypes():
                         setattr(results, plotKey.format(name=resultName), value)
-                        weakrefArgs.append(value)
                     case Measurement():
                         metricAccumulate.append(value)
             # only add the metrics if there are some
@@ -302,7 +298,6 @@ class AnalysisPipelineTask(PipelineTask):
         # TODO: This finalize step closes all open plots at the conclusion of
         # a task. When DM-39114 is implemented, this step should no longer be
         # required and may be removed.
-        weakref.finalize(results, _plotCloser, *weakrefArgs)
         return results
 
     def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:
@@ -383,6 +378,17 @@ class AnalysisPipelineTask(PipelineTask):
         else:
             skymap = None
         outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
+        for name in outputs.getDict():
+            result = getattr(outputs, name)
+            ref = getattr(outputRefs, name)
+            if isinstance(result, bytes):
+                # This is a pickle of a figure object, load it back in.
+                result = pickle.loads(result)
+                butlerQC.put(result, ref)
+                plt.close(result)
+            else:
+                butlerQC.put(result, ref)
+
         butlerQC.put(outputs, outputRefs)
 
     def _populatePlotInfoWithDataId(

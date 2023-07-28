@@ -385,17 +385,18 @@ def sortAllArrays(arrsToSort, sortArrayIndex=0):
 
     Parameters
     ----------
-    arrsToSort : `list` [`np.array`]
-        A list of arrays to be simultaneously sorted based on the array in
-        the list position given by ``sortArrayIndex`` (defaults to be the
-        first array in the list).
+    arrsToSort : `list` [`np.array`] | `list` [`pd.Series`]
+        A list of arrays or Series to be simultaneously sorted based on the
+        array in the list position given by ``sortArrayIndex`` (defaults to be
+        the first array in the list).
     sortArrayIndex : `int`, optional
         Zero-based index indicating the array on which to base the sorting.
 
     Returns
     -------
-    arrsToSort : `list` [`np.array`]
-        The list of arrays sorted on array in list index ``sortArrayIndex``.
+    arrsToSort : `list` [`np.array`] | `list` [`pd.Series`]
+        The list of arrays or Series (same type as the input) sorted on array
+        in list index ``sortArrayIndex``.
     """
     ids = extremaSort(arrsToSort[sortArrayIndex])
     for i, arr in enumerate(arrsToSort):

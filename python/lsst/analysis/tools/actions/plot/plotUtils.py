@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from lsst.geom import Box2D, SpherePoint, degrees
 from lsst.pex.config import Config, Field
 from matplotlib import colors
@@ -398,7 +399,11 @@ def sortAllArrays(arrsToSort, sortArrayIndex=0):
     """
     ids = extremaSort(arrsToSort[sortArrayIndex])
     for i, arr in enumerate(arrsToSort):
-        arrsToSort[i] = arr[ids]
+        if isinstance(arr, pd.Series):
+            arrsToSort[i] = arr.iloc[ids]
+        else:
+            arrsToSort[i] = arr[ids]
+
     return arrsToSort
 
 

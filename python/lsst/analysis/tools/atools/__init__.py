@@ -34,3 +34,4 @@ from .skyObject import *
 from .skySource import *
 from .sources import *
 from .stellarLocus import *
+from .wholeSkyPlotTool import *

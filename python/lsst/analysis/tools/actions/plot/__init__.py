@@ -12,4 +12,5 @@ from .propertyMapPlot import *
 from .rhoStatisticsPlot import *
 from .scatterplotWithTwoHists import *
 from .skyPlot import *
+from .wholeSkyPlot import *
 from .xyPlot import *

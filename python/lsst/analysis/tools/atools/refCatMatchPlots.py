@@ -185,11 +185,27 @@ class TargetRefCatDeltaScatterPhotom(TargetRefCatDelta):
         self.process.calculateActions.stars.highSNSelector.fluxType = "{band}_psfFlux_target"
         self.process.calculateActions.stars.fluxType = "{band}_psfFlux_target"
 
-        self.produce = ScatterPlotWithTwoHists()
-        self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
-        self.produce.yAxisLabel = "Output Mag - Ref Mag (mmag)"
+        self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.magLabel = "PSF Magnitude (mag)"
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.plot.yAxisLabel = "Output Mag - Ref Mag (mmag)"
+
+#        self.produce.metric.newNames = {"{band}_lowSNStars_median": "targetRefCatDelta_{band}_lowSNStars_median",
+#                "{band}_lowSNStars_sigmaMad": "targetRefCatDelta_{band}_lowSNStars_sigmaMad",
+#                "{band}_lowSNStars_count": "targetRefCatDelta_{band}_lowSNStars_count",
+#                "{band}_highSNStars_median": "targetRefCatDelta_{band}_highSNStars_median",
+#                "{band}_highSNStars_sigmaMad": "targetRefCatDelta_{band}_highSNStars_sigmaMad",
+#                "{band}_highSNStars_count": "targetRefCatDelta_{band}_highSNStars_count" }
+
+        self.produce.metric.units = {"{band}_lowSNStars_median": "mmag",
+                "{band}_lowSNStars_sigmaMad": "mmag",
+                "{band}_lowSNStars_count": "",
+                "{band}_highSNStars_median": "mmag",
+                "{band}_highSNStars_sigmaMad": "mmag",
+                "{band}_highSNStars_count": "",
+                }
+
         self.applyContext(CoaddContext)
         self.applyContext(RefMatchContext)
 

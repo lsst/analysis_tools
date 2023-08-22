@@ -559,7 +559,7 @@ class HistPlot(PlotAction):
             else:
                 reference_value = self.panels[panel].referenceValue
                 reference_label = "${{\\mu_{{ref}}}}$: {}".format(reference_value)
-        ax2.axvline(reference_value, ls="-", lw=1, c="black", zorder=0, label=reference_label)
+            ax2.axvline(reference_value, ls="-", lw=1, c="black", zorder=0, label=reference_label)
         if self.panels[panel].histDensity:
             ref_x = np.arange(panel_range[0], panel_range[1], (panel_range[1] - panel_range[0]) / 100.0)
             ref_mean = self.panels[panel].referenceValue

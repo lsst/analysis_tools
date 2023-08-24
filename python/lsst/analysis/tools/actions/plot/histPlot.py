@@ -160,6 +160,11 @@ class HistPanel(Config):
         default=None,
         optional=True,
     )
+    refRelativeToMedian = Field[bool](
+        doc="Is the referenceValue meant to be an offset from the median?",
+        default=False,
+        optional=True,
+    )
     histDensity = Field[bool](
         doc="Whether to plot the histogram as a normalized probability distribution. Must also "
         "provide a value for referenceValue",
@@ -452,7 +457,7 @@ class HistPlot(PlotAction):
             # If histDensity is True, also plot a reference PDF with
             # mean = referenceValue and sigma = 1 for reference.
             if self.panels[panel].referenceValue is not None:
-                ax = self._addReferenceLines(ax, panel, panel_range, legend_font_size=legend_font_size)
+                ax = self._addReferenceLines(ax, panel, panel_range, meds, legend_font_size=legend_font_size)
 
             # Check if we should use the default stats panel or if a custom one
             # has been created.
@@ -536,7 +541,7 @@ class HistPlot(PlotAction):
         mad = sigmaMad(data)
         return num, med, mad
 
-    def _addReferenceLines(self, ax, panel, panel_range, legend_font_size=7):
+    def _addReferenceLines(self, ax, panel, panel_range, meds, legend_font_size=7):
         """Draw the vertical reference line and density curve (if requested)
         on the panel.
         """
@@ -548,10 +553,13 @@ class HistPlot(PlotAction):
         if self.panels[panel].histDensity:
             reference_label = None
         else:
-            reference_label = "${{\\mu_{{ref}}}}$: {}".format(self.panels[panel].referenceValue)
-        ax2.axvline(
-            self.panels[panel].referenceValue, ls="-", lw=1, c="black", zorder=0, label=reference_label
-        )
+            if self.panels[panel].refRelativeToMedian:
+                reference_value = self.panels[panel].referenceValue + meds[0]
+                reference_label = "${{\\mu_{{ref}}}}$: {}".format(reference_value)
+            else:
+                reference_value = self.panels[panel].referenceValue
+                reference_label = "${{\\mu_{{ref}}}}$: {}".format(reference_value)
+            ax2.axvline(reference_value, ls="-", lw=1, c="black", zorder=0, label=reference_label)
         if self.panels[panel].histDensity:
             ref_x = np.arange(panel_range[0], panel_range[1], (panel_range[1] - panel_range[0]) / 100.0)
             ref_mean = self.panels[panel].referenceValue

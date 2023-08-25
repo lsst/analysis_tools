@@ -22,7 +22,6 @@ from __future__ import annotations
 
 __all__ = ("CcdVisitTableAnalysisConfig", "CcdVisitTableAnalysisTask")
 
-from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
 from lsst.pex.config import Field
 from lsst.pipe.base import connectionTypes as cT
 from lsst.skymap import BaseSkyMap
@@ -66,7 +65,6 @@ class CcdVisitTableAnalysisConnections(
         storageClass="Camera",
         dimensions=("instrument",),
         isCalibration=True,
-        lookupFunction=lookupStaticCalibration,
     )
 
     def __init__(self, *, config=None):

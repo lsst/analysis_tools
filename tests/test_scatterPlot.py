@@ -82,6 +82,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             ],
             xLims=(20, 30),
             yLims=(-1000, 1000),
+            addSummaryPlot=False,
         )
         plot = AnalysisTool()
         plot.produce.plot = action
@@ -131,7 +132,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             )
             setattr(
                 plot.process.filterActions,
-                f"flux{plural}Err",
+                f"fluxErr{plural}",
                 DownselectVector(
                     vectorKey="fluxes_err", selector=VectorSelector(vectorKey=f"{singular}Selector")
                 ),
@@ -154,6 +155,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
         }
 
         self.data = pd.DataFrame(data)
+        print(self.data.columns)
         self.plot = plot
         self.plot.finalize()
         plotInfo = {key: "test" for key in ("plotName", "run", "tableName")}

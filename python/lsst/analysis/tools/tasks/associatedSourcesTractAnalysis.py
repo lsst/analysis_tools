@@ -24,7 +24,6 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 
 import numpy as np
 import pandas as pd
-from lsst.cp.pipe._lookupStaticCalibration import lookupStaticCalibration
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
@@ -69,7 +68,6 @@ class AssociatedSourcesTractAnalysisConnections(
         storageClass="Camera",
         dimensions=("instrument",),
         isCalibration=True,
-        lookupFunction=lookupStaticCalibration,
     )
 
 

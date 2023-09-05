@@ -56,6 +56,9 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.process.buildActions.xStars.vectorKey = "coord_ra"
         self.process.buildActions.yStars = LoadVector()
         self.process.buildActions.yStars.vectorKey = "coord_dec"
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
+
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
 

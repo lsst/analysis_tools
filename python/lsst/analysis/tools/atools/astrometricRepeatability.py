@@ -109,6 +109,7 @@ class StellarAstrometricResidualsRASkyPlot(StellarAstrometricResidualsBase):
         self.process.buildActions.residual.buildAction.buildAction = RAcosDec()
         self.process.buildActions.x = LoadVector(vectorKey="coord_ra")
         self.process.buildActions.y = LoadVector(vectorKey="coord_dec")
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
 
         self.produce = SkyPlot()
 

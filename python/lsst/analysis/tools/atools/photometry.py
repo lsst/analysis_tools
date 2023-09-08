@@ -109,7 +109,7 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
         self.process.buildActions.starStatMask.threshold = 300
-        
+
         self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
         self.process.buildActions.zStars.magDiff.col1 = "{band}_psfFlux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_cModelFlux"
@@ -125,7 +125,7 @@ class PsfCModelSkyPlot(AnalysisTool):
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.plotName = "{band}_psd-cModel"
+        self.produce.plot.plotName = "{band}_psf-cModel"
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
         self.produce.plot.zAxisLabel = "PSF - cModel [mmag]"

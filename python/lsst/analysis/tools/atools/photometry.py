@@ -93,8 +93,6 @@ class PsfCModelSkyPlot(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
-        # Set this to an empty list to look at the band
-        # the plot is being made in.
         self.prep.selectors.flagSelector.bands = []
 
         self.prep.selectors.snSelector = SnSelector()
@@ -104,14 +102,14 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
 
-        # TODO: Can we make these defaults somewhere?
         self.process.buildActions.xStars = LoadVector()
         self.process.buildActions.xStars.vectorKey = "coord_ra"
         self.process.buildActions.yStars = LoadVector()
         self.process.buildActions.yStars.vectorKey = "coord_dec"
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
-
+        self.process.buildActions.starStatMask.threshold = 300
+        
         self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
         self.process.buildActions.zStars.magDiff.col1 = "{band}_psfFlux"
         self.process.buildActions.zStars.magDiff.col2 = "{band}_cModelFlux"

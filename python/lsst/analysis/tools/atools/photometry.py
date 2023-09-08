@@ -128,7 +128,7 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.produce.plot.plotName = "{band}_psd-cModel"
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
-        self.produce.plot.zAxisLabel = "PSF - cModel [mag]"
+        self.produce.plot.zAxisLabel = "PSF - cModel [mmag]"
         self.produce.plot.plotOutlines = False
 
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}

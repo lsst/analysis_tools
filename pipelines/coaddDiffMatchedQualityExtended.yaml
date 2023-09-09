@@ -30,8 +30,8 @@ tasks:
       # metrics
       atools.matchedRefCModelMagDiffMetric: MatchedRefCoaddDiffMagMetric
 
-      atools.matchedRefMagChiMetric: MatchedRefCoaddDiffMagMetric
-      atools.matchedRefMagChiMetric.compute_chi: true
+      atools.matchedRefCModelMagChiMetric: MatchedRefCoaddDiffMagMetric
+      atools.matchedRefCModelMagChiMetric.compute_chi: true
 
       atools.matchedRefPositionXDiffMetric: MatchedRefCoaddDiffPositionMetric
       atools.matchedRefPositionXDiffMetric.variable: x

@@ -57,6 +57,7 @@ Script reference
    :maxdepth: 1
 
    scripts/verify_to_sasquatch.py
+   scripts/build-gather-resource-usage-qg
 
 .. _lsst.analysis_tools-pyapi:
 

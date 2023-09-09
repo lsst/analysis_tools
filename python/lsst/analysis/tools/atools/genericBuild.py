@@ -325,7 +325,7 @@ class SizeTool(AnalysisTool):
 
     def setDefaults(self):
         super().setDefaults()
-        self.produce.legendLocation = "lower left"
+        self.produce.plot.legendLocation = "lower left"
 
     def finalize(self):
         super().finalize()

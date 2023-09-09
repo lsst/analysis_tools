@@ -26,9 +26,9 @@ import lsst.utils.tests
 import numpy as np
 from lsst.analysis.tools.atools import (
     MagnitudeTool,
-    MatchedRefCoaddDiffMagMetric,
-    MatchedRefCoaddDiffMetric,
+    MatchedRefCoaddDiffMagTool,
     MatchedRefCoaddDiffPositionTool,
+    MatchedRefCoaddDiffTool,
 )
 
 
@@ -37,7 +37,7 @@ class TestDiffMatched(TestCase):
         super().setUp()
         self.band_default = "analysisTools"
 
-    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffMetric], **kwargs):
+    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffTool], **kwargs):
         plotInfo = {key: "" for key in ("plotName", "run", "tableName")}
         plotInfo["bands"] = []
         for compute_chi in (False, True):
@@ -58,7 +58,7 @@ class TestDiffMatched(TestCase):
         # Pass one at a time to test
         for kwarg in kwargs:
             kwargs_init = {kwarg: ""}
-            tester = MatchedRefCoaddDiffMetric(**kwargs_init)
+            tester = MatchedRefCoaddDiffTool(**kwargs_init)
             tester.validate()
             with self.assertRaises(KeyError):
                 tester.configureMetrics()
@@ -67,7 +67,7 @@ class TestDiffMatched(TestCase):
             # Failing to find any of the required keys
             with self.assertRaises(KeyError):
                 tester({})
-        tester = MatchedRefCoaddDiffMetric(**kwargs)
+        tester = MatchedRefCoaddDiffTool(**kwargs)
         tester.validate()
         with self.assertRaises(KeyError):
             tester.configureMetrics()
@@ -84,7 +84,7 @@ class TestDiffMatched(TestCase):
 
     def testMatchedRefCoaddDiffMagMetric(self):
         self._testMatchedRefCoaddMetricDerived(
-            MatchedRefCoaddDiffMagMetric,
+            MatchedRefCoaddDiffMagTool,
             fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
             mag_y="cmodel",
             name_prefix="",

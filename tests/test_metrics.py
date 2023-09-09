@@ -28,7 +28,7 @@ from lsst.analysis.tools.atools import (
     MagnitudeTool,
     MatchedRefCoaddDiffMagMetric,
     MatchedRefCoaddDiffMetric,
-    MatchedRefCoaddDiffPositionMetric,
+    MatchedRefCoaddDiffPositionTool,
 )
 
 
@@ -38,6 +38,8 @@ class TestDiffMatched(TestCase):
         self.band_default = "analysisTools"
 
     def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffMetric], **kwargs):
+        plotInfo = {key: "" for key in ("plotName", "run", "tableName")}
+        plotInfo["bands"] = []
         for compute_chi in (False, True):
             tester = type_metric(**kwargs, compute_chi=compute_chi)
             # tester.getInputSchema won't work properly before finalizing
@@ -47,7 +49,7 @@ class TestDiffMatched(TestCase):
             self.assertGreater(len(keys), 0)
             self.assertGreater(len(list(tester.configureMetrics())), 0)
             data = {key.format(band=self.band_default): np.arange(5) for key in keys}
-            output = tester(data)
+            output = tester(data, skymap=None, plotInfo=plotInfo)
             self.assertGreater(len(output), 0)
 
     def testMatchedRefCoaddMetric(self):
@@ -89,9 +91,9 @@ class TestDiffMatched(TestCase):
             unit="",
         )
 
-    def testMatchedRefCoaddDiffPositionMetric(self):
+    def testMatchedRefCoaddDiffPositionTool(self):
         for variable in ("x", "y"):
-            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddDiffPositionMetric, variable=variable)
+            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddDiffPositionTool, variable=variable)
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

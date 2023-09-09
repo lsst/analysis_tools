@@ -26,7 +26,6 @@ __all__ = (
     "MatchedRefCoaddDiffMagTool",
     "MatchedRefCoaddDiffMagMetric",
     "MatchedRefCoaddDiffPositionTool",
-    "MatchedRefCoaddDiffPositionMetric",
 )
 
 from lsst.pex.config import ChoiceField, Field
@@ -240,15 +239,16 @@ class MatchedRefCoaddDiffMagPlot(MatchedRefCoaddDiffMagTool, MagnitudeScatterPlo
         # the MagnitudeScatterPlot looks for a flux to compute S/N from
         MatchedRefCoaddDiffMagTool.finalize(self)
         MagnitudeScatterPlot.finalize(self)
-        if not self.produce.yAxisLabel:
+        if not self.produce.plot.yAxisLabel:
             config = self.fluxes[self.mag_y]
             label = f"{config.name_flux} - {self.fluxes['ref_matched'].name_flux}"
-            self.produce.yAxisLabel = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
+            self.produce.plot.yAxisLabel = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
 
 
-class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool):
+class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffMetric, MagnitudeScatterPlot):
     """Tool for diffs between reference and measured coadd astrometry."""
 
+    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
     scale_factor = Field[float](
         doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
         default=200,
@@ -265,6 +265,9 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool):
     def finalize(self):
         # Check if it has already been finalized
         if not hasattr(self.process.buildActions, "diff"):
+            # Set before MagnitudeScatterPlot.finalize to undo PSF default.
+            # Matched ref tables may not have PSF fluxes, or prefer CModel.
+            self._set_flux_default("mag_sn")
             super().finalize()
             self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
             self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
@@ -284,34 +287,16 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool):
                         actionB=self.process.buildActions.pos_ref,
                     ),
                 )
-
-
-class MatchedRefCoaddDiffPositionMetric(MatchedRefCoaddDiffPositionTool, MatchedRefCoaddDiffMetric):
-    """Metric for diffs between reference and base coadd centroids."""
-
-    def finalize(self):
-        super().finalize()
-        if self.unit is None:
-            self.unit = "" if self.compute_chi else "mas"
-        if self.name_prefix is None:
-            subtype = "chi" if self.compute_chi else "diff"
-            self.name_prefix = f"astrom_{self.variable}_{{name_class}}_{subtype}_"
-        if not self.produce.metric.units:
-            self.produce.metric.units = self.configureMetrics()
-
-
-class MatchedRefCoaddDiffPositionPlot(MatchedRefCoaddDiffPositionTool, MagnitudeScatterPlot):
-    # The matched catalog columns are configurable but default to cmodel only
-    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
-
-    def finalize(self):
-        if not self.produce.yAxisLabel:
-            # Set before MagnitudeScatterPlot.finalize or it'll default to PSF
-            # Matched ref tables may not have PSF fluxes, or prefer CModel
-            self._set_flux_default("mag_sn")
-            super().finalize()
-            self.produce.yAxisLabel = (
-                f"chi = (slot - Reference {self.variable} position)/error"
-                if self.compute_chi
-                else f"{self.variable} position (pix)"
-            )
+            if self.unit is None:
+                self.unit = "" if self.compute_chi else "mas"
+            if self.name_prefix is None:
+                subtype = "chi" if self.compute_chi else "diff"
+                self.name_prefix = f"astrom_{self.variable}_{{name_class}}_{subtype}_"
+            if not self.produce.metric.units:
+                self.produce.metric.units = self.configureMetrics()
+            if not self.produce.plot.yAxisLabel:
+                self.produce.plot.yAxisLabel = (
+                    f"chi = (slot - reference {self.variable} position)/error"
+                    if self.compute_chi
+                    else f"slot - reference {self.variable} position (mas)"
+                )

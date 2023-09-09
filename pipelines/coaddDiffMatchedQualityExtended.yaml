@@ -13,17 +13,17 @@ tasks:
       atools.matchedRefMagChi.compute_chi: true
 
       # TODO: Can this be a one liner?
-      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXDiff.variable: x
 
-      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXChi.variable: x
       atools.matchedRefPositionXChi.compute_chi: true
 
-      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionYDiff.variable: y
 
-      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionPlot
+      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionYChi.variable: y
       atools.matchedRefPositionYChi.compute_chi: true
 
@@ -33,24 +33,9 @@ tasks:
       atools.matchedRefCModelMagChiMetric: MatchedRefCoaddDiffMagMetric
       atools.matchedRefCModelMagChiMetric.compute_chi: true
 
-      atools.matchedRefPositionXDiffMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionXDiffMetric.variable: x
-
-      atools.matchedRefPositionXChiMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionXChiMetric.variable: x
-      atools.matchedRefPositionXChiMetric.compute_chi: true
-
-      atools.matchedRefPositionYDiffMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionYDiffMetric.variable: y
-
-      atools.matchedRefPositionYChiMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionYChiMetric.variable: y
-      atools.matchedRefPositionYChiMetric.compute_chi: true
-
       python: |
         from lsst.analysis.tools.atools.diffMatched import (
           MatchedRefCoaddDiffMagMetric,
-          MatchedRefCoaddDiffPositionMetric,
           MatchedRefCoaddDiffMagPlot,
-          MatchedRefCoaddDiffPositionPlot,
+          MatchedRefCoaddDiffPositionTool,
         )

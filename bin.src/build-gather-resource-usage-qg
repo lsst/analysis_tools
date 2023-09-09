@@ -28,9 +28,7 @@ See ``GatherResourceUsageTask.build_quantum_graph`` for more information
 arguments.
 """
 
-import sys
-
-from lsst.analysis.tools.tasks.gatherResourceUsage import GatherResourceUsageTask
+from lsst.analysis.tools.tasks.gatherResourceUsage import ResourceUsageQuantumGraphBuilder
 
 if __name__ == "__main__":
-    GatherResourceUsageTask.build_quantum_graph_cli(sys.argv[1:])
+    ResourceUsageQuantumGraphBuilder.main()

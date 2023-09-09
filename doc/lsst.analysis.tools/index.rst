@@ -69,3 +69,4 @@ Python API Reference
 .. automodapi:: lsst.analysis.tools.actions.scalar
 .. automodapi:: lsst.analysis.tools.actions.vector
 .. automodapi:: lsst.analysis.tools.actions.keyedData
+.. automodapi:: lsst.analysis.tools.tasks

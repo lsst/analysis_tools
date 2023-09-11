@@ -82,7 +82,7 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
 
 
 class AstrometricCatalogMatchVisitConnections(
-    CatalogMatchConnections,
+    pipeBase.PipelineTaskConnections,
     dimensions=("visit",),
     defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr2_20200414"},
 ):

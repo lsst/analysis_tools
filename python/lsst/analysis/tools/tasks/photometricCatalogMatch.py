@@ -92,7 +92,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
 
 class PhotometricCatalogMatchVisitConnections(
-    CatalogMatchConnections,
+    pipeBase.PipelineTaskConnections,
     dimensions=("visit",),
     defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "ps1_pv3_3pi_20170110"},
 ):

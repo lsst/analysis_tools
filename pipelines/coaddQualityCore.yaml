@@ -47,8 +47,11 @@ tasks:
       atools.astromDiffDecScatterPlot: TargetRefCatDeltaDecScatterPlot
       atools.astromDiffRASkyPlot: TargetRefCatDeltaRASkyPlot
       atools.astromDiffDecSkyPlot: TargetRefCatDeltaDecSkyPlot
+      atools.astromDiffMetrics: TargetRefCatDeltaMetrics
+      atools.astromDiffMetrics.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
 
     ## Perform photometric comparison to the reference catalog
   photometricCatalogMatch:

@@ -40,19 +40,24 @@ __all__ = (
     "TargetRefCatDeltaDecSkyVisitPlot",
     "TargetRefCatDeltaRAScatterVisitPlot",
     "TargetRefCatDeltaDecScatterVisitPlot",
+    "TargetRefCatDeltaMetrics",
 )
 
 from lsst.pex.config import Field
 
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
+from ..actions.scalar.scalarActions import MedianAction, SigmaMadAction
 from ..actions.vector import (
+    AngularSeparation,
     CoaddPlotFlagSelector,
     ConvertFluxToMag,
     ConvertUnits,
+    DownselectVector,
     LoadVector,
     MagDiff,
     RAcosDec,
+    RangeSelector,
     SnSelector,
     StarSelector,
     SubtractVector,
@@ -529,3 +534,111 @@ class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlotAstrom):
 
         self.produce.plotName = "astromDiffSky_Dec"
         self.produce.zAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (marcsec)"
+
+
+class TargetRefCatDeltaMetrics(AnalysisTool):
+    """Calculate the AA1 metric and the sigma MAD from the difference between
+    the target and reference catalog coordinates.
+    """
+
+    parameterizedBand = Field[bool](
+        doc="Does this AnalysisTool support band as a name parameter", default=True
+    )
+
+    def coaddContext(self) -> None:
+        """Apply coadd options for the metrics. Applies the coadd plot flag
+        selector and sets flux types.
+        """
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness_target"
+
+        self.applyContext(RefMatchContext)
+
+        self.process.buildActions.mags.vectorKey = "{band}_psfFlux_target"
+
+        self.produce.metric.newNames = {
+            "AA1_RA": "{band}_AA1_RA_coadd",
+            "AA1_sigmaMad_RA": "{band}_AA1_sigmaMad_RA_coadd",
+            "AA1_Dec": "{band}_AA1_Dec_coadd",
+            "AA1_sigmaMad_Dec": "{band}_AA1_sigmaMad_Dec_coadd",
+            "AA1_tot": "{band}_AA1_tot_coadd",
+            "AA1_sigmaMad_tot": "{band}_AA1_sigmaMad_tot_coadd",
+        }
+
+    def visitContext(self) -> None:
+        """Apply visit options for the metrics. Applies the visit plot flag
+        selector and sets flux types.
+        """
+        self.parameterizedBand = False
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.starSelector.vectorKey = "extendedness_target"
+
+        self.applyContext(RefMatchContext)
+
+        self.process.buildActions.mags.vectorKey = "psfFlux_target"
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.starSelector = StarSelector()
+
+        # Calculate difference in RA
+        self.process.buildActions.astromDiffRA = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
+        )
+        self.process.buildActions.astromDiffRA.buildAction.actionA = RAcosDec(
+            raKey="coord_ra_target", decKey="dec_ref"
+        )
+        self.process.buildActions.astromDiffRA.buildAction.actionB = RAcosDec(
+            raKey="ra_ref", decKey="dec_ref"
+        )
+        # Calculate difference in Dec
+        self.process.buildActions.astromDiffDec = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
+        )
+        self.process.buildActions.astromDiffDec.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
+        self.process.buildActions.astromDiffDec.buildAction.actionB = LoadVector(vectorKey="dec_ref")
+        # Calculate total difference (using astropy)
+        self.process.buildActions.astromDiffTot = AngularSeparation(
+            raKey_A="coord_ra_target",
+            decKey_A="coord_dec_target",
+            raKey_B="ra_ref",
+            decKey_B="dec_ref",
+        )
+
+        self.process.buildActions.mags = ConvertFluxToMag()
+
+        # Filter down to only objects with mag 17-21.5
+        self.process.filterActions.brightStarsRA = DownselectVector(vectorKey="astromDiffRA")
+        self.process.filterActions.brightStarsRA.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        self.process.filterActions.brightStarsDec = DownselectVector(vectorKey="astromDiffDec")
+        self.process.filterActions.brightStarsDec.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        self.process.filterActions.brightStarsTot = DownselectVector(vectorKey="astromDiffTot")
+        self.process.filterActions.brightStarsTot.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        # Calculate median and sigmaMad
+        self.process.calculateActions.AA1_RA = MedianAction(vectorKey="brightStarsRA")
+        self.process.calculateActions.AA1_sigmaMad_RA = SigmaMadAction(vectorKey="brightStarsRA")
+
+        self.process.calculateActions.AA1_Dec = MedianAction(vectorKey="brightStarsDec")
+        self.process.calculateActions.AA1_sigmaMad_Dec = SigmaMadAction(vectorKey="brightStarsDec")
+
+        self.process.calculateActions.AA1_tot = MedianAction(vectorKey="brightStarsTot")
+        self.process.calculateActions.AA1_sigmaMad_tot = SigmaMadAction(vectorKey="brightStarsTot")
+
+        self.produce.metric.units = {
+            "AA1_RA": "mas",
+            "AA1_sigmaMad_RA": "mas",
+            "AA1_Dec": "mas",
+            "AA1_sigmaMad_Dec": "mas",
+            "AA1_tot": "mas",
+            "AA1_sigmaMad_tot": "mas",
+        }

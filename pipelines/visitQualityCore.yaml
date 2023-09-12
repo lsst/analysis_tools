@@ -23,8 +23,11 @@ tasks:
       atools.astromDiffDecSkyVisitPlot: TargetRefCatDeltaDecSkyVisitPlot
       atools.astromDiffRAScatterVisitPlot: TargetRefCatDeltaRAScatterVisitPlot
       atools.astromDiffDecScatterVisitPlot: TargetRefCatDeltaDecScatterVisitPlot
+      atools.astromDiffMetrics: TargetRefCatDeltaMetrics
+      atools.astromDiffMetrics.applyContext: VisitContext
       python: |
         from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
   photometricMatchVisit:
     class: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchVisitTask
     config:

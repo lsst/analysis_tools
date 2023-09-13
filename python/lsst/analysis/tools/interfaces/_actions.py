@@ -41,6 +41,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Iterable
 
+import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 
 from ..contexts import ContextApplier
@@ -193,9 +194,15 @@ class PlotAction(AnalysisAction):
     a `Mapping` of `str` to `PlotType` when called.
     """
 
-    def getOutputNames(self) -> Iterable[str]:
+    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
         """Returns a list of names that will be used as keys if this action's
-        call method returns a mapping. Otherwise return an empty Iterable
+        call method returns a mapping. Otherwise return an empty Iterable.
+
+        Parameters
+        ----------
+        config : `lsst.pex.config.Config`, optional
+            Configuration of the task. This is only used if the output naming
+            needs to be config-aware.
 
         Returns
         -------
@@ -251,14 +258,26 @@ class JointAction(AnalysisAction):
         yield from self.metric.getInputSchema()
         yield from self.plot.getInputSchema()
 
-    def getOutputNames(self) -> Iterable[str]:
+    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
         """Returns a list of names that will be used as keys if this action's
-        call method returns a mapping. Otherwise return an empty Iterable
+        call method returns a mapping. Otherwise return an empty Iterable.
+
+        Parameters
+        ----------
+        config : `lsst.pex.config.Config`, optional
+            Configuration of the task. This is only used if the output naming
+            needs to be config-aware.
 
         Returns
         -------
-        result : `Iterable` of `str`
+        outNames : `Iterable` of `str`
             If a `PlotAction` produces more than one plot, this should be the
             keys the action will use in the returned `Mapping`.
         """
-        return self.plot.getOutputNames()
+        if config is None:
+            # `dynamicOutputNames` is set to False.
+            outNames = self.plot.getOutputNames()
+        else:
+            # `dynamicOutputNames` is set to True.
+            outNames = self.plot.getOutputNames(config=config)
+        return outNames

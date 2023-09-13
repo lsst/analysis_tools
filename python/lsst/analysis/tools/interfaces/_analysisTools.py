@@ -27,6 +27,7 @@ from collections.abc import Mapping
 from functools import wraps
 from typing import Callable, Iterable, Protocol, runtime_checkable
 
+import lsst.pex.config as pexConfig
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.verify import Measurement
@@ -38,7 +39,7 @@ from ._stages import BasePrep, BaseProcess, BaseProduce
 
 @runtime_checkable
 class _HasOutputNames(Protocol):
-    def getOutputNames(self) -> Iterable[str]:
+    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
         ...
 
 
@@ -132,6 +133,11 @@ class AnalysisTool(AnalysisAction):
         # ensures that the bases classes private finalize is called last.
         if "finalize" in vars(cls):
             cls.finalize = _finalizeWrapper(cls.finalize, cls)
+
+    dynamicOutputNames: bool | Field[bool] = False
+    """Determines whether to grant the ``getOutputNames`` method access to
+    config parameters.
+    """
 
     parameterizedBand: bool | Field[bool] = True
     """Specifies if an `AnalysisTool` may parameterize a band within any field
@@ -234,13 +240,19 @@ class AnalysisTool(AnalysisAction):
         """
         self.prep.addInputSchema(self.process.getInputSchema())
 
-    def getOutputNames(self) -> Iterable[str]:
+    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
         """Return the names of the plots produced by this analysis tool.
 
         If there is a `PlotAction` defined in the produce action, these names
         will either come from the `PlotAction` if it defines a
         ``getOutputNames`` method (likely if it returns a mapping of figures),
         or a default value is used and a single figure is assumed.
+
+        Parameters
+        ----------
+        config : `lsst.pex.config.Config`, optional
+            Configuration of the task. This is only used if the output naming
+            needs to be config-aware.
 
         Returns
         -------
@@ -251,7 +263,7 @@ class AnalysisTool(AnalysisAction):
             case JointAction(plot=NoPlot()):
                 return tuple()
             case _HasOutputNames():
-                outNames = tuple(self.produce.getOutputNames())
+                outNames = tuple(self.produce.getOutputNames(config=config))
             case _:
                 raise ValueError(f"Unsupported Action type {type(self.produce)} for getting output names")
 

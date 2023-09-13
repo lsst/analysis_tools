@@ -1,5 +1,16 @@
 description: |
   Matched difference (measured vs reference) plots/metrics
+parameters:
+  mag_x_min: 17
+  mag_x_max: 29
+  mag_diff_min: -1000
+  mag_diff_max: 1000
+  mag_chi_min: -5
+  mag_chi_max: 5
+  pos_diff_min: -100
+  pos_diff_max: 100
+  pos_chi_min: -5
+  pos_chi_max: 5
 tasks:
   diff_matched_analysis:
     class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
@@ -8,23 +19,37 @@ tasks:
 
       # plots
       atools.matchedRefCModelMagDiff: MatchedRefCoaddDiffMagTool
+      # Doesn't work; interpreted as float
+      # atools.matchedRefCModelMagDiff.produce.plot.xLims: [parameters.mag_x_min, parameters.mag_x_max]
+      atools.matchedRefCModelMagDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelMagDiff.produce.plot.yLims: lims_mag_diff
 
       atools.matchedRefCModelMagChi: MatchedRefCoaddDiffMagTool
       atools.matchedRefCModelMagChi.compute_chi: true
+      atools.matchedRefCModelMagChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelMagChi.produce.plot.yLims: lims_mag_chi
 
       # TODO: Can this be a one liner?
       atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXDiff.variable: x
+      atools.matchedRefPositionXDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionXDiff.produce.plot.yLims: lims_pos_diff
 
       atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXChi.variable: x
+      atools.matchedRefPositionXChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionXChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionXChi.compute_chi: true
 
       atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionYDiff.variable: y
+      atools.matchedRefPositionYDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionYDiff.produce.plot.yLims: lims_pos_diff
 
       atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionYChi.variable: y
+      atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionYChi.compute_chi: true
 
       python: |
@@ -32,3 +57,8 @@ tasks:
           MatchedRefCoaddDiffMagTool,
           MatchedRefCoaddDiffPositionTool,
         )
+        lims_mag_x = (parameters.mag_x_min, parameters.mag_x_max)
+        lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)
+        lims_mag_diff = (parameters.mag_diff_min, parameters.mag_diff_max)
+        lims_pos_chi = (parameters.pos_chi_min, parameters.pos_chi_max)
+        lims_pos_diff = (parameters.pos_diff_min, parameters.pos_diff_max)

@@ -77,10 +77,10 @@ class TestDiffMatched(TestCase):
         self.assertGreater(n_input, 0)
         self.assertGreater(len(list(tester.configureMetrics())), 0)
 
-        self.assertEquals(len(inputs), n_input)
+        self.assertEqual(len(inputs), n_input)
         data = {key.format(band="analysisTools"): np.array([0.0]) for key, *_ in inputs}
         # There's no metric or plot so it just returns an empty dict
-        self.assertEquals(len(tester(data)), 0)
+        self.assertEqual(len(tester(data)), 0)
 
     def testMatchedRefCoaddDiffMagMetric(self):
         self._testMatchedRefCoaddMetricDerived(

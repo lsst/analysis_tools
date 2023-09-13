@@ -93,7 +93,11 @@ class TestDiffMatched(TestCase):
 
     def testMatchedRefCoaddDiffPositionTool(self):
         for variable in ("x", "y"):
-            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddDiffPositionTool, variable=variable)
+            self._testMatchedRefCoaddMetricDerived(
+                MatchedRefCoaddDiffPositionTool,
+                coord_meas=variable,
+                coord_ref=variable,
+            )
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

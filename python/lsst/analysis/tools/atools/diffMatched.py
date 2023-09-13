@@ -27,7 +27,7 @@ __all__ = (
     "MatchedRefCoaddDiffPositionTool",
 )
 
-from lsst.pex.config import ChoiceField, Field
+from lsst.pex.config import Field
 
 from ..actions.vector import (
     CalcBinnedStatsAction,
@@ -229,12 +229,17 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
         doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
         default=200,
     )
-    variable = ChoiceField[str](
-        doc="The astrometric variable to compute metrics for",
-        allowed={
-            "x": "x",
-            "y": "y",
-        },
+    coord_label = Field[str](
+        doc="The plot label for the astrometric variable (default coord_meas)",
+        optional=True,
+        default=None,
+    )
+    coord_meas = Field[str](
+        doc="The key for measured values of the astrometric variable",
+        optional=False,
+    )
+    coord_ref = Field[str](
+        doc="The key for reference values of the astrometric variabler",
         optional=False,
     )
 
@@ -245,8 +250,9 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
             # Matched ref tables may not have PSF fluxes, or prefer CModel.
             self._set_flux_default("mag_sn")
             super().finalize()
-            self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
-            self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
+            name = self.coord_label if self.coord_label else self.coord_meas
+            self.process.buildActions.pos_meas = LoadVector(vectorKey=self.coord_meas)
+            self.process.buildActions.pos_ref = LoadVector(vectorKey=self.coord_ref)
             if self.compute_chi:
                 self.process.buildActions.diff = DivideVector(
                     actionA=SubtractVector(
@@ -267,12 +273,12 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 self.unit = "" if self.compute_chi else "mas"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"astrom_{self.variable}_{{name_class}}_{subtype}_"
+                self.name_prefix = f"astrom_{self.coord_meas}_{{name_class}}_{subtype}_"
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
                 self.produce.plot.yAxisLabel = (
-                    f"chi = (slot - reference {self.variable} position)/error"
+                    f"chi = (slot - reference {name} position)/error"
                     if self.compute_chi
-                    else f"slot - reference {self.variable} position (mas)"
+                    else f"slot - reference {name} position ({self.unit})"
                 )

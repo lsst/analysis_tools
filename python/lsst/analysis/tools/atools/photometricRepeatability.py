@@ -106,13 +106,6 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute summary statistics on filtered groups
         self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
-        # self.process.calculateActions.photRepeatOutlier = FracThreshold(
-        #     vectorKey="perGroupStdevFiltered",
-        #     op="ge",
-        #     threshold=self.PA2Value,
-        #     percent=True,
-        #     relative_to_median=True,
-        # )
         self.process.calculateActions.photRepeatNsources = CountAction(vectorKey="perGroupStdevFiltered")
 
         self.produce.plot = HistPlot()
@@ -125,7 +118,6 @@ class StellarPhotometricRepeatability(AnalysisTool):
         self.produce.plot.panels["panel_rms"].statsPanel.stat2 = ["photRepeatStdev"]
         self.produce.plot.panels["panel_rms"].statsPanel.stat3 = ["photRepeatOutlier"]
 
-        # self.produce.plot.panels["panel_rms"].referenceValue = self.PA2Value
         self.produce.plot.panels["panel_rms"].refRelativeToMedian = True
 
         self.produce.plot.panels["panel_rms"].label = "rms (mmag)"

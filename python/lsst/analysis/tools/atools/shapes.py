@@ -28,6 +28,7 @@ __all__ = (
     "E1Diff",
     "E2Diff",
     "RhoStatistics",
+    "EllipticityCorrelationMetrics",
 )
 
 from lsst.pex.config import Field
@@ -198,3 +199,47 @@ class RhoStatistics(AnalysisTool):
         self.process.calculateActions.rho.treecorr.metric = "Arc"
 
         self.produce.plot = RhoStatisticsPlot()
+
+
+class EllipticityCorrelationMetrics(AnalysisTool):
+    """Calculate the TEx metrics and make histograms showing the data
+    used to compute the metrics.
+    """
+
+    xValue = Field[int](doc="Metric suffix corresponding to annulus size (1, 2, or 3)", default=1)
+    minSep = Field[float](doc="Inner radius of the annulus in arcmin", default=0.25)
+    maxSep = Field[float](doc="Outer radius of the annulus in arcmin", default=1.0)
+    nbins = Field[int](doc="Number of log-spaced angular bins", default=10)
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=50)
+        self.prep.selectors.starSelector = StarSelector()
+
+        self.process.calculateActions.rho = CalcRhoStatistics()
+        self.process.calculateActions.rho.treecorr.nbins = self.nbins
+        self.process.calculateActions.rho.treecorr.min_sep = self.minSep
+        self.process.calculateActions.rho.treecorr.max_sep = self.maxSep
+        self.process.calculateActions.rho.treecorr.sep_units = "arcmin"
+        self.process.calculateActions.rho.treecorr.metric = "Arc"
+
+        # This doesn't work 'cause the results of CalcRhoStats aren't
+        # available to the process? How do I calculate the median of a column
+        # from CalcRhoStats? Do I need a separate Action to do that?
+        self.process.calculateActions.TEx_E1 = MedianAction(vectorKey="rho1")
+
+        self.produce.metric.units = {
+            "TEx": "",
+        }
+
+    def finalize(self):
+        super().finalize()
+        self.process.calculateActions.rho.treecorr.nbins = self.nbins
+        self.process.calculateActions.rho.treecorr.min_sep = self.minSep
+        self.process.calculateActions.rho.treecorr.max_sep = self.maxSep
+
+        self.produce.metric.newNames = {
+            "TEx": f"{{band}}_TE{self.xValue}",
+        }

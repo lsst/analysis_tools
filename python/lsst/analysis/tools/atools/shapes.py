@@ -201,7 +201,8 @@ class RhoStatistics(AnalysisTool):
         self.produce.plot = RhoStatisticsPlot()
 
 
-class EllipticityCorrelationMetrics(AnalysisTool):
+class EllipticityCorrelationMetrics(RhoStatistics):
+    # class EllipticityCorrelationMetrics(AnalysisTool):
     """Calculate the TEx metrics and make histograms showing the data
     used to compute the metrics.
     """

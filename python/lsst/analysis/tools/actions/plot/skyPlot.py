@@ -34,7 +34,7 @@ from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...statistics import nansigmaMad
-from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays
+from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays, generateSummaryStats
 
 
 class SkyPlot(PlotAction):
@@ -67,6 +67,16 @@ class SkyPlot(PlotAction):
     fixAroundZero = Field[bool](
         doc="Fix the colorbar to be symmetric around zero.",
         default=False,
+    )
+
+    addExtremeScatter = Field[bool](
+        doc="Add extreme scatter points?",
+        default=True,
+    )
+
+    addExtremeScatter = Field[bool](
+        doc="Add extreme scatter points?",
+        default=True,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -204,8 +214,9 @@ class SkyPlot(PlotAction):
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 
-        if sumStats is None:
-            sumStats = {}
+        if self.plotOutlines:
+            if sumStats is None:
+                sumStats = generateSummaryStats(data, kwargs['skymap'], plotInfo)
 
         if plotInfo is None:
             plotInfo = {}
@@ -337,6 +348,7 @@ class SkyPlot(PlotAction):
                 maxDec,
                 fixAroundZero=self.fixAroundZero,
                 isSorted=True,
+                addExtremeScatter=self.addExtremeScatter,
             )
             cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
             plt.colorbar(plotOut, cax=cax, extend="both")

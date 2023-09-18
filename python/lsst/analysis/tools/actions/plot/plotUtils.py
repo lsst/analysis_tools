@@ -599,6 +599,7 @@ def plotProjectionWithBinning(
     isSorted=False,
     vmin=None,
     vmax=None,
+    addExtremeScatter=True,
     scatPtSize=7,
 ):
     """Plot color-mapped data in projection and with binning when appropriate.
@@ -674,17 +675,18 @@ def plotProjectionWithBinning(
         # distance from the median, this is just the head/tail 15% of points.
         if len(xs) > 1:
             extremes = int(np.floor((len(xs) / 100)) * 85)
-            plotOut = ax.scatter(
-                xs[extremes:],
-                ys[extremes:],
-                c=zs[extremes:],
-                s=s,
-                cmap=cmap,
-                vmin=vmin,
-                vmax=vmax,
-                edgecolor="white",
-                linewidths=lw,
-            )
+            if addExtremeScatter:
+                plotOut = ax.scatter(
+                    xs[extremes:],
+                    ys[extremes:],
+                    c=zs[extremes:],
+                    s=s,
+                    cmap=cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    edgecolor="white",
+                    linewidths=lw,
+                )
     else:
         plotOut = ax.scatter(
             xs,

@@ -6,4 +6,5 @@ from .diaObjectDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
+from .propertyMapTractAnalysis import *
 from .sourceTableVisitAnalysis import *

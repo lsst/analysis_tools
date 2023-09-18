@@ -13,6 +13,7 @@ from .magDiff import *
 from .numericalValidity import *
 from .photometricRepeatability import *
 from .photometry import *
+from .propertyMap import *
 from .seeingMetric import *
 from .shapes import *
 from .simpleDiaPlot import *

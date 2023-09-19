@@ -74,11 +74,6 @@ class SkyPlot(PlotAction):
         default=True,
     )
 
-    addExtremeScatter = Field[bool](
-        doc="Add extreme scatter points?",
-        default=True,
-    )
-
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
         if "stars" in self.plotTypes:  # type: ignore

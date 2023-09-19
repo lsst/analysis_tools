@@ -79,6 +79,11 @@ class SkyPlot(PlotAction):
         default=Med2Mad,
     )
 
+    showExtremeOutliers = Field[bool](
+        doc="Show the x-y positions of extreme outlier values as overlaid scatter points.",
+        default=True,
+    )
+
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
         if "stars" in self.plotTypes:  # type: ignore
@@ -353,6 +358,7 @@ class SkyPlot(PlotAction):
                 vmax=maxColorVal,
                 fixAroundZero=self.fixAroundZero,
                 isSorted=True,
+                showExtremeOutliers=self.showExtremeOutliers,
             )
             cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
             plt.colorbar(plotOut, cax=cax, extend="both")

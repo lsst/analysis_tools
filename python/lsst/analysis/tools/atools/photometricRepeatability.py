@@ -69,7 +69,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute per-group quantities
         self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = CalcSn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.buildAction = CalcSn()
         self.process.buildActions.perGroupSn.func = "median"
         self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
         self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
@@ -131,7 +131,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
     def finalize(self):
         super().finalize()
-        self.process.buildActions.perGroupSn.buildAction = CalcSn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.buildAction.fluxType = f"{self.fluxType}"
         self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
         self.process.buildActions.perGroupStdev.buildAction = ConvertFluxToMag(
             vectorKey=f"{self.fluxType}",
@@ -144,7 +144,9 @@ class StellarPhotometricRepeatability(AnalysisTool):
             percent=True,
             relative_to_median=True,
         )
-        self.produce.plot.panels["panel_rms"].referenceValue = self.PA2Value
+
+        if isinstance(self.produce.plot, HistPlot):
+            self.produce.plot.panels["panel_rms"].referenceValue = self.PA2Value
 
         self.produce.metric.newNames = {
             "photRepeatStdev": "{band}_stellarPhotRepeatStdev",

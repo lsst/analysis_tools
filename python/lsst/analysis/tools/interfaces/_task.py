@@ -147,11 +147,15 @@ class AnalysisBaseConnections(
         # AnalysisPlots.
         names: list[str] = []
         for action in config.atools:
+            if action.dynamicOutputNames:
+                outNames = action.getOutputNames(config=config)
+            else:
+                outNames = action.getOutputNames()
             if action.parameterizedBand:
                 for band in config.bands:
-                    names.extend(name.format(band=band) for name in action.getOutputNames())
+                    names.extend(name.format(band=band) for name in outNames)
             else:
-                names.extend(action.getOutputNames())
+                names.extend(outNames)
 
         # For each of the names found, create output connections.
         for name in names:

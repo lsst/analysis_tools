@@ -210,8 +210,10 @@ class SkyPlot(PlotAction):
         ax = fig.add_subplot(111)
 
         if self.plotOutlines:
-            if sumStats is None:
+            if sumStats is None and "patch" in data.keys():
                 sumStats = generateSummaryStats(data, kwargs['skymap'], plotInfo)
+            else:
+                sumStats = {}
 
         if plotInfo is None:
             plotInfo = {}

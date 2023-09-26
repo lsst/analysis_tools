@@ -56,8 +56,8 @@ class CoaddInputCount(AnalysisTool):
         self.process.buildActions.z = LoadVector()
         self.process.buildActions.z.vectorKey = "{band}_inputCount"
 
-        self.process.buildActions.patch = LoadVector()
-        self.process.buildActions.patch.vectorKey = "patch"
+        #self.process.buildActions.patch = LoadVector()
+        #self.process.buildActions.patch.vectorKey = "patch"
 
         self.process.calculateActions.median = MedianAction()
         self.process.calculateActions.median.vectorKey = "z"

@@ -38,10 +38,10 @@ class NumDiaSourcesAllMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.NumDiaSourcesMetricAll = CountAction(vectorKey="diaSourceId")
+        self.process.calculateActions.numDiaSourcesAll = CountAction(vectorKey="diaSourceId")
 
         # the units for the quantity (count, an astropy quantity)
-        self.produce.metric.units = {"NumDiaSourcesAll": "ct"}
+        self.produce.metric.units = {"numDiaSourcesAll": "ct"}
 
 
 class NumDiaSourcesMetric(AnalysisTool):

@@ -4,7 +4,7 @@ tasks:
   analyzeDiaSourceTableCore:
     class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
     config:
-      atools.numDiaSources: NumDiaSourcesMetric
+      # atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesAllMetric
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric

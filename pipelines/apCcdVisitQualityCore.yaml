@@ -2,7 +2,7 @@ description: |
   Tier 1 AP plots and metrics to assess CcdVisit quality
 tasks:
   analyzeDiaSourceTableCore:
-    class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
+    class: lsst.analysis.tools.tasks.AssociatedDiaSourceTableVisitAnalysisTask
     config:
       # atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesAllMetric

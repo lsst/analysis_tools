@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-__all__ = ("DiaSourceTableCcdVisitAnalysisConfig", "DiaSourceTableCcdVisitAnalysisTask")
+__all__ = ("AssociatedDiaSourceTableVisitAnalysisConfig", "AssociatedDiaSourceTableVisitAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class DiaSourceTableCcdVisitAnalysisConnections(
+class AssociatedDiaSourceTableVisitAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
@@ -21,12 +21,12 @@ class DiaSourceTableCcdVisitAnalysisConnections(
     )
 
 
-class DiaSourceTableCcdVisitAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=DiaSourceTableCcdVisitAnalysisConnections
+class AssociatedDiaSourceTableVisitAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=AssociatedDiaSourceTableVisitAnalysisConnections
 ):
     pass
 
 
-class DiaSourceTableCcdVisitAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = DiaSourceTableCcdVisitAnalysisConfig
-    _DefaultName = "DiaSourceTableCcdVisitAnalysis"
+class AssociatedDiaSourceTableVisitAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = AssociatedDiaSourceTableVisitAnalysisConfig
+    _DefaultName = "AssociatedDiaSourceTableVisitAnalysis"

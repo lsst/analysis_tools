@@ -10,7 +10,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class AssociatedDiaSourceTableVisitAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band"),
-    defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
+    defaultTemplates={"coaddName": "goodSeeing", "fakesType": "fakes_"},
 ):
     data = ct.Input(
         doc="CcdVisit-based DiaSource table to load from the butler",

@@ -9,7 +9,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class AssocDiaSrcDetectorVisitAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("visit", "band"),
+    dimensions=("visit", "band", "detector"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": "fakes_"},
 ):
     data = ct.Input(

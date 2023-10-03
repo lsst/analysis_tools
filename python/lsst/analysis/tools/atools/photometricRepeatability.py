@@ -69,7 +69,7 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute per-group quantities
         self.process.buildActions.perGroupSn = PerGroupStatistic()
-        self.process.buildActions.perGroupSn.buildAction = CalcSn(fluxType=f"{self.fluxType}")
+        self.process.buildActions.perGroupSn.buildAction = CalcSn()
         self.process.buildActions.perGroupSn.func = "median"
         self.process.buildActions.perGroupExtendedness = PerGroupStatistic()
         self.process.buildActions.perGroupExtendedness.buildAction.vectorKey = "extendedness"
@@ -106,13 +106,6 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Compute summary statistics on filtered groups
         self.process.calculateActions.photRepeatStdev = MedianAction(vectorKey="perGroupStdevFiltered")
-        self.process.calculateActions.photRepeatOutlier = FracThreshold(
-            vectorKey="perGroupStdevFiltered",
-            op="ge",
-            threshold=self.PA2Value,
-            percent=True,
-            relative_to_median=True,
-        )
         self.process.calculateActions.photRepeatNsources = CountAction(vectorKey="perGroupStdevFiltered")
 
         self.produce.plot = HistPlot()
@@ -125,7 +118,6 @@ class StellarPhotometricRepeatability(AnalysisTool):
         self.produce.plot.panels["panel_rms"].statsPanel.stat2 = ["photRepeatStdev"]
         self.produce.plot.panels["panel_rms"].statsPanel.stat3 = ["photRepeatOutlier"]
 
-        self.produce.plot.panels["panel_rms"].referenceValue = self.PA2Value
         self.produce.plot.panels["panel_rms"].refRelativeToMedian = True
 
         self.produce.plot.panels["panel_rms"].label = "rms (mmag)"
@@ -136,6 +128,26 @@ class StellarPhotometricRepeatability(AnalysisTool):
             "photRepeatOutlier": "percent",
             "photRepeatNsources": "ct",
         }
+
+    def finalize(self):
+        super().finalize()
+        self.process.buildActions.perGroupSn.buildAction.fluxType = f"{self.fluxType}"
+        self.process.buildActions.perGroupCount.buildAction.vectorKey = f"{self.fluxType}"
+        self.process.buildActions.perGroupStdev.buildAction = ConvertFluxToMag(
+            vectorKey=f"{self.fluxType}",
+            returnMillimags=True,
+        )
+        self.process.calculateActions.photRepeatOutlier = FracThreshold(
+            vectorKey="perGroupStdevFiltered",
+            op="ge",
+            threshold=self.PA2Value,
+            percent=True,
+            relative_to_median=True,
+        )
+
+        if isinstance(self.produce.plot, HistPlot):
+            self.produce.plot.panels["panel_rms"].referenceValue = self.PA2Value
+
         self.produce.metric.newNames = {
             "photRepeatStdev": "{band}_stellarPhotRepeatStdev",
             "photRepeatOutlier": "{band}_stellarPhotRepeatOutlierFraction",

@@ -29,13 +29,15 @@ from ..interfaces import AnalysisTool
 class SimpleDiaPlot(AnalysisTool):
     """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky."""
 
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.ras = LoadVector()
         self.process.buildActions.ras.vectorKey = "ra"
         self.process.buildActions.decs = LoadVector()
-        self.process.buildActions.decs.vectorKey = "decl"
+        self.process.buildActions.decs.vectorKey = "dec"
         # TODO: update column name to 'dec' once column names are standardized,
         # i.e., RFC-863
 

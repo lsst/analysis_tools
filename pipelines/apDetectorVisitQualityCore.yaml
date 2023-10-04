@@ -1,14 +1,14 @@
 description: |
   Tier 1 AP plots and metrics to assess CcdVisit quality
 tasks:
-  analyzeDiaSourceTableCore:
-    class: lsst.analysis.tools.tasks.DiaSourceTableCcdVisitAnalysisTask
+  analyzeAssocDiaSrcCore:
+    class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
     config:
-      atools.numDiaSources: NumDiaSourcesMetric
+      # atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesAllMetric
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
-      connections.outputName: diaSourceTableCore
+      connections.outputName: assocDiaSrcCore
       atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *

@@ -29,6 +29,8 @@ from ..interfaces import AnalysisTool
 class SimpleDiaPlot(AnalysisTool):
     """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky."""
 
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
 

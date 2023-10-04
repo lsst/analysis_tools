@@ -8,8 +8,8 @@ tasks:
       atools.numDiaSourcesAll: NumDiaSourcesAllMetric
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
-      connections.outputName: diaSourceTableCore
-      atools.simpleSky: SimpleDiaPlot
+      connections.outputName: assocDiaSrcCore
+      #atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
 #  analyzeDiaObjectTableSources:

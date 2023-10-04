@@ -9,14 +9,6 @@ tasks:
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
       connections.outputName: assocDiaSrcCore
-      #atools.simpleSky: SimpleDiaPlot
+      atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
-#  analyzeDiaObjectTableSources:
-#    class: lsst.analysis.tools.tasks.DiaObjectDetectorVisitAnalysisTask
-#    config:
-#      connections.outputName: sourcesOutput
-#      #bands: ['g']
-#      atools.sourceTool: SourcesTool
-#      python: |
-#        from lsst.analysis.tools.atools import *

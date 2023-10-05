@@ -1,6 +1,8 @@
 description: |
   Matched difference (measured vs reference) plots/metrics
 parameters:
+  color_diff_min: -250
+  color_diff_max: 250
   mag_x_min: 17
   mag_x_max: 29
   mag_diff_min: -1000
@@ -17,10 +19,16 @@ tasks:
     config:
       connections.outputName: diff_matched_truth_summary_objectTable_tract
 
-      # plots
+      atools.matchedRefCModelColorDiff: MatchedRefCoaddDiffColorTool
+      atools.matchedRefCModelColorDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelColorDiff.produce.plot.yLims: lims_color_diff
+
+      atools.matchedRefCModelColorChi: MatchedRefCoaddDiffColorTool
+      atools.matchedRefCModelColorChi.compute_chi: true
+      atools.matchedRefCModelColorChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelColorChi.produce.plot.yLims: lims_mag_chi
+
       atools.matchedRefCModelMagDiff: MatchedRefCoaddDiffMagTool
-      # Doesn't work; interpreted as float
-      # atools.matchedRefCModelMagDiff.produce.plot.xLims: [parameters.mag_x_min, parameters.mag_x_max]
       atools.matchedRefCModelMagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelMagDiff.produce.plot.yLims: lims_mag_diff
 
@@ -29,7 +37,6 @@ tasks:
       atools.matchedRefCModelMagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelMagChi.produce.plot.yLims: lims_mag_chi
 
-      # TODO: Can this be a one liner?
       atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXDiff.coord_meas: x
       atools.matchedRefPositionXDiff.coord_ref: refcat_x
@@ -55,12 +62,13 @@ tasks:
       atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionYChi.compute_chi: true
-
       python: |
         from lsst.analysis.tools.atools.diffMatched import (
+          MatchedRefCoaddDiffColorTool,
           MatchedRefCoaddDiffMagTool,
           MatchedRefCoaddDiffPositionTool,
         )
+        lims_color_diff = (parameters.color_diff_min, parameters.color_diff_max)
         lims_mag_x = (parameters.mag_x_min, parameters.mag_x_max)
         lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)
         lims_mag_diff = (parameters.mag_diff_min, parameters.mag_diff_max)

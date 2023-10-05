@@ -10,11 +10,11 @@ them to be created from the same code to ensure that they are consistent
 and repeatable.
 
 It has powerful and flexible functionality but can be somewhat
-overwhelming at first. We are going to cover getting the stack set up 
+overwhelming at first. We are going to cover getting the stack set up
 and cloning analysis_tools. Then an overview of the package and follow that
 with walking through a series of examples of increasing complexity.
 
-Analysis tools is designed to work with any sort of keyed data but to make it 
+Analysis tools is designed to work with any sort of keyed data but to make it
 more intuitive initially we'll talk about tables and column names.
 
 Setting Up the Package and Getting Started With The Stack
@@ -50,9 +50,9 @@ hopefully this will show your local version of analysis_tools.
 
 Package Layout
 ==============
-There are a bunch of files in analysis_tools but we are going to focus on two directories, 
-``python/lsst/analysis/tools/`` and ``pipelines``, which contain the python code and the 
-pipelines that run it respecitvely. Below is a brief overview of the layout, for more details 
+There are a bunch of files in analysis_tools but we are going to focus on two directories,
+``python/lsst/analysis/tools/`` and ``pipelines``, which contain the python code and the
+pipelines that run it respecitvely. Below is a brief overview of the layout, for more details
 please see the :doc:`package layout guide<detailed-package-layout>` (still under development).
 
 
@@ -78,9 +78,9 @@ Pipelines
 
     Plots and metrics that assess the repeatability of sources per tract by matching them between visits.
 
-**apCcdVisitQualityCore.yaml**
+**apDetectorVisitQualityCore.yaml**
 
-    The core plots to assess the quality of the ccd visit dataset.
+    A metrics pipeline that runs as an afterburner on the butler datasets produced by `ap_pipe` on single detector-visits.
 
 python/lsst/analysis/tools
 --------------------------
@@ -101,14 +101,14 @@ python/lsst/analysis/tools
 
     **keyedData**
 
-        These actions are base classes for other actions. You 
-        shouldn't need to add stuff here. Use the scalar or 
+        These actions are base classes for other actions. You
+        shouldn't need to add stuff here. Use the scalar or
         vector actions.
 
     **plots**
 
-        The plotting code lives in here. You shouldn't need to touch 
-        this unless you have to add a new plot type. Try to use one of 
+        The plotting code lives in here. You shouldn't need to touch
+        this unless you have to add a new plot type. Try to use one of
         the existing ones first rather than duplicating things.
 
 **atools**
@@ -134,24 +134,24 @@ A Simple Plotting And Metric Example
 ====================================
 
 We will start with a simple example and build
-up from there. We're going to start by adapting an existing plot and metric to our needs, we'll use a 
+up from there. We're going to start by adapting an existing plot and metric to our needs, we'll use a
 sky plot to show the on sky distribution of the values of a column in the table.
 
 The plot/metric is an example of an analysis tool, these are composed of actions which do the actual work of
 selection and calculation.
 
-We use ‘actions’ to tell the code what to plot on the z axis, these can be defined by anyone 
-but standard ones exist already. This example will showcase some of these standard ones and 
-then we’ll look more into how to define them. One of the great things about actions is that 
+We use ‘actions’ to tell the code what to plot on the z axis, these can be defined by anyone
+but standard ones exist already. This example will showcase some of these standard ones and
+then we’ll look more into how to define them. One of the great things about actions is that
 they allow us to only read in the columns we need from large tables.
 
-Each plot and/or metric is its own class, each one has a prep, process and produce section. 
+Each plot and/or metric is its own class, each one has a prep, process and produce section.
 The prep section manipulates input data, for example by performing flag cuts and signal to noise cuts.
-The process section builds the data required for the plot/metric, for example if the plot 
-is of a magnitude difference against a magnitude then the actions defined in the 
-process section will identify which flux column needs to be read in and turned into a magnitude. 
-Then another will take the fluxes needed, turn them into magnitudes and then calculate their 
-difference. The produce section takes the prepared and pre calculated data, plots it on 
+The process section builds the data required for the plot/metric, for example if the plot
+is of a magnitude difference against a magnitude then the actions defined in the
+process section will identify which flux column needs to be read in and turned into a magnitude.
+Then another will take the fluxes needed, turn them into magnitudes and then calculate their
+difference. The produce section takes the prepared and pre calculated data, plots it on
 the graph and creates the metrics from it. The plot options, such as axis labels, are set in this section.
 
 .. code-block:: python

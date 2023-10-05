@@ -27,7 +27,7 @@ __all__ = (
     "MatchedRefCoaddDiffPositionTool",
 )
 
-from lsst.pex.config import Field
+from lsst.pex.config import ConfigDictField, Field
 
 from ..actions.vector import (
     CalcBinnedStatsAction,
@@ -41,6 +41,27 @@ from ..actions.vector import (
 from ..actions.vector.selectors import RangeSelector, VectorSelector
 from .genericBuild import ExtendednessTool, MagnitudeXTool
 from .genericProduce import MagnitudeScatterPlot
+from ..interfaces import BaseMetricAction, KeyedData, KeyedDataSchema, MetricAction, MetricResultType
+
+
+class DictMetricAction(MetricAction):
+    """A dictionary of named BaseMetricActions."""
+
+    actions = ConfigDictField[str, BaseMetricAction](doc="Named metric actions")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        # Something is wrong with the typing for DictField key iteration
+        schema = []
+        for action in self.actions.values():
+            schema.extend(action)
+        return schema
+
+    def __call__(self, data: KeyedData, **kwargs) -> MetricResultType:
+        results = {}
+        for action in self.actions.values():
+            result = action(data=data, **kwargs)
+            results.update(result)
+        return results
 
 
 class MatchedRefCoaddToolBase(MagnitudeXTool, ExtendednessTool):

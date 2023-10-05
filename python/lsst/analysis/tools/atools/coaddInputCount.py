@@ -42,7 +42,7 @@ class CoaddInputCount(AnalysisTool):
 
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-        self.prep.selectors.snSelector.threshold = 100
+        self.prep.selectors.snSelector.threshold = 5
 
         # TODO: Can we make these defaults somewhere?
         self.process.buildActions.x = LoadVector()
@@ -51,7 +51,7 @@ class CoaddInputCount(AnalysisTool):
         self.process.buildActions.y.vectorKey = "coord_dec"
         self.process.buildActions.statMask = SnSelector()
         self.process.buildActions.statMask.fluxType = "{band}_psfFlux"
-        self.process.buildActions.statMask.threshold = 100
+        self.process.buildActions.statMask.threshold = 5
 
         self.process.buildActions.z = LoadVector()
         self.process.buildActions.z.vectorKey = "{band}_inputCount"

@@ -27,7 +27,9 @@ __all__ = (
     "MatchedRefCoaddDiffPositionTool",
 )
 
-from lsst.pex.config import ConfigDictField, Field
+from typing import Iterable
+
+from lsst.pex.config import Config, DictField, Field
 
 from ..actions.vector import (
     CalcBinnedStatsAction,
@@ -41,8 +43,9 @@ from ..actions.vector import (
 from ..actions.vector.selectors import RangeSelector, VectorSelector
 from .genericBuild import ExtendednessTool, MagnitudeXTool
 from .genericProduce import MagnitudeScatterPlot
-from ..interfaces import BaseMetricAction, KeyedData, KeyedDataSchema, MetricAction, MetricResultType
-
+from ..interfaces import (
+    BaseMetricAction, KeyedData, KeyedDataSchema, MetricAction, MetricResultType, PlotAction, PlotResultType,
+)
 
 class DictMetricAction(MetricAction):
     """A dictionary of named BaseMetricActions."""
@@ -57,6 +60,26 @@ class DictMetricAction(MetricAction):
         return schema
 
     def __call__(self, data: KeyedData, **kwargs) -> MetricResultType:
+        results = {}
+        for action in self.actions.values():
+            result = action(data=data, **kwargs)
+            results.update(result)
+        return results
+
+
+class DictPlotAction(PlotAction):
+    """A dictionary of named PlotActions."""
+
+    actions = ConfigDictField[str, PlotAction](doc="Named plot actions")
+
+    def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
+        names = []
+        for action in self.actions.values():
+            names_action = action.getOutputNames(config=config)
+            names.extend(names_action)
+        return tuple(names)
+
+    def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         results = {}
         for action in self.actions.values():
             result = action(data=data, **kwargs)

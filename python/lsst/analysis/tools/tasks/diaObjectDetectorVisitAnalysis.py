@@ -40,6 +40,7 @@ class DiaObjectDetectorVisitAnalysisConnections(
         doc="CcdVisit-based DiaObject table to load from the butler",
         name="{fakesType}{coaddName}Diff_diaObject",
         storageClass="DataFrame",
+        deferLoad=True,
         dimensions=("visit", "band"),
     )
 

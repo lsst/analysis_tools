@@ -36,6 +36,7 @@ class AssocDiaSrcDetectorVisitAnalysisConnections(
         doc="CcdVisit-based DiaSource table to load from the butler",
         name="{fakesType}{coaddName}Diff_assocDiaSrc",
         storageClass="DataFrame",
+        deferLoad=True,
         dimensions=("visit", "band", "detector"),
     )
 

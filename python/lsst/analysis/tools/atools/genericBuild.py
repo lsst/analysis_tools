@@ -123,17 +123,39 @@ class MagnitudeTool(AnalysisTool):
         doc="Flux fields to convert to magnitudes",
     )
 
-    def _add_flux(self, name: str, config: FluxConfig):
-        key_flux = config.key_flux_band(band="{band}")
+    def _add_flux(self, name: str, config: FluxConfig, band: str | None = None) -> str:
+        """Add requisite buildActions for a given flux.
+
+        Parameters
+        ----------
+        name
+            The name of the flux, without "flux_" prefix.
+        config
+            The configuration for the flux.
+        band
+            The name of the band. Default "{band}" assumes the this band is
+            the parameterized band.
+
+        Returns
+        -------
+        name
+            The name of the flux, suffixed by band if band is not None.
+        """
+        if band is None:
+            band = "{band}"
+        else:
+            name = f"{name}_{band}"
+        key_flux = config.key_flux_band(band=band)
         name_flux = f"flux_{name}"
         self._set_action(self.process.buildActions, name_flux, LoadVector, vectorKey=key_flux)
         if config.key_flux_error is not None:
             # Pre-emptively loaded for e.g. future S/N calculations
-            key_flux_err = config.key_flux_error_band(band="{band}")
+            key_flux_err = config.key_flux_error_band(band=band)
             self._set_action(
                 self.process.buildActions, f"flux_err_{name}", LoadVector, vectorKey=key_flux_err
             )
         self._set_action(self.process.buildActions, f"mag_{name}", ConvertFluxToMag, vectorKey=key_flux)
+        return name
 
     def _set_action(self, target: ConfigurableActionStructField, name: str, action, *args, **kwargs):
         """Set an action attribute on a target tool's struct field.
@@ -162,11 +184,27 @@ class MagnitudeTool(AnalysisTool):
         else:
             setattr(target, name, action(*args, **kwargs))
 
-    def _set_flux_default(self, attr):
-        """Set own config attr to appropriate string flux name."""
-        name_mag = getattr(self, attr)
+    def _set_flux_default(self: str, attr, band: str | None = None, name_mag: str | None = None):
+        """Set own config attr to appropriate string flux name.
+
+        Parameters
+        ----------
+        attr
+            The name of the attribute to set.
+        band
+            The name of the band to pass to _add_flux.
+        name_mag
+            The name of the magnitude to configure. If None, self must already
+            have an attr, and name_mag is set to the attr's value.
+        """
+        name_mag_is_none = name_mag is None
+        if name_mag_is_none:
+            name_mag = getattr(self, attr)
+            complete = name_mag in self.fluxes
+        else:
+            complete = hasattr(self, attr)
         # Do nothing if already set - may have been called 2+ times
-        if name_mag not in self.fluxes:
+        if not complete:
             name_found = None
             drop_err = False
             # Check if the name with errors is a configured default
@@ -189,13 +227,13 @@ class MagnitudeTool(AnalysisTool):
                 if drop_err:
                     value.key_flux_error = None
                 self.fluxes[name_found] = value
-                self._add_flux(name=name_found, config=value)
+                name_found = self._add_flux(name=name_found, config=value, band=band)
             else:
                 raise RuntimeError(
                     f"flux={name_mag} not defined in self.fluxes={self.fluxes}"
                     f" and no default configuration found"
                 )
-            if name_mag != name_found:
+            if name_mag_is_none and (name_mag != name_found):
                 # Essentially appends _err to the name if needed
                 setattr(self, attr, name_found)
 

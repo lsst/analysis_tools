@@ -5,9 +5,27 @@ tasks:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
     config:
       # atools.numDiaSources: NumDiaSourcesMetric
-      atools.numDiaSourcesAll: NumDiaSourcesAllMetric
+      atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesAll.metricName: numDiaSourcesAll
+      atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
+      atools.numDiaSourcesHighReliability: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesHighReliability.metricName: numDiaSourcesHighReliability
+      atools.numDiaSourcesHighReliability.process.calculateActions.countingAction.op: gt
+      atools.numDiaSourcesHighReliability.process.calculateActions.countingAction.threshold: 0.9
+      atools.numDiaSourcesHighReliability.process.calculateActions.countingAction.vectorKey: reliability
+      atools.numDiaSourcesLowReliability: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesLowReliability.metricName: numDiaSourcesLowReliability
+      atools.numDiaSourcesLowReliability.process.calculateActions.countingAction.op: lt
+      atools.numDiaSourcesLowReliability.process.calculateActions.countingAction.threshold: 0.1
+      atools.numDiaSourcesLowReliability.process.calculateActions.countingAction.vectorKey: reliability
+      atools.numDiaSourcesNanReliability: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesNanReliability.metricName: numDiaSourcesNanReliability
+      atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.op: eq
+      atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.threshold: !!float nan
+      atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
+      atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
       connections.outputName: assocDiaSrcCore
       atools.simpleSky: SimpleDiaPlot
       python: |

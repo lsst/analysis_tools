@@ -29,12 +29,15 @@ import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field, ListField
+from lsst.pex.config.configurableActions import ConfigurableActionField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
-from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector, VectorAction
+
 from ...statistics import nansigmaMad
 from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays, generateSummaryStats
+from .calculateRange import Med2Mad
 
 
 class SkyPlot(PlotAction):
@@ -72,6 +75,11 @@ class SkyPlot(PlotAction):
     addExtremeScatter = Field[bool](
         doc="Add extreme scatter points?",
         default=True,
+    )
+
+    colorbarRange = ConfigurableActionField[VectorAction](
+        doc="Action to calculate the min and max of the colorbar range.",
+        default=Med2Mad,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -319,6 +327,7 @@ class SkyPlot(PlotAction):
             # This should be obvious on the plot
             if not any(np.isfinite(colorVals)):
                 colorVals[:] = 0
+            minColorVal, maxColorVal = self.colorbarRange(colorVals)
 
             if n_xs < 5:
                 continue
@@ -343,6 +352,8 @@ class SkyPlot(PlotAction):
                 maxRa,
                 minDec,
                 maxDec,
+                vmin=minColorVal,
+                vmax=maxColorVal,
                 fixAroundZero=self.fixAroundZero,
                 isSorted=True,
                 addExtremeScatter=self.addExtremeScatter,

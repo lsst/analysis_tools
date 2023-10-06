@@ -24,6 +24,7 @@ __all__ = ("CoaddInputCount", )
 
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
+from ..actions.plot.calculateRange import MinMax
 from ..actions.vector import (
     CoaddPlotFlagSelector,
     LoadVector,
@@ -76,6 +77,7 @@ class CoaddInputCount(AnalysisTool):
         self.produce.plot.zAxisLabel = "Input Count"
         self.produce.plot.plotOutlines = True
         self.produce.plot.addExtremeScatter = False
+        self.produce.plot.colorbarRange = MinMax()
 
         self.produce.metric.units = {"median": "ct", "sigmaMad": "ct", "mean": "ct"}
 

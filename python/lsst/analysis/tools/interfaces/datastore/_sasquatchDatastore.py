@@ -28,14 +28,10 @@ import logging
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from lsst.daf.butler import (
-    DatasetRef,
-    DatasetRefURIs,
-    DatasetTypeNotSupportedError,
-    DatastoreRecordData,
-    StorageClass,
-)
-from lsst.daf.butler.datastores.genericDatastore import GenericBaseDatastore
+from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
+from lsst.daf.butler.datastore import DatasetRefURIs
+from lsst.daf.butler.datastore.generic_base import GenericBaseDatastore
+from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
 from lsst.resources import ResourcePath
 

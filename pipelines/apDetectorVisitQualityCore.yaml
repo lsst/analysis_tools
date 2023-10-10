@@ -12,3 +12,11 @@ tasks:
       atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
+
+  analyzeDiaFakesCore:
+    class: lsst.analysis.tools.tasks.DiaFakesDetectorVisitAnalysisTask
+    config:
+      atools.numFakesInDiaSources: NumFakesInDiaSourcesAllMetric
+      connections.outputName: diaFakesCore
+      python: |
+        from lsst.analysis.tools.atools import *

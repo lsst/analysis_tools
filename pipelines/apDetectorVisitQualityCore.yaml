@@ -20,3 +20,22 @@ tasks:
       connections.outputName: trailedDiaSrcCore
       python: |
         from lsst.analysis.tools.atools import *
+  diffimTaskCore:
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
+    config:
+      connections.outputName: diffimMetadata
+      atools.nUnmergedDiaSources: NUnmergedDiaSourcesMetric
+      atools.nMergedDiaSources: NMergedDiaSourcesMetric
+      atools.nGoodPixelsMetric: NGoodPixelsMetric
+      atools.nBadPixelsMetric: NBadPixelsMetric
+      atools.nDetectedPositiveAllPixelsMetric: NPixelsDetectedPositiveMetric
+      atools.nDetectedNegativeAllPixelsMetric: NPixelsDetectedNegativeMetric
+      atools.nDetectedPositiveGoodPixelsMetric: NBadPixelsDetectedPositiveMetric
+      atools.nDetectedNegativeGoodPixelsMetric: NBadPixelsDetectedNegativeMetric
+      atools.sciencePsfSize: SciencePsfSizeMetric
+      atools.templatePsfSize: TemplatePsfSizeMetric
+      atools.scaleScienceVariance: ScienceVarianceScaleMetric
+      atools.scaleTemplateVariance: TemplateVarianceScaleMetric
+      atools.templateCoverage: TemplateCoverageMetric
+      python: |
+        from lsst.analysis.tools.atools import *

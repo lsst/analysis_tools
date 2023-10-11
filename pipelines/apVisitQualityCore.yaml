@@ -1,0 +1,12 @@
+description: |
+  Tier 1 AP plots and metrics to assess CcdVisit quality
+tasks:
+  analyzeDiaFakesVisitCore:
+    class: lsst.analysis.tools.tasks.DiaFakesVisitAnalysisTask
+    config:
+      atools.numFoundFakesDiaAllMetric: NumFoundFakesDiaAllMetric
+      atools.fractionFoundFakesDiaAllMetric: FractionFoundFakesDiaAllMetric
+      atools.numFakesInjectedAllMetric: NumFakesInjectedAllMetric
+      connections.outputName: diaFakesVisitCore
+      python: |
+        from lsst.analysis.tools.atools import *

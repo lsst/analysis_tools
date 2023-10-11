@@ -77,7 +77,8 @@ class DiaFakesVisitAnalysisTask(AnalysisPipelineTask):
 
         butlerQC.put(outputs, outputRefs)
 
-    def loadMultipleData(self, inputs: Iterable[DeferredDatasetHandle], names: Iterable[str] | None = None
+    def loadMultipleData(
+        self, inputs: Iterable[DeferredDatasetHandle], names: Iterable[str] | None = None
     ) -> KeyedData:
         fakesTables = []
         for aninput in inputs:

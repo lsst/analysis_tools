@@ -27,7 +27,7 @@ __all__ = (
 )
 
 from ..actions.scalar import CountAction, FracThreshold
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector, ThresholdSelector
+from ..actions.vector import ThresholdSelector
 from ..interfaces import AnalysisTool
 
 
@@ -41,8 +41,7 @@ class NumFoundFakesDiaAllMetric(AnalysisTool):
         self.prep.selectors.foundFakesSelector = ThresholdSelector(
             vectorKey="diaSourceId",
             op="gt",
-            threshold=0,
-        )
+            threshold=0)
         # Count the number of fake sources found in the images
         self.process.calculateActions.numFoundFakesDiaSourcesAll = CountAction(vectorKey="diaSourceId")
         # the units for the quantity (count, an astropy quantity)
@@ -59,8 +58,7 @@ class FractionFoundFakesDiaAllMetric(AnalysisTool):
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
             vectorKey="diaSourceId",
             op='gt',
-            threshold=0
-            )
+            threshold=0)
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"fractionFoundFakesDiaAll": "ct"}
 

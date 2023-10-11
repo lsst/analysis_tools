@@ -28,13 +28,11 @@ from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantized
 
 from ..interfaces._interfaces import KeyedData
 
-
 __all__ = (
     "DiaFakesVisitAnalysisConnections",
     "DiaFakesVisitAnalysisConfig",
     "DiaFakesVisitAnalysisTask",
 )
-
 
 from astropy.table import Table, vstack
 from lsst.pipe.base import QuantumContext

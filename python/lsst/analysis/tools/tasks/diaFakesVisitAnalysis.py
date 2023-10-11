@@ -56,9 +56,7 @@ class DiaFakesVisitAnalysisConnections(
     )
 
 
-class DiaFakesVisitAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=DiaFakesVisitAnalysisConnections
-):
+class DiaFakesVisitAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiaFakesVisitAnalysisConnections):
     pass
 
 
@@ -70,9 +68,8 @@ class DiaFakesVisitAnalysisTask(AnalysisPipelineTask):
         self,
         butlerQC: QuantumContext,
         inputRefs: InputQuantizedConnection,
-        outputRefs: OutputQuantizedConnection
+        outputRefs: OutputQuantizedConnection,
     ) -> None:
-
         inputs = butlerQC.get(inputRefs)
         fakesTable = self.loadMultipleData(inputs["data"])
         inputs["data"] = fakesTable
@@ -80,12 +77,8 @@ class DiaFakesVisitAnalysisTask(AnalysisPipelineTask):
 
         butlerQC.put(outputs, outputRefs)
 
-    def loadMultipleData(
-        self,
-        inputs: Iterable[DeferredDatasetHandle],
-        names: Iterable[str] | None = None
+    def loadMultipleData(self, inputs: Iterable[DeferredDatasetHandle], names: Iterable[str] | None = None
     ) -> KeyedData:
-
         fakesTables = []
         for aninput in inputs:
             fakesTables.append(Table.from_pandas(aninput.get()))

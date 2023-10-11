@@ -8,3 +8,4 @@ from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .sourceTableVisitAnalysis import *
 from .diaFakesDetectorVisitAnalysis import *
+from .diaFakesVisitAnalysis import *

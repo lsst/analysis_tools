@@ -19,13 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
+
 from collections.abc import Iterable
 from typing import cast
 
-from ..interfaces._interfaces import KeyedData
 from lsst.daf.butler import DeferredDatasetHandle
-
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
+
+from ..interfaces._interfaces import KeyedData
+
 
 __all__ = (
     "DiaFakesVisitAnalysisConnections",
@@ -33,11 +35,12 @@ __all__ = (
     "DiaFakesVisitAnalysisTask",
 )
 
-from lsst.pipe.base import QuantumContext, connectionTypes as ct
-
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 from astropy.table import Table, vstack
+from lsst.pipe.base import QuantumContext
+from lsst.pipe.base import connectionTypes as ct
+
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class DiaFakesVisitAnalysisConnections(

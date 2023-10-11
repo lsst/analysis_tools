@@ -2,10 +2,10 @@ from .assocDiaSrcDetectorVisitAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
+from .diaFakesDetectorVisitAnalysis import *
+from .diaFakesVisitAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .sourceTableVisitAnalysis import *
-from .diaFakesDetectorVisitAnalysis import *
-from .diaFakesVisitAnalysis import *

@@ -16,7 +16,9 @@ tasks:
   analyzeDiaFakesCore:
     class: lsst.analysis.tools.tasks.DiaFakesDetectorVisitAnalysisTask
     config:
-      atools.numFakesInDiaSources: NumFakesInDiaSourcesAllMetric
-      connections.outputName: diaFakesCore
+      atools.numFoundFakesDiaAllMetric: NumFoundFakesDiaAllMetric
+      atools.fractionFoundFakesDiaAllMetric: FractionFoundFakesDiaAllMetric
+      atools.numFakesInjectedAllMetric: NumFakesInjectedAllMetric
+      connections.outputName: diaFakesDetectorVisitCore
       python: |
         from lsst.analysis.tools.atools import *

@@ -10,5 +10,6 @@ tasks:
       atools.numSsObjects: NumSsObjectsMetric
       connections.outputName: assocDiaSrcCore
       atools.simpleSky: SimpleDiaPlot
+      atools.streakSource: NumStreakSourcesMetric
       python: |
         from lsst.analysis.tools.atools import *

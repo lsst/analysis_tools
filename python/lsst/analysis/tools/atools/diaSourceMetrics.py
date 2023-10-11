@@ -24,6 +24,7 @@ __all__ = (
     "NumDiaSourcesAllMetric",
     "NumDiaSourcesMetric",
     "NumDipolesMetric",
+    "NumStreakSourcesMetric"
 )
 
 from ..actions.scalar import CountAction
@@ -76,3 +77,19 @@ class NumDipolesMetric(AnalysisTool):
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"numDipoles": "ct"}
+
+
+class NumStreakSourcesMetric(AnalysisTool):
+    """Calculate the number of diaSources with a streak in their footprint."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Select all diaSources with the streak mask set
+        self.prep.selectors.flags = FlagSelector(selectWhenTrue=["base_PixelFlags_flag_streak"])
+
+        # Count the number of diaSources in a streak
+        self.process.buildActions.numStreakSources = CountAction(vectorKey="base_PixelFlags_flag_streak")
+
+        # Units for the quantity (count, an astropy quantity)
+        self.produce.metric.units = {"numStreakSources": "ct"}

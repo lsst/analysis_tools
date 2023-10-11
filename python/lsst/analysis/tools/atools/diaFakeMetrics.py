@@ -20,11 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "NumFoundFakesDiaAllMetric",
-    "FractionFoundFakesDiaAllMetric",
-    "NumFakesInjectedAllMetric"
-)
+__all__ = ("NumFoundFakesDiaAllMetric", "FractionFoundFakesDiaAllMetric", "NumFakesInjectedAllMetric")
 
 from ..actions.scalar import CountAction, FracThreshold
 from ..actions.vector import ThresholdSelector
@@ -39,9 +35,8 @@ class NumFoundFakesDiaAllMetric(AnalysisTool):
 
         # filter the fakes that were actually found
         self.prep.selectors.foundFakesSelector = ThresholdSelector(
-            vectorKey="diaSourceId",
-            op="gt",
-            threshold=0)
+            vectorKey="diaSourceId", op="gt", threshold=0
+        )
         # Count the number of fake sources found in the images
         self.process.calculateActions.numFoundFakesDiaSourcesAll = CountAction(vectorKey="diaSourceId")
         # the units for the quantity (count, an astropy quantity)
@@ -56,9 +51,8 @@ class FractionFoundFakesDiaAllMetric(AnalysisTool):
 
         # Count the number of fake sources found in the images
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
-            vectorKey="diaSourceId",
-            op='gt',
-            threshold=0)
+            vectorKey="diaSourceId", op='gt', threshold=0
+        )
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"fractionFoundFakesDiaAll": "ct"}
 
@@ -70,6 +64,6 @@ class NumFakesInjectedAllMetric(AnalysisTool):
         super().setDefaults()
 
         # count the number of total fake sources injected in the images
-        self.process.calculateActions.numFakesInjectedAll = CountAction(vectorKey='fakeId')
+        self.process.calculateActions.numFakesInjectedAll = CountAction(vectorKey="fakeId")
         # the units for the quantity (count, an astropy quantity)
-        self.produce.metric.units = {'numFakesInjectedAll': 'ct'}
+        self.produce.metric.units = {"numFakesInjectedAll": "ct"}

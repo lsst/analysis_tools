@@ -92,6 +92,7 @@ class MultiVisitCoveragePlot(PlotAction):
             "yFp": "mm",
             "medianE": "",
             "psfStarScaledDeltaSizeScatter": "",
+            "psfTraceRadiusDelta": "pixel",
         },
     )
     sortedFullBandList = ListField[str](
@@ -126,6 +127,7 @@ class MultiVisitCoveragePlot(PlotAction):
             "psfStarDeltaE1Median",
             "psfStarDeltaE2Median",
             "psfStarScaledDeltaSizeScatter",
+            "psfTraceRadiusDelta",
             "llcra",
             "lrcra",
             "ulcra",
@@ -309,9 +311,11 @@ class MultiVisitCoveragePlot(PlotAction):
         if makeWarpConfig is None:
             maxEllipResidual = 0.007
             maxScaledSizeScatter = 0.009
+            maxPsfTraceRadiusDelta = 0.7
         else:
             maxEllipResidual = makeWarpConfig.select.value.maxEllipResidual  # type: ignore
             maxScaledSizeScatter = makeWarpConfig.select.value.maxScaledSizeScatter  # type: ignore
+            maxPsfTraceRadiusDelta = makeWarpConfig.select.value.maxPsfTraceRadiusDelta  # type: ignore
 
         cameraName = "" if camera is None else camera.getName()
         if self.projection == "focalPlane":
@@ -425,6 +429,8 @@ class MultiVisitCoveragePlot(PlotAction):
                 vMaxDict[zKey] = maxScaledSizeScatter
             elif zKey == "astromOffsetMean" and self.projection != "raDec":
                 vMaxDict[zKey] = min(maxMeanDistanceArcsec, 1.1 * nanMean(zKeySorted.tail(nPercent)))
+            elif zKey == "maxPsfTraceRadiusDelta":
+                vMaxDict[zKey] = maxPsfTraceRadiusDelta
             else:
                 vMaxDict[zKey] = nanMean(zKeySorted.tail(nPercent))
 
@@ -487,7 +493,7 @@ class MultiVisitCoveragePlot(PlotAction):
                 else:
                     cmap = mpl.cm.get_cmap(self.cmapName).copy()
 
-                if zKey in ["medianE", "psfStarScaledDeltaSizeScatter"]:
+                if zKey in ["medianE", "psfStarScaledDeltaSizeScatter", "psfTraceRadiusDelta"]:
                     cmap.set_over("red")
                 elif (
                     zKey in ["astromOffsetMean"]
@@ -643,10 +649,11 @@ class MultiVisitCoveragePlot(PlotAction):
                 # Add a shaded area of the size of a detector for reference.
                 if self.plotDetectorOutline and self.projection == "raDec":
                     if camera is None:
-                        log.warning(
-                            "Config plotDetectorOutline is True, but no camera was provided. "
-                            "Reference detector outline will not be included in the plot."
-                        )
+                        if iRow == 0 and iCol == 0:
+                            log.warning(
+                                "Config plotDetectorOutline is True, but no camera was provided. "
+                                "Reference detector outline will not be included in the plot."
+                            )
                     else:
                         # Calculate area of polygon with known vertices.
                         x1, x2, x3, x4 = (
@@ -750,10 +757,11 @@ class MultiVisitCoveragePlot(PlotAction):
 
                 cbLabel = zKey
                 if zKey not in self.unitsDict:
-                    log.warning(
-                        "Data column {} does not have an entry in unitsDict config.  Units "
-                        "will not be included in the colorbar text.".format(zKey)
-                    )
+                    if iRow == 0 and iCol == 0:
+                        log.warning(
+                            "Data column {} does not have an entry in unitsDict config.  Units "
+                            "will not be included in the colorbar text.".format(zKey)
+                        )
                 elif len(self.unitsDict[zKey]) > 0:
                     cbLabel = "{} ({})".format(zKey, self.unitsDict[zKey])
 

@@ -27,25 +27,26 @@ from ..interfaces import AnalysisTool
 
 
 class SimpleDiaPlot(AnalysisTool):
-    """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky."""
+    """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky.
+
+    Column names sfollowing Science Data Model (SDM).
+    """
 
     parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.ras = LoadVector()
-        self.process.buildActions.ras.vectorKey = "ra"
-        self.process.buildActions.decs = LoadVector()
-        self.process.buildActions.decs.vectorKey = "dec"
-        # TODO: update column name to 'dec' once column names are standardized,
-        # i.e., RFC-863
+        self.process.buildActions.ra = LoadVector()
+        self.process.buildActions.ra.vectorKey = "ra"
+        self.process.buildActions.dec = LoadVector()
+        self.process.buildActions.dec.vectorKey = "dec"
 
         self.produce.plot = DiaSkyPlot()
 
         self.produce.plot.panels["panel_main"] = DiaSkyPanel()
         self.produce.plot.panels["panel_main"].xlabel = "RA (deg)"
         self.produce.plot.panels["panel_main"].ylabel = "Dec (deg)"
-        self.produce.plot.panels["panel_main"].ra = "ras"
-        self.produce.plot.panels["panel_main"].dec = "decs"
+        self.produce.plot.panels["panel_main"].ra = "ra"
+        self.produce.plot.panels["panel_main"].dec = "dec"
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False

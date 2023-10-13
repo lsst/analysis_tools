@@ -200,14 +200,15 @@ class BaseMetricAction(MetricAction):
         for key, unit in self.units.items():
             formattedKey = key.format(**kwargs)
             if formattedKey not in data:
-                raise ValueError(f"Key: {formattedKey} could not be found input data")
+                raise ValueError(f"Key: {formattedKey} could not be found in input data")
             value = data[formattedKey]
             if not isinstance(value, Scalar):
                 raise ValueError(f"Data for key {key} is not a Scalar type")
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)
             notes = {"metric_tags": kwargs.get("metric_tags", [])}
-            results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit), notes=notes)
+            # The dtype=None is to preserve integers which will otherwise be converted to float64
+            results[formattedKey] = Measurement(formattedKey, apu.Quantity(value, apu.Unit(unit), dtype=None), notes=notes)
         return results
 
 

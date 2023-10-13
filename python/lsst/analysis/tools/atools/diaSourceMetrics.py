@@ -21,6 +21,8 @@
 from __future__ import annotations
 
 __all__ = (
+    "DiaSkySourceHistPlot",
+    "DiaSkySourceSkyPlot",
     "NumDiaSourcesMetric",
     "NumDipolesMetric",
     "NumDiaSourcesSelectionMetric",
@@ -30,8 +32,59 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector
+from ..actions.vector import CalcSn, ConvertUnits, FlagSelector, GoodDiaSourceSelector, LoadVector
 from ..interfaces import AnalysisTool
+from .skySource import SkySourceHistPlot, SkySourceSkyPlot
+
+
+class DiaSkySourceHistPlot(SkySourceHistPlot):
+    """Calculate the SNR distribution of the sky sources.
+
+    This distribution should have a sigma=1 if the errors are correct.
+
+    This class inherits from SkySourceHistPlot and is different because
+    it uses diaSrc column names
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.skySourceSelector = GoodDiaSourceSelector
+        self.prep.selectors.skySourceSelector.selectWhenTrue = ["sky_source"]
+
+        self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="slot_PsfFlux_instFlux")
+        self.process.buildActions.hist_ap09_flux = LoadVector(
+            vectorKey="base_CircularApertureFlux_9_0_instFlux"
+        )
+        self.process.buildActions.hist_psf_sn = CalcSn(fluxType="slot_PsfFlux_instFlux")
+        self.process.buildActions.hist_ap09_sn = CalcSn(fluxType="base_CircularApertureFlux_9_0_instFlux")
+
+
+class DiaSkySourceSkyPlot(SkySourceSkyPlot):
+    """Visualizes the sky values.
+
+    This class inherits from SkySourceSkyPlot and is different because
+    it uses diaSrc column names
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.skySourceSelector = GoodDiaSourceSelector
+        self.prep.selectors.skySourceSelector.selectWhenTrue = ["sky_source"]
+
+        # We have to rename the columns from the SkySource assumptions
+        # of having a catalog following the Science Data Model names
+        self.process.buildActions.statMask.fluxType = "slot_PsfFlux_instFlux"
+
+        # Convert from rad to degree
+        # I think this is the simplest way to do it
+        # We have to override the existing x, y VectorActions
+        self.process.buildActions.x = ConvertUnits(buildAction=LoadVector, inUnit="rad", outUnit="degree")
+        self.process.buildActions.x.buildAction.vectorKey = "coord_ra"
+        self.process.buildActions.y = ConvertUnits(buildAction=LoadVector, inUnit="rad", outUnit="degree")
+        self.process.buildActions.y.buildAction.vectorKey = "coord_dec"
+        self.process.buildActions.z.vectorKey = "base_CircularApertureFlux_9_0_instFlux"
 
 
 class NumDiaSourcesMetric(AnalysisTool):

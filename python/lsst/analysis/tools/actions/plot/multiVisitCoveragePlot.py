@@ -837,8 +837,8 @@ class MultiVisitCoveragePlot(PlotAction):
         downSelectedData : `lsst.analysis.tools.interfaces.KeyedData`
             The down-selected catalog.
         """
-        xSelector = RangeSelector(key=xKey, minimum=xMin, maximum=xMax)
-        ySelector = RangeSelector(key=yKey, minimum=yMin, maximum=yMax)
+        xSelector = RangeSelector(vectorKey=xKey, minimum=xMin, maximum=xMax)
+        ySelector = RangeSelector(vectorKey=yKey, minimum=yMin, maximum=yMax)
 
         totMask = xSelector(data) & ySelector(data)
         downSelectedData = data[totMask]

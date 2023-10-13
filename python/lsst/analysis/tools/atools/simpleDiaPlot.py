@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ("SimpleDiaPlot",)
+__all__ = ("SimpleDiaPlot", "SimpleDiaSrcPlot")
 
 from ..actions.plot.diaSkyPlot import DiaSkyPanel, DiaSkyPlot
-from ..actions.vector import LoadVector
+from ..actions.vector import ConvertUnits, LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -50,3 +50,22 @@ class SimpleDiaPlot(AnalysisTool):
         self.produce.plot.panels["panel_main"].ra = "ra"
         self.produce.plot.panels["panel_main"].dec = "dec"
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False
+
+
+class SimpleDiaSrcPlot(SimpleDiaPlot):
+    """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky.
+
+    Column names following diaSrc names.
+    """
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.ra = ConvertUnits(buildAction=LoadVector, inUnit="rad", outUnit="degree")
+        self.process.buildActions.ra.buildAction.vectorKey = "coord_ra"
+        self.process.buildActions.dec = ConvertUnits(buildAction=LoadVector, inUnit="rad", outUnit="degree")
+        self.process.buildActions.dec.buildAction.vectorKey = "coord_dec"
+
+        self.process.buildActions.ra.vectorKey = "coord_ra"
+        self.process.buildActions.dec.vectorKey = "coord_dec"
+        self.produce.plot.panels["panel_main"].xlabel = "RA (rad)"
+        self.produce.plot.panels["panel_main"].ylabel = "Dec (rad)"

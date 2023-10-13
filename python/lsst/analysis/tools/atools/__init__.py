@@ -1,6 +1,7 @@
 from .astrometricRepeatability import *
 from .astrometryWithReference import *
 from .coveragePlots import *
+from .diaFakeMetrics import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
 from .diffMatched import *

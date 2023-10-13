@@ -387,7 +387,11 @@ class SkySourceSelector(FlagSelector):
 
 
 class GoodDiaSourceSelector(FlagSelector):
-    """Selects good DIA sources from diaSourceTables."""
+    """Selects good DIA sources from diaSrc tables.
+
+    Note: the flag selectors are based on a diaSrc table flag names
+    not on the bit-packed flags in an SDMified diaSourceTable.
+    """
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()

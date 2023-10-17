@@ -52,8 +52,8 @@ class ObjectTableSurveyAnalysisConnections(
         name="objectTable_tract",
         storageClass="ArrowAstropy",
         deferLoad=True,
-        multiple=True,
         dimensions=("tract", "skymap"),
+        multiple=True,
     )
 
 
@@ -81,7 +81,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         else:
             tableName = inputs[connectionName][0].ref.datasetType.name
             run = inputs[connectionName][0].ref.run
-            tracts = [data.ref.dataId["tract"] for data in inputs[connectionName]]
+            tracts = [data.ref.dataId["tract"] for data in list(inputs[connectionName])]
 
         # Initialize the plot info dictionary
         plotInfo = {

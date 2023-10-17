@@ -29,7 +29,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class RefCatSourcePhotometricAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap", "tract"),
+    dimensions=("visit",),
     defaultTemplates={"outputName": "sourceTable_visit_ps1_pv3_3pi_20170110_match"},
 ):
     data = ct.Input(

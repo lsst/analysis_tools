@@ -25,7 +25,7 @@ __all__ = ("PhotometricCatalogMatchConfig", "PhotometricCatalogMatchTask")
 import lsst.geom
 import lsst.pipe.base as pipeBase
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import Table
 from astropy.time import Time
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
@@ -177,6 +177,8 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
                 selectorSchema = selector.getFormattedInputSchema()
                 columns += [s[0] for s in selectorSchema]
 
+        if isinstance(inputs["catalog"], pd.core.frame.DataFrame):
+            inputs["catalog"] = Table.from_pandas(inputs["catalog"])
         table = inputs["catalog"].get(parameters={"columns": columns})
         inputs["catalog"] = table
 
@@ -225,6 +227,10 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         # convert the coordinates to degrees and convert the catalog to a
         # dataframe
 
-        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, [physicalFilter], epoch=epoch)
+        try:
+            loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, [physicalFilter], epoch=epoch)
+        except RuntimeError as e:
+            self.log.warn(e)
+            return Table()
 
         return Table(loadedRefCat)

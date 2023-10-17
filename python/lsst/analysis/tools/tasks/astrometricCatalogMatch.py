@@ -29,6 +29,7 @@ __all__ = (
 import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
+import numpy as np
 from astropy.table import Table
 from astropy.time import Time
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
@@ -181,6 +182,8 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
+        if isinstance(inputs["catalog"], pd.core.frame.DataFrame):
+            inputs["catalog"] = Table.from_pandas(inputs["catalog"])
         outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
@@ -211,5 +214,9 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         # dataframe
 
         filterName = self.config.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis
-        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
+        try:
+            loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
+        except RuntimeError as e:
+            self.log.warn(e)
+            return Table()
         return Table(loadedRefCat)

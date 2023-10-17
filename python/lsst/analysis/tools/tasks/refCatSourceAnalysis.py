@@ -35,7 +35,7 @@ class RefCatSourceAnalysisConnections(
     data = ct.Input(
         doc="Tract based object table to load from the butler",
         name="sourceTable_visit_gaia_dr2_20200414_match",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),
     )

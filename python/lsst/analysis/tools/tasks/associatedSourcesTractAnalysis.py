@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalysisTask")
 
 import numpy as np
-import pandas as pd
+from astropy.table import join, vstack
 from lsst.geom import Box2D
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
@@ -42,7 +42,7 @@ class AssociatedSourcesTractAnalysisConnections(
     sourceCatalogs = ct.Input(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit", "band"),
         multiple=True,
@@ -51,7 +51,7 @@ class AssociatedSourcesTractAnalysisConnections(
     associatedSources = ct.Input(
         doc="Table of associated sources",
         name="{associatedSourcesInputName}",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument", "skymap", "tract"),
     )
@@ -105,12 +105,12 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         """Concatenate source catalogs and join on associated object index."""
 
         # Keep only sources with associations
-        dataJoined = pd.concat(sourceCatalogs).merge(associatedSources, on="sourceId", how="inner")
-        dataJoined.set_index("sourceId", inplace=True)
+        sourceCatalogStack = vstack(sourceCatalogs)
+        dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
 
         # Determine which sources are contained in tract
-        ra = np.radians(dataJoined["coord_ra"].values)
-        dec = np.radians(dataJoined["coord_dec"].values)
+        ra = np.radians(dataJoined["coord_ra"])
+        dec = np.radians(dataJoined["coord_dec"])
         box, wcs = cls.getBoxWcs(skymap, tract)
         box = Box2D(box)
         x, y = wcs.skyToPixelArray(ra, dec)
@@ -118,9 +118,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # Keep only the sources in groups that are fully contained within the
         # tract
-        dataJoined["boxSelection"] = boxSelection
-        dataFiltered = dataJoined.groupby("obj_index").filter(lambda x: all(x["boxSelection"]))
-        dataFiltered.drop(columns="boxSelection", inplace=True)
+        dataFiltered = dataJoined[boxSelection]
 
         return dataFiltered
 

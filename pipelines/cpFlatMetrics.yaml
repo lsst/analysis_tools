@@ -1,0 +1,15 @@
+description: Initial test calibration pipeline.
+tasks:
+  flatMetrics_test:
+    class: lsst.analysis.tools.tasks.CpFlatAnalysisTask
+    config:
+      connections.outputName: "flatMetrics"
+      connections.data: "verifyFlatStats"
+      connections.rawData: "verifyFlatDetStats"
+      atools.flatScalars: FlatScalarMetrics
+      atools.flatMeanMFP: FlatResidualMeanMedianFP
+      atools.flatMeanSFP: FlatResidualMeanStdevFP
+      atools.flatNoiseMFP: FlatNoiseMedianFP
+      atools.flatNoiseSFP: FlatNoiseStdevFP
+      python: |
+        from lsst.analysis.tools.atools import *

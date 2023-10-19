@@ -1,0 +1,14 @@
+description: Initial test calibration pipeline.
+tasks:
+  ptcMetrics_test:
+    class: lsst.analysis.tools.tasks.CpPtcAnalysisTask
+    config:
+      connections.outputName: "ptcMetrics"
+      connections.data: "verifyPtcStats"
+      connections.rawData: "verifyPtcDetStats"
+      atools.ptcGainFP: PtcGainFP
+      atools.ptcNoiseFP: PtcNoiseFP
+      atools.ptcA00FP: PtcA00FP
+      atools.ptcTurnoffFP: PtcTurnoffFP
+      python: |
+        from lsst.analysis.tools.atools import *

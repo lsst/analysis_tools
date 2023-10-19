@@ -3,6 +3,7 @@ from .associatedSourcesTractAnalysis import *
 from .astrometricCatalogMatch import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
+from .cpAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diffimTaskDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *

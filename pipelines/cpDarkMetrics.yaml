@@ -1,0 +1,15 @@
+description: Initial test calibration pipeline.
+tasks:
+  darkMetrics_test:
+    class: lsst.analysis.tools.tasks.CpDarkAnalysisTask
+    config:
+      connections.outputName: "darkMetrics"
+      connections.data: "verifyDarkStats"
+      connections.rawData: "verifyDarkDetStats"
+      atools.darkScalars: DarkScalarMetrics
+      atools.darkMeanMFP: DarkResidualMeanMedianFP
+      atools.darkMeanSFP: DarkResidualMeanStdevFP
+      atools.darkNoiseMFP: DarkReadNoiseMedianFP
+      atools.darkNoiseSFP: DarkReadNoiseStdevFP
+      python: |
+        from lsst.analysis.tools.atools import *

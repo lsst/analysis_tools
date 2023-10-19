@@ -1,5 +1,6 @@
 from .astrometricRepeatability import *
 from .coveragePlots import *
+from .cpMetrics import *
 from .deblenderMetric import *
 from .deltaSkyCorr import *
 from .diaSolarSystemObjectMetrics import *

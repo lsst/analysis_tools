@@ -1,0 +1,15 @@
+description: Initial test calibration pipeline.
+tasks:
+  biasMetrics_test:
+    class: lsst.analysis.tools.tasks.CpBiasAnalysisTask
+    config:
+      connections.outputName: "biasMetrics"
+      connections.data: "verifyBiasStats"
+      connections.rawData: "verifyBiasDetStats"
+      atools.biasScalars: BiasScalarMetrics
+      atools.biasMeanMFP: BiasResidualMeanMedianFP
+      atools.biasMeanSFP: BiasResidualMeanStdevFP
+      atools.biasNoiseMFP: BiasReadNoiseMedianFP
+      atools.biasNoiseSFP: BiasReadNoiseStdevFP
+      python: |
+        from lsst.analysis.tools.atools import *

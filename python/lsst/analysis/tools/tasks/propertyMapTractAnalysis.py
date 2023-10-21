@@ -138,7 +138,7 @@ class PropertyMapTractAnalysisTask(AnalysisPipelineTask):
         ----------
         inputs: `dict`
             The inputs to the task
-        dataCoordinate: `lsst.daf.butler.DataCoordinate`
+        dataId: `~lsst.daf.butler.DataCoordinate`
             The dataId that the task is being run on.
         connectionNames: `list` [`str`]
             Name of the input connections to use for determining table names.

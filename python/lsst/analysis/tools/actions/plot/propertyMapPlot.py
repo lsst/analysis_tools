@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 from __future__ import annotations
 
 __all__ = ("PropertyMapPlot",)
@@ -61,7 +60,7 @@ class CustomHandler(HandlerTuple):
     Example
     -------
     # Plot some data.
-    line, = ax.plot(x, y, label='Sample Line')
+    line, = ax.plot(x, y, label="Sample Line")
 
     # Use CustomHandler for overlaid patches and also include the regular
     # line legend if desired.
@@ -218,10 +217,10 @@ class PropertyMapPlot(PlotAction):
         ----------
         data : `KeyedData`
             The HealSparseMap to plot the points from.
-        tractInfo: `lsst.skymap.tractInfo.ExplicitTractInfo`
+        tractInfo: `~lsst.skymap.tractInfo.ExplicitTractInfo`
             The tract info object.
         plotConfig :
-            `lsst.analysis.tools.tasks.propertyMapTractAnalysis.
+            `~lsst.analysis.tools.tasks.propertyMapTractAnalysis.
             PropertyMapTractAnalysisConfig`
             The configuration for the plot.
         plotInfo : `dict`
@@ -232,6 +231,15 @@ class PropertyMapPlot(PlotAction):
         figDict : `dict` [`~matplotlib.figure.Figure`]
             The resulting figures.
         """
+
+        # 'plotName' defaults to the attribute specified in
+        # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
+        # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
+        # it will override this default.
+        if self.plotName:
+            # Set the plot name using 'produce.plot.plotName' from
+            # PropertyMapTool's instance.
+            plotInfo["plotName"] = self.plotName
 
         figDict: dict[str, Figure] = {}
 
@@ -251,12 +259,12 @@ class PropertyMapPlot(PlotAction):
         histColors = ["#265D40", "#8B0000", "#00008B"]
 
         with plt.rc_context(rcparams):
-            for mapName, deferredDatasetHandle in data.items():
-                mapData = deferredDatasetHandle.get()
+            for mapName, mapDataHandle in data.items():
+                mapData = mapDataHandle.get()
                 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 16))
 
                 # Reduce whitespace but leave some room at the top for
-                # `plotInfo`.
+                # plotInfo.
                 plt.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
 
                 # Get the values for the valid pixels of the full tract.
@@ -397,7 +405,7 @@ class PropertyMapPlot(PlotAction):
                 ax2.set_xlabel(plotInfo["property"].title().replace("Psf", "PSF"))
                 ax2.set_ylabel("Normalized Count")
 
-                # Get handles and labels from the axes.
+                # Get handles and labels from the axis.
                 handles, labels = ax2.get_legend_handles_labels()
 
                 # Add a legend with custom handler that combines the handle
@@ -421,7 +429,7 @@ class PropertyMapPlot(PlotAction):
                     color = line.get_edgecolor() if line.get_facecolor()[-1] == 0 else line.get_facecolor()
                     text.set_color(color)
 
-                # Add extra info to `plotInfo`.
+                # Add extra info to plotInfo.
                 plotInfo["nside"] = mapData.nside_sparse
                 plotInfo["valid_area"] = mapData.get_valid_area()
 
@@ -454,7 +462,7 @@ class PropertyMapPlot(PlotAction):
 
         Parameters
         ----------
-        fullExtent : `tuple` of `float`
+        fullExtent : `tuple` [`float`]
             The full extent defined by (lon_min, lon_max, lat_min, lat_max):
 
             * ``lon_min``
@@ -472,7 +480,7 @@ class PropertyMapPlot(PlotAction):
 
         Returns
         -------
-        Results : `tuple` [`float`]
+        `tuple` [`float`]
             New extent as (new_lon_min, new_lon_max, new_lat_min, new_lat_max).
         """
         if n is None:
@@ -497,7 +505,7 @@ class PropertyMapPlot(PlotAction):
 
         Parameters
         ----------
-        cb : `matplotlib.colorbar.Colorbar`
+        cb : `~matplotlib.colorbar.Colorbar`
             The colorbar object.
         text : `str`
             The text to add.
@@ -513,7 +521,7 @@ class PropertyMapPlot(PlotAction):
 
         Returns
         -------
-        Results : `None`
+        `None`
             The text is added to the colorbar in place.
         """
         if color is None:
@@ -552,7 +560,7 @@ class PropertyMapPlot(PlotAction):
 
         Returns
         -------
-        Results : `str`
+        `str`
             The longest matching suffix from the `options` list. If no match is
             found, returns `None`.
         """

@@ -28,7 +28,7 @@ from typing import Mapping, cast
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Field, ListField
+from lsst.pex.config import Field, ListField, RangeField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from sklearn.neighbors import KernelDensity
@@ -58,6 +58,11 @@ class ColorColorFitPlot(PlotAction):
     )
 
     plotName = Field[str](doc="The name for the plot.", optional=False)
+    minPointsForFit = RangeField[int](
+        doc="Minimum number of valid objects to bother attempting a fit.",
+        default=5,
+        min=1,
+    )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base: list[tuple[str, type[Vector] | type[Scalar]]] = []
@@ -224,10 +229,6 @@ class ColorColorFitPlot(PlotAction):
         ys = cast(Vector, data["y"])[goodPoints]
         mags = cast(Vector, data["mag"])[goodPoints]
 
-        # TODO: Make a no data fig function and use here
-        if len(xs) == 0 or len(ys) == 0:
-            return fig
-
         # Points to use for the fit
         # type ignore because Vector needs a prototype interface
         fitPoints = np.where(
@@ -236,6 +237,17 @@ class ColorColorFitPlot(PlotAction):
             & (ys > data["yMin"])  # type: ignore
             & (ys < data["yMax"])  # type: ignore
         )[0]
+
+        # TODO: Make a no data fig function and use here
+        if len(fitPoints) < self.minPointsForFit:
+            fig = plt.figure(dpi=120)
+            noDataText = (
+                "Number of objects after cuts ({}) is less than the\nminimum required by "
+                "minPointsForFit ({})".format(len(fitPoints), self.minPointsForFit)
+            )
+            fig.text(0.5, 0.5, noDataText, ha="center", va="center")
+            fig = addPlotInfo(plt.gcf(), plotInfo)
+            return fig
 
         # Plot the initial fit box
         ax.plot(

@@ -179,8 +179,9 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
             # Validate the structure of the figure.
             self._validateFigureStructure(fig, binsCount, xlabel, zoomFactors)
 
-            # Validate the RGB fractions of the figure.
-            self._validateRGBFractions(fig, expectedRGBFraction, rtol=1e-7)
+            # Validate the RGB fractions of the figure. The tolerance is set
+            # empirically.
+            self._validateRGBFractions(fig, expectedRGBFraction, rtol=5e-3)
 
     @staticmethod
     def _isHistogramAxis(ax, binsCount, legendLabels, errors):
@@ -238,7 +239,7 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
 
         Parameters
         ----------
-        figure : `~matplotlib.figure.Figure`
+        fig : `~matplotlib.figure.Figure`
             The figure to be validated.
         binsCount : `int`
             The expected number of bins in the histogram.

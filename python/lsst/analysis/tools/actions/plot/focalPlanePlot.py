@@ -136,16 +136,17 @@ class FocalPlanePlot(PlotAction):
             The camera used to map from pixel to focal plane positions.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
-                ``"bands"``
-                    The band(s) that the data comes from (`list` of `str`).
+
+            ``"run"``
+                The output run for the plots (`str`).
+            ``"skymap"``
+                The type of skymap used for the data (`str`).
+            ``"filter"``
+                The filter used for this data (`str`).
+            ``"tract"``
+                The tract that the data comes from (`str`).
+            ``"bands"``
+                The band(s) that the data comes from (`list` of `str`).
 
         Returns
         -------
@@ -280,31 +281,33 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         data : `pandas.core.frame.DataFrame`
             The catalog to plot the points from.  This is expected to
             have the following columns/keys:
-                ``"detector"``
-                    The integer detector id for the points.
-                ``"amplifier"``
-                    The string amplifier name for the points.
-                ``"z"``
-                    The numerical value that will be combined via
-                    ``statistic`` to the binned value.
-                ``"x"``
-                    Focal plane x position, optional.
-                ``"y"``
-                    Focal plane y position, optional.
+
+            ``"detector"``
+                The integer detector id for the points.
+            ``"amplifier"``
+                The string amplifier name for the points.
+            ``"z"``
+                The numerical value that will be combined via
+                ``statistic`` to the binned value.
+            ``"x"``
+                Focal plane x position, optional.
+            ``"y"``
+                Focal plane y position, optional.
         camera : `lsst.afw.cameraGeom.Camera`
             The camera used to map from pixel to focal plane positions.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
-                ``"run"``
-                    The output run for the plots (`str`).
-                ``"skymap"``
-                    The type of skymap used for the data (`str`).
-                ``"filter"``
-                    The filter used for this data (`str`).
-                ``"tract"``
-                    The tract that the data comes from (`str`).
-                ``"bands"``
-                    The band(s) that the data comes from (`list` of `str`).
+
+            ``"run"``
+                The output run for the plots (`str`).
+            ``"skymap"``
+                The type of skymap used for the data (`str`).
+            ``"filter"``
+                The filter used for this data (`str`).
+            ``"tract"``
+                The tract that the data comes from (`str`).
+            ``"bands"``
+                The band(s) that the data comes from (`list` of `str`).
 
         Returns
         -------

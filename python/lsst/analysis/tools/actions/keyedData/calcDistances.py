@@ -64,14 +64,16 @@ class CalcRelativeDistances(KeyedDataAction):
 
         Parameters
         ----------
-        data: KeyedData
+        data : KeyedData
             Catalog of data including coordinate, visit, and object group
             information.
+
         Returns
         -------
-        distanceParams: `dict`
+        distanceParams : `dict`
             Dictionary of the calculated arrays and metrics with the following
             keys:
+
             - ``rmsDistances`` : Per-object rms of separations (`np.array`).
             - ``separationResiduals`` : All separations minus per-object median
                 (`np.array`)
@@ -219,6 +221,7 @@ def sphDist(ra_mean, dec_mean, ra, dec):
         Array of RA in radians.
     dec : `numpy.array` [`float`]
         Array of Dec in radians.
+
     Notes
     -----
     Uses the Haversine formula to preserve accuracy at small angles.

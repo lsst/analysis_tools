@@ -4,6 +4,7 @@ from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
+from .gatherResourceUsage import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .propertyMapTractAnalysis import *

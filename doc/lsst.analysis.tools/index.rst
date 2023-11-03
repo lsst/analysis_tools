@@ -57,6 +57,7 @@ Script reference
    :maxdepth: 1
 
    scripts/verify_to_sasquatch.py
+   scripts/build-gather-resource-usage-qg
 
 .. _lsst.analysis_tools-pyapi:
 
@@ -69,3 +70,4 @@ Python API Reference
 .. automodapi:: lsst.analysis.tools.actions.scalar
 .. automodapi:: lsst.analysis.tools.actions.vector
 .. automodapi:: lsst.analysis.tools.actions.keyedData
+.. automodapi:: lsst.analysis.tools.tasks

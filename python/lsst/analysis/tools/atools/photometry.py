@@ -30,6 +30,7 @@ from ..actions.vector import (
     DivideVector,
     ExtinctionCorrectedMagDiff,
     LoadVector,
+    MagDiff,
     SnSelector,
     StarSelector,
 )
@@ -110,9 +111,9 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
         self.process.buildActions.starStatMask.threshold = 300
 
-        self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
-        self.process.buildActions.zStars.magDiff.col1 = "{band}_psfFlux"
-        self.process.buildActions.zStars.magDiff.col2 = "{band}_cModelFlux"
+        self.process.buildActions.zStars = MagDiff()
+        self.process.buildActions.zStars.col1 = "{band}_psfFlux"
+        self.process.buildActions.zStars.col2 = "{band}_cModelFlux"
 
         self.process.calculateActions.median = MedianAction()
         self.process.calculateActions.median.vectorKey = "zStars"

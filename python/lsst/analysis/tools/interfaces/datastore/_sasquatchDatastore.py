@@ -29,7 +29,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
-from lsst.daf.butler.datastore import DatasetRefURIs
+from lsst.daf.butler.datastore import DatasetRefURIs, DatastoreOpaqueTable
 from lsst.daf.butler.datastore.generic_base import GenericBaseDatastore
 from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
@@ -117,6 +117,13 @@ class SasquatchDatastore(GenericBaseDatastore):
             raise DatasetTypeNotSupportedError(
                 f"Could not put dataset type {ref.datasetType} with Sasquatch datastore"
             )
+
+    def put_new(self, in_memory_dataset: Any, dataset_ref: DatasetRef) -> Mapping[str, DatasetRef]:
+        # Docstring inherited from the base class.
+        self.put(in_memory_dataset, dataset_ref)
+        # Sasquatch is a sort of ephemeral, because we do not store its
+        # datastore records in registry, so return empty dict.
+        return {}
 
     def addStoredItemInfo(self, refs: Iterable[DatasetRef], infos: Iterable[Any]) -> None:
         raise NotImplementedError()
@@ -223,3 +230,7 @@ class SasquatchDatastore(GenericBaseDatastore):
     @classmethod
     def setConfigRoot(cls, root: str, config: Config, full: Config, overwrite: bool = True) -> None:
         pass
+
+    def get_opaque_table_definitions(self) -> Mapping[str, DatastoreOpaqueTable]:
+        # Docstring inherited from the base class.
+        return {}

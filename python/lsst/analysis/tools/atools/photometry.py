@@ -91,6 +91,8 @@ class Ap12PsfSkyPlot(AnalysisTool):
 
 
 class PsfCModelSkyPlot(AnalysisTool):
+    """Creates a skyPlot showing the difference between PSF and CModel mags"""
+
     def setDefaults(self):
         super().setDefaults()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()

@@ -26,9 +26,9 @@ import lsst.utils.tests
 import numpy as np
 from lsst.analysis.tools.atools import (
     MagnitudeTool,
-    MatchedRefCoaddDiffMagMetric,
-    MatchedRefCoaddDiffMetric,
-    MatchedRefCoaddDiffPositionMetric,
+    MatchedRefCoaddDiffMagTool,
+    MatchedRefCoaddDiffPositionTool,
+    MatchedRefCoaddDiffTool,
 )
 
 
@@ -37,7 +37,9 @@ class TestDiffMatched(TestCase):
         super().setUp()
         self.band_default = "analysisTools"
 
-    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffMetric], **kwargs):
+    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffTool], **kwargs):
+        plotInfo = {key: "" for key in ("plotName", "run", "tableName")}
+        plotInfo["bands"] = []
         for compute_chi in (False, True):
             tester = type_metric(**kwargs, compute_chi=compute_chi)
             # tester.getInputSchema won't work properly before finalizing
@@ -47,7 +49,7 @@ class TestDiffMatched(TestCase):
             self.assertGreater(len(keys), 0)
             self.assertGreater(len(list(tester.configureMetrics())), 0)
             data = {key.format(band=self.band_default): np.arange(5) for key in keys}
-            output = tester(data)
+            output = tester(data, skymap=None, plotInfo=plotInfo)
             self.assertGreater(len(output), 0)
 
     def testMatchedRefCoaddMetric(self):
@@ -56,7 +58,7 @@ class TestDiffMatched(TestCase):
         # Pass one at a time to test
         for kwarg in kwargs:
             kwargs_init = {kwarg: ""}
-            tester = MatchedRefCoaddDiffMetric(**kwargs_init)
+            tester = MatchedRefCoaddDiffTool(**kwargs_init)
             tester.validate()
             with self.assertRaises(KeyError):
                 tester.configureMetrics()
@@ -65,7 +67,7 @@ class TestDiffMatched(TestCase):
             # Failing to find any of the required keys
             with self.assertRaises(KeyError):
                 tester({})
-        tester = MatchedRefCoaddDiffMetric(**kwargs)
+        tester = MatchedRefCoaddDiffTool(**kwargs)
         tester.validate()
         with self.assertRaises(KeyError):
             tester.configureMetrics()
@@ -75,23 +77,27 @@ class TestDiffMatched(TestCase):
         self.assertGreater(n_input, 0)
         self.assertGreater(len(list(tester.configureMetrics())), 0)
 
-        self.assertEquals(len(inputs), n_input)
+        self.assertEqual(len(inputs), n_input)
         data = {key.format(band="analysisTools"): np.array([0.0]) for key, *_ in inputs}
         # There's no metric or plot so it just returns an empty dict
-        self.assertEquals(len(tester(data)), 0)
+        self.assertEqual(len(tester(data)), 0)
 
     def testMatchedRefCoaddDiffMagMetric(self):
         self._testMatchedRefCoaddMetricDerived(
-            MatchedRefCoaddDiffMagMetric,
+            MatchedRefCoaddDiffMagTool,
             fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
             mag_y="cmodel",
             name_prefix="",
             unit="",
         )
 
-    def testMatchedRefCoaddDiffPositionMetric(self):
+    def testMatchedRefCoaddDiffPositionTool(self):
         for variable in ("x", "y"):
-            self._testMatchedRefCoaddMetricDerived(MatchedRefCoaddDiffPositionMetric, variable=variable)
+            self._testMatchedRefCoaddMetricDerived(
+                MatchedRefCoaddDiffPositionTool,
+                coord_meas=variable,
+                coord_ref=variable,
+            )
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

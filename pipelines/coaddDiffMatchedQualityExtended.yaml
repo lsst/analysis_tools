@@ -1,5 +1,16 @@
 description: |
   Matched difference (measured vs reference) plots/metrics
+parameters:
+  mag_x_min: 17
+  mag_x_max: 29
+  mag_diff_min: -1000
+  mag_diff_max: 1000
+  mag_chi_min: -5
+  mag_chi_max: 5
+  pos_diff_min: -100
+  pos_diff_max: 100
+  pos_chi_min: -5
+  pos_chi_max: 5
 tasks:
   diff_matched_analysis:
     class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
@@ -7,50 +18,51 @@ tasks:
       connections.outputName: diff_matched_truth_summary_objectTable_tract
 
       # plots
-      atools.matchedRefCModelMagDiff: MatchedRefCoaddDiffMagPlot
+      atools.matchedRefCModelMagDiff: MatchedRefCoaddDiffMagTool
+      # Doesn't work; interpreted as float
+      # atools.matchedRefCModelMagDiff.produce.plot.xLims: [parameters.mag_x_min, parameters.mag_x_max]
+      atools.matchedRefCModelMagDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelMagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefMagChi: MatchedRefCoaddDiffMagPlot
-      atools.matchedRefMagChi.compute_chi: true
+      atools.matchedRefCModelMagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefCModelMagChi.compute_chi: true
+      atools.matchedRefCModelMagChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefCModelMagChi.produce.plot.yLims: lims_mag_chi
 
       # TODO: Can this be a one liner?
-      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionPlot
-      atools.matchedRefPositionXDiff.variable: x
+      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionXDiff.coord_meas: x
+      atools.matchedRefPositionXDiff.coord_ref: refcat_x
+      atools.matchedRefPositionXDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionXDiff.produce.plot.yLims: lims_pos_diff
 
-      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionPlot
-      atools.matchedRefPositionXChi.variable: x
+      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionXChi.coord_meas: x
+      atools.matchedRefPositionXChi.coord_ref: refcat_x
+      atools.matchedRefPositionXChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionXChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionXChi.compute_chi: true
 
-      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionPlot
-      atools.matchedRefPositionYDiff.variable: y
+      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionYDiff.coord_meas: y
+      atools.matchedRefPositionYDiff.coord_ref: refcat_y
+      atools.matchedRefPositionYDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionYDiff.produce.plot.yLims: lims_pos_diff
 
-      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionPlot
-      atools.matchedRefPositionYChi.variable: y
+      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionYChi.coord_meas: y
+      atools.matchedRefPositionYChi.coord_ref: refcat_y
+      atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionYChi.compute_chi: true
-
-      # metrics
-      atools.matchedRefCModelMagDiffMetric: MatchedRefCoaddDiffMagMetric
-
-      atools.matchedRefMagChiMetric: MatchedRefCoaddDiffMagMetric
-      atools.matchedRefMagChiMetric.compute_chi: true
-
-      atools.matchedRefPositionXDiffMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionXDiffMetric.variable: x
-
-      atools.matchedRefPositionXChiMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionXChiMetric.variable: x
-      atools.matchedRefPositionXChiMetric.compute_chi: true
-
-      atools.matchedRefPositionYDiffMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionYDiffMetric.variable: y
-
-      atools.matchedRefPositionYChiMetric: MatchedRefCoaddDiffPositionMetric
-      atools.matchedRefPositionYChiMetric.variable: y
-      atools.matchedRefPositionYChiMetric.compute_chi: true
 
       python: |
         from lsst.analysis.tools.atools.diffMatched import (
-          MatchedRefCoaddDiffMagMetric,
-          MatchedRefCoaddDiffPositionMetric,
-          MatchedRefCoaddDiffMagPlot,
-          MatchedRefCoaddDiffPositionPlot,
+          MatchedRefCoaddDiffMagTool,
+          MatchedRefCoaddDiffPositionTool,
         )
+        lims_mag_x = (parameters.mag_x_min, parameters.mag_x_max)
+        lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)
+        lims_mag_diff = (parameters.mag_diff_min, parameters.mag_diff_max)
+        lims_pos_chi = (parameters.pos_chi_min, parameters.pos_chi_max)
+        lims_pos_diff = (parameters.pos_diff_min, parameters.pos_diff_max)

@@ -34,18 +34,18 @@ class MagnitudeScatterPlot(MagnitudeXTool):
         super().setDefaults()
 
         # init with placeholders
-        self.produce = ScatterPlotWithTwoHists(xAxisLabel="", yAxisLabel="", magLabel="")
-        self.produce.plotTypes = ["galaxies", "stars"]
+        self.produce.plot = ScatterPlotWithTwoHists(xAxisLabel="", yAxisLabel="", magLabel="")
+        self.produce.plot.plotTypes = ["galaxies", "stars"]
 
     def finalize(self):
         super().finalize()
         config_x = self.config_mag_x
         label_x = f"{config_x.name_flux} (mag)"
         # Hacky way to check if setup is complete
-        if self.produce.xAxisLabel == label_x:
+        if self.produce.plot.xAxisLabel == label_x:
             return
-        self.produce.xAxisLabel = label_x
-        self.produce.magLabel = self.produce.xAxisLabel
+        self.produce.plot.xAxisLabel = label_x
+        self.produce.plot.magLabel = self.produce.plot.xAxisLabel
 
         # Can't compute S/N of magnitude with no errors (e.g. true mag)
         # Try to find another or give up

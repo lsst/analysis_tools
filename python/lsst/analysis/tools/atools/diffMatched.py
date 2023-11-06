@@ -22,14 +22,12 @@ from __future__ import annotations
 
 __all__ = (
     "MatchedRefCoaddToolBase",
-    "MatchedRefCoaddDiffMetric",
+    "MatchedRefCoaddDiffTool",
     "MatchedRefCoaddDiffMagTool",
-    "MatchedRefCoaddDiffMagMetric",
     "MatchedRefCoaddDiffPositionTool",
-    "MatchedRefCoaddDiffPositionMetric",
 )
 
-from lsst.pex.config import ChoiceField, Field
+from lsst.pex.config import Field
 
 from ..actions.vector import (
     CalcBinnedStatsAction,
@@ -74,23 +72,6 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
         default=False,
         doc="Whether to compute scaled flux residuals (chi) instead of magnitude differences",
     )
-
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.filterActions.yAll = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="allSelector")
-        )
-        self.process.filterActions.yGalaxies = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
-        )
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="starSelector")
-        )
-
-
-class MatchedRefCoaddDiffMetric(MatchedRefCoaddDiffTool):
-    """Base tool for matched-to-reference metrics on coadds."""
-
     # These are optional because validate can be called before finalize
     # Validate should not fail in that case if it would otherwise succeed
     name_prefix = Field[str](doc="Prefix for metric key", default=None, optional=True)
@@ -171,6 +152,16 @@ class MatchedRefCoaddDiffMetric(MatchedRefCoaddDiffTool):
     def setDefaults(self):
         super().setDefaults()
 
+        self.process.filterActions.yAll = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="allSelector")
+        )
+        self.process.filterActions.yGalaxies = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
+        )
+        self.process.filterActions.yStars = DownselectVector(
+            vectorKey="diff", selector=VectorSelector(vectorKey="starSelector")
+        )
+
         for name in self._names:
             key = f"y{name.capitalize()}"
             for minimum in range(self._mag_low_min, self._mag_low_max + 1):
@@ -188,7 +179,7 @@ class MatchedRefCoaddDiffMetric(MatchedRefCoaddDiffTool):
                 )
 
 
-class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool):
+class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
     """Tool for diffs between reference and measured coadd mags."""
 
     mag_y = Field[str](default="cmodel_err", doc="Flux (magnitude) field to difference against ref")
@@ -196,8 +187,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool):
     def finalize(self):
         # Check if it has already been finalized
         if not hasattr(self.process.buildActions, "diff"):
-            # TODO: Is this hack to ensure mag_y is set before plot tools
-            # are called necessary?
+            # Ensure mag_y is set before any plot finalizes
             self._set_flux_default("mag_y")
             super().finalize()
             if self.compute_chi:
@@ -216,58 +206,53 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool):
                     ),
                     actionB=ConstantValue(value=1e-3),
                 )
+            if not self.produce.plot.yAxisLabel:
+                config = self.fluxes[self.mag_y]
+                label = f"{config.name_flux} - {self.fluxes['ref_matched'].name_flux}"
+                self.produce.plot.yAxisLabel = (
+                    f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
+                )
+            if self.unit is None:
+                self.unit = "" if self.compute_chi else "mmag"
+            if self.name_prefix is None:
+                subtype = "chi" if self.compute_chi else "diff"
+                self.name_prefix = f"photom_mag_{{key_flux}}_{{name_class}}_{subtype}_"
+            if not self.produce.metric.units:
+                self.produce.metric.units = self.configureMetrics()
 
 
-# The diamond inheritance on MatchedRefCoaddTool seems ok
-class MatchedRefCoaddDiffMagMetric(MatchedRefCoaddDiffMagTool, MatchedRefCoaddDiffMetric):
-    """Metric for diffs between reference and measured coadd mags."""
-
-    def finalize(self):
-        super().finalize()
-        if self.unit is None:
-            self.unit = "" if self.compute_chi else "mmag"
-        if self.name_prefix is None:
-            subtype = "chi" if self.compute_chi else "diff"
-            self.name_prefix = f"photom_mag_{{key_flux}}_{{name_class}}_{subtype}_"
-        if not self.produce.metric.units:
-            self.produce.metric.units = self.configureMetrics()
-
-
-class MatchedRefCoaddDiffMagPlot(MatchedRefCoaddDiffMagTool, MagnitudeScatterPlot):
-    def finalize(self):
-        # TODO: Check if this is really necessary
-        # finalizing in this order should get all fluxes finalized before
-        # the MagnitudeScatterPlot looks for a flux to compute S/N from
-        MatchedRefCoaddDiffMagTool.finalize(self)
-        MagnitudeScatterPlot.finalize(self)
-        if not self.produce.yAxisLabel:
-            config = self.fluxes[self.mag_y]
-            label = f"{config.name_flux} - {self.fluxes['ref_matched'].name_flux}"
-            self.produce.yAxisLabel = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
-
-
-class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool):
+class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
     """Tool for diffs between reference and measured coadd astrometry."""
 
+    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
     scale_factor = Field[float](
         doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
         default=200,
     )
-    variable = ChoiceField[str](
-        doc="The astrometric variable to compute metrics for",
-        allowed={
-            "x": "x",
-            "y": "y",
-        },
+    coord_label = Field[str](
+        doc="The plot label for the astrometric variable (default coord_meas)",
+        optional=True,
+        default=None,
+    )
+    coord_meas = Field[str](
+        doc="The key for measured values of the astrometric variable",
+        optional=False,
+    )
+    coord_ref = Field[str](
+        doc="The key for reference values of the astrometric variabler",
         optional=False,
     )
 
     def finalize(self):
         # Check if it has already been finalized
         if not hasattr(self.process.buildActions, "diff"):
+            # Set before MagnitudeScatterPlot.finalize to undo PSF default.
+            # Matched ref tables may not have PSF fluxes, or prefer CModel.
+            self._set_flux_default("mag_sn")
             super().finalize()
-            self.process.buildActions.pos_meas = LoadVector(vectorKey=self.variable)
-            self.process.buildActions.pos_ref = LoadVector(vectorKey=f"refcat_{self.variable}")
+            name = self.coord_label if self.coord_label else self.coord_meas
+            self.process.buildActions.pos_meas = LoadVector(vectorKey=self.coord_meas)
+            self.process.buildActions.pos_ref = LoadVector(vectorKey=self.coord_ref)
             if self.compute_chi:
                 self.process.buildActions.diff = DivideVector(
                     actionA=SubtractVector(
@@ -284,34 +269,16 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool):
                         actionB=self.process.buildActions.pos_ref,
                     ),
                 )
-
-
-class MatchedRefCoaddDiffPositionMetric(MatchedRefCoaddDiffPositionTool, MatchedRefCoaddDiffMetric):
-    """Metric for diffs between reference and base coadd centroids."""
-
-    def finalize(self):
-        super().finalize()
-        if self.unit is None:
-            self.unit = "" if self.compute_chi else "mas"
-        if self.name_prefix is None:
-            subtype = "chi" if self.compute_chi else "diff"
-            self.name_prefix = f"astrom_{self.variable}_{{name_class}}_{subtype}_"
-        if not self.produce.metric.units:
-            self.produce.metric.units = self.configureMetrics()
-
-
-class MatchedRefCoaddDiffPositionPlot(MatchedRefCoaddDiffPositionTool, MagnitudeScatterPlot):
-    # The matched catalog columns are configurable but default to cmodel only
-    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
-
-    def finalize(self):
-        if not self.produce.yAxisLabel:
-            # Set before MagnitudeScatterPlot.finalize or it'll default to PSF
-            # Matched ref tables may not have PSF fluxes, or prefer CModel
-            self._set_flux_default("mag_sn")
-            super().finalize()
-            self.produce.yAxisLabel = (
-                f"chi = (slot - Reference {self.variable} position)/error"
-                if self.compute_chi
-                else f"{self.variable} position (pix)"
-            )
+            if self.unit is None:
+                self.unit = "" if self.compute_chi else "mas"
+            if self.name_prefix is None:
+                subtype = "chi" if self.compute_chi else "diff"
+                self.name_prefix = f"astrom_{self.coord_meas}_{{name_class}}_{subtype}_"
+            if not self.produce.metric.units:
+                self.produce.metric.units = self.configureMetrics()
+            if not self.produce.plot.yAxisLabel:
+                self.produce.plot.yAxisLabel = (
+                    f"chi = (slot - reference {name} position)/error"
+                    if self.compute_chi
+                    else f"slot - reference {name} position ({self.unit})"
+                )

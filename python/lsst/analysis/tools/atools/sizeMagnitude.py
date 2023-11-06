@@ -36,9 +36,9 @@ class SizeMagnitudePlot(ExtendednessTool, SizeTool, MagnitudeScatterPlot):
         # TODO: Investigate why MagnitudeScatterPlot.finalize(self) is called
         # always, even if super().finalize() is omitted
         super().finalize()
-        if not self.produce.yAxisLabel:
+        if not self.produce.plot.yAxisLabel:
             size = self.sizes[self.size_y]
-            self.produce.yAxisLabel = (
+            self.produce.plot.yAxisLabel = (
                 f"log10({size.name_size}/{size.unit_size})"
                 if size.log10_size
                 else f"{size.name_size} ({size.unit_size})"

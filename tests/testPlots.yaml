@@ -8,6 +8,7 @@ tasks:
       plots.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterPlot
       plots.wPerpPSFPlot: WPerpPSFPlot
       plots.ap12PsfSkyPlot: Ap12PsfSkyPlot
+      plots.PsfCModelSkyPlot: PsfCModelSkyPlot
       plots.skyObjectHistPlot: SkyObjectHistPlot
       python: |
         from lsst.analysis.tools.analysisPlots import *

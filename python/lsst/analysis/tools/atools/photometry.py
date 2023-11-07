@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("Ap12PsfSkyPlot", "PsfApRatio")
+__all__ = ("Ap12PsfSkyPlot", "PsfCModelSkyPlot", "PsfApRatio")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.skyPlot import SkyPlot
@@ -30,6 +30,7 @@ from ..actions.vector import (
     DivideVector,
     ExtinctionCorrectedMagDiff,
     LoadVector,
+    MagDiff,
     SnSelector,
     StarSelector,
 )
@@ -86,6 +87,59 @@ class Ap12PsfSkyPlot(AnalysisTool):
             "median": "{band}_ap12-psf_median",
             "mean": "{band}_ap12-psf_mean",
             "sigmaMad": "{band}_ap12-psf_sigmaMad",
+        }
+
+
+class PsfCModelSkyPlot(AnalysisTool):
+    """Creates a skyPlot showing the difference between PSF and CModel mags"""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.flagSelector.bands = []
+
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.threshold = 300
+
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
+
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec"
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
+        self.process.buildActions.starStatMask.threshold = 300
+
+        self.process.buildActions.zStars = MagDiff()
+        self.process.buildActions.zStars.col1 = "{band}_psfFlux"
+        self.process.buildActions.zStars.col2 = "{band}_cModelFlux"
+
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "zStars"
+
+        self.process.calculateActions.mean = MeanAction()
+        self.process.calculateActions.mean.vectorKey = "zStars"
+
+        self.process.calculateActions.sigmaMad = SigmaMadAction()
+        self.process.calculateActions.sigmaMad.vectorKey = "zStars"
+
+        self.produce.plot = SkyPlot()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.plotName = "{band}_psf-cModel"
+        self.produce.plot.xAxisLabel = "R.A. (degrees)"
+        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.zAxisLabel = "PSF - cModel [mmag]"
+        self.produce.plot.plotOutlines = False
+
+        self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
+
+        self.produce.metric.newNames = {
+            "median": "{band}_psf-cModel_median",
+            "mean": "{band}_psf-cModel_mean",
+            "sigmaMad": "{band}_psf-cModel_sigmaMad",
         }
 
 

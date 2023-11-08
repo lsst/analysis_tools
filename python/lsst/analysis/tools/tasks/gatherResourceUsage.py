@@ -332,7 +332,7 @@ class GatherResourceUsageTask(PipelineTask):
             - ``outout_table``: a `pandas.DataFrame` that aggregates the
               configured resource usage statistics.
         """
-        dimensions = universe.extract(self.config.dimensions)
+        dimensions = universe.conform(self.config.dimensions)
         # Transform input list into a dict keyed by data ID.
         handles_by_data_id = {}
         for handle in input_metadata:
@@ -340,7 +340,10 @@ class GatherResourceUsageTask(PipelineTask):
         n_rows = len(handles_by_data_id)
         # Create a dict of empty column arrays that we'll ultimately make into
         # a table.
-        columns = {d.name: np.zeros(n_rows, dtype=_dtype_from_field_spec(d.primaryKey)) for d in dimensions}
+        columns = {
+            d: np.zeros(n_rows, dtype=_dtype_from_field_spec(universe.dimensions[d].primaryKey))
+            for d in dimensions.names
+        }
         for attr_name in ("memory", "prep_time", "init_time", "run_time"):
             if getattr(self.config, attr_name):
                 columns[attr_name] = np.zeros(n_rows, dtype=float)
@@ -350,7 +353,7 @@ class GatherResourceUsageTask(PipelineTask):
         warned_about_metadata_version = False
         for index, (data_id, handle) in enumerate(handles_by_data_id.items()):
             # Fill in the data ID columns.
-            for k, v in data_id.full.byName().items():
+            for k, v in data_id.mapping.items():
                 columns[k][index] = v
             # Load the metadata dataset and fill in the columns derived from
             # it.
@@ -612,7 +615,7 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         for gather_task_label, gather_input_refs in metadata_refs.items():
             gather_inputs_for_task: list[DatasetKey] = []
             for ref in gather_input_refs:
-                dataset_key = DatasetKey(ref.datasetType.name, ref.dataId.values_tuple())
+                dataset_key = DatasetKey(ref.datasetType.name, ref.dataId.required_values)
                 self.existing_datasets.inputs[dataset_key] = ref
                 gather_inputs_for_task.append(dataset_key)
             self.gather_inputs[gather_task_label] = gather_inputs_for_task

@@ -40,7 +40,7 @@ from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
-from ...statistics import nansigmaMad, sigmaMad
+from ...math import nanMedian, nanSigmaMad
 from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
 from ..vector import ConvertFluxToMag, SnSelector
@@ -405,15 +405,15 @@ class ScatterPlotWithTwoHists(PlotAction):
             # ensure the columns are actually array
             xs = np.array(xs)
             ys = np.array(ys)
-            sigMadYs = nansigmaMad(ys)
+            sigMadYs = nanSigmaMad(ys)
             # plot lone median point if there's not enough data to measure more
             n_xs = len(xs)
             if n_xs == 0:
                 continue
             elif n_xs < 10:
-                xs = [np.nanmedian(xs)]
-                sigMads = np.array([nansigmaMad(ys)])
-                ys = np.array([np.nanmedian(ys)])
+                xs = [nanMedian(xs)]
+                sigMads = np.array([nanSigmaMad(ys)])
+                ys = np.array([nanMedian(ys)])
                 (medLine,) = ax.plot(xs, ys, color, label=f"Median: {ys[0]:.2g}", lw=0.8)
                 linesForLegend.append(medLine)
                 (sigMadLine,) = ax.plot(
@@ -444,7 +444,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 xLims[1] = max(xLims[1], xMax)
 
             xEdges = np.arange(xMin, xMax, (xMax - xMin) / self.nBins)
-            medYs = np.nanmedian(ys)
+            medYs = nanMedian(ys)
             fiveSigmaHigh = medYs + 5.0 * sigMadYs
             fiveSigmaLow = medYs - 5.0 * sigMadYs
             binSize = (fiveSigmaHigh - fiveSigmaLow) / 101.0
@@ -472,8 +472,8 @@ class ScatterPlotWithTwoHists(PlotAction):
 
                 for i, xEdge in enumerate(xEdgesPlot):
                     ids = np.where((xs < xEdge) & (xs > xEdges[i]) & (np.isfinite(ys)))[0]
-                    med = np.nanmedian(ys[ids])
-                    sigMad = sigmaMad(ys[ids], nan_policy="omit")
+                    med = nanMedian(ys[ids])
+                    sigMad = nanSigmaMad(ys[ids])
                     meds[i] = med
                     sigMads[i] = sigMad
                     threeSigMadVerts[i, :] = [xEdge, med + 3 * sigMad]
@@ -599,10 +599,10 @@ class ScatterPlotWithTwoHists(PlotAction):
 
             else:
                 ax.plot(xs, ys, ".", ms=5, alpha=0.3, mfc=color, mec=color, zorder=-1)
-                meds = np.array([np.nanmedian(ys)] * len(xs))
-                (medLine,) = ax.plot(xs, meds, color, label=f"Median: {np.nanmedian(ys):0.3g}", lw=0.8)
+                meds = np.array([nanMedian(ys)] * len(xs))
+                (medLine,) = ax.plot(xs, meds, color, label=f"Median: {nanMedian(ys):0.3g}", lw=0.8)
                 linesForLegend.append(medLine)
-                sigMads = np.array([nansigmaMad(ys)] * len(xs))
+                sigMads = np.array([nanSigmaMad(ys)] * len(xs))
                 (sigMadLine,) = ax.plot(
                     xs,
                     meds + 1.0 * sigMads,
@@ -621,15 +621,15 @@ class ScatterPlotWithTwoHists(PlotAction):
         # Set the scatter plot limits
         # TODO: Make this not work by accident
         if "yStars" in data and (len(cast(Vector, data["yStars"])) > 0):
-            plotMed = np.nanmedian(cast(Vector, data["yStars"]))
+            plotMed = nanMedian(cast(Vector, data["yStars"]))
         elif "yGalaxies" in data and (len(cast(Vector, data["yGalaxies"])) > 0):
-            plotMed = np.nanmedian(cast(Vector, data["yGalaxies"]))
+            plotMed = nanMedian(cast(Vector, data["yGalaxies"]))
         else:
             plotMed = np.nan
 
         # Ignore types below pending making this not working my accident
         if len(xs) < 2:  # type: ignore
-            meds = [np.nanmedian(ys)]  # type: ignore
+            meds = [nanMedian(ys)]  # type: ignore
         if self.yLims:
             ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore
         elif np.isfinite(plotMed):

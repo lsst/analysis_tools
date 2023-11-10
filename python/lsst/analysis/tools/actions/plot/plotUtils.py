@@ -34,7 +34,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
 
-from ...statistics import nansigmaMad
+from ...math import nanMedian, nanSigmaMad
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -126,7 +126,7 @@ def generateSummaryStats(data, skymap, plotInfo):
         if sum(onPatch) == 0:
             stat = np.nan
         else:
-            stat = np.nanmedian(data[yCol][onPatch])
+            stat = nanMedian(data[yCol][onPatch])
         try:
             patchTuple = (int(patch.split(",")[0]), int(patch.split(",")[-1]))
             patchInfo = tractInfo.getPatchInfo(patchTuple)
@@ -172,7 +172,7 @@ def generateSummaryStatsVisit(cat, colName, visitSummaryTable):
         if ccd is None:
             continue
         onCcd = cat["detector"] == ccd
-        stat = np.nanmedian(cat[colName].values[onCcd])
+        stat = nanMedian(cat[colName].values[onCcd])
 
         sumRow = visitSummaryTable["id"] == ccd
         corners = zip(visitSummaryTable["raCorners"][sumRow][0], visitSummaryTable["decCorners"][sumRow][0])
@@ -349,7 +349,7 @@ def extremaSort(xs):
     -------
     ids : `np.array`
     """
-    med = np.nanmedian(xs)
+    med = nanMedian(xs)
     dists = np.abs(xs - med)
     ids = np.argsort(dists)
     return ids
@@ -642,8 +642,8 @@ def plotProjectionWithBinning(
     plotOut : `matplotlib.collections.PathCollection`
         The plot object with ``ax`` updated with data plotted here.
     """
-    med = np.nanmedian(zs)
-    mad = nansigmaMad(zs)
+    med = nanMedian(zs)
+    mad = nanSigmaMad(zs)
     if vmin is None:
         vmin = med - 2 * mad
     if vmax is None:

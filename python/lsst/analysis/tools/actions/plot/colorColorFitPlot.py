@@ -34,7 +34,7 @@ from matplotlib.patches import Rectangle
 from sklearn.neighbors import KernelDensity
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
-from ...statistics import sigmaMad
+from ...math import nanMean, nanMedian, nanSigmaMad
 from ..keyedData.stellarLocusFit import perpDistance
 from .plotUtils import addPlotInfo, mkColormap
 
@@ -259,7 +259,7 @@ class ColorColorFitPlot(PlotAction):
 
         # Add some useful information to the plot
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-        medMag = np.nanmedian(cast(Vector, mags))
+        medMag = nanMedian(cast(Vector, mags))
 
         # TODO: GET THE SN FROM THE EARLIER PREP STEP
         SN = "-"
@@ -378,9 +378,9 @@ class ColorColorFitPlot(PlotAction):
         # Add a histogram
         axHist.set_ylabel("Number")
         axHist.set_xlabel("Distance to Line Fit")
-        medDists = np.nanmedian(dists)
-        madDists = sigmaMad(dists, nan_policy="omit")
-        meanDists = np.nanmean(dists)
+        medDists = nanMedian(dists)
+        madDists = nanSigmaMad(dists)
+        meanDists = nanMean(dists)
 
         axHist.set_xlim(meanDists - 2.0 * madDists, meanDists + 2.0 * madDists)
         lineMedian = axHist.axvline(medDists, color="k", label="Median: {:0.3f}".format(medDists))

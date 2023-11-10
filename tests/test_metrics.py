@@ -48,7 +48,7 @@ class TestDiffMatched(TestCase):
             keys = set(k[0] for k in tester.getInputSchema())
             self.assertGreater(len(keys), 0)
             self.assertGreater(len(list(tester.configureMetrics())), 0)
-            data = {key.format(band=self.band_default): np.arange(5) for key in keys}
+            data = {key.format(band=self.band_default): np.arange(5.0) for key in keys}
             output = tester(data, skymap=None, plotInfo=plotInfo)
             self.assertGreater(len(output), 0)
 

@@ -36,6 +36,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
+from ...math import nanMax, nanMean, nanMedian, nanMin
 from ..keyedData import KeyedDataSelectorAction
 from ..vector.selectors import RangeSelector
 from .plotUtils import mkColormap, plotProjectionWithBinning
@@ -336,8 +337,8 @@ class MultiVisitCoveragePlot(PlotAction):
 
             corners = camera[0].getCorners(FOCAL_PLANE)  # type: ignore
             xCorners, yCorners = zip(*corners)
-            xScatLen = 0.4 * (np.nanmax(xCorners) - np.nanmin(xCorners))
-            yScatLen = 0.4 * (np.nanmax(yCorners) - np.nanmin(yCorners))
+            xScatLen = 0.4 * (nanMax(xCorners) - nanMin(xCorners))
+            yScatLen = 0.4 * (nanMax(yCorners) - nanMin(yCorners))
             tractList: List[int] = []
         elif self.projection == "raDec":
             xKey = "ra"
@@ -418,15 +419,15 @@ class MultiVisitCoveragePlot(PlotAction):
         for zKey in self.parametersToPlotList:
             zKeySorted = dataDf[zKey].sort_values()
             zKeySorted = zKeySorted[np.isfinite(zKeySorted)]
-            vMinDict[zKey] = np.nanmean(zKeySorted.head(nPercent))
+            vMinDict[zKey] = nanMean(zKeySorted.head(nPercent))
             if zKey == "medianE":
                 vMaxDict[zKey] = maxEllipResidual
             elif zKey == "psfStarScaledDeltaSizeScatter":
                 vMaxDict[zKey] = maxScaledSizeScatter
             elif zKey == "astromOffsetMean" and self.projection != "raDec":
-                vMaxDict[zKey] = min(maxMeanDistanceArcsec, 1.1 * np.nanmean(zKeySorted.tail(nPercent)))
+                vMaxDict[zKey] = min(maxMeanDistanceArcsec, 1.1 * nanMean(zKeySorted.tail(nPercent)))
             else:
-                vMaxDict[zKey] = np.nanmean(zKeySorted.tail(nPercent))
+                vMaxDict[zKey] = nanMean(zKeySorted.tail(nPercent))
 
         for iRow, band in enumerate(bandList):
             dataBand = dataDf[dataDf["band"] == band].copy()
@@ -443,8 +444,8 @@ class MultiVisitCoveragePlot(PlotAction):
                     nPercent = max(2, int(0.02 * nDataIdBand))
                     zKeySorted = dataBand[zKey].sort_values()
                     zKeySorted = zKeySorted[np.isfinite(zKeySorted)]
-                    vMinDict[zKey] = np.nanmean(zKeySorted.head(nPercent))
-                    vMaxDict[zKey] = np.nanmean(zKeySorted.tail(nPercent))
+                    vMinDict[zKey] = nanMean(zKeySorted.head(nPercent))
+                    vMaxDict[zKey] = nanMean(zKeySorted.tail(nPercent))
 
             # Scatter the plots within the detector for focal plane plots.
             if self.doScatterInRaDec:
@@ -671,8 +672,8 @@ class MultiVisitCoveragePlot(PlotAction):
                             / 2.0
                         )
                         detScaleDeg = np.sqrt(areaDeg / (dataBand["xSize"] * dataBand["ySize"]))
-                        detWidthDeg = np.nanmedian(detScaleDeg * dataBand["xSize"])
-                        detHeightDeg = np.nanmedian(detScaleDeg * dataBand["ySize"])
+                        detWidthDeg = nanMedian(detScaleDeg * dataBand["xSize"])
+                        detHeightDeg = nanMedian(detScaleDeg * dataBand["ySize"])
 
                         patch = mpl.patches.Rectangle(
                             (xLimMax - 0.02 * limRange - detWidthDeg, yLimMin + 0.03 * limRange),

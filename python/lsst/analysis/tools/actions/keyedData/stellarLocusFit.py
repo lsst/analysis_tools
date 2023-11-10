@@ -30,7 +30,7 @@ import scipy.odr as scipyODR
 from lsst.pex.config import DictField
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
-from ...statistics import sigmaMad
+from ...math import sigmaMad
 
 
 def stellarLocusFit(xs, ys, paramDict):
@@ -290,9 +290,11 @@ class StellarLocusFitAction(KeyedDataAction):
             xs = np.array([fitParams["xMax"] - 0.2, fitParams["xMax"], fitParams["xMax"] + 0.2])
             ys = xs * fitParams["mPerp"] + fitParams["bPerpMax"]
 
-        fitParams[f"{self.identity or ''}_sigmaMAD"] = sigmaMad(dists)
-        fitParams[f"{self.identity or ''}_median"] = np.median(dists)
-        fitParams[f"{self.identity or ''}_hardwired_sigmaMAD"] = sigmaMad(distsHW)
-        fitParams[f"{self.identity or ''}_hardwired_median"] = np.median(distsHW)
+        fit_sigma, fit_med = (sigmaMad(dists), np.median(dists)) if len(dists) else (np.nan, np.nan)
+        fitParams[f"{self.identity or ''}_sigmaMAD"] = fit_sigma
+        fitParams[f"{self.identity or ''}_median"] = fit_med
+        fit_sigma, fit_med = (sigmaMad(distsHW), np.median(distsHW)) if len(distsHW) else (np.nan, np.nan)
+        fitParams[f"{self.identity or ''}_hardwired_sigmaMAD"] = fit_sigma
+        fitParams[f"{self.identity or ''}_hardwired_median"] = fit_med
 
         return fitParams  # type: ignore

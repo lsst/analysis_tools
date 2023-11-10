@@ -46,6 +46,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...math import divide
 
 
 class SelectorBase(VectorAction):
@@ -286,7 +287,7 @@ class SnSelector(SelectorBase):
             errCol = (
                 f"{fluxCol}"[:fluxInd] + f"{self.uncertaintySuffix.format(**kwargs)}" + f"{fluxCol}"[fluxInd:]
             )
-            vec = cast(Vector, data[fluxCol]) / data[errCol]
+            vec = divide(cast(Vector, data[fluxCol]), cast(Vector, data[errCol]))
             temp = (vec > self.threshold) & (vec < self.maxSN)
             if mask is not None:
                 mask &= temp  # type: ignore

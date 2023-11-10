@@ -34,7 +34,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector, VectorAction
-from ...statistics import nansigmaMad
+from ...math import nanMedian, nanSigmaMad
 from .calculateRange import Med2Mad
 from .plotUtils import addPlotInfo, generateSummaryStats, mkColormap, plotProjectionWithBinning, sortAllArrays
 
@@ -130,8 +130,8 @@ class SkyPlot(PlotAction):
         numPoints = len(arr)
         if mask is not None:
             arr = arr[mask]
-        med = np.nanmedian(arr)
-        sigMad = nansigmaMad(arr)
+        med = nanMedian(arr)
+        sigMad = nanSigmaMad(arr)
 
         statsText = (
             "Median: {:0.2f}\n".format(med)

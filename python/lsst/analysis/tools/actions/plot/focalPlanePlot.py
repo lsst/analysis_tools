@@ -36,7 +36,7 @@ from matplotlib.patches import Polygon
 from scipy.stats import binned_statistic_2d, binned_statistic_dd
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
-from ...statistics import nansigmaMad
+from ...math import nanMedian, nanSigmaMad
 from .plotUtils import addPlotInfo, sortAllArrays
 
 
@@ -97,8 +97,8 @@ class FocalPlanePlot(PlotAction):
         numPoints = len(arr)
         if mask is not None:
             arr = arr[mask]
-        med = np.nanmedian(arr)
-        sigMad = nansigmaMad(arr)
+        med = nanMedian(arr)
+        sigMad = nanSigmaMad(arr)
 
         statsText = (
             "Median: {:0.2f}\n".format(med)
@@ -195,8 +195,8 @@ class FocalPlanePlot(PlotAction):
         bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
         ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
 
-        median = np.nanmedian(statistic.ravel())
-        mad = nansigmaMad(statistic.ravel())
+        median = nanMedian(statistic.ravel())
+        mad = nanSigmaMad(statistic.ravel())
 
         vmin = median - 2 * mad
         vmax = median + 2 * mad

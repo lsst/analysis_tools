@@ -41,6 +41,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...math import divide, log10, sqrt
 
 _LOG = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class DivideVector(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
-        return vecA / vecB
+        return divide(vecA, vecB)
 
 
 class SqrtVector(VectorAction):
@@ -131,7 +132,7 @@ class SqrtVector(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         vecA = self.actionA(data, **kwargs)  # type: ignore
-        return np.sqrt(vecA)
+        return sqrt(vecA)
 
 
 class SquareVector(VectorAction):
@@ -185,7 +186,7 @@ class Log10Vector(VectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         vecA = self.actionA(data, **kwargs)  # type: ignore
-        return np.log10(vecA)
+        return log10(vecA)
 
 
 class FractionalDifference(VectorAction):
@@ -201,4 +202,4 @@ class FractionalDifference(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
-        return (vecA - vecB) / vecB
+        return divide(vecA - vecB, vecB)

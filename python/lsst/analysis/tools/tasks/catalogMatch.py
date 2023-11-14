@@ -281,6 +281,11 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         epoch = Time(self.config.epoch, format="decimalyear")
 
         # This is always going to return degrees.
-        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, self.config.filterNames, epoch=epoch)
+        try:
+            loadedRefCat = loaderTask.getSkyCircleCatalog(
+                center, radius, self.config.filterNames, epoch=epoch
+            )
+        except RuntimeError as e:
+            raise pipeBase.NoWorkFound(e)
 
         return Table(loadedRefCat)

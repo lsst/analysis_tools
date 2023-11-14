@@ -64,7 +64,6 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
         inputs = butlerQC.get(inputRefs)
         columns = self.prepColumns(self.config.bands)
         table = inputs["catalog"].get(parameters={"columns": columns})
-        inputs["catalog"] = table
 
         tract = butlerQC.quantum.dataId["tract"]
 
@@ -77,7 +76,7 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -171,7 +170,6 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
                 columns += [s[0] for s in selectorSchema]
 
         table = inputs["catalog"].get(parameters={"columns": columns})
-        inputs["catalog"] = table
 
         loaderTask = LoadReferenceCatalogTask(
             config=self.config.referenceCatalogLoader,
@@ -182,9 +180,7 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
-        if isinstance(inputs["catalog"], pd.core.frame.DataFrame):
-            inputs["catalog"] = Table.from_pandas(inputs["catalog"])
-        outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -200,6 +196,10 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         corners = []
         for visSum in visitSummaryTable:
             for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
+                # If the coordinates are nan then don't keep going
+                # because it crashes later
+                if not np.isfinite(ra) or not np.isfinite(dec):
+                    raise pipeBase.NoWorkFound("Visit summary corners not finite")
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
@@ -214,9 +214,6 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         # dataframe
 
         filterName = self.config.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis
-        try:
-            loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
-        except RuntimeError as e:
-            self.log.warn(e)
-            return Table()
+        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
+
         return Table(loadedRefCat)

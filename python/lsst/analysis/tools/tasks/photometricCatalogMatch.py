@@ -73,7 +73,6 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
         columns = self.prepColumns(bands)
         table = inputs["catalog"].get(parameters={"columns": columns})
-        inputs["catalog"] = table
 
         tract = butlerQC.quantum.dataId["tract"]
 
@@ -86,7 +85,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -177,10 +176,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
                 selectorSchema = selector.getFormattedInputSchema()
                 columns += [s[0] for s in selectorSchema]
 
-        if isinstance(inputs["catalog"], pd.core.frame.DataFrame):
-            inputs["catalog"] = Table.from_pandas(inputs["catalog"])
         table = inputs["catalog"].get(parameters={"columns": columns})
-        inputs["catalog"] = table
 
         loaderTask = LoadReferenceCatalogTask(
             config=self.config.referenceCatalogLoader,
@@ -191,7 +187,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable, physicalFilter)
-        outputs = self.run(catalog=inputs["catalog"], loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
 
         # The matcher adds the band to the front of the columns
         # but the visit plots aren't expecting it
@@ -214,6 +210,10 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         corners = []
         for visSum in visitSummaryTable:
             for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
+                # If the coordinates are nan then don't keep going
+                # because it crashes later
+                if not np.isfinite(ra) or not np.isfinite(dec):
+                    raise pipeBase.NoWorkFound("Visit summary corners not finite")
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
@@ -227,10 +227,6 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         # convert the coordinates to degrees and convert the catalog to a
         # dataframe
 
-        try:
-            loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, [physicalFilter], epoch=epoch)
-        except RuntimeError as e:
-            self.log.warn(e)
-            return Table()
+        loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, [physicalFilter], epoch=epoch)
 
         return Table(loadedRefCat)

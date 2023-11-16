@@ -36,7 +36,7 @@ __all__ = (
     "TemplateCoverageMetric",
 )
 
-from ..actions.scalar import MedianAction
+from ..actions.scalar import ValueAction
 from ..interfaces import AnalysisTool
 
 
@@ -47,7 +47,7 @@ class NUnmergedDiaSourcesMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nUnmergedDiaSources = MedianAction(vectorKey="nUnmergedDiaSources")
+        self.process.calculateActions.nUnmergedDiaSources = ValueAction(vectorKey="nUnmergedDiaSources")
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"nUnmergedDiaSources": "ct"}
@@ -60,7 +60,7 @@ class NMergedDiaSourcesMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nMergedDiaSources = MedianAction(vectorKey="nMergedDiaSources")
+        self.process.calculateActions.nMergedDiaSources = ValueAction(vectorKey="nMergedDiaSources")
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"nMergedDiaSources": "ct"}
@@ -73,7 +73,7 @@ class NGoodPixelsMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nGoodPixels = MedianAction(vectorKey="nGoodPixels")
+        self.process.calculateActions.nGoodPixels = ValueAction(vectorKey="nGoodPixels")
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"nGoodPixels": "ct"}
@@ -86,7 +86,7 @@ class NBadPixelsMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nBadPixels = MedianAction(vectorKey="nBadPixels")
+        self.process.calculateActions.nBadPixels = ValueAction(vectorKey="nBadPixels")
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"nBadPixels": "ct"}
@@ -99,7 +99,7 @@ class NPixelsDetectedPositiveMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nPixelsDetectedPositive = MedianAction(
+        self.process.calculateActions.nPixelsDetectedPositive = ValueAction(
             vectorKey="nPixelsDetectedPositive"
         )
 
@@ -114,7 +114,7 @@ class NPixelsDetectedNegativeMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nPixelsDetectedNegative = MedianAction(
+        self.process.calculateActions.nPixelsDetectedNegative = ValueAction(
             vectorKey="nPixelsDetectedNegative"
         )
 
@@ -129,7 +129,7 @@ class NBadPixelsDetectedPositiveMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nBadPixelsDetectedPositive = MedianAction(
+        self.process.calculateActions.nBadPixelsDetectedPositive = ValueAction(
             vectorKey="nBadPixelsDetectedPositive"
         )
 
@@ -144,7 +144,7 @@ class NBadPixelsDetectedNegativeMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.nBadPixelsDetectedNegative = MedianAction(
+        self.process.calculateActions.nBadPixelsDetectedNegative = ValueAction(
             vectorKey="nBadPixelsDetectedNegative"
         )
 
@@ -159,7 +159,7 @@ class SciencePsfSizeMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.sciencePsfSize = MedianAction(vectorKey="sciencePsfSize")
+        self.process.calculateActions.sciencePsfSize = ValueAction(vectorKey="sciencePsfSize")
 
         # the units for the quantity
         self.produce.metric.units = {"sciencePsfSize": "pixel"}
@@ -172,7 +172,7 @@ class TemplatePsfSizeMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.templatePsfSize = MedianAction(vectorKey="templatePsfSize")
+        self.process.calculateActions.templatePsfSize = ValueAction(vectorKey="templatePsfSize")
 
         # the units for the quantity
         self.produce.metric.units = {"templatePsfSize": "pixel"}
@@ -185,7 +185,7 @@ class ScienceVarianceScaleMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.scaleScienceVariance = MedianAction(
+        self.process.calculateActions.scaleScienceVariance = ValueAction(
             vectorKey="scaleScienceVarianceFactor"
         )
 
@@ -200,7 +200,7 @@ class TemplateVarianceScaleMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.scaleTemplateVariance = MedianAction(
+        self.process.calculateActions.scaleTemplateVariance = ValueAction(
             vectorKey="scaleTemplateVarianceFactor"
         )
 
@@ -215,7 +215,7 @@ class TemplateCoverageMetric(AnalysisTool):
         super().setDefaults()
 
         # Count the number of dia sources
-        self.process.calculateActions.templateCoverage = MedianAction(vectorKey="TemplateCoveragePercent")
+        self.process.calculateActions.templateCoverage = ValueAction(vectorKey="TemplateCoveragePercent")
 
         # the units for the quantity
         self.produce.metric.units = {"templateCoverage": "percent"}

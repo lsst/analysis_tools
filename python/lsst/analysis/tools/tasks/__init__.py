@@ -9,3 +9,4 @@ from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .propertyMapTractAnalysis import *
 from .sourceTableVisitAnalysis import *
+from .trailedDiaSrcDetectorVisitAnalysis import *

@@ -508,7 +508,7 @@ class HistPlot(PlotAction):
             minMed = np.nanmin(meds)
             panel_range = [minMed - lowerRange * maxMad, maxMed + upperRange * maxMad]
             if panel_range[1] - panel_range[0] == 0:
-                self.log.info(
+                log.info(
                     "NOTE: panel_range for {} based on med/sigMad was 0. Computing using "
                     "percentile range instead.".format(panel)
                 )

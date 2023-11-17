@@ -30,7 +30,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class AssocDiaSrcDetectorVisitAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
-    defaultTemplates={"coaddName": "goodSeeing", "fakesType": "fakes_"},
+    defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
 ):
     data = connectionTypes.Input(
         doc="CcdVisit-based DiaSource table to load from the butler",

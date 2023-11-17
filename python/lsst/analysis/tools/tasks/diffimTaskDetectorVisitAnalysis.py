@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ("DiffimDetectorVisitAnalysisConfig", "DiffimDetectorVisitAnalysisTask")
 
 import pandas as pd
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base import connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -32,13 +32,13 @@ class DiffimDetectorVisitAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
 ):
-    metadataSubtract = ct.Input(
+    metadataSubtract = connectionTypes.Input(
         doc="Task metadata from image differencing",
         name="subtractImages_metadata",
         storageClass="TaskMetadata",
         dimensions=("visit", "band", "detector"),
     )
-    metadataDetect = ct.Input(
+    metadataDetect = connectionTypes.Input(
         doc="Task metadata from DIA detection and measurement",
         name="detectAndMeasure_metadata",
         storageClass="TaskMetadata",

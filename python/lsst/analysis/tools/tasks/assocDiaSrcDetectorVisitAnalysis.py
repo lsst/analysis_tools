@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("AssocDiaSrcDetectorVisitAnalysisConfig", "AssocDiaSrcDetectorVisitAnalysisTask")
 
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base import connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -32,7 +32,7 @@ class AssocDiaSrcDetectorVisitAnalysisConnections(
     dimensions=("visit", "band", "detector"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": "fakes_"},
 ):
-    data = ct.Input(
+    data = connectionTypes.Input(
         doc="CcdVisit-based DiaSource table to load from the butler",
         name="{fakesType}{coaddName}Diff_assocDiaSrc",
         storageClass="DataFrame",

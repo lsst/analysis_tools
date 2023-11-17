@@ -24,18 +24,22 @@ tasks:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
     config:
       connections.outputName: diffimMetadata
-      atools.nUnmergedDiaSources: NUnmergedDiaSourcesMetric
-      atools.nMergedDiaSources: NMergedDiaSourcesMetric
-      atools.nGoodPixelsMetric: NGoodPixelsMetric
-      atools.nBadPixelsMetric: NBadPixelsMetric
-      atools.nDetectedPositiveAllPixelsMetric: NPixelsDetectedPositiveMetric
-      atools.nDetectedNegativeAllPixelsMetric: NPixelsDetectedNegativeMetric
-      atools.nDetectedPositiveGoodPixelsMetric: NBadPixelsDetectedPositiveMetric
-      atools.nDetectedNegativeGoodPixelsMetric: NBadPixelsDetectedNegativeMetric
-      atools.sciencePsfSize: SciencePsfSizeMetric
-      atools.templatePsfSize: TemplatePsfSizeMetric
-      atools.scaleScienceVariance: ScienceVarianceScaleMetric
-      atools.scaleTemplateVariance: TemplateVarianceScaleMetric
-      atools.templateCoverage: TemplateCoverageMetric
+
+      atools.diffimMetadataMetric: DiffimMetadataMetricTool
+      atools.diffimMetadataMetric.metrics:
+        # Format is "metric name in the metadata": units
+        nUnmergedDiaSources: ct
+        nMergedDiaSources: ct
+        nGoodPixels: ct
+        nBadPixels: ct
+        nPixelsDetectedPositive: ct
+        nPixelsDetectedNegative: ct
+        nBadPixelsDetectedPositive: ct
+        nBadPixelsDetectedNegative: ct
+        sciencePsfSize: pixel
+        templatePsfSize: pixel
+        scaleScienceVarianceFactor: ct
+        scaleTemplateVarianceFactor: ct
+        templateCoveragePercent: percent
       python: |
-        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.atools import DiffimMetadataMetricTool

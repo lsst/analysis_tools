@@ -1,4 +1,5 @@
 from .barPlots import *
+from .calculateRange import *
 from .colorColorFitPlot import *
 from .diaSkyPlot import *
 from .focalPlanePlot import *

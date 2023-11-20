@@ -527,3 +527,28 @@ The current plot types that are available are detailed :doc:`here<plot-types>`. 
 already coded up and please try to reuse them before making your own. Before adding a new plot type please
 think about if some of the already coded ones can be adapted to your needs rather than making multiple plots
 that are basically identical.
+
+------------------------
+
+numpy and other warnings
+========================
+Functions from some external packages such as numpy can issue warnings for e.g. division by zero.
+These can occur frequently, such as when computing a magnitude from a negative (usually sky-subtracted) flux.
+numpy warnings do not include a traceback or context and are therefore generally not informative enough to log.
+Therefore, it is recommended that actions and tasks check for potential issues like NaN values and either log
+a debug- or info-level message if unexpected values are found, or use the provided mechanisms to filter any uninformative warnings.
+
+There are two built-in methods to filter warnings in `analysis_tools`:
+
+`python/lsst/analysis/tools/math.py <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/math.py>`__
+contains wrapped version of math functions (from numpy and scipy) that filter warnings so they always result in a particular action.
+These should be used in place of the standard numpy nan-prefixed functions, unless the action already filters out any values that
+could produce a warning.
+
+`python/lsst/analysis/tools/warning_control.py <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/warning_control.py>`__
+has a global setting `filterwarnings_action` that controls all of the wrapped functions.
+This can be set to `"error"` when debugging new or modified actions and tasks.
+
+`python/lsst/analysis/tools/interfaces/_task.py <https://github.com/lsst/analysis_tools/blob/main/python/lsst/analysis/tools/interfaces/_task.py>`__
+allows for filtering warnings issued at any other point in task execution, including for direct calls to numpy functions.
+Developers can replace the empty list of warnings to catch in `_runTools` with `self.warnings_all` or any other list of warning texts.

@@ -36,7 +36,7 @@ from matplotlib.patches import Rectangle
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector, VectorAction
 from ...statistics import nansigmaMad
 from .calculateRange import Med2Mad
-from .plotUtils import addPlotInfo, mkColormap, plotProjectionWithBinning, sortAllArrays
+from .plotUtils import addPlotInfo, generateSummaryStats, mkColormap, plotProjectionWithBinning, sortAllArrays
 
 
 class SkyPlot(PlotAction):
@@ -46,6 +46,9 @@ class SkyPlot(PlotAction):
     according to the positions given for x and y. Optimised
     for use with RA and Dec. Also calculates some basic
     statistics and includes those on the plot.
+
+    The plotting of patch outlines requires patch information
+    to be included as an additional parameter.
     """
 
     xAxisLabel = Field[str](doc="Label to use for the x axis.", optional=False)
@@ -212,7 +215,10 @@ class SkyPlot(PlotAction):
         ax = fig.add_subplot(111)
 
         if sumStats is None:
-            sumStats = {}
+            if self.plotOutlines and "patch" in data.keys():
+                sumStats = generateSummaryStats(data, kwargs["skymap"], plotInfo)
+            else:
+                sumStats = {}
 
         if plotInfo is None:
             plotInfo = {}

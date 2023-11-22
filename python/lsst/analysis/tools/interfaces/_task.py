@@ -402,8 +402,7 @@ class AnalysisPipelineTask(PipelineTask):
             The dataId to use to update the plotInfo.
         """
         if dataId is not None:
-            for dataInfo in dataId:
-                plotInfo[dataInfo.name] = dataId[dataInfo.name]
+            plotInfo.update(dataId.mapping)
 
     def parsePlotInfo(
         self, inputs: Mapping[str, Any] | None, dataId: DataCoordinate | None, connectionName: str = "data"

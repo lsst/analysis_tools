@@ -48,7 +48,15 @@ class TestDiffMatched(TestCase):
             keys = set(k[0] for k in tester.getInputSchema())
             self.assertGreater(len(keys), 0)
             self.assertGreater(len(list(tester.configureMetrics())), 0)
-            data = {key.format(band=self.band_default): np.arange(5.0) for key in keys}
+            data = {}
+            n_data = 10
+            for key in keys:
+                if key.endswith("xtendedness"):
+                    values = np.linspace(0.0, 1.0, n_data)
+                else:
+                    values = np.linspace(0.1, 15.0, n_data)
+                data[key.format(band=self.band_default)] = values
+
             output = tester(data, skymap=None, plotInfo=plotInfo)
             self.assertGreater(len(output), 0)
 

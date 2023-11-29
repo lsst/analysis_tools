@@ -4,6 +4,7 @@ __all__ = (
     "MedianAction",
     "MeanAction",
     "StdevAction",
+    "ValueAction",
     "SigmaMadAction",
     "CountAction",
     "CountUniqueAction",
@@ -62,6 +63,18 @@ class StdevAction(ScalarAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         return cast(Scalar, float(np.nanstd(cast(Vector, data[self.vectorKey.format(**kwargs)])[mask])))
+
+
+class ValueAction(ScalarAction):
+    """Extracts the first value from a vector."""
+
+    vectorKey = Field[str]("Key of Vector from which to extract the first value")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        return cast(Scalar, float(data[self.vectorKey.format(**kwargs)][0]))
 
 
 class SigmaMadAction(ScalarAction):

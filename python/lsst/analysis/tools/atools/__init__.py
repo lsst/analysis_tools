@@ -3,6 +3,7 @@ from .astrometryWithReference import *
 from .coveragePlots import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
+from .diffimMetadataMetrics import *
 from .diffMatched import *
 from .fluxMetrics import *
 from .genericBuild import *

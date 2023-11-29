@@ -3,6 +3,7 @@ from .associatedSourcesTractAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
+from .diffimTaskDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .objectTableSurveyAnalysis import *

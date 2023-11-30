@@ -77,7 +77,7 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -182,7 +182,7 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 

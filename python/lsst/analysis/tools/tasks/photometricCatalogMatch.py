@@ -89,7 +89,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -197,7 +197,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable, physicalFilter)
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=bands)
 
         # The matcher adds the band to the front of the columns
         # but the visit plots aren't expecting it

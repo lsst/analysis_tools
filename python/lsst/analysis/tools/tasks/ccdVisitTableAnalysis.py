@@ -37,7 +37,7 @@ class CcdVisitTableAnalysisConnections(
     data = cT.Input(
         doc="Collection based source table to load from the butler.",
         name="ccdVisitTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument",),
     )

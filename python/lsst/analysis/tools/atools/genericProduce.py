@@ -36,6 +36,7 @@ class MagnitudeScatterPlot(MagnitudeXTool):
         # init with placeholders
         self.produce.plot = ScatterPlotWithTwoHists(xAxisLabel="", yAxisLabel="", magLabel="")
         self.produce.plot.plotTypes = ["galaxies", "stars"]
+        self.produce.plot.addSummaryPlot = False
 
     def finalize(self):
         super().finalize()
@@ -71,7 +72,7 @@ class MagnitudeScatterPlot(MagnitudeXTool):
             for suffix, prefix_vec, key in keys_filter:
                 setattr(
                     self.process.filterActions,
-                    f"{prefix}_{key}{suffix}",
+                    f"{prefix}_{key}_flux{suffix}",
                     DownselectVector(
                         vectorKey=f"{prefix_vec}{key}",
                         selector=VectorSelector(vectorKey=f"{prefix}Selector"),
@@ -79,7 +80,7 @@ class MagnitudeScatterPlot(MagnitudeXTool):
                 )
 
             statAction = ScatterPlotStatsAction(vectorKey=f"y{plural.capitalize()}")
-            fluxType = f"{prefix}_{key_err}"
+            fluxType = f"{prefix}_{key_err}_flux"
             statAction.highSNSelector.fluxType = fluxType
             statAction.highSNSelector.threshold = 200
             statAction.lowSNSelector.fluxType = fluxType

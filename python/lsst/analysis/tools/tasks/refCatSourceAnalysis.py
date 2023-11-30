@@ -24,13 +24,6 @@ __all__ = ("RefCatSourceAnalysisConfig", "RefCatSourceAnalysisTask")
 
 from lsst.pipe.base import connectionTypes as ct
 
-from ..atools.astrometryWithReference import (
-    TargetRefCatDeltaDecScatterPlot,
-    TargetRefCatDeltaDecSkyPlot,
-    TargetRefCatDeltaRAScatterPlot,
-    TargetRefCatDeltaRASkyPlot,
-)
-from ..contexts import VisitContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
@@ -42,7 +35,7 @@ class RefCatSourceAnalysisConnections(
     data = ct.Input(
         doc="Tract based object table to load from the butler",
         name="sourceTable_visit_gaia_dr2_20200414_match",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),
     )
@@ -51,21 +44,6 @@ class RefCatSourceAnalysisConnections(
 class RefCatSourceAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatSourceAnalysisConnections):
     def setDefaults(self):
         super().setDefaults()
-
-        # set plots to run
-        self.plots.astromDiffRAScatterPlot = TargetRefCatDeltaRAScatterPlot()
-        self.plots.astromDiffRAScatterPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffDecScatterPlot = TargetRefCatDeltaDecScatterPlot()
-        self.plots.astromDiffDecScatterPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffRASkyPlot = TargetRefCatDeltaRASkyPlot()
-        self.plots.astromDiffRASkyPlot.applyContext(VisitContext)
-
-        self.plots.astromDiffDecSkyPlot = TargetRefCatDeltaDecSkyPlot()
-        self.plots.astromDiffDecSkyPlot.applyContext(VisitContext)
-
-        # set metrics to run - none so far
 
 
 class RefCatSourceAnalysisTask(AnalysisPipelineTask):

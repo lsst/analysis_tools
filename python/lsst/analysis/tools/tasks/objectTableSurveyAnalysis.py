@@ -22,13 +22,12 @@ from __future__ import annotations
 __all__ = ("ObjectTableSurveyAnalysisTask",)
 
 
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, cast
-
-import pandas as pd
+from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate, DeferredDatasetHandle
 
+from astropy.table import vstack
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -51,10 +50,10 @@ class ObjectTableSurveyAnalysisConnections(
     data = ct.Input(
         doc="Input catalog of objects",
         name="objectTable_tract",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
-        multiple=True,
         dimensions=("tract", "skymap"),
+        multiple=True,
     )
 
 
@@ -82,7 +81,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         else:
             tableName = inputs[connectionName][0].ref.datasetType.name
             run = inputs[connectionName][0].ref.run
-            tracts = [data.ref.dataId["tract"] for data in inputs[connectionName]]
+            tracts = [data.ref.dataId["tract"] for data in list(inputs[connectionName])]
 
         # Initialize the plot info dictionary
         plotInfo = {
@@ -122,4 +121,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         if names is None:
             names = self.collectInputNames()
 
-        return cast(KeyedData, pd.concat(h.get(parameters={"columns": names}) for h in handle))
+        cats = []
+        for h in handle:
+            cats.append(h.get(parameters={"columns": names}))
+        return vstack(cats)

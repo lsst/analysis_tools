@@ -39,7 +39,7 @@ class ObjectTableTractAnalysisConnections(
     data = ct.Input(
         doc="Tract based object table to load from the butler",
         name="objectTable_tract",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),
     )

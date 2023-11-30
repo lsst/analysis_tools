@@ -1,5 +1,4 @@
 from .astrometricRepeatability import *
-from .astrometryWithReference import *
 from .coveragePlots import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
@@ -15,6 +14,7 @@ from .numericalValidity import *
 from .photometricRepeatability import *
 from .photometry import *
 from .propertyMap import *
+from .refCatMatchPlots import *
 from .seeingMetric import *
 from .shapes import *
 from .simpleDiaPlot import *

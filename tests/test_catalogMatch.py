@@ -27,21 +27,23 @@ import lsst.geom
 import lsst.skymap
 import numpy as np
 import pandas as pd
-from lsst.analysis.tools.tasks import CatalogMatchConfig, CatalogMatchTask
+from astropy.table import Table
+from lsst.analysis.tools.tasks import AstrometricCatalogMatchConfig, AstrometricCatalogMatchTask
 from lsst.daf.base import PropertyList
-from lsst.meas.algorithms import ReferenceObjectLoader
 from lsst.meas.algorithms.testUtils import MockRefcatDataId
 from lsst.pipe.base import InMemoryDatasetHandle
+from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
 
 class TestCatalogMatch(unittest.TestCase):
-    """Test CatalogMatchTask"""
+    """Test AstrometricCatalogMatchTask"""
 
     def setUp(self):
-        config = CatalogMatchConfig()
+        config = AstrometricCatalogMatchConfig()
         config.bands = ["g", "r", "i", "z", "y"]
-        self.task = CatalogMatchTask(config=config)
+        self.task = AstrometricCatalogMatchTask(config=config)
         self.task.config.extraColumns.append("sourceId")
+        self.task.config.referenceCatalogLoader.refObjLoader.requireProperMotion = False
 
         self.rng = np.random.default_rng(12345)
 
@@ -65,11 +67,14 @@ class TestCatalogMatch(unittest.TestCase):
 
         refDataId, deferredRefCat = self._make_refCat(starIds, starRas, starDecs, self.tractPoly)
 
-        self.task.refObjLoader = ReferenceObjectLoader(
-            dataIds=[refDataId], refCats=[deferredRefCat], name="gaia_dr2_20200414"
+        loaderTask = LoadReferenceCatalogTask(
+            config=config.referenceCatalogLoader,
+            dataIds=[refDataId],
+            name="gaia_dr2_20200414",
+            refCats=[deferredRefCat],
         )
-        self.task.refObjLoader.config.anyFilterMapsToThis = "phot_g_mean"
-        self.task.setRefCat(self.skymap, self.tract)
+        self.loadedRefCat = self.task._loadRefCat(loaderTask, tract)
+        self.loadedRefCat["sourceId"] = np.arange(0, len(self.loadedRefCat))
 
         self.objectTable = self._make_objectCat(starIds, starRas, starDecs)
 
@@ -113,6 +118,7 @@ class TestCatalogMatch(unittest.TestCase):
         refSchema = afwTable.SimpleTable.makeMinimalSchema()
         idKey = refSchema.addField("sourceId", type="I")
         fluxKey = refSchema.addField("phot_g_mean_flux", units="nJy", type=np.float64)
+        fluxErrKey = refSchema.addField("phot_g_mean_fluxErr", units="nJy", type=np.float64)
         refCat = afwTable.SimpleCatalog(refSchema)
         ref_md = PropertyList()
         ref_md.set("REFCAT_FORMAT_VERSION", 1)
@@ -123,6 +129,7 @@ class TestCatalogMatch(unittest.TestCase):
             record.setRa(lsst.geom.Angle(starRas[i], lsst.geom.degrees))
             record.setDec(lsst.geom.Angle(starDecs[i], lsst.geom.degrees))
             record.set(fluxKey, 1)
+            record.set(fluxErrKey, 0.01)
         refDataId = MockRefcatDataId(poly)
         deferredRefCat = InMemoryDatasetHandle(refCat, storageClass="SimpleCatalog", htm7="mockRefCat")
         return refDataId, deferredRefCat
@@ -189,29 +196,31 @@ class TestCatalogMatch(unittest.TestCase):
             sourceDict[key] = 1000
         for key in ["z_psfFluxErr", "i_psfFluxErr", "r_psfFluxErr", "g_psfFluxErr", "y_psfFluxErr"]:
             sourceDict[key] = 1
-        sourceCat = pd.DataFrame(sourceDict)
+        sourceCat = Table.from_pandas(pd.DataFrame(sourceDict))
         return sourceCat
 
     def test_setRefCat(self):
         """Test whether the objects in the reference catalog are in the
         expected footprint and that we get as many as expected
         """
-        coord_ra = (self.task.refCat["coord_ra"].to_numpy() * u.degree).to(u.radian).value
-        coord_dec = (self.task.refCat["coord_dec"].to_numpy() * u.degree).to(u.radian).value
+        coord_ra = (self.loadedRefCat["ra"] * u.degree).to(u.radian).value
+        coord_dec = (self.loadedRefCat["dec"] * u.degree).to(u.radian).value
         inFootprint = self.tractBbox.contains(coord_ra, coord_dec)
         self.assertTrue(inFootprint.all())
-        self.assertEqual(len(self.task.refCat), self.nStars)
+        self.assertEqual(len(self.loadedRefCat), self.nStars)
 
     def test_run(self):
         """Test whether `CatalogMatchTask` correctly associates the target and
         reference catalog.
         """
-        output = self.task.run(self.objectTable)
+        output = self.task.run(
+            catalog=self.objectTable, loadedRefCat=self.loadedRefCat, bands=self.task.config.bands
+        )
 
         self.assertEqual(len(output.matchedCatalog), self.nStars)
         self.assertListEqual(
-            output.matchedCatalog["sourceId_target"].to_list(),
-            output.matchedCatalog["sourceId_ref"].to_list(),
+            list(output.matchedCatalog["sourceId_target"]),
+            list(output.matchedCatalog["sourceId_ref"]),
         )
 
 

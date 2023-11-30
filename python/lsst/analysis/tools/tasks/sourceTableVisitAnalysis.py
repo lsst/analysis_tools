@@ -15,7 +15,7 @@ class SourceTableVisitAnalysisConnections(
     data = ct.Input(
         doc="Visit based source table to load from the butler",
         name="sourceTable_visit",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         dimensions=("visit", "band"),
         deferLoad=True,
     )

@@ -178,7 +178,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     addSummaryPlot = Field[bool](
         doc="Add a summary plot to the figure?",
-        default=False,
+        default=True,
     )
 
     _stats = ("median", "sigmaMad", "count", "approxMag")
@@ -673,9 +673,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         # Top histogram
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
 
-        if "all" in self.plotTypes:
-            x_all = f"x{self._datatypes['all'].suffix_xy}"
-            keys_notall = [x for x in self.plotTypes if x != "all"]
+        if "any" in self.plotTypes:
+            x_all = data[f"x{self._datatypes['any'].suffix_xy}"]
+            keys_notall = [x for x in self.plotTypes if x != "any"]
         else:
             x_all = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
             keys_notall = self.plotTypes
@@ -712,16 +712,16 @@ class ScatterPlotWithTwoHists(PlotAction):
         # Side histogram
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
 
-        if "all" in self.plotTypes:
-            y_all = f"y{self._datatypes['all'].suffix_xy}"
-            keys_notall = [x for x in self.plotTypes if x != "all"]
+        if "any" in self.plotTypes:
+            y_all = data[f"y{self._datatypes['any'].suffix_xy}"]
+            keys_notall = [x for x in self.plotTypes if x != "any"]
         else:
             y_all = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
             keys_notall = self.plotTypes
 
         y_min, y_max = ax.get_ylim()
         bins = np.linspace(y_min, y_max, 100)
-        sideHist.hist(y_all, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        sideHist.hist(np.array(y_all), bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
         kwargs_hist = dict(
             bins=bins,
             histtype="step",

@@ -123,7 +123,10 @@ def generateSummaryStats(data, skymap, plotInfo):
         # Once the objectTable_tract catalogues are using gen 3 patches
         # this will go away
         onPatch = data["patch"] == patch
-        stat = np.nanmedian(data[yCol][onPatch])
+        if sum(onPatch) == 0:
+            stat = np.nan
+        else:
+            stat = np.nanmedian(data[yCol][onPatch])
         try:
             patchTuple = (int(patch.split(",")[0]), int(patch.split(",")[-1]))
             patchInfo = tractInfo.getPatchInfo(patchTuple)

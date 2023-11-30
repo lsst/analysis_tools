@@ -129,6 +129,11 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
     decColumn = pexConfig.Field[str](doc="Dec column.", default="coord_dec")
     patchColumn = pexConfig.Field[str](doc="Patch column.", default="patch")
 
+    refCat = pexConfig.Field[bool](
+        doc="Is the catalog being matched to a reference catalog?",
+        default=False,
+    )
+
     def setDefaults(self):
         super().setDefaults()
         self.referenceCatalogLoader.doReferenceSelection = False
@@ -218,11 +223,13 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         for col in refCols:
             loadedRefCatMatched.rename_column(col, col + "_ref")
 
-        for i, band in enumerate(bands):
-            loadedRefCatMatched[band + "_mag_ref"] = loadedRefCatMatched["refMag_ref"][:, i]
-            loadedRefCatMatched[band + "_magErr_ref"] = loadedRefCatMatched["refMagErr_ref"][:, i]
-        loadedRefCatMatched.remove_column("refMag_ref")
-        loadedRefCatMatched.remove_column("refMagErr_ref")
+        if self.config.refCat:
+            for i, band in enumerate(bands):
+                loadedRefCatMatched[band + "_mag_ref"] = loadedRefCatMatched["refMag_ref"][:, i]
+                loadedRefCatMatched[band + "_magErr_ref"] = loadedRefCatMatched["refMagErr_ref"][:, i]
+            loadedRefCatMatched.remove_column("refMag_ref")
+            loadedRefCatMatched.remove_column("refMagErr_ref")
+
         tMatched = hstack([targetCatalogMatched, loadedRefCatMatched], join_type="exact")
         tMatched["matchDistance"] = dists
 

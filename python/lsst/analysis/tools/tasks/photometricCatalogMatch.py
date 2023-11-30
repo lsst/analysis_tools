@@ -42,6 +42,7 @@ class PhotometricCatalogMatchConfig(
 ):
     def setDefaults(self):
         super().setDefaults()
+        self.refCat = True
         self.referenceCatalogLoader.doReferenceSelection = False
         self.referenceCatalogLoader.doApplyColorTerms = True
 
@@ -134,6 +135,7 @@ class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
     def setDefaults(self):
+        self.refCat = True
         self.filterNames = []
         self.extraPerBandColumns = []
         self.patchColumn = ""

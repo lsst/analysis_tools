@@ -47,6 +47,7 @@ class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=Cata
 
     def setDefaults(self):
         super().setDefaults()
+        self.refCat = True
         self.referenceCatalogLoader.doApplyColorTerms = False
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = True
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"
@@ -137,6 +138,7 @@ class AstrometricCatalogMatchVisitConfig(
     )
 
     def setDefaults(self):
+        self.refCat = True
         # sourceSelectorActions.sourceSelector is StarSelector
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         # extraColumnSelectors.selector1 is SnSelector

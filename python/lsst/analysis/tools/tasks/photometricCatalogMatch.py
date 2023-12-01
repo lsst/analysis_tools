@@ -71,6 +71,11 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
         for filterName in self.config.filterNames:
             bands.append(self.config.referenceCatalogLoader.refObjLoader.filterMap[filterName])
 
+        # For some reason the imsim filterMaps don't work the same way as
+        # the HSC ones do, this is a bit hacky but fixes this
+        if "sim" in bands[0] or "smeared" in bands[0]:
+            bands = self.config.filterNames
+
         columns = self.prepColumns(bands)
         table = inputs["catalog"].get(parameters={"columns": columns})
 
@@ -163,7 +168,14 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         inputs = butlerQC.get(inputRefs)
         physicalFilter = inputs["catalog"].dataId["physical_filter"]
-        bands = [self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter]]
+
+        # For some reason the imsim filterMaps don't work the same way as
+        # the HSC ones do, this is a bit hacky but fixes this
+        if "sim" in physicalFilter:
+            physicalFilter = physicalFilter[0]
+            bands = [physicalFilter]
+        else:
+            bands = [self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter]]
         # No bands needed for visit tables
         # but we do need them later for the matching
         columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()

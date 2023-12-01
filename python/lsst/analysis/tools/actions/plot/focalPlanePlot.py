@@ -162,6 +162,11 @@ class FocalPlanePlot(PlotAction):
             noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
+        if self.nBins == -1:
+            numBins = int(np.round(0.4 * np.sqrt(len(data["x"]))))
+        else:
+            numBins = self.nBins
+
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 
@@ -181,8 +186,8 @@ class FocalPlanePlot(PlotAction):
 
         # Add an arbitrary small offset to bins to ensure that the minimum does
         # not equal the maximum.
-        binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, self.nBins)
-        binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, self.nBins)
+        binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, numBins)
+        binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, numBins)
 
         statistic, x_edge, y_edge, binnumber = binned_statistic_2d(
             focalPlane_x, focalPlane_y, data["z"], statistic=self.statistic, bins=[binsx, binsy]

@@ -162,11 +162,6 @@ class FocalPlanePlot(PlotAction):
             noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
-        if self.nBins == -1:
-            numBins = int(np.round(0.4 * np.sqrt(len(data["x"]))))
-        else:
-            numBins = self.nBins
-
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 
@@ -183,6 +178,17 @@ class FocalPlanePlot(PlotAction):
             fp_x, fp_y = map.applyForward(points)
             focalPlane_x[detectorInd] = fp_x
             focalPlane_y[detectorInd] = fp_y
+        
+        if self.nBins == -1:
+            binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, 33)
+            binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, 33)
+            
+            binnedNumSrc= np.histogram2d(focalPlane_x, focalPlane_y, bins=[binsx,binsy])[0]
+            meanSrcDensity = np.mean(binnedNumSrc, where = binnedNumSrc > 0.)
+            
+            numBins = int(np.round(16. * np.sqrt(meanSrcDensity)))
+        else:
+            numBins = self.nBins
 
         # Add an arbitrary small offset to bins to ensure that the minimum does
         # not equal the maximum.

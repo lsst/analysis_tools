@@ -32,6 +32,8 @@ connection classes and should specify a unique name
 
 __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTask")
 
+import datetime
+import logging
 import weakref
 from collections.abc import Iterable
 from copy import deepcopy
@@ -175,6 +177,33 @@ class AnalysisBaseConnections(
             self.outputs.add(name)
 
 
+def _timestampValidator(value: str) -> bool:
+    if value in ("reference_package_timestamp", "run_timestamp", "current_timestamp", "dataset_timestamp"):
+        return True
+    elif "explicit_timestamp" in value:
+        try:
+            _, splitTime = value.split(":")
+        except ValueError:
+            logging.error(
+                "Explicit timestamp must be given in the format 'explicit_timestamp:datetime', "
+                r"where datetime is given in the form '%Y%m%dT%H%M%S%z"
+            )
+            return False
+        try:
+            datetime.datetime.strptime(splitTime, r"%Y%m%dT%H%M%S%z")
+        except ValueError:
+            # This is explicitly chosen to be an f string as the string
+            # contains control characters.
+            logging.error(
+                f"The supplied datetime {splitTime} could not be parsed correctly into "
+                r"%Y%m%dT%H%M%S%z format"
+            )
+            return False
+        return True
+    else:
+        return False
+
+
 class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseConnections):
     """Base class for all configs used to define an `AnalysisPipelineTask`.
 
@@ -212,10 +241,10 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         doc="Which time stamp should be used as the reference timestamp for a "
         "metric in a time series database, valid values are; "
         "reference_package_timestamp, run_timestamp, current_timestamp, "
-        "and dataset_timestamp",
+        "dataset_timestamp and explicit_timestamp:datetime where datetime is "
+        "given in the form %Y%m%dT%H%M%S%z",
         default="run_timestamp",
-        check=lambda x: x
-        in ("reference_package_timestamp", "run_timestamp", "current_timestamp", "dataset_timestamp"),
+        check=_timestampValidator,
     )
 
     def applyConfigOverrides(
@@ -232,6 +261,21 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         if (value := parameters.mapping.get("sasquatch_reference_package", None)) is not None:
             extraConfig["reference_package"] = value
         if (value := parameters.mapping.get("sasquatch_timestamp_version", None)) is not None:
+            if "explicit_timestamp" in value:
+                try:
+                    _, splitTime = value.split(":")
+                except ValueError as excpt:
+                    raise ValueError(
+                        "Explicit timestamp must be given in the format 'explicit_timestamp:datetime', "
+                        "where datetime is given in the form '%Y%m%dT%H%M%S%z"
+                    ) from excpt
+                try:
+                    datetime.datetime.strptime(splitTime, r"%Y%m%dT%H%M%S%z")
+                except ValueError as excpt:
+                    raise ValueError(
+                        f"The supplied datetime {splitTime} could not be parsed correctly into "
+                        "%Y%m%dT%H%M%S%z format"
+                    ) from excpt
             extraConfig["timestamp_version"] = value
         if extraConfig:
             newPipelineConfigs = [ConfigIR(rest=extraConfig)]

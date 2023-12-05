@@ -34,11 +34,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class ObjectTableTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "objectTable_tract"},
+    defaultTemplates={"inputName": "objectTable_tract", "outputName": "objectTable_tract"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTable_tract",
+        name="{inputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),

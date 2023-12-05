@@ -32,11 +32,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class CcdVisitTableAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "instrument"),
-    defaultTemplates={"outputName": "ccdVisitTable"},
+    defaultTemplates={"inputName": "ccdVisitTable", "outputName": "ccdVisitTable"},
 ):
     data = cT.Input(
         doc="Collection based source table to load from the butler.",
-        name="ccdVisitTable",
+        name="{inputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument",),

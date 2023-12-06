@@ -25,6 +25,7 @@ __all__ = (
     "ObjectTableTractAnalysisTask",
 )
 
+import lsst.pex.config as pexConfig
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -51,11 +52,15 @@ class ObjectTableTractAnalysisConnections(
         dimensions=("skymap",),
     )
 
+    def __init__(self, *, config=None):
+        if not config.load_skymap:
+            del self.skymap
+
 
 class ObjectTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=ObjectTableTractAnalysisConnections
 ):
-    pass
+    load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap", default=True)
 
 
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):

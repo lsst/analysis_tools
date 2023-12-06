@@ -22,30 +22,25 @@ from __future__ import annotations
 
 __all__ = ("DiffMatchedAnalysisConfig", "DiffMatchedAnalysisTask")
 
-from lsst.pipe.base import connectionTypes as ct
-
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from .objectTableTractAnalysis import (
+    ObjectTableTractAnalysisConnections, ObjectTableTractAnalysisConfig, ObjectTableTractAnalysisTask,
+)
 
 
 class DiffMatchedAnalysisConnections(
-    AnalysisBaseConnections,
+    ObjectTableTractAnalysisConnections,
     dimensions=("skymap", "tract"),
     defaultTemplates={"inputName": "matched_truth_summary_objectTable_tract",
                       "outputName": "matched_truth_summary_objectTable_tract"},
 ):
-    data = ct.Input(
-        doc="Tract based object table to load from the butler",
-        name="{inputName}",
-        storageClass="DataFrame",
-        deferLoad=True,
-        dimensions=("skymap", "tract"),
-    )
-
-
-class DiffMatchedAnalysisConfig(AnalysisBaseConfig, pipelineConnections=DiffMatchedAnalysisConnections):
     pass
 
 
-class DiffMatchedAnalysisTask(AnalysisPipelineTask):
+class DiffMatchedAnalysisConfig(ObjectTableTractAnalysisConfig,
+                                pipelineConnections=DiffMatchedAnalysisConnections):
+    pass
+
+
+class DiffMatchedAnalysisTask(ObjectTableTractAnalysisTask):
     ConfigClass = DiffMatchedAnalysisConfig
     _DefaultName = "DiffMatchedAnalysisTask"

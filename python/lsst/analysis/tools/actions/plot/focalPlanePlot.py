@@ -54,7 +54,10 @@ class FocalPlanePlot(PlotAction):
     zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
 
     nBins = Field[int](
-        doc="Number of bins to use within the effective plot ranges along the spatial directions.",
+        doc="Number of bins to use within the effective plot ranges along"
+        " the spatial directions. If nBins is negative the number of"
+        " bins is adapted to the source density, with lower densities"
+        " using fewer bins, but with a minimum of abs(nBins).",
         default=200,
     )
     statistic = Field[str](
@@ -178,15 +181,17 @@ class FocalPlanePlot(PlotAction):
             fp_x, fp_y = map.applyForward(points)
             focalPlane_x[detectorInd] = fp_x
             focalPlane_y[detectorInd] = fp_y
-        
+
         if self.nBins < 0:
+            # Use a course 32x32 binning to determine the mean source density
+            # in regions where there are sources.
             binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, 33)
             binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, 33)
-            
-            binnedNumSrc= np.histogram2d(focalPlane_x, focalPlane_y, bins=[binsx,binsy])[0]
-            meanSrcDensity = np.mean(binnedNumSrc, where = binnedNumSrc > 0.)
-            
-            numBins = int(np.round(16. * np.sqrt(meanSrcDensity)))
+
+            binnedNumSrc = np.histogram2d(focalPlane_x, focalPlane_y, bins=[binsx, binsy])[0]
+            meanSrcDensity = np.mean(binnedNumSrc, where=binnedNumSrc > 0.0)
+
+            numBins = int(np.round(16.0 * np.sqrt(meanSrcDensity)))
             numBins = max(numBins, abs(self.nBins))
         else:
             numBins = self.nBins

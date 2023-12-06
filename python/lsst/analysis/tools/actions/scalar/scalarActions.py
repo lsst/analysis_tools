@@ -14,6 +14,7 @@ __all__ = (
     "MinAction",
     "FracInRange",
     "FracNan",
+    "SumAction",
 )
 
 import operator
@@ -307,3 +308,17 @@ class FracNan(ScalarAction):
             return 100.0 * result
         else:
             return result
+
+
+class SumAction(ScalarAction):
+    """Returns the sum of all values in the column."""
+
+    vectorKey = Field[str]("Key of Vector to sum")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+        return cast(Scalar, np.nansum(arr))

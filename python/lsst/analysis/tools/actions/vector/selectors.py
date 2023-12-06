@@ -494,3 +494,15 @@ class BandSelector(VectorAction):
             # No band selection is applied, i.e., select all rows
             mask = np.full(len(data[self.vectorKey]), True)  # type: ignore
         return cast(Vector, mask)
+
+
+class ParentObjectSelector(FlagSelector):
+    """Select only parent objects that are not sky objects."""
+
+    def setDefaults(self):
+        # This selects all of the parents
+        self.selectWhenFalse = [
+            "detect_isDeblendedModelSource",
+            "sky_object",
+        ]
+        self.selectWhenTrue = ["detect_isPatchInner"]

@@ -10,6 +10,10 @@ tasks:
       atools.e2Diff: E2Diff
       atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
       atools.skyFluxStatisticMetric.applyContext: CoaddContext
+      atools.parentDeblenderMetrics: ParentDeblenderMetrics
+      atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
+      atools.blendMetrics: BlendMetrics
+      atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
       atools.wPerpPSFP: WPerpPSF
       atools.wPerpCModel: WPerpCModel
       atools.xPerpPSFP: XPerpPSF

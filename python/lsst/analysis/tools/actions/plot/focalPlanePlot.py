@@ -179,7 +179,7 @@ class FocalPlanePlot(PlotAction):
             focalPlane_x[detectorInd] = fp_x
             focalPlane_y[detectorInd] = fp_y
         
-        if self.nBins == -1:
+        if self.nBins < 0:
             binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, 33)
             binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, 33)
             
@@ -187,6 +187,7 @@ class FocalPlanePlot(PlotAction):
             meanSrcDensity = np.mean(binnedNumSrc, where = binnedNumSrc > 0.)
             
             numBins = int(np.round(16. * np.sqrt(meanSrcDensity)))
+            numBins = max(numBins, abs(self.nBins))
         else:
             numBins = self.nBins
 

@@ -39,6 +39,7 @@ __all__ = (
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
+    "Mag50Action",
 )
 
 import operator
@@ -412,3 +413,36 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+class Mag50Action(ScalarFromVectorAction):
+    """Calculates the magnitude at 50% completeness of the given data."""
+
+    matchDistanceKey = Field[str]("Match distance Vector")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.matchDistanceKey, Vector),
+            (self.vectorKey, Vector),
+        )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        matched = np.isfinite(data[self.matchDistanceKey])
+        values = data[self.vectorKey.format(**kwargs)]
+        nInput, bins = np.histogram(
+            values,
+            range=(np.nanmin(values), np.nanmax(values)),
+            bins=100,
+        )
+        nOutput, _ = np.histogram(
+            values[matched],
+            range=(np.nanmin(values[matched]), np.nanmax(values[matched])),
+            bins=bins,
+        )
+        # Find bin where the fraction recovered first falls below 0.5
+        lessThanHalf = np.where((nOutput / nInput < 0.5))[0]
+        if len(lessThanHalf) == 0:
+            mag50 = np.nan
+        else:
+            mag50 = np.min(bins[lessThanHalf])
+        return mag50

@@ -1,0 +1,19 @@
+description: |
+  Tier2 plots and metrics to assess injected coadd quality.
+  injectedCoaddQualityCore must be finished to run this pipeline.
+tasks:
+  combineInjectedCatalogs:
+    class: lsst.source.injection.consolidate_injected_catalogs.ConsolidateInjectedCatalogsTask
+  injectedCatalogMatchTract:
+    class: lsst.analysis.tools.tasks.injectedCatalogCoaddMatch.InjectedCatalogCoaddMatchTask
+  injectedObjectAnalysis:
+    class: lsst.analysis.tools.tasks.injectedObjectAnalysis.InjectedObjectAnalysisTask
+    config:
+      atools.astromDiffRASkyPlot: TargetInjectedCatDeltaRASkyPlot
+      atools.astromDiffDecSkyPlot: TargetInjectedCatDeltaDecSkyPlot
+      atools.targetInjectedCatDeltaCModelScatterPlot: TargetInjectedCatDeltaCModelScatterPlot
+      atools.targetInjectedCatDeltaPsfSkyPlot: TargetInjectedCatDeltaPsfSkyPlot
+      atools.targetInjectedCatDeltaCModelSkyPlot: TargetRefCatDeltaCModelSkyPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

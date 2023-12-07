@@ -296,7 +296,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             for col in falseFlagCols:
                 refCatalogNotMatched[col] = [False] * len(refCatalogNotMatched)
 
-        if self.config.matchesRefCat:
+        if self.config.refCat:
             for i, band in enumerate(bands):
                 refCatalogMatched[band + "_mag_ref"] = refCatalogMatched["refMag_ref"][:, i]
                 refCatalogMatched[band + "_magErr_ref"] = refCatalogMatched["refMagErr_ref"][:, i]
@@ -316,7 +316,6 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         if self.config.returnNonMatches:
             refCatalogNotMatched["matchDistance"] = [np.nan] * len(refCatalogNotMatched)
             tMatched = vstack([tMatched, refCatalogNotMatched])
-
         return pipeBase.Struct(matchedCatalog=tMatched)
 
     def prepColumns(self, bands):

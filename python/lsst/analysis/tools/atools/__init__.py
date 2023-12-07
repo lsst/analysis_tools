@@ -28,5 +28,6 @@ from .sizeMagnitude import *
 from .skyFluxStatisticMetrics import *
 from .skyObject import *
 from .skySource import *
+from .sourceInjectionPlots import *
 from .sources import *
 from .stellarLocus import *

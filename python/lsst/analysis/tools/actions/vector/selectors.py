@@ -102,9 +102,14 @@ class FlagSelector(VectorAction):
         select on in each circumstance.
         """
 
+        # if not self.selectWhenFalse and not self.selectWhenTrue:
+        #     raise RuntimeError("No column keys specified")
+        # results: Optional[Vector] = None
         if not self.selectWhenFalse and not self.selectWhenTrue:
-            raise RuntimeError("No column keys specified")
-        results: Optional[Vector] = None
+            # raise RuntimeError("No column keys specified")
+            print("No column keys specified for flag selector")
+        # results: Optional[Vector] = None
+        results: Optional[Vector] = [True] * len(data)
 
         for flag in self.selectWhenFalse:  # type: ignore
             temp = np.array(data[flag.format(**kwargs)] == 0)

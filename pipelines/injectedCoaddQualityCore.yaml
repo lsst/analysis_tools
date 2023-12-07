@@ -1,0 +1,20 @@
+description: |
+  Tier1 plots and metrics to assess injected coadd quality
+tasks:
+  consolidateInjectedCatalogs:
+    class: lsst.source.injection.utils.consolidate_injected_deepCoadd_catalogs.ConsolidateInjectedCatalogsTask
+  injectedCatalogMatchTract:
+    class: lsst.analysis.tools.tasks.injectedCatalogCoaddMatch.InjectedCatalogCoaddMatchTask
+  injectedObjectAnalysis:
+    class: lsst.analysis.tools.tasks.injectedObjectAnalysis.InjectedObjectAnalysisTask
+    config:
+      atools.completenessHist: Completeness
+      atools.astromDiffRAScatterPlot: TargetInjectedCatDeltaRAScatterPlot
+      atools.astromDiffDecScatterPlot: TargetInjectedCatDeltaDecScatterPlot
+      atools.astromDiffMetrics: TargetInjectedCatDeltaMetrics
+      atools.astromDiffMetrics.applyContext: CoaddContext
+      atools.targetInjectedCatDeltaPsfScatterPlot: TargetInjectedCatDeltaPsfScatterPlot
+      bands: ["g", "r", "i", "z", "y"]
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

@@ -11,6 +11,7 @@ from .diffimTaskDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .injectedCatalogCoaddMatch import *
+from .injectedObjectAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .photometricCatalogMatch import *

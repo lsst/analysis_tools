@@ -26,7 +26,7 @@ import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, vstack
 from astropy.time import Time
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
@@ -152,6 +152,11 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
         default=False,
     )
 
+    returnNonMatches = pexConfig.Field[bool](
+        doc="Return the rows of the reference catalog that didn't get matched?",
+        default=False,
+    )
+
     def setDefaults(self):
         super().setDefaults()
         self.referenceCatalogLoader.doReferenceSelection = False
@@ -241,6 +246,13 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         for col in refCols:
             refCatalogMatched.rename_column(col, col + "_ref")
 
+        if self.config.returnNonMatches:
+            refCatalogNotMatched = refCatalog[~refMatchIndices]
+            for col in refCols:
+                refCatalogNotMatched.rename_column(col, col + "_ref")
+            for col in targetCols:
+                refCatalogNotMatched[col] = [np.nan] * len(refCatalogNotMatched)
+
         if self.config.refCat:
             for i, band in enumerate(bands):
                 refCatalogMatched[band + "_mag_ref"] = refCatalogMatched["refMag_ref"][:, i]
@@ -248,8 +260,19 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             refCatalogMatched.remove_column("refMag_ref")
             refCatalogMatched.remove_column("refMagErr_ref")
 
+            if self.config.returnNonMatches:
+                for i, band in enumerate(bands):
+                    refCatalogNotMatched[band + "_mag_ref"] = refCatalogNotMatched["refMag_ref"][:, i]
+                    refCatalogNotMatched[band + "_magErr_ref"] = refCatalogNotMatched["refMagErr_ref"][:, i]
+                refCatalogNotMatched.remove_column("refMag_ref")
+                refCatalogNotMatched.remove_column("refMagErr_ref")
+
         tMatched = hstack([targetCatalogMatched, refCatalogMatched], join_type="exact")
         tMatched["matchDistance"] = dists
+
+        if self.config.returnNonMatches:
+            refCatalogNotMatched["matchDistance"] = [np.nan] * len(refCatalogNotMatched)
+            tMatched = vstack([tMatched, refCatalogNotMatched])
 
         return pipeBase.Struct(matchedCatalog=tMatched)
 

@@ -5,3 +5,11 @@ tasks:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
   refCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
+  deltaSkyCorrHist:
+    class: lsst.analysis.tools.tasks.deltaSkyCorrAnalysis.DeltaSkyCorrHistTask
+  deltaSkyCorrAnalysis:
+    class: lsst.analysis.tools.tasks.deltaSkyCorrAnalysis.DeltaSkyCorrAnalysisTask
+    config:
+      atools.deltaSkyCorr: DeltaSkyCorrXYPlot
+      python: |
+        from lsst.analysis.tools.atools import *

@@ -36,6 +36,8 @@ __all__ = (
     "FracInRange",
     "FracNan",
     "SumAction",
+    "MedianHistAction",
+    "IqrHistAction",
 )
 
 import operator
@@ -246,3 +248,90 @@ class SumAction(ScalarFromVectorAction):
         mask = self.getMask(**kwargs)
         arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
         return cast(Scalar, np.nansum(arr))
+
+
+class MedianHistAction(ScalarAction):
+    """Calculates the median of the given histogram data."""
+
+    histKey = Field[str]("Key of frequency Vector")
+    midKey = Field[str]("Key of bin midpoints Vector")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.histKey, Vector),
+            (self.midKey, Vector),
+        )
+
+    def histMedian(self, hist, bin_mid):
+        """Calculates the median of a histogram with binned values
+
+        Parameters
+        ----------
+        hist : `numpy.ndarray`
+            Frequency array
+        bin_mid : `numpy.ndarray`
+            Bin midpoints array
+
+        Returns
+        -------
+        median : `float`
+            Median of histogram with binned values
+        """
+        cumulative_sum = np.cumsum(hist)
+        median_index = np.searchsorted(cumulative_sum, cumulative_sum[-1] / 2)
+        median = bin_mid[median_index]
+        return median
+
+    def __call__(self, data: KeyedData, **kwargs):
+        if len(data[self.histKey.format(**kwargs)]) != 0:
+            hist = cast(Vector, data[self.histKey.format(**kwargs)])
+            bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
+            med = cast(Scalar, float(self.histMedian(hist, bin_mid)))
+        else:
+            med = np.NaN
+        return med
+
+
+class IqrHistAction(ScalarAction):
+    """Calculates the interquartile range of the given histogram data."""
+
+    histKey = Field[str]("Key of frequency Vector")
+    midKey = Field[str]("Key of bin midpoints Vector")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.histKey, Vector),
+            (self.midKey, Vector),
+        )
+
+    def histIqr(self, hist, bin_mid):
+        """Calculates the interquartile range of a histogram with binned values
+
+        Parameters
+        ----------
+        hist : `numpy.ndarray`
+            Frequency array
+        bin_mid : `numpy.ndarray`
+            Bin midpoints array
+
+        Returns
+        -------
+        iqr : `float`
+            Inter-quartile range of histogram with binned values
+        """
+        cumulative_sum = np.cumsum(hist)
+        liqr_index = np.searchsorted(cumulative_sum, cumulative_sum[-1] / 4)
+        uiqr_index = np.searchsorted(cumulative_sum, (3 / 4) * cumulative_sum[-1])
+        liqr = bin_mid[liqr_index]
+        uiqr = bin_mid[uiqr_index]
+        iqr = uiqr - liqr
+        return iqr
+
+    def __call__(self, data: KeyedData, **kwargs):
+        if len(data[self.histKey.format(**kwargs)]) != 0:
+            hist = cast(Vector, data[self.histKey.format(**kwargs)])
+            bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
+            iqr = cast(Scalar, float(self.histIqr(hist, bin_mid)))
+        else:
+            iqr = np.NaN
+        return iqr

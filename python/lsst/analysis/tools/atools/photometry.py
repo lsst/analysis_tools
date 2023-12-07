@@ -137,9 +137,9 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 
         self.produce.metric.newNames = {
-            "median": "{band}_psf-cModel_median",
-            "mean": "{band}_psf-cModel_mean",
-            "sigmaMad": "{band}_psf-cModel_sigmaMad",
+            "median": "{band}_psf_cModel_diff_median",
+            "mean": "{band}_psf_cModel_diff_mean",
+            "sigmaMad": "{band}_psf_cModel_diff_sigmaMad",
         }
 
 

@@ -35,7 +35,6 @@ __all__ = (
 )
 
 import logging
-import warnings
 from typing import Optional, cast
 
 import numpy as np
@@ -45,6 +44,7 @@ from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...math import divide, fluxToMag
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
@@ -129,9 +129,7 @@ class CalcSn(VectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         signal = np.array(data[self.fluxType.format(**kwargs)])
         noise = np.array(data[f"{self.fluxType}{self.uncertaintySuffix}".format(**kwargs)])
-        sn = signal / noise
-
-        return np.array(sn)
+        return divide(signal, noise)
 
 
 class ConvertFluxToMag(VectorAction):
@@ -145,14 +143,11 @@ class ConvertFluxToMag(VectorAction):
         return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", r"invalid value encountered")
-            warnings.filterwarnings("ignore", r"divide by zero")
-            vec = cast(Vector, data[self.vectorKey.format(**kwargs)])
-            mags = (np.array(vec) * u.Unit(self.fluxUnit)).to(u.ABmag).value  # type: ignore
-            if self.returnMillimags:
-                mags *= 1000
-            return mags
+        return fluxToMag(
+            cast(Vector, data[self.vectorKey.format(**kwargs)]),
+            flux_unit=self.fluxUnit,
+            return_millimags=self.returnMillimags,
+        )
 
 
 class ConvertUnits(VectorAction):
@@ -198,18 +193,12 @@ class MagDiff(VectorAction):
         return ((self.col1, Vector), (self.col2, Vector))
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        flux1 = np.array(data[self.col1.format(**kwargs)]) * u.Unit(self.fluxUnits1)
-        mag1 = flux1.to(u.ABmag)
-
-        flux2 = np.array(data[self.col2.format(**kwargs)]) * u.Unit(self.fluxUnits2)
-        mag2 = flux2.to(u.ABmag)
-
+        mag1 = fluxToMag(data[self.col1.format(**kwargs)], flux_unit=u.Unit(self.fluxUnits1))
+        mag2 = fluxToMag(data[self.col2.format(**kwargs)], flux_unit=u.Unit(self.fluxUnits2))
         magDiff = mag1 - mag2
-
         if self.returnMillimags:
-            magDiff = magDiff.to(u.mmag)
-
-        return np.array(magDiff.value)
+            magDiff *= 1000.0
+        return magDiff
 
 
 class ExtinctionCorrectedMagDiff(VectorAction):

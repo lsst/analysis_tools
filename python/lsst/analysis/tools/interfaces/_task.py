@@ -34,6 +34,7 @@ __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTas
 
 import datetime
 import logging
+import warnings
 import weakref
 from collections.abc import Iterable
 from copy import deepcopy
@@ -320,37 +321,55 @@ class AnalysisPipelineTask(PipelineTask):
     config: AnalysisBaseConfig
     ConfigClass = AnalysisBaseConfig
 
+    warnings_all = (
+        "divide by zero encountered in divide",
+        "invalid value encountered in arcsin",
+        "invalid value encountered in cos",
+        "invalid value encountered in divide",
+        "invalid value encountered in log10",
+        "invalid value encountered in scalar divide",
+        "invalid value encountered in sin",
+        "invalid value encountered in sqrt",
+        "invalid value encountered in true_divide",
+        "Mean of empty slice",
+    )
+
     def _runTools(self, data: KeyedData, **kwargs) -> Struct:
-        results = Struct()
-        results.metrics = MetricMeasurementBundle(
-            dataset_identifier=self.config.dataset_identifier,
-            reference_package=self.config.reference_package,
-            timestamp_version=self.config.timestamp_version,
-        )
-        # copy plot info to be sure each action sees its own copy
-        plotInfo = kwargs.get("plotInfo")
-        plotKey = f"{self.config.connections.outputName}_{{name}}"
-        weakrefArgs = []
-        for name, action in self.config.atools.items():
-            kwargs["plotInfo"] = deepcopy(plotInfo)
-            actionResult = action(data, **kwargs)
-            metricAccumulate = []
-            for resultName, value in actionResult.items():
-                match value:
-                    case PlotTypes():
-                        setattr(results, plotKey.format(name=resultName), value)
-                        weakrefArgs.append(value)
-                    case Measurement():
-                        metricAccumulate.append(value)
-            # only add the metrics if there are some
-            if metricAccumulate:
-                results.metrics[name] = metricAccumulate
-        # Wrap the return struct in a finalizer so that when results is
-        # garbage collected the plots will be closed.
-        # TODO: This finalize step closes all open plots at the conclusion of
-        # a task. When DM-39114 is implemented, this step should no longer be
-        # required and may be removed.
-        weakref.finalize(results, _plotCloser, *weakrefArgs)
+        with warnings.catch_warnings():
+            # Change below to "in self.warnings_all" to find otherwise
+            # unfiltered numpy warnings.
+            for warning in ():
+                warnings.filterwarnings("error", warning, RuntimeWarning)
+            results = Struct()
+            results.metrics = MetricMeasurementBundle(
+                dataset_identifier=self.config.dataset_identifier,
+                reference_package=self.config.reference_package,
+                timestamp_version=self.config.timestamp_version,
+            )
+            # copy plot info to be sure each action sees its own copy
+            plotInfo = kwargs.get("plotInfo")
+            plotKey = f"{self.config.connections.outputName}_{{name}}"
+            weakrefArgs = []
+            for name, action in self.config.atools.items():
+                kwargs["plotInfo"] = deepcopy(plotInfo)
+                actionResult = action(data, **kwargs)
+                metricAccumulate = []
+                for resultName, value in actionResult.items():
+                    match value:
+                        case PlotTypes():
+                            setattr(results, plotKey.format(name=resultName), value)
+                            weakrefArgs.append(value)
+                        case Measurement():
+                            metricAccumulate.append(value)
+                # only add the metrics if there are some
+                if metricAccumulate:
+                    results.metrics[name] = metricAccumulate
+            # Wrap the return struct in a finalizer so that when results is
+            # garbage collected the plots will be closed.
+            # TODO: This finalize step closes all open plots at the conclusion
+            # of a task. When DM-39114 is implemented, this step should not
+            # be required and may be removed.
+            weakref.finalize(results, _plotCloser, *weakrefArgs)
         return results
 
     def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:

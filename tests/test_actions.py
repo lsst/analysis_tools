@@ -115,7 +115,7 @@ class TestVectorActions(unittest.TestCase):
 
     def setUp(self):
         self.size = 5
-        r = np.arange(self.size) + 1
+        r = np.arange(float(self.size)) + 1
         i = r**2
         rFlag = np.ones(self.size)
         rFlag[1] = 0

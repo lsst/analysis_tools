@@ -43,7 +43,7 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
-from ...statistics import sigmaMad
+from ...math import nanMax, nanMedian, nanMin, sigmaMad
 from .plotUtils import addPlotInfo
 
 log = logging.getLogger(__name__)
@@ -503,9 +503,9 @@ class HistPlot(PlotAction):
             # maximum sigmaMad for the datasets in the panel to the left[right]
             # from the minimum[maximum] median value of all datasets in the
             # panel.
-            maxMad = np.nanmax(mads)
-            maxMed = np.nanmax(meds)
-            minMed = np.nanmin(meds)
+            maxMad = nanMax(mads)
+            maxMed = nanMax(meds)
+            minMed = nanMin(meds)
             panel_range = [minMed - lowerRange * maxMad, maxMed + upperRange * maxMad]
             if panel_range[1] - panel_range[0] == 0:
                 log.info(
@@ -529,15 +529,15 @@ class HistPlot(PlotAction):
                 hist_range = np.nanpercentile(
                     data[hist], [self.panels[panel].lowerRange, self.panels[panel].upperRange]
                 )
-                panel_range[0] = np.nanmin([panel_range[0], hist_range[0]])
-                panel_range[1] = np.nanmax([panel_range[1], hist_range[1]])
+                panel_range[0] = nanMin([panel_range[0], hist_range[0]])
+                panel_range[1] = nanMax([panel_range[1], hist_range[1]])
         return panel_range
 
     def _calcStats(self, data):
         """Calculate the number of data points, median, and median absolute
         deviation of input data."""
         num = len(data)
-        med = np.nanmedian(data)
+        med = nanMedian(data)
         mad = sigmaMad(data)
         return num, med, mad
 

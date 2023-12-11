@@ -162,6 +162,19 @@ class ScalarAction(AnalysisAction):
 
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        """Compute a scalar value from keyed data.
+
+        Parameters
+        ----------
+        data
+            Keyed data to compute a value from.
+        kwargs
+            Additional keyword arguments.
+
+        Returns
+        -------
+        A scalar value.
+        """
         raise NotImplementedError("This is not implemented on the base class")
 
     def getMask(self, **kwargs) -> Vector | slice:

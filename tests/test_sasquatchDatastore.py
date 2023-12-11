@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import os
 import unittest
 from unittest.mock import patch
@@ -70,6 +71,24 @@ class SasquatchDatastoreTest(unittest.TestCase):
 
         mock_method.assert_called()
         self.assertIs(mock_method.call_args[0][0], bundle)
+
+    def test_explicit_timestamp_version(self):
+        dispatcher = SasquatchDispatcher("http://test.local", "na")
+        bundle = MetricMeasurementBundle()
+        bundle.timestamp_version = "explicit_timestamp"
+        # verify this raises with no specified time
+        with self.assertRaises(ValueError):
+            dispatcher._handleTimes({}, bundle, "localRun")
+        # verify this raise with a date that can't be parsed
+        bundle.timestamp_version = "explicit_timestamp:123233"
+        with self.assertRaises(ValueError):
+            dispatcher._handleTimes({}, bundle, "localRun")
+        # verify that a correct time gets parsed
+        bundle.timestamp_version = "explicit_timestamp:20230728T165102Z"
+        meta = {}
+        dispatcher._handleTimes(meta, bundle, "localRun")
+        dt = datetime.datetime(2023, 7, 28, 16, 51, 2, tzinfo=datetime.timezone.utc)
+        self.assertEqual(meta["timestamp"], dt.timestamp())
 
 
 if __name__ == "__main__":

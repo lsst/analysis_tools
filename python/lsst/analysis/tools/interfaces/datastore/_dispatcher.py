@@ -408,6 +408,15 @@ class SasquatchDispatcher:
                 case "dataset_timestamp":
                     log.error("dataset timestamps are not yet supported, run_timestamp will be used")
                     meta["timestamp"] = meta["run_timestamp"]
+                case str(value) if "explicit_timestamp" in value:
+                    try:
+                        _, splitTime = value.split(":")
+                    except ValueError as excpt:
+                        raise ValueError(
+                            "Explicit timestamp must be given in the format 'explicit_timestamp:datetime', "
+                            "where datetime is given in the form '%Y%m%dT%H%M%S%z"
+                        ) from excpt
+                    meta["timestamp"] = datetime.datetime.strptime(splitTime, r"%Y%m%dT%H%M%S%z").timestamp()
                 case _:
                     log.error(
                         "Timestamp version %s is not supported, run_timestamp will be used",

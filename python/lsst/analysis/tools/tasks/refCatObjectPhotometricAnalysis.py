@@ -31,11 +31,15 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class RefCatObjectPhotometricAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "objectTable_tract_ps1_pv3_3pi_20170110_match"},
+    defaultTemplates={
+        "targetCatalog": "objectTable_tract",
+        "refCatalog": "ps1_pv3_3pi_20170110",
+        "outputName": "objectTable_tract_ps1_pv3_3pi_20170110_match",
+    },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTable_tract_ps1_pv3_3pi_20170110_match",
+        name="{targetCatalog}_{refCatalog}_match",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),

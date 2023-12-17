@@ -84,19 +84,19 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
 class AstrometricCatalogMatchVisitConnections(
     pipeBase.PipelineTaskConnections,
     dimensions=("visit",),
-    defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr2_20200414"},
+    defaultTemplates={"targetCatalog": "sourceTable_visit", "refCatalog": "gaia_dr3_20230707"},
 ):
     catalog = pipeBase.connectionTypes.Input(
         doc="The visit-wide catalog to make plots from.",
         storageClass="ArrowAstropy",
-        name="sourceTable_visit",
+        name="{targetCatalog}",
         dimensions=("visit",),
         deferLoad=True,
     )
 
     refCat = pipeBase.connectionTypes.PrerequisiteInput(
         doc="The astrometry reference catalog to match to loaded input catalog sources.",
-        name="gaia_dr2_20200414",
+        name="{refCatalog}",
         storageClass="SimpleCatalog",
         dimensions=("skypix",),
         deferLoad=True,

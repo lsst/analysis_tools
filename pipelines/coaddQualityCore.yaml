@@ -39,7 +39,7 @@ tasks:
   catalogMatchTract:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
     config:
-      connections.refCatalog: gaia_dr2_20200414
+      connections.refCatalog: gaia_dr3_20230707
   refCatObjectTract:
     class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
     config:

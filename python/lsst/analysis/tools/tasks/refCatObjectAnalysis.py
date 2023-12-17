@@ -33,8 +33,8 @@ class RefCatObjectAnalysisConnections(
     dimensions=("skymap", "tract"),
     defaultTemplates={
         "targetCatalog": "objectTable_tract",
-        "refCatalog": "gaia_dr2_20200414",
-        "outputName": "objectTable_tract_gaia_dr2_20200414_match",
+        "refCatalog": "gaia_dr3_20230707",
+        "outputName": "objectTable_tract_gaia_dr3_20230707_match",
     },
 ):
     data = ct.Input(

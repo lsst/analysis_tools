@@ -191,6 +191,12 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             # Which I think is okay, but the current task
             # allows different units. Need to configure match
             # radius, either in this task or a subtask.
+
+            # Get rid of entries in the refCat with non-finite RA/Dec values.
+            refRas = loadedRefCat["ra"]
+            refDecs = loadedRefCat["dec"]
+            refRaDecFiniteMask = np.isfinite(refRas) & np.isfinite(refDecs)
+            loadedRefCat = loadedRefCat[refRaDecFiniteMask]
             with Matcher(loadedRefCat["ra"], loadedRefCat["dec"]) as m:
                 idx, refMatchIndices, targetMatchIndices, dists = m.query_radius(
                     targetCatalog[self.config.raColumn],

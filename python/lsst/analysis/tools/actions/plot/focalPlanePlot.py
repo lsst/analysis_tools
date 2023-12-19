@@ -57,6 +57,12 @@ class FocalPlanePlot(PlotAction):
         doc="Number of bins to use within the effective plot ranges along the spatial directions.",
         default=200,
     )
+    doUseAdaptiveBinning = Field[bool](
+        doc="If set to True, the number of bins is adapted to the source"
+        " density, with lower densities using fewer bins. Under these"
+        " circumstances the nBins parameter sets the minimum number of bins.",
+        default=False,
+    )
     statistic = Field[str](
         doc="Operation to perform in binned_statistic_2d",
         default="mean",
@@ -179,10 +185,24 @@ class FocalPlanePlot(PlotAction):
             focalPlane_x[detectorInd] = fp_x
             focalPlane_y[detectorInd] = fp_y
 
+        if self.doUseAdaptiveBinning:
+            # Use a course 32x32 binning to determine the mean source density
+            # in regions where there are sources.
+            binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, 33)
+            binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, 33)
+
+            binnedNumSrc = np.histogram2d(focalPlane_x, focalPlane_y, bins=[binsx, binsy])[0]
+            meanSrcDensity = np.mean(binnedNumSrc, where=binnedNumSrc > 0.0)
+
+            numBins = int(np.round(16.0 * np.sqrt(meanSrcDensity)))
+            numBins = max(numBins, self.nBins)
+        else:
+            numBins = self.nBins
+
         # Add an arbitrary small offset to bins to ensure that the minimum does
         # not equal the maximum.
-        binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, self.nBins)
-        binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, self.nBins)
+        binsx = np.linspace(focalPlane_x.min() - 1e-5, focalPlane_x.max() + 1e-5, numBins)
+        binsy = np.linspace(focalPlane_y.min() - 1e-5, focalPlane_y.max() + 1e-5, numBins)
 
         statistic, x_edge, y_edge, binnumber = binned_statistic_2d(
             focalPlane_x, focalPlane_y, data["z"], statistic=self.statistic, bins=[binsx, binsy]

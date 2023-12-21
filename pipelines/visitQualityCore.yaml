@@ -15,7 +15,7 @@ tasks:
   catalogMatchVisit:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
     config:
-      connections.refCatalog: gaia_dr2_20200414
+      connections.refCatalog: gaia_dr3_20230707
   astrometricRefCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
     config:

@@ -70,7 +70,7 @@ class TestCatalogMatch(unittest.TestCase):
         loaderTask = LoadReferenceCatalogTask(
             config=config.referenceCatalogLoader,
             dataIds=[refDataId],
-            name="gaia_dr2_20200414",
+            name="gaia_dr3_20230707",
             refCats=[deferredRefCat],
         )
         self.loadedRefCat = self.task._loadRefCat(loaderTask, tract)

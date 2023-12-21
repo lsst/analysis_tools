@@ -30,11 +30,15 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class RefCatSourceAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit",),
-    defaultTemplates={"outputName": "sourceTable_visit_gaia_dr2_20200414_match"},
+    defaultTemplates={
+        "targetCatalog": "sourceTable_visit",
+        "refCatalog": "gaia_dr3_20230707",
+        "outputName": "sourceTable_visit_gaia_dr3_20230707_match",
+    },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="sourceTable_visit_gaia_dr2_20200414_match",
+        name="{targetCatalog}_{refCatalog}_match",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),

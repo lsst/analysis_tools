@@ -29,7 +29,7 @@ from astropy.table import Table
 from astropy.time import Time
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
-from ..actions.vector import VisitPlotFlagSelector
+from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
@@ -141,9 +141,12 @@ class PhotometricCatalogMatchVisitConfig(
         self.patchColumn = ""
         self.selectorBands = []
         self.selectorActions.flagSelector = VisitPlotFlagSelector
+        self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         self.extraColumnSelectors.selector2.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector3.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector4 = VisitPlotFlagSelector
 
 
 class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):

@@ -35,7 +35,7 @@ from astropy.time import Time
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
-from ..actions.vector import VisitPlotFlagSelector
+from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
@@ -140,11 +140,14 @@ class AstrometricCatalogMatchVisitConfig(
     def setDefaults(self):
         self.refCat = True
         # sourceSelectorActions.sourceSelector is StarSelector
+        self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         # extraColumnSelectors.selector1 is SnSelector
         self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         # extraColumnSelectors.selector2 is GalaxySelector
         self.extraColumnSelectors.selector2.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector3.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector4 = VisitPlotFlagSelector
         self.referenceCatalogLoader.doApplyColorTerms = False
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = False
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"

@@ -33,7 +33,13 @@ from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 from lsst.skymap import BaseSkyMap
 from smatch import Matcher
 
-from ..actions.vector import CoaddPlotFlagSelector, GalaxySelector, SnSelector, StarSelector
+from ..actions.vector import (
+    CoaddPlotFlagSelector,
+    GalaxySelector,
+    MatchingFlagSelector,
+    SnSelector,
+    StarSelector,
+)
 from ..interfaces import VectorAction
 
 
@@ -97,17 +103,22 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     selectorActions = ConfigurableActionStructField[VectorAction](
         doc="Which selectors to use to narrow down the data for QA plotting.",
-        default={"flagSelector": CoaddPlotFlagSelector()},
+        default={"flagSelector": MatchingFlagSelector()},
     )
 
     sourceSelectorActions = ConfigurableActionStructField[VectorAction](
         doc="What types of sources to use.",
-        default={"sourceSelector": StarSelector()},
+        default={},
     )
 
     extraColumnSelectors = ConfigurableActionStructField[VectorAction](
         doc="Other selectors that are not used in this task, but whose columns" "may be needed downstream",
-        default={"selector1": SnSelector(), "selector2": GalaxySelector()},
+        default={
+            "selector1": SnSelector(),
+            "selector2": StarSelector(),
+            "selector3": GalaxySelector(),
+            "selector4": CoaddPlotFlagSelector(),
+        },
     )
 
     extraColumns = pexConfig.ListField[str](
@@ -221,10 +232,10 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             # radius, either in this task or a subtask.
 
             # Get rid of entries in the refCat with non-finite RA/Dec values.
-            refRas = loadedRefCat[self.config.refRaColumn]
-            refDecs = loadedRefCat[self.config.refDecColum]
+            refRas = refCatalog[self.config.refRaColumn]
+            refDecs = refCatalog[self.config.refDecColumn]
             refRaDecFiniteMask = np.isfinite(refRas) & np.isfinite(refDecs)
-            loadedRefCat = loadedRefCat[refRaDecFiniteMask]
+            refCatalog = refCatalog[refRaDecFiniteMask]
             with Matcher(refCatalog[self.config.refRaColumn], refCatalog[self.config.refDecColumn]) as m:
                 idx, refMatchIndices, targetMatchIndices, dists = m.query_radius(
                     targetCatalog[self.config.targetRaColumn],
@@ -247,11 +258,31 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             refCatalogMatched.rename_column(col, col + "_ref")
 
         if self.config.returnNonMatches:
-            refCatalogNotMatched = refCatalog[~refMatchIndices]
+            unmatchedIndices = list(set(np.arange(0, len(refCatalog))) - set(refMatchIndices))
+            refCatalogNotMatched = refCatalog[unmatchedIndices]
+            # We need to set the relevant flag columns to
+            # true or false so that they make it through the
+            # selectors even though the none matched sources
+            # don't have values for those columns.
+            trueFlagCols = []
+            falseFlagCols = []
+            for selectorAction in [self.config.selectorActions, self.config.extraColumnSelectors]:
+                for selector in selectorAction:
+                    try:
+                        for flag in selector.selectWhenTrue:
+                            trueFlagCols.append(flag)
+                        for flag in selector.selectWhenFalse:
+                            falseFlagCols.append(flag)
+                    except AttributeError:
+                        continue
             for col in refCols:
                 refCatalogNotMatched.rename_column(col, col + "_ref")
             for col in targetCols:
                 refCatalogNotMatched[col] = [np.nan] * len(refCatalogNotMatched)
+            for col in trueFlagCols:
+                refCatalogNotMatched[col] = [True] * len(refCatalogNotMatched)
+            for col in falseFlagCols:
+                refCatalogNotMatched[col] = [False] * len(refCatalogNotMatched)
 
         if self.config.refCat:
             for i, band in enumerate(bands):

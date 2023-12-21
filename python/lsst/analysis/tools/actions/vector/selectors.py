@@ -36,6 +36,7 @@ __all__ = (
     "VisitPlotFlagSelector",
     "ThresholdSelector",
     "BandSelector",
+    "MatchingFlagSelector",
 )
 
 import operator
@@ -165,6 +166,17 @@ class CoaddPlotFlagSelector(FlagSelector):
             "xy_flag",
         ]
         self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
+
+
+class MatchingFlagSelector(CoaddPlotFlagSelector):
+    """The default flag selector to apply pre matching.
+    The sources are cut down to remove duplicates but
+    not on quality.
+    """
+
+    def setDefaults(self):
+        self.selectWhenFalse = []
+        self.selectWhenTrue = ["detect_isPrimary"]
 
 
 class VisitPlotFlagSelector(FlagSelector):

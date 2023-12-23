@@ -602,6 +602,7 @@ def plotProjectionWithBinning(
     isSorted=False,
     vmin=None,
     vmax=None,
+    showExtremeOutliers=True,
     scatPtSize=7,
 ):
     """Plot color-mapped data in projection and with binning when appropriate.
@@ -634,6 +635,9 @@ def plotProjectionWithBinning(
         extrema of the data).
     vmin, vmax : `float`, optional
         The min and max limits for the colorbar.
+    showExtremeOutliers: `bool`, default True
+        Use overlaid scatter points to show the x-y positions of the 15%
+        most extreme values.
     scatPtSize : `float`, optional
         The point size to use if just plotting a regular scatter plot.
 
@@ -673,21 +677,23 @@ def plotProjectionWithBinning(
         if not isSorted:
             sortedArrays = sortAllArrays([zs, xs, ys])
             zs, xs, ys = sortedArrays[0], sortedArrays[1], sortedArrays[2]
-        # Find the most extreme 15% of points. The list is ordered by the
-        # distance from the median, this is just the head/tail 15% of points.
         if len(xs) > 1:
-            extremes = int(np.floor((len(xs) / 100)) * 85)
-            plotOut = ax.scatter(
-                xs[extremes:],
-                ys[extremes:],
-                c=zs[extremes:],
-                s=s,
-                cmap=cmap,
-                vmin=vmin,
-                vmax=vmax,
-                edgecolor="white",
-                linewidths=lw,
-            )
+            if showExtremeOutliers:
+                # Find the most extreme 15% of points. The list is ordered
+                # by the distance from the median, this is just the
+                # head/tail 15% of points.
+                extremes = int(np.floor((len(xs) / 100)) * 85)
+                plotOut = ax.scatter(
+                    xs[extremes:],
+                    ys[extremes:],
+                    c=zs[extremes:],
+                    s=s,
+                    cmap=cmap,
+                    vmin=vmin,
+                    vmax=vmax,
+                    edgecolor="white",
+                    linewidths=lw,
+                )
     else:
         plotOut = ax.scatter(
             xs,

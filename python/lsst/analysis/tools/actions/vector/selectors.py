@@ -164,6 +164,7 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_pixelFlags_saturatedCenter",
             "{band}_extendedness_flag",
             "xy_flag",
+            "sky_object",
         ]
         self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]
 
@@ -213,6 +214,7 @@ class VisitPlotFlagSelector(FlagSelector):
             "pixelFlags_saturatedCenter",
             "extendedness_flag",
             "centroid_flag",
+            "sky_source",
         ]
 
 

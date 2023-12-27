@@ -463,6 +463,7 @@ class TestVectorSelectors(unittest.TestCase):
             "{band}_psfFlux_flag",
             "{band}_pixelFlags_saturatedCenter",
             "{band}_extendedness_flag",
+            "sky_object",
             "xy_flag",
             "detect_isPatchInner",
             "detect_isDeblendedSource",
@@ -471,7 +472,7 @@ class TestVectorSelectors(unittest.TestCase):
 
         result = selector(self.data)
         truth = np.ones(self.size, dtype=bool)
-        for bit in (1, 3, 5, 7, 9, 11):
+        for bit in (1, 3, 5, 7, 9, 11, 13, 15, 17):
             truth[bit] = 0
         np.testing.assert_array_equal(result, truth)
 

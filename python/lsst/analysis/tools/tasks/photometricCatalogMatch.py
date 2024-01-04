@@ -55,15 +55,13 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
     _DefaultName = "analysisToolsPhotometricCatalogMatch"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        """Run the matching to the photometric reference
-        catalog.
+        """Run the matching to the photometric reference catalog.
 
         Parameters
         ----------
-        `butlerQC` : lsst.pipe.base.butlerQuantumContext.ButlerQuantumContext
-        `inputRefs` : lsst.pipe.base.connections.InputQuantizedConnection
-        `outputRefs` : lsst.pipe.base.connections.OutputQuantizedConnection
-
+        butlerQC : `lsst.pipe.base.QuantumContext`
+        inputRefs : `lsst.pipe.base.InputQuantizedConnection`
+        outputRefs : `lsst.pipe.base.OutputQuantizedConnection`
         """
 
         inputs = butlerQC.get(inputRefs)
@@ -155,15 +153,13 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
     _DefaultName = "analysisToolsPhotometricCatalogMatchVisit"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        """Run the matching to the photometric reference
-        catalog.
+        """Run the matching to the photometric reference catalog.
 
         Parameters
         ----------
-        `butlerQC` : lsst.pipe.base.butlerQuantumContext.ButlerQuantumContext
-        `inputRefs` : lsst.pipe.base.connections.InputQuantizedConnection
-        `outputRefs` : lsst.pipe.base.connections.OutputQuantizedConnection
-
+        butlerQC : `lsst.pipe.base.QuantumContext`
+        inputRefs : `lsst.pipe.base.InputQuantizedConnection`
+        outputRefs : `lsst.pipe.base.OutputQuantizedConnection`
         """
 
         inputs = butlerQC.get(inputRefs)

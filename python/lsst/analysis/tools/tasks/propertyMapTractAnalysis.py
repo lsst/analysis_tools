@@ -29,7 +29,7 @@ from typing import Any, Mapping, Union
 
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Config, ConfigDictField, Field, ListField
-from lsst.pipe.base import ButlerQuantumContext, InputQuantizedConnection, OutputQuantizedConnection
+from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -177,7 +177,7 @@ class PropertyMapTractAnalysisTask(AnalysisPipelineTask):
 
     def runQuantum(
         self,
-        butlerQC: ButlerQuantumContext,
+        butlerQC: QuantumContext,
         inputRefs: InputQuantizedConnection,
         outputRefs: OutputQuantizedConnection,
     ) -> None:

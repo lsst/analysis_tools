@@ -33,142 +33,118 @@ from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, V
 from ...math import sigmaMad
 
 
-def stellarLocusFit(xs, ys, paramDict):
+def stellarLocusFit(xs, ys, mags, paramDict):
     """Make a fit to the stellar locus.
 
     Parameters
     ----------
-    xs : `numpy.ndarray`
-        The color on the xaxis
-    ys : `numpy.ndarray`
-        The color on the yaxis
-    paramDict : lsst.pex.config.dictField.Dict
-        A dictionary of parameters for line fitting
-        xMin : `float`
-            The minimum x edge of the box to use for initial fitting
-        xMax : `float`
-            The maximum x edge of the box to use for initial fitting
-        yMin : `float`
-            The minimum y edge of the box to use for initial fitting
-        yMax : `float`
-            The maximum y edge of the box to use for initial fitting
-        mHW : `float`
-            The hardwired gradient for the fit
-        bHW : `float`
-            The hardwired intercept of the fit
+    xs : `numpy.ndarray` [`float`]
+        The color on the xaxis.
+    ys : `numpy.ndarray` [`float`]
+        The color on the yaxis.
+    mags : `numpy.ndarray` [`float`]
+        The magnitude of the reference band flux (in mag).
+    paramDict : `dict` [`str`, `float`]
+        A dictionary of parameters for line fitting:
+
+        ``"xMin"``
+            The minimum x edge of the box to use for initial fitting (`float`).
+        ``"xMax"``
+            The maximum x edge of the box to use for initial fitting (`float`).
+        ``"yMin"``
+            The minimum y edge of the box to use for initial fitting (`float`).
+        ``"yMax"``
+            The maximum y edge of the box to use for initial fitting (`float`).
+        ``"mHW"``
+            The hardwired gradient for the fit (`float`).
+        ``"bHw"``
+            The hardwired intercept of the fit (`float`).
 
     Returns
     -------
-    paramsOut : `dict`
-        A dictionary of the calculated fit parameters
-        xMin : `float`
-            The minimum x edge of the box to use for initial fitting
-        xMax : `float`
-            The maximum x edge of the box to use for initial fitting
-        yMin : `float`
-            The minimum y edge of the box to use for initial fitting
-        yMax : `float`
-            The maximum y edge of the box to use for initial fitting
-        mHW : `float`
-            The hardwired gradient for the fit
-        bHW : `float`
-            The hardwired intercept of the fit
-        mODR : `float`
-            The gradient calculated by the ODR fit
-        bODR : `float`
-            The intercept calculated by the ODR fit
-        yBoxMin : `float`
-            The y value of the fitted line at xMin
-        yBoxMax : `float`
-            The y value of the fitted line at xMax
-        bPerpMin : `float`
+    fitParams : `dict`
+        A dictionary of the calculated fit parameters:
+
+        ``"bPerpMin"``
             The intercept of the perpendicular line that goes through xMin
-        bPerpMax : `float`
+            (`float`).
+        ``"bPerpMax"``
             The intercept of the perpendicular line that goes through xMax
-        mODR2 : `float`
-            The gradient from the second round of fitting
-        bODR2 : `float`
-            The intercept from the second round of fitting
-        mPerp : `float`
-            The gradient of the line perpendicular to the line from the
-            second fit
+            (`float`).
+        ``"mODR"``
+            The gradient from the final round of fitting (`float`).
+        ``"bODR"``
+            The intercept from the final round of fitting (`float`).
+        ``"mPerp"``
+            The gradient of the line perpendicular to the line from the final
+            fit (`float`).
+        ``"fitPoints"``
+            A boolean list indicating which points were used in the final fit
+            (`list` [`bool`]).
 
     Notes
     -----
     The code does two rounds of fitting, the first is initiated using the
-    hardwired values given in the `paramDict` parameter and is done using
-    an Orthogonal Distance Regression fit to the points defined by the
-    box of xMin, xMax, yMin and yMax. Once this fitting has been done a
-    perpendicular bisector is calculated at either end of the line and
+    hardwired values given in ``paramDict`` and is done using an Orthogonal
+    Distance Regression (ODR) fit to the points defined by the box with limits
+    defined by the keys: xMin, xMax, yMin, and yMax. Once this fitting has been
+    done a perpendicular bisector is calculated at either end of the line and
     only points that fall within these lines are used to recalculate the fit.
+    We also perform clipping of points perpendicular to the fit line that have
+    distances that deviate more than 5-sigma from the fit.
     """
-    # Points to use for the fit
-    fitPoints = np.where(
-        (xs > paramDict["xMin"])
+    fitParams = {}
+    # Initial subselection of points to use for the fit
+    # Check for nans/infs
+    goodPoints = np.isfinite(xs) & np.isfinite(ys) & np.isfinite(mags)
+
+    fitPoints = (
+        goodPoints
+        & (xs > paramDict["xMin"])
         & (xs < paramDict["xMax"])
         & (ys > paramDict["yMin"])
         & (ys < paramDict["yMax"])
-    )[0]
-
+    )
     linear = scipyODR.polynomial(1)
 
-    data = scipyODR.Data(xs[fitPoints], ys[fitPoints])
-    odr = scipyODR.ODR(data, linear, beta0=[paramDict["bHW"], paramDict["mHW"]])
+    fitData = scipyODR.Data(xs[fitPoints], ys[fitPoints])
+    odr = scipyODR.ODR(fitData, linear, beta0=[paramDict["bHW"], paramDict["mHW"]])
     params = odr.run()
-    mODR = float(params.beta[1])
-    bODR = float(params.beta[0])
-
-    paramsOut = {
-        "xMin": paramDict["xMin"],
-        "xMax": paramDict["xMax"],
-        "yMin": paramDict["yMin"],
-        "yMax": paramDict["yMax"],
-        "mHW": paramDict["mHW"],
-        "bHW": paramDict["bHW"],
-        "mODR": mODR,
-        "bODR": bODR,
-    }
+    mODR0 = float(params.beta[1])
+    bODR0 = float(params.beta[0])
 
     # Having found the initial fit calculate perpendicular ends
-    mPerp = -1.0 / mODR
+    mPerp0 = -1.0 / mODR0
+
     # When the gradient is really steep we need to use
-    # the y limits of the box rather than the x ones
+    # the y limits of the fit line rather than the x ones.
 
-    if np.abs(mODR) > 1:
-        yBoxMin = paramDict["yMin"]
-        xBoxMin = (yBoxMin - bODR) / mODR
-        yBoxMax = paramDict["yMax"]
-        xBoxMax = (yBoxMax - bODR) / mODR
+    if np.abs(mODR0) > 1:
+        yPerpMin = paramDict["yMin"]
+        xPerpMin = (yPerpMin - bODR0) / mODR0
+        yPerpMax = paramDict["yMax"]
+        xPerpMax = (yPerpMax - bODR0) / mODR0
     else:
-        yBoxMin = mODR * paramDict["xMin"] + bODR
-        xBoxMin = paramDict["xMin"]
-        yBoxMax = mODR * paramDict["xMax"] + bODR
-        xBoxMax = paramDict["xMax"]
+        yPerpMin = mODR0 * paramDict["xMin"] + bODR0
+        xPerpMin = paramDict["xMin"]
+        yPerpMax = mODR0 * paramDict["xMax"] + bODR0
+        xPerpMax = paramDict["xMax"]
 
-    bPerpMin = yBoxMin - mPerp * xBoxMin
+    bPerpMin = yPerpMin - mPerp0 * xPerpMin
+    bPerpMax = yPerpMax - mPerp0 * xPerpMax
 
-    paramsOut["yBoxMin"] = yBoxMin
-    paramsOut["bPerpMin"] = bPerpMin
+    fitParams["bPerpMin"] = bPerpMin
+    fitParams["bPerpMax"] = bPerpMax
 
-    bPerpMax = yBoxMax - mPerp * xBoxMax
+    fitParams["mODR"] = float(params.beta[1])
+    fitParams["bODR"] = float(params.beta[0])
 
-    paramsOut["yBoxMax"] = yBoxMax
-    paramsOut["bPerpMax"] = bPerpMax
+    fitParams["mPerp"] = -1.0 / fitParams["mODR"]
+    fitParams["goodPoints"] = goodPoints
+    fitParams["fitPoints"] = fitPoints
+    fitParams["paramDict"] = paramDict
 
-    # Use these perpendicular lines to chose the data and refit
-    fitPoints = (ys > mPerp * xs + bPerpMin) & (ys < mPerp * xs + bPerpMax)
-    data = scipyODR.Data(xs[fitPoints], ys[fitPoints])
-    odr = scipyODR.ODR(data, linear, beta0=[bODR, mODR])
-    params = odr.run()
-    mODR = float(params.beta[1])
-    bODR = float(params.beta[0])
-
-    paramsOut["mODR2"] = float(params.beta[1])
-    paramsOut["bODR2"] = float(params.beta[0])
-
-    paramsOut["mPerp"] = -1.0 / paramsOut["mODR2"]
-
-    return paramsOut
+    return fitParams
 
 
 def perpDistance(p1, p2, points):
@@ -176,24 +152,25 @@ def perpDistance(p1, p2, points):
 
     Parameters
     ----------
-    p1 : `numpy.ndarray`
-        A point on the line
-    p2 : `numpy.ndarray`
-        Another point on the line
-    points : `zip`
-        The points to calculate the distance to
+    p1 : `numpy.ndarray` [`float`]
+        A point on the line.
+    p2 : `numpy.ndarray` [`float`]
+        Another point on the line.
+    points : `zip` [(`float`, `float`)]
+        The points to calculate the distance to.
 
     Returns
     -------
-    dists : `list`
+    dists : `numpy.ndarray` [`float`]
         The distances from the line to the points. Uses the cross
         product to work this out.
     """
-    dists = []
-    for point in points:
-        point = np.array(point)
-        distToLine = np.cross(p2 - p1, point - p1) / np.linalg.norm(p2 - p1)
-        dists.append(distToLine)
+    if sum(p2 - p1) == 0:
+        raise ValueError(f"Must supply two different points for p1, p2. Got {p1}, {p2}")
+    points = list(points)
+    if len(points) == 0:
+        raise ValueError("Must provied a non-empty zip() list of points.")
+    dists = np.cross(p2 - p1, points - p1) / np.linalg.norm(p2 - p1)
 
     return dists
 
@@ -216,85 +193,76 @@ class StellarLocusFitAction(KeyedDataAction):
         value = (
             (f"{self.identity or ''}_sigmaMAD", Scalar),
             (f"{self.identity or ''}_median", Scalar),
-            (f"{self.identity or ''}_hardwired_sigmaMAD", Scalar),
-            (f"{self.identity or ''}_hardwired_median", Scalar),
         )
         return value
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         xs = cast(Vector, data["x"])
         ys = cast(Vector, data["y"])
-        fitParams = stellarLocusFit(xs, ys, self.stellarLocusFitDict)
-        fitPoints = np.where(
-            (xs > fitParams["xMin"])  # type: ignore
-            & (xs < fitParams["xMax"])  # type: ignore
-            & (ys > fitParams["yMin"])  # type: ignore
-            & (ys < fitParams["yMax"])  # type: ignore
-        )[0]
+        mags = cast(Vector, data["mag"])
 
-        if np.fabs(fitParams["mHW"]) > 1:
-            ysFitLineHW = np.array([fitParams["yMin"], fitParams["yMax"]])
-            xsFitLineHW = (ysFitLineHW - fitParams["bHW"]) / fitParams["mHW"]
-            ysFitLine = np.array([fitParams["yMin"], fitParams["yMax"]])
+        fitParams = stellarLocusFit(xs, ys, mags, self.stellarLocusFitDict)
+        fitPoints = fitParams["fitPoints"]
+
+        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
+            ysFitLineHW = np.array([self.stellarLocusFitDict["yMin"], self.stellarLocusFitDict["yMax"]])
+            xsFitLineHW = (ysFitLineHW - self.stellarLocusFitDict["bHW"]) / self.stellarLocusFitDict["mHW"]
+            ysFitLine = np.array([self.stellarLocusFitDict["yMin"], self.stellarLocusFitDict["yMax"]])
             xsFitLine = (ysFitLine - fitParams["bODR"]) / fitParams["mODR"]
-            ysFitLine2 = np.array([fitParams["yMin"], fitParams["yMax"]])
-            xsFitLine2 = (ysFitLine2 - fitParams["bODR2"]) / fitParams["mODR2"]
 
         else:
-            xsFitLineHW = np.array([fitParams["xMin"], fitParams["xMax"]])
-            ysFitLineHW = fitParams["mHW"] * xsFitLineHW + fitParams["bHW"]
-            xsFitLine = [fitParams["xMin"], fitParams["xMax"]]
+            xsFitLineHW = np.array([self.stellarLocusFitDict["xMin"], self.stellarLocusFitDict["xMax"]])
+            ysFitLineHW = self.stellarLocusFitDict["mHW"] * xsFitLineHW + self.stellarLocusFitDict["bHW"]
+            xsFitLine = [self.stellarLocusFitDict["xMin"], self.stellarLocusFitDict["xMax"]]
             ysFitLine = np.array(
                 [
                     fitParams["mODR"] * xsFitLine[0] + fitParams["bODR"],
                     fitParams["mODR"] * xsFitLine[1] + fitParams["bODR"],
                 ]
             )
-            xsFitLine2 = [fitParams["xMin"], fitParams["xMax"]]
-            ysFitLine2 = np.array(
-                [
-                    fitParams["mODR2"] * xsFitLine2[0] + fitParams["bODR2"],
-                    fitParams["mODR2"] * xsFitLine2[1] + fitParams["bODR2"],
-                ]
-            )
 
-        # Calculate the distances to that line
-        # Need two points to characterise the lines we want
-        # to get the distances to
+        # Calculate the distances to that line.
+        # Need two points to characterize the lines we want to get the
+        # distances to.
         p1 = np.array([xsFitLine[0], ysFitLine[0]])
         p2 = np.array([xsFitLine[1], ysFitLine[1]])
 
-        p1HW = np.array([xsFitLine[0], ysFitLineHW[0]])
-        p2HW = np.array([xsFitLine[1], ysFitLineHW[1]])
-
-        # Convert this to mmag
-        distsHW = np.array(perpDistance(p1HW, p2HW, zip(xs[fitPoints], ys[fitPoints]))) * 1000
+        # Convert this to mmag.
         dists = np.array(perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))) * 1000
 
         # Now we have the information for the perpendicular line we
         # can use it to calculate the points at the ends of the
-        # perpendicular lines that intersect at the box edges
-        if np.fabs(fitParams["mHW"]) > 1:
-            xMid = (fitParams["yMin"] - fitParams["bODR2"]) / fitParams["mODR2"]
+        # perpendicular lines that intersect at the box edges.
+        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
+            xMid = (self.stellarLocusFitDict["yMin"] - fitParams["bODR"]) / fitParams["mODR"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
             ys = fitParams["mPerp"] * xs + fitParams["bPerpMin"]
         else:
-            xs = np.array([fitParams["xMin"] - 0.2, fitParams["xMin"], fitParams["xMin"] + 0.2])
+            xs = np.array(
+                [
+                    self.stellarLocusFitDict["xMin"] - 0.2,
+                    self.stellarLocusFitDict["xMin"],
+                    self.stellarLocusFitDict["xMin"] + 0.2,
+                ]
+            )
             ys = xs * fitParams["mPerp"] + fitParams["bPerpMin"]
 
-        if np.fabs(fitParams["mHW"]) > 1:
-            xMid = (fitParams["yMax"] - fitParams["bODR2"]) / fitParams["mODR2"]
+        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
+            xMid = (self.stellarLocusFitDict["yMax"] - fitParams["bODR"]) / fitParams["mODR"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
             ys = fitParams["mPerp"] * xs + fitParams["bPerpMax"]
         else:
-            xs = np.array([fitParams["xMax"] - 0.2, fitParams["xMax"], fitParams["xMax"] + 0.2])
+            xs = np.array(
+                [
+                    self.stellarLocusFitDict["xMax"] - 0.2,
+                    self.stellarLocusFitDict["xMax"],
+                    self.stellarLocusFitDict["xMax"] + 0.2,
+                ]
+            )
             ys = xs * fitParams["mPerp"] + fitParams["bPerpMax"]
 
         fit_sigma, fit_med = (sigmaMad(dists), np.median(dists)) if len(dists) else (np.nan, np.nan)
         fitParams[f"{self.identity or ''}_sigmaMAD"] = fit_sigma
         fitParams[f"{self.identity or ''}_median"] = fit_med
-        fit_sigma, fit_med = (sigmaMad(distsHW), np.median(distsHW)) if len(distsHW) else (np.nan, np.nan)
-        fitParams[f"{self.identity or ''}_hardwired_sigmaMAD"] = fit_sigma
-        fitParams[f"{self.identity or ''}_hardwired_median"] = fit_med
 
         return fitParams  # type: ignore

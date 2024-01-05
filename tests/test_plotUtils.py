@@ -35,19 +35,18 @@ class FitTest(lsst.utils.tests.TestCase):
 
         xs = np.arange(1, 10)
         ys = np.arange(1, 10)
+        mags = np.arange(17.5, 22, 0.5)
 
         # Define an initial fit box that encompasses the points
         testParams = {"xMin": 0, "xMax": 11, "yMin": 0, "yMax": 11, "mHW": 1, "bHW": 0}
-        paramsOut = stellarLocusFit(xs, ys, testParams)
+        paramsOut = stellarLocusFit(xs, ys, mags, testParams)
 
         # stellarLocusFit performs two iterations of fitting and also
         # calculates the perpendicular gradient to the fit line and
         # the points of intersection between the box and the fit
         # line. Test that these are returning what is expected.
         self.assertFloatsAlmostEqual(paramsOut["mODR"], 1.0)
-        self.assertFloatsAlmostEqual(paramsOut["mODR2"], 1.0)
         self.assertFloatsAlmostEqual(paramsOut["bODR"], 0.0)
-        self.assertFloatsAlmostEqual(paramsOut["bODR2"], 0.0)
         self.assertFloatsAlmostEqual(paramsOut["bPerpMin"], 0.0)
         self.assertFloatsAlmostEqual(paramsOut["bPerpMax"], 22.0)
 

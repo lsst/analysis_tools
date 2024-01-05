@@ -28,10 +28,10 @@ from typing import Mapping, cast
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats
 from lsst.pex.config import Field, ListField, RangeField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from sklearn.neighbors import KernelDensity
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMean, nanMedian, nanSigmaMad
@@ -40,11 +40,10 @@ from .plotUtils import addPlotInfo, mkColormap
 
 
 class ColorColorFitPlot(PlotAction):
-    """Makes a color-color plot and overplots a
-    prefited line to the specified area of the plot.
-    This is mostly used for the stellar locus plots
-    and also includes panels that illustrate the
-    goodness of the given fit.
+    """Make a color-color plot and overplot a prefited line to the fit region.
+
+    This is mostly used for the stellar locus plots and also includes panels
+    that illustrate the goodness of the given fit.
     """
 
     xAxisLabel = Field[str](doc="Label to use for the x axis", optional=False)
@@ -72,22 +71,10 @@ class ColorColorFitPlot(PlotAction):
         base.append(("approxMagDepth", Scalar))
         base.append((f"{self.plotName}_sigmaMAD", Scalar))
         base.append((f"{self.plotName}_median", Scalar))
-        base.append((f"{self.plotName}_hardwired_sigmaMAD", Scalar))
-        base.append((f"{self.plotName}_hardwired_median", Scalar))
-        base.append(("xMin", Scalar))
-        base.append(("xMax", Scalar))
-        base.append(("yMin", Scalar))
-        base.append(("yMax", Scalar))
-        base.append(("mHW", Scalar))
-        base.append(("bHW", Scalar))
         base.append(("mODR", Scalar))
         base.append(("bODR", Scalar))
-        base.append(("yBoxMin", Scalar))
-        base.append(("yBoxMax", Scalar))
         base.append(("bPerpMin", Scalar))
         base.append(("bPerpMax", Scalar))
-        base.append(("mODR2", Scalar))
-        base.append(("bODR2", Scalar))
         base.append(("mPerp", Scalar))
 
         return base
@@ -118,125 +105,113 @@ class ColorColorFitPlot(PlotAction):
     ) -> Figure:
         """Make stellar locus plots using pre fitted values.
 
-         Parameters
-         ----------
-         data : `KeyedData`
-             The data to plot the points from, for more information
-             please see the notes section.
-         plotInfo : `dict`
-             A dictionary of information about the data being plotted
-             with keys:
+        Parameters
+        ----------
+        data : `KeyedData`
+            The data to plot the points from, for more information
+            please see the notes section.
+        plotInfo : `dict`
+            A dictionary of information about the data being plotted
+            with keys:
 
-             * ``"run"``
-                   The output run for the plots (`str`).
-             * ``"skymap"``
-                   The type of skymap used for the data (`str`).
-             * ``"filter"``
-                   The filter used for this data (`str`).
-             * ``"tract"``
-                   The tract that the data comes from (`str`).
+            * ``"run"``
+                  The output run for the plots (`str`).
+            * ``"skymap"``
+                  The type of skymap used for the data (`str`).
+            * ``"filter"``
+                  The filter used for this data (`str`).
+            * ``"tract"``
+                  The tract that the data comes from (`str`).
 
         Returns
-         -------
-         fig : `matplotlib.figure.Figure`
-             The resulting figure.
+        -------
+        fig : `matplotlib.figure.Figure`
+            The resulting figure.
 
-         Notes
-         -----
-         The axis labels are given by `self.config.xLabel` and
-         `self.config.yLabel`. The perpendicular distance of the points to
-         the fit line is given in a histogram in the second panel.
+        Notes
+        -----
+        The axis labels are given by `self.xAxisLabel` and `self.yAxisLabel`.
+        The perpendicular distance of the points to the fit line is given in a
+        histogram in the second panel.
 
-         For the code to work it expects various quantities to be
-         present in the 'data' that it is given.
+        For the code to work it expects various quantities to be present in
+        the `data` that it is given.
 
-         The quantities that are expected to be present are:
+        The quantities that are expected to be present are:
 
-          * Statistics that are shown on the plot or used by the plotting code:
-             * ``approxMagDepth``
-                   The approximate magnitude corresponding to the SN cut used.
-             * ``f"{self.plotName}_sigmaMAD"``
-                   The sigma mad of the distances to the line fit.
-             * ``f"{self.identity or ''}_median"``
-                   The median of the distances to the line fit.
-             * ``f"{self.identity or ''}_hardwired_sigmaMAD"``
-                   The sigma mad of the distances to the initial fit.
-             * ``f"{self.identity or ''}_hardwired_median"``
-                   The median of the distances to the initial fit.
+         * Statistics that are shown on the plot or used by the plotting code:
+            * ``approxMagDepth``
+                  The approximate magnitude corresponding to the SN cut used.
+            * ``f"{self.plotName}_sigmaMAD"``
+                  The sigma mad of the distances to the line fit.
+            * ``f"{self.plotName or ''}_median"``
+                  The median of the distances to the line fit.
 
-
-          * Parameters from the fitting code that are illustrated on the plot:
-             * ``"bHW"``
-                   The hardwired intercept to fall back on.
-             * ``"bODR"``
-                   The intercept calculated by the orthogonal distance
-                   regression fitting.
-             * ``"bODR2"``
-                   The intercept calculated by the second iteration of
-                   orthogonal distance regression fitting.
-             * ``"mHW"``
-                   The hardwired gradient to fall back on.
-             * ``"mODR"``
-                   The gradient calculated by the orthogonal distance
-                   regression fitting.
-             * ``"mODR2"``
-                   The gradient calculated by the second iteration of
-                   orthogonal distance regression fitting.
-             * ``"xMin`"``
-                   The x minimum of the box used in the fit.
-             * ``"xMax"``
-                   The x maximum of the box used in the fit.
-             * ``"yMin"``
-                   The y minimum of the box used in the fit.
-             * ``"yMax"``
-                   The y maximum of the box used in the fit.
-             * ``"mPerp"``
-                   The gradient of the line perpendicular to the line from
-                   the second ODR fit.
-             * ``"bPerpMin"``
-                   The intercept of the perpendicular line that goes through
-                   xMin.
-             * ``"bPerpMax"``
-                   The intercept of the perpendicular line that goes through
-                   xMax.
+         * Parameters from the fitting code that are illustrated on the plot:
+            * ``"bHW"``
+                  The hardwired intercept to fall back on.
+            * ``"bODR"``
+                  The intercept calculated by the final orthogonal distance
+                  regression fitting.
+            * ``"mHW"``
+                  The hardwired gradient to fall back on.
+            * ``"mODR"``
+                  The gradient calculated by the final orthogonal distance
+                  regression fitting.
+            * ``"xMin`"``
+                  The x minimum of the box used in the fit.
+            * ``"xMax"``
+                  The x maximum of the box used in the fit.
+            * ``"yMin"``
+                  The y minimum of the box used in the fit.
+            * ``"yMax"``
+                  The y maximum of the box used in the fit.
+            * ``"mPerp"``
+                  The gradient of the line perpendicular to the line from
+                  the second ODR fit.
+            * ``"bPerpMin"``
+                  The intercept of the perpendicular line that goes through
+                  xMin.
+            * ``"bPerpMax"``
+                  The intercept of the perpendicular line that goes through
+                  xMax.
+            * ``"goodPoints"``
+                  The points that passed the initial set of cuts (typically
+                  in fluxType S/N, extendedness, magnitude, and isfinite).
+            * ``"fitPoints"``
+                  The points use in the final fit.
 
           * The main inputs to plot:
                 x, y, mag
 
-         Examples
-         --------
-         An example of the plot produced from this code is here:
+        Examples
+        --------
+        An example of the plot produced from this code is here:
 
-         .. image:: /_static/analysis_tools/stellarLocusExample.png
+        .. image:: /_static/analysis_tools/stellarLocusExample.png
 
-         For a detailed example of how to make a plot from the command line
-         please see the
-         :ref:`getting started guide<analysis-tools-getting-started>`.
+        For a detailed example of how to make a plot from the command line
+        please see the
+        :ref:`getting started guide<analysis-tools-getting-started>`.
         """
+        paramDict = data.pop("paramDict")
+        # Points to use for the fit.
+        fitPoints = data.pop("fitPoints")
+        # Points with finite values for x, y, and mag.
+        goodPoints = data.pop("goodPoints")
+        # Define new colormaps.
+        newBlues = mkColormap(["darkblue", "paleturquoise"])
+        newGrays = mkColormap(["lightslategray", "white"])
 
-        # Define a new colormap
-        newBlues = mkColormap(["paleturquoise", "midnightblue"])
-
-        # Make a figure with three panels
+        # Make a figure with three panels.
         fig = plt.figure(dpi=300)
         ax = fig.add_axes([0.12, 0.25, 0.43, 0.60])
         axContour = fig.add_axes([0.65, 0.11, 0.3, 0.31])
         axHist = fig.add_axes([0.65, 0.51, 0.3, 0.31])
 
-        # Check for nans/infs
-        goodPoints = np.isfinite(data["x"]) & np.isfinite(data["y"]) & np.isfinite(data["mag"])
-        xs = cast(Vector, data["x"])[goodPoints]
-        ys = cast(Vector, data["y"])[goodPoints]
-        mags = cast(Vector, data["mag"])[goodPoints]
-
-        # Points to use for the fit
-        # type ignore because Vector needs a prototype interface
-        fitPoints = np.where(
-            (xs > data["xMin"])  # type: ignore
-            & (xs < data["xMax"])  # type: ignore
-            & (ys > data["yMin"])  # type: ignore
-            & (ys < data["yMax"])  # type: ignore
-        )[0]
+        xs = cast(Vector, data["x"])
+        ys = cast(Vector, data["y"])
+        mags = cast(Vector, data["mag"])
 
         # TODO: Make a no data fig function and use here
         if len(fitPoints) < self.minPointsForFit:
@@ -249,15 +224,16 @@ class ColorColorFitPlot(PlotAction):
             fig = addPlotInfo(plt.gcf(), plotInfo)
             return fig
 
-        # Plot the initial fit box
-        ax.plot(
-            [data["xMin"], data["xMax"], data["xMax"], data["xMin"], data["xMin"]],
-            [data["yMin"], data["yMin"], data["yMax"], data["yMax"], data["yMin"]],
+        # Plot the initial fit box.
+        (initialBox,) = ax.plot(
+            [paramDict["xMin"], paramDict["xMax"], paramDict["xMax"], paramDict["xMin"], paramDict["xMin"]],
+            [paramDict["yMin"], paramDict["yMin"], paramDict["yMax"], paramDict["yMax"], paramDict["yMin"]],
             "k",
             alpha=0.3,
+            label="Initial Fit Limits",
         )
 
-        # Add some useful information to the plot
+        # Add some useful information to the plot.
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
         magsUsed = cast(Vector, mags[fitPoints])
         magsUsed.sort()
@@ -265,169 +241,217 @@ class ColorColorFitPlot(PlotAction):
         ptFrac = max(2, int(0.02*len(magsUsed)))
         maxMagUsedInFit = np.nanmean(magsUsed[-ptFrac:])
 
-        # TODO: GET THE SN FROM THE EARLIER PREP STEP
-        SN = "-"
-        infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(xs), SN)
-        infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(maxMagUsedInFit)
-        ax.text(0.05, 0.78, infoText, color="k", transform=ax.transAxes, fontsize=8, bbox=bbox)
+        snStr = "-"
+        for k, v in plotInfo.items():
+            if "S/N" in k:
+                snStr = "{}{:.1f}".format(k, v)
+                break
+        infoText = "N Total: {}\nN Used: {}\n{}\n".format(sum(goodPoints), sum(fitPoints), snStr)
+        infoText += r"Mag Used$\lesssim$ " + "{:0.2f}".format(maxMagUsedInFit)
+        ax.text(0.04, 0.97, infoText, color="k", transform=ax.transAxes, fontsize=7, bbox=bbox, va="top")
 
-        # Calculate the density of the points
-        xy = np.vstack([xs, ys]).T
-        kde = KernelDensity(kernel="gaussian").fit(xy)
-        z = np.exp(kde.score_samples(xy))
+        # Calculate the point density for the Used and NotUsed subsamples.
+        xyUsed = np.vstack([xs[fitPoints], ys[fitPoints]])
+        xyNotUsed = np.vstack([xs[~fitPoints & goodPoints], ys[~fitPoints & goodPoints]])
+        zUsed = scipy.stats.gaussian_kde(xyUsed)(xyUsed)
+        zNotUsed = scipy.stats.gaussian_kde(xyNotUsed)(xyNotUsed)
 
-        ax.scatter(xs[~fitPoints], ys[~fitPoints], c=z[~fitPoints], cmap="binary", s=0.3)
+        notUsedScatter = ax.scatter(
+            xs[~fitPoints & goodPoints], ys[~fitPoints & goodPoints], c=zNotUsed, cmap=newGrays, s=0.3
+        )
         fitScatter = ax.scatter(
-            xs[fitPoints], ys[fitPoints], c=z[fitPoints], cmap=newBlues, label="Used for Fit", s=0.3
+            xs[fitPoints], ys[fitPoints], c=zUsed, cmap=newBlues, s=0.3, label="Used for Fit"
         )
 
-        # Add colorbar
-        cbAx = fig.add_axes([0.12, 0.08, 0.43, 0.04])
+        # Add colorbars.
+        cbAx = fig.add_axes([0.12, 0.07, 0.43, 0.04])
         plt.colorbar(fitScatter, cax=cbAx, orientation="horizontal")
+        cbKwargs = {
+            "color": "k",
+            "rotation": "horizontal",
+            "ha": "center",
+            "va": "center",
+            "fontsize": 7,
+        }
         cbText = cbAx.text(
             0.5,
             0.5,
-            "Number Density",
-            color="k",
-            rotation="horizontal",
+            "Number Density (used in fit)",
             transform=cbAx.transAxes,
-            ha="center",
-            va="center",
-            fontsize=8,
+            **cbKwargs,
         )
-        cbText.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
-        cbAx.set_xticks([np.min(z[fitPoints]), np.max(z[fitPoints])], labels=["Less", "More"])
+        cbText.set_path_effects([pathEffects.Stroke(linewidth=1.5, foreground="w"), pathEffects.Normal()])
+        cbAx.set_xticks([np.min(zUsed), np.max(zUsed)], labels=["Less", "More"], fontsize=7)
+        cbAxNotUsed = fig.add_axes([0.12, 0.11, 0.43, 0.04])
+        plt.colorbar(notUsedScatter, cax=cbAxNotUsed, orientation="horizontal")
+        cbText = cbAxNotUsed.text(
+            0.5,
+            0.5,
+            "Number Density (not used in fit)",
+            transform=cbAxNotUsed.transAxes,
+            **cbKwargs,
+        )
+        cbText.set_path_effects([pathEffects.Stroke(linewidth=1.5, foreground="w"), pathEffects.Normal()])
+        cbAxNotUsed.set_xticks([])
 
-        ax.set_xlabel(self.xAxisLabel)
-        ax.set_ylabel(self.yAxisLabel)
+        ax.set_xlabel(self.xAxisLabel, fontsize=8)
+        ax.set_ylabel(self.yAxisLabel, fontsize=8)
+        ax.tick_params(labelsize=7)
 
         # Set useful axis limits
-        percsX = np.nanpercentile(xs, [0.5, 99.5])
-        percsY = np.nanpercentile(ys, [0.5, 99.5])
+        percsX = np.nanpercentile(xs[goodPoints], [0.5, 99.5])
+        percsY = np.nanpercentile(ys[goodPoints], [0.5, 99.5])
         x5 = (percsX[1] - percsX[0]) / 5
         y5 = (percsY[1] - percsY[0]) / 5
         ax.set_xlim(percsX[0] - x5, percsX[1] + x5)
         ax.set_ylim(percsY[0] - y5, percsY[1] + y5)
 
-        # Plot the fit lines
-        if np.fabs(data["mHW"]) > 1:
-            ysFitLineHW = np.array([data["yMin"], data["yMax"]])
-            xsFitLineHW = (ysFitLineHW - data["bHW"]) / data["mHW"]
-            ysFitLine = np.array([data["yMin"], data["yMax"]])
+        # Plot the fit lines.
+        if np.fabs(paramDict["mHW"]) > 1:
+            ysFitLineHW = np.array([paramDict["yMin"], paramDict["yMax"]])
+            xsFitLineHW = (ysFitLineHW - paramDict["bHW"]) / paramDict["mHW"]
+            ysFitLine = np.array([paramDict["yMin"], paramDict["yMax"]])
             xsFitLine = (ysFitLine - data["bODR"]) / data["mODR"]
-            ysFitLine2 = np.array([data["yMin"], data["yMax"]])
-            xsFitLine2 = (ysFitLine2 - data["bODR2"]) / data["mODR2"]
 
         else:
-            xsFitLineHW = np.array([data["xMin"], data["xMax"]])
-            ysFitLineHW = data["mHW"] * xsFitLineHW + data["bHW"]  # type: ignore
-            xsFitLine = np.array([data["xMin"], data["xMax"]])
+            xsFitLineHW = np.array([paramDict["xMin"], paramDict["xMax"]])
+            ysFitLineHW = paramDict["mHW"] * xsFitLineHW + paramDict["bHW"]  # type: ignore
+            xsFitLine = np.array([paramDict["xMin"], paramDict["xMax"]])
             ysFitLine = np.array(
                 [
                     data["mODR"] * xsFitLine[0] + data["bODR"],
                     data["mODR"] * xsFitLine[1] + data["bODR"],
                 ]
             )
-            xsFitLine2 = np.array([data["xMin"], data["xMax"]])
-            ysFitLine2 = np.array(
-                [
-                    data["mODR2"] * xsFitLine2[0] + data["bODR2"],
-                    data["mODR2"] * xsFitLine2[1] + data["bODR2"],
-                ]
-            )
 
-        ax.plot(xsFitLineHW, ysFitLineHW, "w", lw=2)
-        (lineHW,) = ax.plot(xsFitLineHW, ysFitLineHW, "g", lw=1, ls="--", label="Hardwired")
+        ax.plot(xsFitLineHW, ysFitLineHW, "w", lw=1.5)
+        (lineHW,) = ax.plot(xsFitLineHW, ysFitLineHW, "tab:green", lw=1, ls="--", label="Hardwired Fit")
+        ax.plot(xsFitLine, ysFitLine, "w", lw=1.5)
+        (lineOdrFit,) = ax.plot(xsFitLine, ysFitLine, "k", lw=1, ls="--", label="ODR Fit")
+        ax.legend(handles=[initialBox, lineHW, lineOdrFit], fontsize=6, loc="lower right")
 
-        ax.plot(xsFitLine, ysFitLine, "w", lw=2)
-        (lineInit,) = ax.plot(xsFitLine, ysFitLine, "b", lw=1, ls="--", label="Initial")
-
-        ax.plot(xsFitLine2, ysFitLine2, "w", lw=2)
-        (lineRefit,) = ax.plot(xsFitLine2, ysFitLine2, "k", lw=1, ls="--", label="Refit")
-
-        # Calculate the distances to that line
-        # Need two points to characterise the lines we want
-        # to get the distances to
+        # Calculate the distances (in mmag) to the line for the data used in
+        # the fit. Two points are needed to characterize the lines we want
+        # to get the distances to.
         p1 = np.array([xsFitLine[0], ysFitLine[0]])
         p2 = np.array([xsFitLine[1], ysFitLine[1]])
 
-        p1HW = np.array([xsFitLine[0], ysFitLineHW[0]])
-        p2HW = np.array([xsFitLine[1], ysFitLineHW[1]])
+        p1HW = np.array([xsFitLineHW[0], ysFitLineHW[0]])
+        p2HW = np.array([xsFitLineHW[1], ysFitLineHW[1]])
 
-        # Convert to millimags
+        # Convert to millimags.
+        statsUnitStr = "mmag"
         distsHW = np.array(perpDistance(p1HW, p2HW, zip(xs[fitPoints], ys[fitPoints]))) * 1000
         dists = np.array(perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))) * 1000
-
-        # Now we have the information for the perpendicular line we
-        # can use it to calculate the points at the ends of the
-        # perpendicular lines that intersect at the box edges
-        if np.fabs(data["mHW"]) > 1:
-            xMid = (data["yMin"] - data["bODR2"]) / data["mODR2"]
-            xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
-            ys = data["mPerp"] * xs + data["bPerpMin"]
+        maxDist = np.abs(np.nanmax(dists)) / 1000  # These will be used to set the fit boundary line limits.
+        minDist = np.abs(np.nanmin(dists)) / 1000
+        # Now we have the information for the perpendicular line we can use it
+        # to calculate the points at the ends of the perpendicular lines that
+        # intersect at the box edges.
+        if np.fabs(paramDict["mHW"]) > 1:
+            xMid = (paramDict["yMin"] - data["bODR"]) / data["mODR"]
+            xsFit = np.array([xMid - max(0.2, maxDist), xMid, xMid + max(0.2, minDist)])
+            ysFit = data["mPerp"] * xsFit + data["bPerpMin"]
         else:
-            xs = np.array([data["xMin"] - 0.2, data["xMin"], data["xMin"] + 0.2])
-            ys = xs * data["mPerp"] + data["bPerpMin"]
-        ax.plot(xs, ys, "k--", alpha=0.7)
+            xsFit = np.array(
+                [
+                    paramDict["xMin"] - max(0.2, np.fabs(paramDict["mHW"]) * maxDist),
+                    paramDict["xMin"],
+                    paramDict["xMin"] + max(0.2, np.fabs(paramDict["mHW"]) * minDist),
+                ]
+            )
+            ysFit = xsFit * data["mPerp"] + data["bPerpMin"]
+        ax.plot(xsFit, ysFit, "k--", alpha=0.7, lw=1)
 
-        if np.fabs(data["mHW"]) > 1:
-            xMid = (data["yMax"] - data["bODR2"]) / data["mODR2"]
-            xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
-            ys = data["mPerp"] * xs + data["bPerpMax"]
+        if np.fabs(paramDict["mHW"]) > 1:
+            xMid = (paramDict["yMax"] - data["bODR"]) / data["mODR"]
+            xsFit = np.array([xMid - max(0.2, maxDist), xMid, xMid + max(0.2, minDist)])
+            ysFit = data["mPerp"] * xsFit + data["bPerpMax"]
         else:
-            xs = np.array([data["xMax"] - 0.2, data["xMax"], data["xMax"] + 0.2])
-            ys = xs * data["mPerp"] + data["bPerpMax"]
-        ax.plot(xs, ys, "k--", alpha=0.7)
+            xsFit = np.array(
+                [
+                    paramDict["xMax"] - max(0.2, np.fabs(paramDict["mHW"]) * maxDist),
+                    paramDict["xMax"],
+                    paramDict["xMax"] + max(0.2, np.fabs(paramDict["mHW"]) * minDist),
+                ]
+            )
+            ysFit = xsFit * data["mPerp"] + data["bPerpMax"]
+        ax.plot(xsFit, ysFit, "k--", alpha=0.7, lw=1)
 
-        # Add a histogram
-        axHist.set_ylabel("Number")
-        axHist.set_xlabel("Distance to Line Fit")
+        # Compute statistics for fit.
         medDists = nanMedian(dists)
         madDists = nanSigmaMad(dists)
         meanDists = nanMean(dists)
+        rmsDists = np.sqrt(np.mean(np.array(dists) ** 2))
 
-        axHist.set_xlim(meanDists - 2.0 * madDists, meanDists + 2.0 * madDists)
-        lineMedian = axHist.axvline(medDists, color="k", label="Median: {:0.3f}".format(medDists))
-        lineMad = axHist.axvline(
-            medDists + madDists, color="k", ls="--", label="sigma MAD: {:0.3f}".format(madDists)
+        xMid = paramDict["xMin"] + 0.5 * (paramDict["xMax"] - paramDict["xMin"])
+        # Add a histogram.
+        axHist.set_ylabel("Number", fontsize=7)
+        axHist.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
+        axHist.tick_params(labelsize=7)
+        nSigToPlot = 3.5
+        axHist.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
+        lineMedian = axHist.axvline(
+            medDists, color="k", lw=1, alpha=0.5, label="Median: {:0.2f} {}".format(medDists, statsUnitStr)
         )
-        axHist.axvline(medDists - madDists, color="k", ls="--")
+        lineMad = axHist.axvline(
+            medDists + madDists,
+            color="k",
+            ls="--",
+            lw=1,
+            alpha=0.5,
+            label=r"$\sigma_{MAD}$" + ": {:0.2f} {}".format(madDists, statsUnitStr),
+        )
+        axHist.axvline(medDists - madDists, color="k", ls="--", lw=1, alpha=0.5)
+        lineRms = axHist.axvline(
+            meanDists + rmsDists,
+            color="k",
+            ls=":",
+            lw=1,
+            alpha=0.3,
+            label="RMS: {:0.2f} {}".format(rmsDists, statsUnitStr),
+        )
+        axHist.axvline(meanDists - rmsDists, color="k", ls=":", lw=1, alpha=0.3)
 
-        linesForLegend = [lineHW, lineInit, lineRefit, fitScatter, lineMedian, lineMad]
+        linesForLegend = [lineMedian, lineMad, lineRms]
         fig.legend(
             handles=linesForLegend,
-            fontsize=8,
-            bbox_to_anchor=(1.0, 0.99),
+            handlelength=1.0,
+            fontsize=6,
+            loc="lower right",
+            bbox_to_anchor=(0.96, 0.84),
             bbox_transform=fig.transFigure,
             ncol=2,
         )
 
-        axHist.hist(dists, bins=100, histtype="step", label="Refit", color="C0")
-        axHist.hist(distsHW, bins=100, histtype="step", label="HW", color="C0", alpha=0.5)
+        axHist.hist(dists, bins=100, histtype="stepfilled", label="ODR Fit", color="k", ec="k", alpha=0.3)
+        axHist.hist(distsHW, bins=100, histtype="step", label="HW", color="tab:green", alpha=1.0)
 
-        alphas = [1.0, 0.5]
-        handles = [Rectangle((0, 0), 1, 1, color="none", ec="C0", alpha=a) for a in alphas]
-        labels = ["Refit", "HW"]
-        axHist.legend(handles, labels, fontsize=6, loc="upper right")
+        handles = [Rectangle((0, 0), 1, 1, color="k", alpha=0.4)]
+        handles.append(Rectangle((0, 0), 1, 1, color="none", ec="tab:green", alpha=1.0))
+        labels = ["ODR Fit", "HW"]
+        axHist.legend(handles, labels, fontsize=5, loc="upper right")
 
-        # Add a contour plot showing the magnitude dependance
-        # of the distance to the fit
+        # Add a contour plot showing the magnitude dependance of the distance
+        # to the fit.
         axContour.invert_yaxis()
         axContour.axvline(0.0, color="k", ls="--", zorder=-1)
         percsDists = np.nanpercentile(dists, [4, 96])
         minXs = -1 * np.min(np.fabs(percsDists))
         maxXs = np.min(np.fabs(percsDists))
         plotPoints = (dists < maxXs) & (dists > minXs)
-        xs = np.array(dists)[plotPoints]
-        ys = cast(Vector, cast(Vector, mags)[cast(Vector, fitPoints)])[cast(Vector, plotPoints)]
-        H, xEdges, yEdges = np.histogram2d(xs, ys, bins=(11, 11))
+        xsContour = np.array(dists)[plotPoints]
+        ysContour = cast(Vector, cast(Vector, mags)[cast(Vector, fitPoints)])[cast(Vector, plotPoints)]
+        H, xEdges, yEdges = np.histogram2d(xsContour, ysContour, bins=(11, 11))
         xBinWidth = xEdges[1] - xEdges[0]
         yBinWidth = yEdges[1] - yEdges[0]
         axContour.contour(
             xEdges[:-1] + xBinWidth / 2, yEdges[:-1] + yBinWidth / 2, H.T, levels=7, cmap=newBlues
         )
-        axContour.set_xlabel("Distance to Line Fit")
-        axContour.set_ylabel(self.magLabel)
+        axContour.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=8)
+        axContour.set_ylabel(self.magLabel, fontsize=8)
+        axContour.set_xlim(meanDists - nSigToPlot*madDists, meanDists + nSigToPlot*madDists)
+        axContour.tick_params(labelsize=8)
 
         fig = addPlotInfo(plt.gcf(), plotInfo)
 

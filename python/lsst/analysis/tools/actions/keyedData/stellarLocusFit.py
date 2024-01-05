@@ -28,6 +28,7 @@ from typing import cast
 import numpy as np
 import scipy.odr as scipyODR
 from lsst.pex.config import DictField
+from lsst.pipe.base import Struct
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, Vector
 from ...math import sigmaMad
@@ -59,6 +60,13 @@ def stellarLocusFit(xs, ys, mags, paramDict):
             The hardwired gradient for the fit (`float`).
         ``"bHw"``
             The hardwired intercept of the fit (`float`).
+        ``"nSigmaToClip1"``
+            The number of sigma perpendicular to the fit to clip in the initial
+            fitting loop (`float`). This should probably be stricter than the
+            final iteration (i.e. nSigmaToClip1 < nSigmaToClip2).
+        ``"nSigmaToClip2"``
+            The number of sigma perpendicular to the fit to clip in the final
+            fitting loop (`float`).
 
     Returns
     -------
@@ -91,7 +99,8 @@ def stellarLocusFit(xs, ys, mags, paramDict):
     done a perpendicular bisector is calculated at either end of the line and
     only points that fall within these lines are used to recalculate the fit.
     We also perform clipping of points perpendicular to the fit line that have
-    distances that deviate more than 5-sigma from the fit.
+    distances that deviate more than nSigmaToClip1/2 (for an initial and final
+    iteration) from the fit.
     """
     fitParams = {}
     # Initial subselection of points to use for the fit
@@ -112,26 +121,47 @@ def stellarLocusFit(xs, ys, mags, paramDict):
     params = odr.run()
     mODR0 = float(params.beta[1])
     bODR0 = float(params.beta[0])
-
-    # Having found the initial fit calculate perpendicular ends
     mPerp0 = -1.0 / mODR0
 
-    # When the gradient is really steep we need to use
-    # the y limits of the fit line rather than the x ones.
+    # Loop twice over the fit and include sigma clipping of points
+    # perpendicular to the fit line (stricter on first iteration).
+    for nSigmaToClip in [paramDict["nSigmaToClip1"], paramDict["nSigmaToClip2"]]:
+        # Having found the initial fit calculate perpendicular ends.
+        # When the gradient is really steep we need to use the
+        # y limits of the fit line rather than the x ones.
+        if np.abs(mODR0) > 1:
+            yPerpMin = paramDict["yMin"]
+            xPerpMin = (yPerpMin - bODR0) / mODR0
+            yPerpMax = paramDict["yMax"]
+            xPerpMax = (yPerpMax - bODR0) / mODR0
+        else:
+            yPerpMin = mODR0 * paramDict["xMin"] + bODR0
+            xPerpMin = paramDict["xMin"]
+            yPerpMax = mODR0 * paramDict["xMax"] + bODR0
+            xPerpMax = paramDict["xMax"]
 
-    if np.abs(mODR0) > 1:
-        yPerpMin = paramDict["yMin"]
-        xPerpMin = (yPerpMin - bODR0) / mODR0
-        yPerpMax = paramDict["yMax"]
-        xPerpMax = (yPerpMax - bODR0) / mODR0
-    else:
-        yPerpMin = mODR0 * paramDict["xMin"] + bODR0
-        xPerpMin = paramDict["xMin"]
-        yPerpMax = mODR0 * paramDict["xMax"] + bODR0
-        xPerpMax = paramDict["xMax"]
+        bPerpMin = yPerpMin - mPerp0 * xPerpMin
+        bPerpMax = yPerpMax - mPerp0 * xPerpMax
 
-    bPerpMin = yPerpMin - mPerp0 * xPerpMin
-    bPerpMax = yPerpMax - mPerp0 * xPerpMax
+        # Use these perpendicular lines to choose the data and refit.
+        fitPoints = (ys > mPerp0 * xs + bPerpMin) & (ys < mPerp0 * xs + bPerpMax)
+        p1 = np.array([0, bODR0])
+        p2 = np.array([-bODR0 / mODR0, 0])
+        if np.abs(sum(p1 - p2) < 1e12):
+            p2 = np.array([(1.0 - bODR0 / mODR0), 1.0])
+
+        # Sigma clip points based on perpendicular distance (in mmag) to
+        # current fit.
+        fitDists = np.array(perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))) * 1000
+        clippedStats = calcQuartileClippedStats(fitDists, nSigmaToClip=nSigmaToClip)
+        allDists = np.array(perpDistance(p1, p2, zip(xs, ys))) * 1000
+        keep = np.abs(allDists) <= clippedStats.clipValue
+        fitPoints &= keep
+        fitData = scipyODR.Data(xs[fitPoints], ys[fitPoints])
+        odr = scipyODR.ODR(fitData, linear, beta0=[bODR0, mODR0])
+        params = odr.run()
+        mODR0 = params.beta[1]
+        bODR0 = params.beta[0]
 
     fitParams["bPerpMin"] = bPerpMin
     fitParams["bPerpMax"] = bPerpMax
@@ -175,15 +205,89 @@ def perpDistance(p1, p2, points):
     return dists
 
 
+def calcQuartileClippedStats(dataArray, nSigmaToClip=3.0):
+    """Calculate the quartile-based clipped statistics of a data array.
+
+    The difference between quartiles[2] and quartiles[0] is the interquartile
+    distance.  0.74*interquartileDistance is an estimate of standard deviation
+    so, in the case that ``dataArray`` has an approximately Gaussian
+    distribution, this is equivalent to nSigma clipping.
+
+    Parameters
+    ----------
+    dataArray : `list` or `numpy.ndarray` [`float`]
+        List or array containing the values for which the quartile-based
+        clipped statistics are to be calculated.
+    nSigmaToClip : `float`, optional
+        Number of \"sigma\" outside of which to clip data when computing the
+        statistics.
+
+    Returns
+    -------
+    result : `lsst.pipe.base.Struct`
+        The quartile-based clipped statistics with ``nSigmaToClip`` clipping.
+        Atributes are:
+
+        ``median``
+            The median of the full ``dataArray`` (`float`).
+        ``mean``
+            The quartile-based clipped mean (`float`).
+        ``stdDev``
+            The quartile-based clipped standard deviation (`float`).
+        ``rms``
+            The quartile-based clipped root-mean-squared (`float`).
+        ``clipValue``
+            The value outside of which to clip the data before computing the
+            statistics (`float`).
+        ``goodArray``
+            A boolean array indicating which data points in ``dataArray`` were
+            used in the calculation of the statistics, where `False` indicates
+            a clipped datapoint (`numpy.ndarray` of `bool`).
+    """
+    quartiles = np.percentile(dataArray, [25, 50, 75])
+    assert len(quartiles) == 3
+    median = quartiles[1]
+    interQuartileDistance = quartiles[2] - quartiles[0]
+    clipValue = nSigmaToClip * 0.74 * interQuartileDistance
+    good = np.abs(dataArray - median) <= clipValue
+    quartileClippedMean = dataArray[good].mean()
+    quartileClippedStdDev = dataArray[good].std()
+    quartileClippedRms = np.sqrt(np.mean(dataArray[good] ** 2))
+
+    return Struct(
+        median=median,
+        mean=quartileClippedMean,
+        stdDev=quartileClippedStdDev,
+        rms=quartileClippedRms,
+        clipValue=clipValue,
+        goodArray=good,
+    )
+
+
 class StellarLocusFitAction(KeyedDataAction):
     r"""Determine Stellar Locus fit parameters from given input `Vector`\ s."""
 
     stellarLocusFitDict = DictField[str, float](
-        doc="The parameters to use for the stellar locus fit. The default parameters are examples and are "
-        "not useful for any of the fits. The dict needs to contain xMin/xMax/yMin/yMax which are the "
-        "limits of the initial box for fitting the stellar locus, mHW and bHW are the initial "
-        "intercept and gradient for the fitting.",
-        default={"xMin": 0.1, "xMax": 0.2, "yMin": 0.1, "yMax": 0.2, "mHW": 0.5, "bHW": 0.0},
+        doc="The parameters to use for the stellar locus fit. For xMin/Max, yMin/Max, "
+        "and m/bFixed, the default parameters are examples and are not generally useful "
+        "for any of the fits, so should be updated in the PlotAction definition in the "
+        "atools directory. The dict needs to contain xMin/xMax/yMin/yMax which are the "
+        "limits of the initial point selection box for fitting the stellar locus, mFixed "
+        "and bFixed are meant to represent the intercept and gradient of a canonical fit "
+        "for a given dataset (and should be derived from data).  They are used here as an "
+        "initial guess for the fitting. nSigmaToClip1/2 set the number of sigma to clip "
+        "perpendicular the fit in the first and second fit iterations after the initial "
+        "guess and point selection fit.",
+        default={
+            "xMin": 0.1,
+            "xMax": 0.2,
+            "yMin": 0.1,
+            "yMax": 0.2,
+            "mHW": 0.5,
+            "bHW": 0.0,
+            "nSigmaToClip1": 3.5,
+            "nSigmaToClip2": 5.0,
+        },
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

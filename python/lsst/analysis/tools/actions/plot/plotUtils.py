@@ -301,8 +301,15 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     for band in plotInfo["bands"]:
         bandText += band + ", "
     bandsText = f", Bands: {bandText[:-2]}"
-    SNText = f", S/N: {plotInfo.get('SN', 'N/A')}"
-    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}{SNText}"
+    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+
+    snKey = None
+    for key, value in plotInfo.items():
+        if "SN" in key or "S/N" in key:
+            snKey = key
+            break
+    if snKey is not None:
+        infoText += f", {snKey}{plotInfo.get(snKey)}"
     fig.text(0.01, 0.98, infoText, fontsize=7, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
 
     return fig

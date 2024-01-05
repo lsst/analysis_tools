@@ -259,12 +259,16 @@ class ColorColorFitPlot(PlotAction):
 
         # Add some useful information to the plot
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-        medMag = nanMedian(cast(Vector, mags))
+        magsUsed = cast(Vector, mags[fitPoints])
+        magsUsed.sort()
+        # Use faintest 2% of values to compute the approximate faint mag limit
+        ptFrac = max(2, int(0.02*len(magsUsed)))
+        maxMagUsedInFit = np.nanmean(magsUsed[-ptFrac:])
 
         # TODO: GET THE SN FROM THE EARLIER PREP STEP
         SN = "-"
         infoText = "N Used: {}\nN Total: {}\nS/N cut: {}\n".format(len(fitPoints), len(xs), SN)
-        infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(medMag)
+        infoText += r"Mag $\lesssim$: " + "{:0.2f}".format(maxMagUsedInFit)
         ax.text(0.05, 0.78, infoText, color="k", transform=ax.transAxes, fontsize=8, bbox=bbox)
 
         # Calculate the density of the points

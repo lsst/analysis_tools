@@ -406,8 +406,6 @@ class AnalysisPipelineTask(PipelineTask):
         if "plotInfo" not in kwargs:
             kwargs["plotInfo"] = _StandinPlotInfo()
         kwargs["plotInfo"]["bands"] = kwargs["bands"]
-        if "SN" not in kwargs["plotInfo"].keys():
-            kwargs["plotInfo"]["SN"] = "-"
         return self._runTools(data, **kwargs)
 
     def runQuantum(

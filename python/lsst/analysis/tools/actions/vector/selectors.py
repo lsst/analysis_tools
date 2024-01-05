@@ -55,9 +55,14 @@ class SelectorBase(VectorAction):
         doc="Key to use when populating plot info, ignored if empty string", optional=True, default=""
     )
 
-    def _addValueToPlotInfo(self, value, **kwargs):
-        if "plotInfo" in kwargs and self.plotLabelKey:
-            kwargs["plotInfo"][self.plotLabelKey] = value
+    def _addValueToPlotInfo(self, value, plotLabelKey=None, **kwargs):
+        if "plotInfo" in kwargs:
+            if plotLabelKey is not None:
+                kwargs["plotInfo"][plotLabelKey] = value
+            elif self.plotLabelKey:
+                kwargs["plotInfo"][self.plotLabelKey] = value
+            else:
+                raise RuntimeError(f"No plotLabelKey provided for value {value}, so can't add to plotInfo")
 
 
 class FlagSelector(VectorAction):
@@ -282,8 +287,6 @@ class SnSelector(SelectorBase):
             A mask of the objects that satisfy the given
             S/N cut.
         """
-
-        self._addValueToPlotInfo(self.threshold, **kwargs)
         mask: Optional[Vector] = None
         bands: tuple[str, ...]
         match kwargs:
@@ -295,6 +298,7 @@ class SnSelector(SelectorBase):
                 bands = tuple(self.bands)
             case _:
                 bands = ("",)
+        bandStr = ",".join(bands)
         for band in bands:
             fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
             fluxInd = fluxCol.find("lux") + len("lux")
@@ -307,6 +311,15 @@ class SnSelector(SelectorBase):
                 mask &= temp  # type: ignore
             else:
                 mask = temp
+
+        plotLabelStr = "({}) > {:.1f}".format(bandStr, self.threshold)
+        if self.maxSN < 1e5:
+            plotLabelStr += " & < {:.1f}".format(self.maxSN)
+
+        if self.plotLabelKey == "" or self.plotLabelKey is None:
+            self._addValueToPlotInfo(plotLabelStr, plotLabelKey="S/N", **kwargs)
+        else:
+            self._addValueToPlotInfo(plotLabelStr, **kwargs)
 
         # It should not be possible for mask to be a None now
         return np.array(cast(Vector, mask))

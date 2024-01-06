@@ -54,7 +54,9 @@ class StellarLocusBase(AnalysisTool):
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.threshold = 300
 
-        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector1 = StarSelector()
+        self.prep.selectors.starSelector2 = StarSelector()
+        self.prep.selectors.starSelector3 = StarSelector()
 
         self.process.buildActions.x = ExtinctionCorrectedMagDiff()
         self.process.buildActions.x.magDiff.returnMillimags = False
@@ -67,19 +69,23 @@ class WPerpPSF(StellarLocusBase):
 
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
+        colorBands = ["g", "r", "i"]
+        fluxType = "psfFlux"
+        self.prep.selectors.flagSelector.bands = colorBands
         self.prep.selectors.snSelector.bands = ["r"]
-        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_" + fluxType
 
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
+        self.prep.selectors.starSelector1.vectorKey = colorBands[0] + "_extendedness"
+        self.prep.selectors.starSelector2.vectorKey = colorBands[1] + "_extendedness"
+        self.prep.selectors.starSelector3.vectorKey = colorBands[2] + "_extendedness"
 
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
+        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_psfFlux"
+        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_psfFlux"
 
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
+        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_psfFlux"
+        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_psfFlux"
 
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_psfFlux")
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_psfFlux")
 
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {

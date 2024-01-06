@@ -79,6 +79,12 @@ class ColorColorFitPlot(PlotAction):
         optional=True,
     )
 
+    doPlotRedBlueHists = Field[bool](
+        doc="Plot distance from fit histograms separated into blue and red star subsamples?",
+        default=False,
+        optional=True,
+    )
+
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base: list[tuple[str, type[Vector] | type[Scalar]]] = []
         base.append(("x", Vector))
@@ -407,6 +413,22 @@ class ColorColorFitPlot(PlotAction):
         rmsDists = np.sqrt(np.mean(np.array(dists) ** 2))
 
         xMid = paramDict["xMin"] + 0.5 * (paramDict["xMax"] - paramDict["xMin"])
+        if self.doPlotRedBlueHists:
+            blueStars = (xs[fitPoints] < xMid) & (xs[fitPoints] >= paramDict["xMin"])
+            blueDists = dists[blueStars]
+            blueMedDists = nanMedian(blueDists)
+            redStars = (xs[fitPoints] >= xMid) & (xs[fitPoints] <= paramDict["xMax"])
+            redDists = dists[redStars]
+            redMedDists = nanMedian(redDists)
+
+        if self.doPlotRedBlueHists:
+            blueStars = (xs[fitPoints] < xMid) & (xs[fitPoints] >= paramDict["xMin"])
+            blueDists = dists[blueStars]
+            blueMedDists = nanMedian(blueDists)
+            redStars = (xs[fitPoints] >= xMid) & (xs[fitPoints] <= paramDict["xMax"])
+            redDists = dists[redStars]
+            redMedDists = nanMedian(redDists)
+
         # Add a histogram.
         axHist.set_ylabel("Number", fontsize=7)
         axHist.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
@@ -434,8 +456,26 @@ class ColorColorFitPlot(PlotAction):
             label="RMS: {:0.2f} {}".format(rmsDists, statsUnitStr),
         )
         axHist.axvline(meanDists - rmsDists, color="k", ls=":", lw=1, alpha=0.3)
-
-        linesForLegend = [lineMedian, lineMad, lineRms]
+        if self.doPlotRedBlueHists:
+            lineBlueMedian = axHist.axvline(
+                blueMedDists,
+                color="blue",
+                ls=":",
+                lw=1.0,
+                alpha=0.5,
+                label="blueMed: {:0.2f}".format(blueMedDists),
+            )
+            lineRedMedian = axHist.axvline(
+                redMedDists,
+                color="red",
+                ls=":",
+                lw=1.0,
+                alpha=0.5,
+                label="redMed: {:0.2f}".format(redMedDists),
+            )
+            linesForLegend = [lineMedian, lineMad, lineRms, lineBlueMedian, lineRedMedian]
+        else:
+            linesForLegend = [lineMedian, lineMad, lineRms]
         fig.legend(
             handles=linesForLegend,
             handlelength=1.0,
@@ -448,10 +488,17 @@ class ColorColorFitPlot(PlotAction):
 
         axHist.hist(dists, bins=100, histtype="stepfilled", label="ODR Fit", color="k", ec="k", alpha=0.3)
         axHist.hist(distsHW, bins=100, histtype="step", label="HW", color="tab:green", alpha=1.0)
+        if self.doPlotRedBlueHists:
+            axHist.hist(blueDists, bins=100, histtype="stepfilled", color="blue", ec="blue", alpha=0.3)
+            axHist.hist(redDists, bins=100, histtype="stepfilled", color="red", ec="red", alpha=0.3)
 
         handles = [Rectangle((0, 0), 1, 1, color="k", alpha=0.4)]
         handles.append(Rectangle((0, 0), 1, 1, color="none", ec="tab:green", alpha=1.0))
         labels = ["ODR Fit", "HW"]
+        if self.doPlotRedBlueHists:
+            handles.append(Rectangle((0, 0), 1, 1, color="blue", alpha=0.3))
+            handles.append(Rectangle((0, 0), 1, 1, color="red", alpha=0.3))
+            labels = ["ODR Fit", "Blue Stars", "Red Stars", "HW"]
         axHist.legend(handles, labels, fontsize=5, loc="upper right")
 
         # Add a contour plot showing the magnitude dependance of the distance

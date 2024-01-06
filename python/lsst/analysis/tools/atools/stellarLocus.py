@@ -99,8 +99,10 @@ class WPerpPSF(StellarLocusBase):
             "xMax": 1.0,
             "yMin": 0.02,
             "yMax": 0.48,
-            "mHW": 0.52,
-            "bHW": -0.08,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 0.483,
+            "bHW": -0.042,
         }
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
@@ -137,8 +139,10 @@ class WPerpCModel(WPerpPSF):
             "xMax": 1.0,
             "yMin": 0.02,
             "yMax": 0.48,
-            "mHW": 0.52,
-            "bHW": -0.08,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 0.483,
+            "bHW": -0.042,
         }
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
@@ -178,8 +182,10 @@ class XPerpPSF(StellarLocusBase):
             "xMax": 1.55,
             "yMin": 0.78,
             "yMax": 1.62,
-            "mHW": 13.35,
-            "bHW": -15.54,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 60.0,
+            "bHW": -75.0,
         }
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
@@ -212,8 +218,10 @@ class XPerpCModel(XPerpPSF):
             "xMax": 1.55,
             "yMin": 0.78,
             "yMax": 1.62,
-            "mHW": 13.35,
-            "bHW": -15.54,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 60.0,
+            "bHW": -75.0,
         }
 
         self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_cModelFlux")
@@ -253,8 +261,10 @@ class YPerpPSF(StellarLocusBase):
             "xMax": 2.01,
             "yMin": 0.37,
             "yMax": 0.90,
-            "mHW": 0.40,
-            "bHW": 0.03,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 0.385,
+            "bHW": 0.064,
         }
 
         self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
@@ -290,8 +300,10 @@ class YPerpCModel(YPerpPSF):
             "xMax": 2.01,
             "yMin": 0.37,
             "yMax": 0.90,
-            "mHW": 0.40,
-            "bHW": 0.03,
+            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # processing (DM-42194). See commit message for further details.
+            "mHW": 0.385,
+            "bHW": 0.064,
         }
 
         self.produce.metric.units = {  # type: ignore

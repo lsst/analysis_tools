@@ -100,6 +100,8 @@ class WPerpPSF(StellarLocusBase):
         self.produce.plot = ColorColorFitPlot()
         self.produce.plot.xAxisLabel = "g - r (PSF) [mags]"
         self.produce.plot.yAxisLabel = "r - i (PSF) [mags]"
+        self.produce.plot.xLims = (-0.7, 1.99)
+        self.produce.plot.yLims = (-0.7, 2.49)
         self.produce.plot.magLabel = "PSF Mag"
         self.produce.plot.plotName = "wPerp_psfFlux"
 

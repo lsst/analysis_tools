@@ -63,6 +63,22 @@ class ColorColorFitPlot(PlotAction):
         min=1,
     )
 
+    xLims = ListField[float](
+        doc="Minimum and maximum x-axis limit to force (provided as a list of [xMin, xMax]). "
+        "If `None`, limits will be computed and set based on the data.",
+        dtype=float,
+        default=None,
+        optional=True,
+    )
+
+    yLims = ListField[float](
+        doc="Minimum and maximum y-axis limit to force (provided as a list of [yMin, yMax]). "
+        "If `None`, limits will be computed and set based on the data.",
+        dtype=float,
+        default=None,
+        optional=True,
+    )
+
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base: list[tuple[str, type[Vector] | type[Scalar]]] = []
         base.append(("x", Vector))
@@ -298,13 +314,19 @@ class ColorColorFitPlot(PlotAction):
         ax.set_ylabel(self.yAxisLabel, fontsize=8)
         ax.tick_params(labelsize=7)
 
-        # Set useful axis limits
-        percsX = np.nanpercentile(xs[goodPoints], [0.5, 99.5])
-        percsY = np.nanpercentile(ys[goodPoints], [0.5, 99.5])
-        x5 = (percsX[1] - percsX[0]) / 5
-        y5 = (percsY[1] - percsY[0]) / 5
-        ax.set_xlim(percsX[0] - x5, percsX[1] + x5)
-        ax.set_ylim(percsY[0] - y5, percsY[1] + y5)
+        # Set axis limits from configs if set, otherwise based on the data.
+        if self.xLims is not None:
+            ax.set_xlim(self.xLims[0], self.xLims[1])
+        else:
+            percsX = np.nanpercentile(xs[goodPoints], [0.5, 99.5])
+            x5 = (percsX[1] - percsX[0]) / 5
+            ax.set_xlim(percsX[0] - x5, percsX[1] + x5)
+        if self.yLims is not None:
+            ax.set_ylim(self.yLims[0], self.yLims[1])
+        else:
+            percsY = np.nanpercentile(ys[goodPoints], [0.5, 99.5])
+            y5 = (percsY[1] - percsY[0]) / 5
+            ax.set_ylim(percsY[0] - y5, percsY[1] + y5)
 
         # Plot the fit lines.
         if np.fabs(paramDict["mHW"]) > 1:

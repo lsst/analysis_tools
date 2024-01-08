@@ -32,6 +32,7 @@ __all__ = (
     "PerGroupStatistic",
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
+    "AngularSeparation",
 )
 
 import logging
@@ -40,6 +41,7 @@ from typing import Optional, cast
 import numpy as np
 import pandas as pd
 from astropy import units as u
+from astropy.coordinates import SkyCoord
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
@@ -281,6 +283,33 @@ class RAcosDec(VectorAction):
         ra = np.array(data[self.raKey])
         dec = np.array(data[self.decKey])
         return ra * np.cos((dec * u.degree).to(u.radian).value)
+
+
+class AngularSeparation(VectorAction):
+    """Calculate the angular separation between two coordinate positions."""
+
+    raKey_A = Field[str](doc="RA coordinate for position A", default="coord_ra")
+    decKey_A = Field[str](doc="Dec coordinate for position A", default="coord_dec")
+    raKey_B = Field[str](doc="RA coordinate for position B", default="coord_ra")
+    decKey_B = Field[str](doc="Dec coordinate for position B", default="coord_dec")
+    outputUnit = Field[str](doc="Output astropy unit", default="milliarcsecond")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.decKey_A, Vector),
+            (self.raKey_A, Vector),
+            (self.decKey_B, Vector),
+            (self.raKey_B, Vector),
+        )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        ra_A = np.array(data[self.raKey_A])
+        dec_A = np.array(data[self.decKey_A])
+        ra_B = np.array(data[self.raKey_B])
+        dec_B = np.array(data[self.decKey_B])
+        coord_A = SkyCoord(ra_A * u.degree, dec_A * u.degree)
+        coord_B = SkyCoord(ra_B * u.degree, dec_B * u.degree)
+        return coord_A.separation(coord_B).to(u.Unit(self.outputUnit)).value
 
 
 # Statistical vectorActions

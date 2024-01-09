@@ -21,27 +21,17 @@
 from __future__ import annotations
 
 __all__ = (
-    "NumDiaSourcesAllMetric",
     "NumDiaSourcesMetric",
     "NumDipolesMetric",
+    "NumDiaSourcesSelectionMetric",
+    "DiaSourcesGoodVsBadRatioMetric",
 )
 
-from ..actions.scalar import CountAction
+from lsst.pex.config import Field
+
+from ..actions.scalar import CountAction, DivideScalar
 from ..actions.vector import FlagSelector, GoodDiaSourceSelector
 from ..interfaces import AnalysisTool
-
-
-class NumDiaSourcesAllMetric(AnalysisTool):
-    """Calculate the number of DIA Sources."""
-
-    def setDefaults(self):
-        super().setDefaults()
-
-        # Count the number of dia sources
-        self.process.calculateActions.numDiaSourcesAll = CountAction(vectorKey="diaSourceId")
-
-        # the units for the quantity (count, an astropy quantity)
-        self.produce.metric.units = {"numDiaSourcesAll": "ct"}
 
 
 class NumDiaSourcesMetric(AnalysisTool):
@@ -63,7 +53,7 @@ class NumDiaSourcesMetric(AnalysisTool):
 
 
 class NumDipolesMetric(AnalysisTool):
-    """Calculate the number of dipoles."""
+    """Calculate the number of dipoles with NaN values excluded."""
 
     def setDefaults(self):
         super().setDefaults()
@@ -76,3 +66,47 @@ class NumDipolesMetric(AnalysisTool):
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {"numDipoles": "ct"}
+
+
+class NumDiaSourcesSelectionMetric(AnalysisTool):
+    """Count the number of DIA Sources for a given threshold."""
+
+    metricName = Field[str](doc="Name to use for output metric")
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Count dia sources with reliability lower than the threshold
+        self.process.calculateActions.countingAction = CountAction
+
+        # The units for the quantity (count, an astropy quantity)
+        self.produce.metric.units = {"countingAction": "ct"}
+
+    def finalize(self):
+        self.produce.metric.newNames = {"countingAction": self.metricName}
+
+
+class DiaSourcesGoodVsBadRatioMetric(AnalysisTool):
+    """Calculate the ratio of 'good' vs 'bad' DIA Sources."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Count dia sources with reliability higher than the threshold
+        self.process.buildActions.numDiaSourcesHighReliability = CountAction(
+            op="gt", threshold=0.9, vectorKey="reliability"
+        )
+
+        # Count dia sources with reliability lower than the threshold
+        self.process.buildActions.numDiaSourcesLowReliability = CountAction(
+            op="lt", threshold=0.1, vectorKey="reliability"
+        )
+
+        # Calculate ratio of good vs bad DIA Sources
+        self.process.calculateActions.DiaSourcesGoodVsBadRatio = DivideScalar(
+            actionA=self.process.buildActions.numDiaSourcesHighReliability,
+            actionB=self.process.buildActions.numDiaSourcesLowReliability,
+        )
+
+        # The units for the quantity (dimensionless, an astropy quantity)
+        self.produce.metric.units = {"DiaSourcesGoodVsBadRatio": ""}

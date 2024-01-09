@@ -38,13 +38,16 @@ __all__ = (
     "SumAction",
     "MedianHistAction",
     "IqrHistAction",
+    "DivideScalar",
 )
 
 import operator
+from math import nan
 from typing import cast
 
 import numpy as np
 from lsst.pex.config import ChoiceField, Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
@@ -104,14 +107,59 @@ class SigmaMadAction(ScalarFromVectorAction):
         return nanSigmaMad(data[self.vectorKey.format(**kwargs)][mask])
 
 
-class CountAction(ScalarFromVectorAction):
-    """Returns the number of non-NaN entries in the given column."""
+class CountAction(ScalarAction):
+    """Performs count actions, with threshold-based filtering.
+    The operator is specified as a string, for example, "lt", "le", "ge",
+    "gt", "ne", and "eq" for the mathematical operations <, <=, >=, >, !=,
+    and == respectively. To count non-NaN values, only pass the column name
+    as vector key. To count NaN values, pass threshold = nan (from math.nan).
+    Optionally to configure from a YAML file, pass "threshold: !!float nan".
+    To compute the number of elements with values less than a given threshold,
+    use op="le".
+    """
+
+    vectorKey = Field[str]("Key of Vector to count")
+    op = ChoiceField[str](
+        doc="Operator name string.",
+        allowed={
+            "lt": "less than threshold",
+            "le": "less than or equal to threshold",
+            "ge": "greater than or equal to threshold",
+            "ne": "not equal to a given value",
+            "eq": "equal to a given value",
+            "gt": "greater than threshold",
+        },
+        default="ne",
+    )
+    threshold = Field[float](doc="Threshold to apply.", default=nan)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        arr = arr[~np.isnan(arr)]
-        return cast(Scalar, len(arr))
+
+        # Count NaNs and non-NaNs
+        if self.threshold == nan:
+            if self.op == "eq":
+                # Count number of NaNs
+                result = np.isnan(arr).sum()
+                return cast(Scalar, result)
+            elif self.op == "ne":
+                # Count number of non-NaNs
+                result = len(arr) - np.isnan(arr).sum()
+                return cast(Scalar, result)
+            else:
+                raise ValueError("Invalid operator for counting NaNs.")
+        # Count for given threshold ignoring all NaNs
+        else:
+            result = arr[~np.isnan(arr)]
+            result = cast(
+                Scalar,
+                float(np.sum(getattr(operator, self.op)(result, self.threshold))),
+            )
+            return result
 
 
 class CountUniqueAction(ScalarFromVectorAction):
@@ -335,3 +383,32 @@ class IqrHistAction(ScalarAction):
         else:
             iqr = np.NaN
         return iqr
+
+
+class DivideScalar(ScalarAction):
+    """Calculate (A/B) for scalars."""
+
+    actionA = ConfigurableActionField[ScalarAction](doc="Action which supplies scalar A")
+    actionB = ConfigurableActionField[ScalarAction](doc="Action which supplies scalar B")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()
+        yield from self.actionB.getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        """Return the result of A/B.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Scalar`
+            The result of dividing A by B.
+        """
+        scalarA = self.actionA(data, **kwargs)
+        scalarB = self.actionB(data, **kwargs)
+        if scalarB == 0:
+            raise ValueError("Denominator is zero!")
+        return scalarA / scalarB

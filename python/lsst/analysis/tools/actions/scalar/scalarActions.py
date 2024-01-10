@@ -145,11 +145,11 @@ class CountAction(ScalarAction):
             if self.op == "eq":
                 # Count number of NaNs
                 result = np.isnan(arr).sum()
-                return cast(Scalar, result)
+                return cast(Scalar, int(result))
             elif self.op == "ne":
                 # Count number of non-NaNs
                 result = len(arr) - np.isnan(arr).sum()
-                return cast(Scalar, result)
+                return cast(Scalar, int(result))
             else:
                 raise ValueError("Invalid operator for counting NaNs.")
         # Count for given threshold ignoring all NaNs
@@ -157,7 +157,7 @@ class CountAction(ScalarAction):
             result = arr[~np.isnan(arr)]
             result = cast(
                 Scalar,
-                float(np.sum(getattr(operator, self.op)(result, self.threshold))),
+                int(np.sum(getattr(operator, self.op)(result, self.threshold))),
             )
             return result
 

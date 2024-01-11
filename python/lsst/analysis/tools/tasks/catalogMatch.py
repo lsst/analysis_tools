@@ -158,8 +158,8 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     patchColumn = pexConfig.Field[str](doc="Patch column.", default="patch")
 
-    refCat = pexConfig.Field[bool](
-        doc="Is the catalog being matched to a reference catalog?",
+    matchesRefCat = pexConfig.Field[bool](
+        doc="Is the catalog being matched to stored as a reference catalog?",
         default=False,
     )
 
@@ -284,7 +284,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             for col in falseFlagCols:
                 refCatalogNotMatched[col] = [False] * len(refCatalogNotMatched)
 
-        if self.config.refCat:
+        if self.config.matchesRefCat:
             for i, band in enumerate(bands):
                 refCatalogMatched[band + "_mag_ref"] = refCatalogMatched["refMag_ref"][:, i]
                 refCatalogMatched[band + "_magErr_ref"] = refCatalogMatched["refMagErr_ref"][:, i]

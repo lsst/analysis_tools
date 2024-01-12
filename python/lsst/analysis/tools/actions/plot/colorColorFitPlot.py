@@ -32,6 +32,7 @@ import scipy.stats
 from lsst.pex.config import Field, ListField, RangeField
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
+from scipy.ndimage import median_filter
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMean, nanMedian, nanSigmaMad
@@ -82,6 +83,12 @@ class ColorColorFitPlot(PlotAction):
     doPlotRedBlueHists = Field[bool](
         doc="Plot distance from fit histograms separated into blue and red star subsamples?",
         default=False,
+        optional=True,
+    )
+
+    doPlotDistVsColor = Field[bool](
+        doc="Plot distance from fit as a function of color in lower right panel?",
+        default=True,
         optional=True,
     )
 
@@ -227,9 +234,12 @@ class ColorColorFitPlot(PlotAction):
 
         # Make a figure with three panels.
         fig = plt.figure(dpi=300)
-        ax = fig.add_axes([0.12, 0.25, 0.43, 0.60])
-        axContour = fig.add_axes([0.65, 0.11, 0.3, 0.31])
-        axHist = fig.add_axes([0.65, 0.51, 0.3, 0.31])
+        ax = fig.add_axes([0.12, 0.25, 0.43, 0.62])
+        if self.doPlotDistVsColor:
+            axLowerRight = fig.add_axes([0.65, 0.11, 0.26, 0.34])
+        else:
+            axLowerRight = fig.add_axes([0.65, 0.11, 0.3, 0.34])
+        axHist = fig.add_axes([0.65, 0.55, 0.3, 0.32])
 
         xs = cast(Vector, data["x"])
         ys = cast(Vector, data["y"])
@@ -481,7 +491,7 @@ class ColorColorFitPlot(PlotAction):
             handlelength=1.0,
             fontsize=6,
             loc="lower right",
-            bbox_to_anchor=(0.96, 0.84),
+            bbox_to_anchor=(0.955, 0.89),
             bbox_transform=fig.transFigure,
             ncol=2,
         )
@@ -501,26 +511,68 @@ class ColorColorFitPlot(PlotAction):
             labels = ["ODR Fit", "Blue Stars", "Red Stars", "HW"]
         axHist.legend(handles, labels, fontsize=5, loc="upper right")
 
-        # Add a contour plot showing the magnitude dependance of the distance
-        # to the fit.
-        axContour.invert_yaxis()
-        axContour.axvline(0.0, color="k", ls="--", zorder=-1)
-        percsDists = np.nanpercentile(dists, [4, 96])
-        minXs = -1 * np.min(np.fabs(percsDists))
-        maxXs = np.min(np.fabs(percsDists))
-        plotPoints = (dists < maxXs) & (dists > minXs)
-        xsContour = np.array(dists)[plotPoints]
-        ysContour = cast(Vector, cast(Vector, mags)[cast(Vector, fitPoints)])[cast(Vector, plotPoints)]
-        H, xEdges, yEdges = np.histogram2d(xsContour, ysContour, bins=(11, 11))
-        xBinWidth = xEdges[1] - xEdges[0]
-        yBinWidth = yEdges[1] - yEdges[0]
-        axContour.contour(
-            xEdges[:-1] + xBinWidth / 2, yEdges[:-1] + yBinWidth / 2, H.T, levels=7, cmap=newBlues
-        )
-        axContour.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=8)
-        axContour.set_ylabel(self.magLabel, fontsize=8)
-        axContour.set_xlim(meanDists - nSigToPlot*madDists, meanDists + nSigToPlot*madDists)
-        axContour.tick_params(labelsize=8)
+        if self.doPlotDistVsColor:
+            axLowerRight.axhline(0.0, color="k", ls="-", lw=0.8, zorder=-1)
+            # Compute and plot a running median of dists vs. color.
+            if np.fabs(data["mODR"]) > 1.0:
+                xRun = ys[fitPoints].copy()
+                axLowerRight.set_xlabel(self.yAxisLabel, fontsize=7)
+            else:
+                xRun = xs[fitPoints].copy()
+                axLowerRight.set_xlabel(self.xAxisLabel, fontsize=7)
+            lowerRightPlot = axLowerRight.scatter(xRun, dists, c=mags[fitPoints], cmap=newBlues, s=0.2)
+            yRun = dists.copy()
+            xySorted = zip(xRun, yRun)
+            xySorted = sorted(xySorted)
+            xSorted = [x for x, y in xySorted]
+            ySorted = [y for x, y in xySorted]
+            nCumulate = int(max(3, len(xRun) // 10))
+            yRunMedian = median_filter(ySorted, size=nCumulate)
+            axLowerRight.plot(xSorted, yRunMedian, "w", lw=1.8)
+            axLowerRight.plot(xSorted, yRunMedian, c="purple", ls="-", lw=1.1, label="Running Median")
+            axLowerRight.set_ylim(-2.5 * madDists, 2.5 * madDists)
+            axLowerRight.set_ylabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
+            axLowerRight.legend(fontsize=4, loc="upper right", handlelength=1.0)
+            # Add colorbars.
+            cbAx = fig.add_axes([0.915, 0.11, 0.014, 0.34])
+            plt.colorbar(lowerRightPlot, cax=cbAx, orientation="vertical")
+            cbKwargs = {
+                "color": "k",
+                "rotation": "vertical",
+                "ha": "center",
+                "va": "center",
+                "fontsize": 4,
+            }
+            cbText = cbAx.text(
+                0.5,
+                0.5,
+                self.magLabel,
+                transform=cbAx.transAxes,
+                **cbKwargs,
+            )
+            cbText.set_path_effects([pathEffects.Stroke(linewidth=1.2, foreground="w"), pathEffects.Normal()])
+            cbAx.tick_params(length=2, labelsize=3.5)
+        else:
+            # Add a contour plot showing the magnitude dependance of the
+            # distance to the fit.
+            axLowerRight.invert_yaxis()
+            axLowerRight.axvline(0.0, color="k", ls="--", zorder=-1)
+            percsDists = np.nanpercentile(dists, [4, 96])
+            minXs = -1 * np.min(np.fabs(percsDists))
+            maxXs = np.min(np.fabs(percsDists))
+            plotPoints = (dists < maxXs) & (dists > minXs)
+            xsContour = np.array(dists)[plotPoints]
+            ysContour = cast(Vector, cast(Vector, mags)[cast(Vector, fitPoints)])[cast(Vector, plotPoints)]
+            H, xEdges, yEdges = np.histogram2d(xsContour, ysContour, bins=(11, 11))
+            xBinWidth = xEdges[1] - xEdges[0]
+            yBinWidth = yEdges[1] - yEdges[0]
+            axLowerRight.contour(
+                xEdges[:-1] + xBinWidth / 2, yEdges[:-1] + yBinWidth / 2, H.T, levels=7, cmap=newBlues
+            )
+            axLowerRight.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=8)
+            axLowerRight.set_ylabel(self.magLabel, fontsize=8)
+            axLowerRight.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
+        axLowerRight.tick_params(labelsize=6)
 
         fig = addPlotInfo(plt.gcf(), plotInfo)
 

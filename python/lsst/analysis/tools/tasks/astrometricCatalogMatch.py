@@ -32,10 +32,10 @@ import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
 from astropy.time import Time
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
-from ..actions.vector import VisitPlotFlagSelector
+from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
@@ -47,6 +47,7 @@ class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=Cata
 
     def setDefaults(self):
         super().setDefaults()
+        self.matchesRefCat = True
         self.referenceCatalogLoader.doApplyColorTerms = False
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = True
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"
@@ -76,7 +77,7 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -137,12 +138,16 @@ class AstrometricCatalogMatchVisitConfig(
     )
 
     def setDefaults(self):
+        self.matchesRefCat = True
         # sourceSelectorActions.sourceSelector is StarSelector
+        self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         # extraColumnSelectors.selector1 is SnSelector
         self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         # extraColumnSelectors.selector2 is GalaxySelector
         self.extraColumnSelectors.selector2.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector3.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector4 = VisitPlotFlagSelector
         self.referenceCatalogLoader.doApplyColorTerms = False
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = False
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"
@@ -180,7 +185,7 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=self.config.bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
 

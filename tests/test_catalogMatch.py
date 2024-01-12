@@ -214,7 +214,7 @@ class TestCatalogMatch(unittest.TestCase):
         reference catalog.
         """
         output = self.task.run(
-            catalog=self.objectTable, loadedRefCat=self.loadedRefCat, bands=self.task.config.bands
+            targetCatalog=self.objectTable, refCatalog=self.loadedRefCat, bands=self.task.config.bands
         )
 
         self.assertEqual(len(output.matchedCatalog), self.nStars)

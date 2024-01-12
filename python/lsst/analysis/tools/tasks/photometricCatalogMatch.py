@@ -29,7 +29,7 @@ from astropy.table import Table
 from astropy.time import Time
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
-from ..actions.vector import VisitPlotFlagSelector
+from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
@@ -42,6 +42,7 @@ class PhotometricCatalogMatchConfig(
 ):
     def setDefaults(self):
         super().setDefaults()
+        self.matchesRefCat = True
         self.referenceCatalogLoader.doReferenceSelection = False
         self.referenceCatalogLoader.doApplyColorTerms = True
 
@@ -88,7 +89,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
         skymap = inputs.pop("skymap")
         loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=bands)
 
         butlerQC.put(outputs, outputRefs)
 
@@ -134,14 +135,18 @@ class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
     def setDefaults(self):
+        self.matchesRefCat = True
         self.filterNames = []
         self.extraPerBandColumns = []
         self.patchColumn = ""
         self.selectorBands = []
         self.selectorActions.flagSelector = VisitPlotFlagSelector
+        self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
         self.extraColumnSelectors.selector1.fluxType = "psfFlux"
         self.extraColumnSelectors.selector2.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector3.vectorKey = "extendedness"
+        self.extraColumnSelectors.selector4 = VisitPlotFlagSelector
 
 
 class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
@@ -195,7 +200,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
         loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable, physicalFilter)
-        outputs = self.run(catalog=table, loadedRefCat=loadedRefCat, bands=bands)
+        outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=bands)
 
         # The matcher adds the band to the front of the columns
         # but the visit plots aren't expecting it

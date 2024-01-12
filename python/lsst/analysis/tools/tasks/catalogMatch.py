@@ -26,14 +26,20 @@ import lsst.geom
 import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, vstack
 from astropy.time import Time
 from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 from lsst.skymap import BaseSkyMap
 from smatch import Matcher
 
-from ..actions.vector import CoaddPlotFlagSelector, GalaxySelector, SnSelector, StarSelector
+from ..actions.vector import (
+    CoaddPlotFlagSelector,
+    GalaxySelector,
+    MatchingFlagSelector,
+    SnSelector,
+    StarSelector,
+)
 from ..interfaces import VectorAction
 
 
@@ -97,17 +103,22 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     selectorActions = ConfigurableActionStructField[VectorAction](
         doc="Which selectors to use to narrow down the data for QA plotting.",
-        default={"flagSelector": CoaddPlotFlagSelector()},
+        default={"flagSelector": MatchingFlagSelector()},
     )
 
     sourceSelectorActions = ConfigurableActionStructField[VectorAction](
         doc="What types of sources to use.",
-        default={"sourceSelector": StarSelector()},
+        default={},
     )
 
     extraColumnSelectors = ConfigurableActionStructField[VectorAction](
         doc="Other selectors that are not used in this task, but whose columns" "may be needed downstream",
-        default={"selector1": SnSelector(), "selector2": GalaxySelector()},
+        default={
+            "selector1": SnSelector(),
+            "selector2": StarSelector(),
+            "selector3": GalaxySelector(),
+            "selector4": CoaddPlotFlagSelector(),
+        },
     )
 
     extraColumns = pexConfig.ListField[str](
@@ -125,9 +136,37 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
         default=1.0,
     )
 
-    raColumn = pexConfig.Field[str](doc="RA column.", default="coord_ra")
-    decColumn = pexConfig.Field[str](doc="Dec column.", default="coord_dec")
+    targetRaColumn = pexConfig.Field[str](
+        doc="RA column name for the target (being matched) catalog.",
+        default="coord_ra",
+    )
+
+    targetDecColumn = pexConfig.Field[str](
+        doc="Dec column name for the target (being matched) catalog.",
+        default="coord_dec",
+    )
+
+    refRaColumn = pexConfig.Field[str](
+        doc="RA column name for the reference (being matched to) catalog.",
+        default="ra",
+    )
+
+    refDecColumn = pexConfig.Field[str](
+        doc="Dec column name for the reference (being matched to) catalog.",
+        default="dec",
+    )
+
     patchColumn = pexConfig.Field[str](doc="Patch column.", default="patch")
+
+    matchesRefCat = pexConfig.Field[bool](
+        doc="Is the catalog being matched to stored as a reference catalog?",
+        default=False,
+    )
+
+    returnNonMatches = pexConfig.Field[bool](
+        doc="Return the rows of the reference catalog that didn't get matched?",
+        default=False,
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -149,15 +188,15 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         """Implemented in the inherited tasks"""
         pass
 
-    def run(self, *, catalog, loadedRefCat, bands):
+    def run(self, *, targetCatalog, refCatalog, bands):
         """Takes the two catalogs and returns the matched one.
 
         Parameters
         ----------
-        `catalog` : astropy.table.Table
+        `targetCatalog` : astropy.table.Table
             The catalog to be matched
-        `loadedRefCat` : astropy.table.Table
-            The loaded reference catalog
+        `refCatalog` : astropy.table.Table
+            The catalog to be matched to
         `bands` : list
             A list of bands to apply the selectors in
 
@@ -170,17 +209,17 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         Performs an RA/Dec match that returns the closest match
         within the match radius which defaults to 1.0 arcsecond.
         Applies the suffix, _target, to the catalog being matched
-        and _ref to the reference catalog.
+        and _ref to the reference catalog being matched to.
         """
         # Apply the selectors to the catalog
-        mask = np.ones(len(catalog), dtype=bool)
+        mask = np.ones(len(targetCatalog), dtype=bool)
         for selector in self.config.sourceSelectorActions:
             for band in self.config.selectorBands:
-                mask &= selector(catalog, band=band).astype(bool)
+                mask &= selector(targetCatalog, band=band).astype(bool)
 
-        targetCatalog = catalog[mask]
+        targetCatalog = targetCatalog[mask]
 
-        if (len(targetCatalog) == 0) or (len(loadedRefCat) == 0):
+        if (len(targetCatalog) == 0) or (len(refCatalog)) == 0:
             refMatchIndices = np.array([], dtype=np.int64)
             targetMatchIndices = np.array([], dtype=np.int64)
             dists = np.array([], dtype=np.float64)
@@ -193,14 +232,14 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             # radius, either in this task or a subtask.
 
             # Get rid of entries in the refCat with non-finite RA/Dec values.
-            refRas = loadedRefCat["ra"]
-            refDecs = loadedRefCat["dec"]
+            refRas = refCatalog[self.config.refRaColumn]
+            refDecs = refCatalog[self.config.refDecColumn]
             refRaDecFiniteMask = np.isfinite(refRas) & np.isfinite(refDecs)
-            loadedRefCat = loadedRefCat[refRaDecFiniteMask]
-            with Matcher(loadedRefCat["ra"], loadedRefCat["dec"]) as m:
+            refCatalog = refCatalog[refRaDecFiniteMask]
+            with Matcher(refCatalog[self.config.refRaColumn], refCatalog[self.config.refDecColumn]) as m:
                 idx, refMatchIndices, targetMatchIndices, dists = m.query_radius(
-                    targetCatalog[self.config.raColumn],
-                    targetCatalog[self.config.decColumn],
+                    targetCatalog[self.config.targetRaColumn],
+                    targetCatalog[self.config.targetDecColumn],
                     self.config.matchRadius / 3600.0,
                     return_indices=True,
                 )
@@ -209,22 +248,62 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             dists *= 3600.0
 
         targetCatalogMatched = targetCatalog[targetMatchIndices]
-        loadedRefCatMatched = loadedRefCat[refMatchIndices]
+        refCatalogMatched = refCatalog[refMatchIndices]
 
         targetCols = targetCatalogMatched.columns.copy()
         for col in targetCols:
             targetCatalogMatched.rename_column(col, col + "_target")
-        refCols = loadedRefCatMatched.columns.copy()
+        refCols = refCatalogMatched.columns.copy()
         for col in refCols:
-            loadedRefCatMatched.rename_column(col, col + "_ref")
+            refCatalogMatched.rename_column(col, col + "_ref")
 
-        for i, band in enumerate(bands):
-            loadedRefCatMatched[band + "_mag_ref"] = loadedRefCatMatched["refMag_ref"][:, i]
-            loadedRefCatMatched[band + "_magErr_ref"] = loadedRefCatMatched["refMagErr_ref"][:, i]
-        loadedRefCatMatched.remove_column("refMag_ref")
-        loadedRefCatMatched.remove_column("refMagErr_ref")
-        tMatched = hstack([targetCatalogMatched, loadedRefCatMatched], join_type="exact")
+        if self.config.returnNonMatches:
+            unmatchedIndices = list(set(np.arange(0, len(refCatalog))) - set(refMatchIndices))
+            refCatalogNotMatched = refCatalog[unmatchedIndices]
+            # We need to set the relevant flag columns to
+            # true or false so that they make it through the
+            # selectors even though the none matched sources
+            # don't have values for those columns.
+            trueFlagCols = []
+            falseFlagCols = []
+            for selectorAction in [self.config.selectorActions, self.config.extraColumnSelectors]:
+                for selector in selectorAction:
+                    try:
+                        for flag in selector.selectWhenTrue:
+                            trueFlagCols.append(flag)
+                        for flag in selector.selectWhenFalse:
+                            falseFlagCols.append(flag)
+                    except AttributeError:
+                        continue
+            for col in refCols:
+                refCatalogNotMatched.rename_column(col, col + "_ref")
+            for col in targetCols:
+                refCatalogNotMatched[col] = [np.nan] * len(refCatalogNotMatched)
+            for col in trueFlagCols:
+                refCatalogNotMatched[col] = [True] * len(refCatalogNotMatched)
+            for col in falseFlagCols:
+                refCatalogNotMatched[col] = [False] * len(refCatalogNotMatched)
+
+        if self.config.matchesRefCat:
+            for i, band in enumerate(bands):
+                refCatalogMatched[band + "_mag_ref"] = refCatalogMatched["refMag_ref"][:, i]
+                refCatalogMatched[band + "_magErr_ref"] = refCatalogMatched["refMagErr_ref"][:, i]
+            refCatalogMatched.remove_column("refMag_ref")
+            refCatalogMatched.remove_column("refMagErr_ref")
+
+            if self.config.returnNonMatches:
+                for i, band in enumerate(bands):
+                    refCatalogNotMatched[band + "_mag_ref"] = refCatalogNotMatched["refMag_ref"][:, i]
+                    refCatalogNotMatched[band + "_magErr_ref"] = refCatalogNotMatched["refMagErr_ref"][:, i]
+                refCatalogNotMatched.remove_column("refMag_ref")
+                refCatalogNotMatched.remove_column("refMagErr_ref")
+
+        tMatched = hstack([targetCatalogMatched, refCatalogMatched], join_type="exact")
         tMatched["matchDistance"] = dists
+
+        if self.config.returnNonMatches:
+            refCatalogNotMatched["matchDistance"] = [np.nan] * len(refCatalogNotMatched)
+            tMatched = vstack([tMatched, refCatalogNotMatched])
 
         return pipeBase.Struct(matchedCatalog=tMatched)
 
@@ -241,8 +320,8 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         columns = (
             [
-                self.config.raColumn,
-                self.config.decColumn,
+                self.config.targetRaColumn,
+                self.config.targetDecColumn,
             ]
             + self.config.extraColumns.list()
             + bandColumns

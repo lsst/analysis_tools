@@ -394,7 +394,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                     statistic=self.statistic,
                     bins=[1, 1],
                 )
-                patches.append(Polygon(corners, True))
+                patches.append(Polygon(corners, closed=True))
                 values.append(statistic.ravel()[0])
             else:
                 # It's at amplifier level.  This uses the focal
@@ -455,7 +455,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                             scaleVY * (ampMaxY - minY) + scaleVX * (ampMaxX - minX) + baseV,
                         )
                     )
-                    patches.append(Polygon(ampCorners, True))
+                    patches.append(Polygon(ampCorners, closed=True))
                     # This does the appropriate statistic for this
                     # amplifier's data.
                     if len(data["z"][ampInd]) > 0:

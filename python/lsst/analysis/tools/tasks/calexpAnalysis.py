@@ -24,7 +24,11 @@ __all__ = (
     "CalexpAnalysisTask",
 )
 
+from collections.abc import Iterable
+from ..interfaces._interfaces import KeyedData
+from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as ct
+
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -39,7 +43,7 @@ class CalexpAnalysisConnections(
         name="calexp",
         storageClass="ExposureF",
         dimensions=("visit", "band", "detector"),
-        deferLoad=True,
+        deferLoad=False,
     )
 
 class CalexpAnalysisConfig(
@@ -51,3 +55,21 @@ class CalexpAnalysisConfig(
 class CalexpAnalysisTask(AnalysisPipelineTask):
     ConfigClass = CalexpAnalysisConfig
     _DefaultName = "calexpAnalysis"
+
+    def runQuantum(
+        self,
+        butlerQC: QuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        # Docstring inherited.
+
+        inputs = butlerQC.get(inputRefs)
+        dataId = butlerQC.quantum.dataId
+
+        expDict = {}
+        expDict['image'] = inputs['data'].image.getArray()
+        expDict['mask'] = inputs['data'].mask.getArray()
+
+        outputs = self.run(data={'exposureArrays':expDict})
+        

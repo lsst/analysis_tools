@@ -37,6 +37,7 @@ from ..actions.vector import (
     CoaddPlotFlagSelector,
     ConvertFluxToMag,
     ExtinctionCorrectedMagDiff,
+    MagSelector,
     SnSelector,
     StarSelector,
 )
@@ -53,6 +54,9 @@ class StellarLocusBase(AnalysisTool):
 
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.threshold = 300
+
+        self.prep.selectors.magSelector = MagSelector()
+        self.prep.selectors.magSelector.maxMag = 22.5
 
         self.prep.selectors.starSelector1 = StarSelector()
         self.prep.selectors.starSelector2 = StarSelector()
@@ -74,6 +78,8 @@ class WPerpPSF(StellarLocusBase):
         self.prep.selectors.flagSelector.bands = colorBands
         self.prep.selectors.snSelector.bands = ["r"]
         self.prep.selectors.snSelector.fluxType = "{band}_" + fluxType
+        self.prep.selectors.magSelector.bands = ["r"]
+        self.prep.selectors.magSelector.fluxType = "{band}_" + fluxType
 
         self.prep.selectors.starSelector1.vectorKey = colorBands[0] + "_extendedness"
         self.prep.selectors.starSelector2.vectorKey = colorBands[1] + "_extendedness"
@@ -108,7 +114,7 @@ class WPerpPSF(StellarLocusBase):
         self.produce.plot.yAxisLabel = "r - i (PSF) [mags]"
         self.produce.plot.xLims = (-0.7, 1.99)
         self.produce.plot.yLims = (-0.7, 2.49)
-        self.produce.plot.magLabel = "PSF Mag"
+        self.produce.plot.magLabel = "PSF r_Mag"
         self.produce.plot.plotName = "wPerp_psfFlux"
 
 

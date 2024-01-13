@@ -8,6 +8,7 @@ test[newline]PhotoCalib: None, Astrometry: None[newline]Table: test, Bands: , S/
 
 
 mag
+None
 mag meas - ref
 Running Median
 $\sigma_{MAD}$

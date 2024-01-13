@@ -37,6 +37,7 @@ __all__ = (
     "ThresholdSelector",
     "BandSelector",
     "MatchingFlagSelector",
+    "MagSelector",
 )
 
 import operator
@@ -47,7 +48,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
-from ...math import divide
+from ...math import divide, fluxToMag
 
 
 class SelectorBase(VectorAction):
@@ -534,3 +535,80 @@ class ParentObjectSelector(FlagSelector):
             "sky_object",
         ]
         self.selectWhenTrue = ["detect_isPatchInner"]
+
+
+class MagSelector(SelectorBase):
+    """Selects points that have minMag < mag (AB) < maxMag.
+
+    The magnitude is based on the given fluxType.
+    """
+
+    fluxType = Field[str](doc="Flux type to calculate the magnitude in.", default="{band}_psfFlux")
+    minMag = Field[float](doc="Minimum mag to include in the sample.", default=-1e6)
+    maxMag = Field[float](doc="Maximum mag to include in the sample.", default=1e6)
+    fluxUnit = Field[str](doc="Astropy unit of flux vector", default="nJy")
+    returnMillimags = Field[bool](doc="Use millimags or not?", default=False)
+    bands = ListField[str](
+        doc="The band(s) to apply the magnitude cut in. Takes precedence if bands passed to call.",
+        default=[],
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        fluxCol = self.fluxType
+        yield fluxCol, Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Make a mask of that satisfies self.minMag < mag < self.maxMag.
+
+        The magnitude is based on the flux in self.fluxType.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+            The data to perform the magnitude selection on.
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the objects that satisfy the given magnitude cut.
+        """
+        mask: Optional[Vector] = None
+        bands: tuple[str, ...]
+        match kwargs:
+            case {"band": band} if not self.bands and self.bands == []:
+                bands = (band,)
+            case {"bands": bands} if not self.bands and self.bands == []:
+                bands = bands
+            case _ if self.bands:
+                bands = tuple(self.bands)
+            case _:
+                bands = ("",)
+        bandStr = ",".join(bands)
+        for band in bands:
+            fluxCol = self.fluxType.format(**(kwargs | dict(band=band)))
+            vec = fluxToMag(
+                cast(Vector, data[fluxCol]),
+                flux_unit=self.fluxUnit,
+                return_millimags=self.returnMillimags,
+            )
+            temp = (vec > self.minMag) & (vec < self.maxMag)
+            if mask is not None:
+                mask &= temp  # type: ignore
+            else:
+                mask = temp
+
+        plotLabelStr = ""
+        if self.maxMag < 100:
+            plotLabelStr += "({}) < {:.1f}".format(bandStr, self.maxMag)
+        if self.minMag > -100:
+            if bandStr in plotLabelStr:
+                plotLabelStr += " & < {:.1f}".format(self.minMag)
+            else:
+                plotLabelStr += "({}) < {:.1f}".format(bandStr, self.minMag)
+        if self.plotLabelKey == "" or self.plotLabelKey is None:
+            self._addValueToPlotInfo(plotLabelStr, plotLabelKey="Mag", **kwargs)
+        else:
+            self._addValueToPlotInfo(plotLabelStr, **kwargs)
+
+        # It should not be possible for mask to be a None now
+        return np.array(cast(Vector, mask))

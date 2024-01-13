@@ -267,19 +267,7 @@ class ColorColorFitPlot(PlotAction):
 
         # Add some useful information to the plot.
         bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-        magsUsed = cast(Vector, mags[fitPoints])
-        magsUsed.sort()
-        # Use faintest 2% of values to compute the approximate faint mag limit
-        ptFrac = max(2, int(0.02*len(magsUsed)))
-        maxMagUsedInFit = np.nanmean(magsUsed[-ptFrac:])
-
-        snStr = "-"
-        for k, v in plotInfo.items():
-            if "S/N" in k:
-                snStr = "{}{:.1f}".format(k, v)
-                break
-        infoText = "N Total: {}\nN Used: {}\n{}\n".format(sum(goodPoints), sum(fitPoints), snStr)
-        infoText += r"Mag Used$\lesssim$ " + "{:0.2f}".format(maxMagUsedInFit)
+        infoText = "N Total: {}\nN Used: {}".format(sum(goodPoints), sum(fitPoints))
         ax.text(0.04, 0.97, infoText, color="k", transform=ax.transAxes, fontsize=7, bbox=bbox, va="top")
 
         # Calculate the point density for the Used and NotUsed subsamples.

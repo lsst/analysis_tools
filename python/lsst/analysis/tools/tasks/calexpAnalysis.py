@@ -28,15 +28,15 @@ from collections.abc import Iterable
 from ..interfaces._interfaces import KeyedData
 from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as ct
-
+from lsst.pex.config import ListField
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+
 
 class CalexpAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
-    defaultTemplates={"inputName": "calexp",
-                      "outputName": "pixelMaskMetrics"},
+    defaultTemplates={"inputName": "calexp", "outputName": "pixelMaskMetrics"},
 ):
     data = ct.Input(
         doc="Calibrated exposure to load from the butler",
@@ -46,11 +46,10 @@ class CalexpAnalysisConnections(
         deferLoad=False,
     )
 
-class CalexpAnalysisConfig(
-    AnalysisBaseConfig,
-    pipelineConnections=CalexpAnalysisConnections
-):
-    pass
+
+class CalexpAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CalexpAnalysisConnections):
+    images = ListField[str](doc="Images to extract from the exposure.", default=["image", "mask", "variance"])
+
 
 class CalexpAnalysisTask(AnalysisPipelineTask):
     ConfigClass = CalexpAnalysisConfig
@@ -67,9 +66,8 @@ class CalexpAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
 
-        expDict = {}
-        expDict['image'] = inputs['data'].image.getArray()
-        expDict['mask'] = inputs['data'].mask.getArray()
+        imageDict = {}
+        for image in self.config.images:
+            imageDict[image] = getattr(inputs["data"], image).getArray()
 
-        outputs = self.run(data={'exposureArrays':expDict})
-        
+        outputs = self.run(data={"imageArrays": imageDict})

@@ -67,10 +67,12 @@ class StellarLocusBase(AnalysisTool):
         self.process.buildActions.y = ExtinctionCorrectedMagDiff()
         self.process.buildActions.y.magDiff.returnMillimags = False
 
+        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
+
+        self.produce.plot = ColorColorFitPlot()
+
 
 class WPerpPSF(StellarLocusBase):
-    parameterizedBand: bool = False
-
     def setDefaults(self):
         super().setDefaults()
         colorBands = ["g", "r", "i"]
@@ -85,13 +87,11 @@ class WPerpPSF(StellarLocusBase):
         self.prep.selectors.starSelector2.vectorKey = colorBands[1] + "_extendedness"
         self.prep.selectors.starSelector3.vectorKey = colorBands[2] + "_extendedness"
 
-        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_psfFlux"
-
-        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_psfFlux"
-
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_psfFlux")
+        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_" + fluxType
+        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_" + fluxType
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
@@ -105,36 +105,42 @@ class WPerpPSF(StellarLocusBase):
             "bHW": -0.042,
         }
 
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
         self.produce.metric.units = {
             "wPerp_psfFlux_sigmaMAD": "mmag",
             "wPerp_psfFlux_median": "mmag",
         }
 
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "g - r (PSF) [mags]"
-        self.produce.plot.yAxisLabel = "r - i (PSF) [mags]"
+        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[0], colorBands[1], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[1], colorBands[2], fluxType.replace("Flux", "")
+        )
         self.produce.plot.xLims = (-0.7, 1.99)
         self.produce.plot.yLims = (-0.7, 2.49)
-        self.produce.plot.magLabel = "PSF r_Mag"
-        self.produce.plot.plotName = "wPerp_psfFlux"
+        self.produce.plot.magLabel = "{} {}_Mag".format(
+            self.prep.selectors.magSelector.bands[0], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.plotName = "wPerp_" + fluxType
 
 
 class WPerpCModel(WPerpPSF):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.snSelector.fluxType = "{band}_cModelFlux"
+        colorBands = ["g", "r", "i"]
+        fluxType = "cModelFlux"
 
-        self.process.buildActions.x.magDiff.col1 = "g_cModelFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_cModelFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_" + fluxType
+        self.prep.selectors.magSelector.fluxType = "{band}_" + fluxType
 
-        self.process.buildActions.y.magDiff.col1 = "r_cModelFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_cModelFlux"
+        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_" + fluxType
+        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_" + fluxType
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_cModelFlux")
-
-        self.process.calculateActions.wPerp_cmodelFlux = StellarLocusFitAction()
-        self.process.calculateActions.wPerp_cmodelFlux.stellarLocusFitDict = {
+        self.process.calculateActions.wPerp_cModelFlux = StellarLocusFitAction()
+        self.process.calculateActions.wPerp_cModelFlux.stellarLocusFitDict = {
             "xMin": 0.28,
             "xMax": 1.0,
             "yMin": 0.02,
@@ -145,36 +151,27 @@ class WPerpCModel(WPerpPSF):
             "bHW": -0.042,
         }
 
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
-
         self.produce.metric.units = {
-            "wPerp_cmodelFlux_sigmaMAD": "mmag",
-            "wPerp_cmodelFlux_median": "mmag",
+            "wPerp_cModelFlux_sigmaMAD": "mmag",
+            "wPerp_cModelFlux_median": "mmag",
         }
 
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "g - r (CModel) [mags]"
-        self.produce.plot.yAxisLabel = "r - i (CModel) [mags]"
-        self.produce.plot.magLabel = "CModel Mag"
-        self.produce.plot.plotName = "wPerp_cmodelFlux"
+        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[0], colorBands[1], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[1], colorBands[2], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.magLabel = "{} {}_Mag".format(
+            self.prep.selectors.magSelector.bands[0], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.plotName = "wPerp_" + fluxType
 
 
-class XPerpPSF(StellarLocusBase):
+class XPerpPSF(WPerpPSF):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector.bands = ["g", "r", "i"]
-        self.prep.selectors.snSelector.bands = ["r"]
-        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
-
-        self.prep.selectors.starSelector.vectorKey = "r_extendedness"
-
-        self.process.buildActions.x.magDiff.col1 = "g_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_psfFlux"
-
-        self.process.buildActions.y.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_psfFlux"
-
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_psfFlux")
+        fluxType = "psfFlux"
 
         self.process.calculateActions.xPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.xPerp_psfFlux.stellarLocusFitDict = {
@@ -188,32 +185,20 @@ class XPerpPSF(StellarLocusBase):
             "bHW": -75.0,
         }
 
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
-
         self.produce.metric.units = {
             "xPerp_psfFlux_sigmaMAD": "mmag",
             "xPerp_psfFlux_median": "mmag",
         }
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "g - r (PSF) [mags]"
-        self.produce.plot.yAxisLabel = "r - i (PSF) [mags]"
-        self.produce.plot.magLabel = "PSF Mag"
-        self.produce.plot.plotName = "xPerp_psfFlux"
+        self.produce.plot.plotName = "xPerp_" + fluxType
 
 
-class XPerpCModel(XPerpPSF):
+class XPerpCModel(WPerpCModel):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.snSelector.fluxType = "{band}_cModelFlux"
+        fluxType = "cModelFlux"
 
-        self.process.buildActions.x.magDiff.col1 = "g_cModelFlux"
-        self.process.buildActions.x.magDiff.col2 = "r_cModelFlux"
-
-        self.process.buildActions.y.magDiff.col1 = "r_cModelFlux"
-        self.process.buildActions.y.magDiff.col2 = "i_cModelFlux"
-
-        self.process.calculateActions.xPerp_cmodelFlux = StellarLocusFitAction()
-        self.process.calculateActions.xPerp_cmodelFlux.stellarLocusFitDict = {
+        self.process.calculateActions.xPerp_cModelFlux = StellarLocusFitAction()
+        self.process.calculateActions.xPerp_cModelFlux.stellarLocusFitDict = {
             "xMin": 1.05,
             "xMax": 1.55,
             "yMin": 0.78,
@@ -224,36 +209,34 @@ class XPerpCModel(XPerpPSF):
             "bHW": -75.0,
         }
 
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="r_cModelFlux")
-
-        self.produce.metric.units = {  # type: ignore
-            "xPerp_cmodelFlux_sigmaMAD": "mmag",
-            "xPerp_cmodelFlux_median": "mmag",
+        self.produce.metric.units = {
+            "xPerp_cModelFlux_sigmaMAD": "mmag",
+            "xPerp_cModelFlux_median": "mmag",
         }
-
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "g - r (CModel) [mags]"
-        self.produce.plot.yAxisLabel = "r - i (CModel) [mags]"
-        self.produce.plot.magLabel = "CModel Mag"
-        self.produce.plot.plotName = "xPerp_cmodelFlux"
+        self.produce.plot.plotName = "xPerp_" + fluxType
 
 
 class YPerpPSF(StellarLocusBase):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.flagSelector.bands = ["r", "i", "z"]
+
+        colorBands = ["r", "i", "z"]
+        fluxType = "psfFlux"
+        self.prep.selectors.flagSelector.bands = colorBands
         self.prep.selectors.snSelector.bands = ["i"]
-        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_" + fluxType
+        self.prep.selectors.magSelector.bands = ["i"]
+        self.prep.selectors.magSelector.fluxType = "{band}_" + fluxType
 
-        self.prep.selectors.starSelector.vectorKey = "i_extendedness"
+        self.prep.selectors.starSelector1.vectorKey = colorBands[0] + "_extendedness"
+        self.prep.selectors.starSelector2.vectorKey = colorBands[1] + "_extendedness"
+        self.prep.selectors.starSelector3.vectorKey = colorBands[2] + "_extendedness"
 
-        self.process.buildActions.x.magDiff.col1 = "r_psfFlux"
-        self.process.buildActions.x.magDiff.col2 = "i_psfFlux"
-
-        self.process.buildActions.y.magDiff.col1 = "i_psfFlux"
-        self.process.buildActions.y.magDiff.col2 = "z_psfFlux"
-
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="i_psfFlux")
+        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_" + fluxType
+        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_" + fluxType
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.yPerp_psfFlux = StellarLocusFitAction()
         self.process.calculateActions.yPerp_psfFlux.stellarLocusFitDict = {
@@ -267,35 +250,42 @@ class YPerpPSF(StellarLocusBase):
             "bHW": 0.064,
         }
 
-        self.process.calculateActions.approxMagDepth = ApproxFloor(vectorKey="mag")
-
         self.produce.metric.units = {
             "yPerp_psfFlux_sigmaMAD": "mmag",
             "yPerp_psfFlux_median": "mmag",
         }
 
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "r - i (PSF) [mags]"
-        self.produce.plot.yAxisLabel = "i - z (PSF) [mags]"
-        self.produce.plot.magLabel = "PSF Mag"
+        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[0], colorBands[1], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[1], colorBands[2], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.xLims = (-0.8, 3.59)
+        self.produce.plot.yLims = (-0.5, 1.49)
+        self.produce.plot.magLabel = "{} {}_Mag".format(
+            self.prep.selectors.magSelector.bands[0], fluxType.replace("Flux", "")
+        )
         self.produce.plot.plotName = "yPerp_psfFlux"
 
 
 class YPerpCModel(YPerpPSF):
     def setDefaults(self):
         super().setDefaults()
-        self.prep.selectors.snSelector.fluxType = "{band}_cModelFlux"
+        colorBands = ["r", "i", "z"]
+        fluxType = "cModelFlux"
 
-        self.process.buildActions.x.magDiff.col1 = "r_cModelFlux"
-        self.process.buildActions.x.magDiff.col2 = "i_cModelFlux"
+        self.prep.selectors.snSelector.fluxType = "{band}_" + fluxType
+        self.prep.selectors.magSelector.fluxType = "{band}_" + fluxType
 
-        self.process.buildActions.y.magDiff.col1 = "i_cModelFlux"
-        self.process.buildActions.y.magDiff.col2 = "z_cModelFlux"
+        self.process.buildActions.x.magDiff.col1 = colorBands[0] + "_" + fluxType
+        self.process.buildActions.x.magDiff.col2 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col1 = colorBands[1] + "_" + fluxType
+        self.process.buildActions.y.magDiff.col2 = colorBands[2] + "_" + fluxType
+        self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
-        self.process.buildActions.mag = ConvertFluxToMag(vectorKey="i_cModelFlux")
-
-        self.process.calculateActions.yPerp_cmodelFlux = StellarLocusFitAction()
-        self.process.calculateActions.yPerp_cmodelFlux.stellarLocusFitDict = {
+        self.process.calculateActions.yPerp_cModelFlux = StellarLocusFitAction()
+        self.process.calculateActions.yPerp_cModelFlux.stellarLocusFitDict = {
             "xMin": 0.82,
             "xMax": 2.01,
             "yMin": 0.37,
@@ -306,13 +296,18 @@ class YPerpCModel(YPerpPSF):
             "bHW": 0.064,
         }
 
-        self.produce.metric.units = {  # type: ignore
-            "yPerp_cmodelFlux_sigmaMAD": "mmag",
-            "yPerp_cmodelFlux_median": "mmag",
+        self.produce.metric.units = {
+            "yPerp_cModelFlux_sigmaMAD": "mmag",
+            "yPerp_cModelFlux_median": "mmag",
         }
 
-        self.produce.plot = ColorColorFitPlot()
-        self.produce.plot.xAxisLabel = "r - i (CModel) [mags]"
-        self.produce.plot.yAxisLabel = "i - z (CModel) [mags]"
-        self.produce.plot.magLabel = "CModel Mag"
-        self.produce.plot.plotName = "yPerp_cmodelFlux"
+        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[0], colorBands[1], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+            colorBands[1], colorBands[2], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.magLabel = "{} {}_Mag".format(
+            self.prep.selectors.magSelector.bands[0], fluxType.replace("Flux", "")
+        )
+        self.produce.plot.plotName = "yPerp_" + fluxType

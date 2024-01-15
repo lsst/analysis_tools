@@ -149,7 +149,8 @@ class AnalysisTool(AnalysisAction):
     def __call__(self, data: KeyedData, **kwargs) -> KeyedResults:
         bands = kwargs.pop("bands", None)
         if "plotInfo" in kwargs and kwargs.get("plotInfo") is not None:
-            kwargs["plotInfo"]["plotName"] = self.identity
+            if "plotName" not in kwargs["plotInfo"] or kwargs["plotInfo"]["plotName"] is None:
+                kwargs["plotInfo"]["plotName"] = self.identity
         if not self.parameterizedBand or bands is None:
             if "band" not in kwargs:
                 # Some tasks require a "band" key for naming. This shouldn't

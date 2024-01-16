@@ -37,7 +37,7 @@ class FitTest(lsst.utils.tests.TestCase):
         ys = np.arange(1, 10)
         mags = np.arange(17.5, 22, 0.5)
 
-        # Define an initial fit box that encompasses the points
+        # Define an initial fit box that encompasses the points.
         testParams = {
             "xMin": 0,
             "xMax": 11,
@@ -47,6 +47,7 @@ class FitTest(lsst.utils.tests.TestCase):
             "bHW": 0,
             "nSigmaToClip1": 3.5,
             "nSigmaToClip2": 5.0,
+            "minObjectForFit": 3,
         }
         paramsOut = stellarLocusFit(xs, ys, mags, testParams)
 

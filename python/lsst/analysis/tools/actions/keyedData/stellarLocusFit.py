@@ -67,6 +67,9 @@ def stellarLocusFit(xs, ys, mags, paramDict):
         ``"nSigmaToClip2"``
             The number of sigma perpendicular to the fit to clip in the final
             fitting loop (`float`).
+        ``"minObjectForFit"``
+            Minimum number of objects surviving cuts to attempt fit.  If not
+            met, return NANs for values in ``fitParams`` (`int`).
 
     Returns
     -------
@@ -114,6 +117,10 @@ def stellarLocusFit(xs, ys, mags, paramDict):
         & (ys > paramDict["yMin"])
         & (ys < paramDict["yMax"])
     )
+    if sum(fitPoints) < paramDict["minObjectForFit"]:
+        fitParams = _setFitParamsNans(fitParams, fitPoints, paramDict)
+        return fitParams
+
     linear = scipyODR.polynomial(1)
 
     fitData = scipyODR.Data(xs[fitPoints], ys[fitPoints])
@@ -145,9 +152,13 @@ def stellarLocusFit(xs, ys, mags, paramDict):
 
         # Use these perpendicular lines to choose the data and refit.
         fitPoints = (ys > mPerp0 * xs + bPerpMin) & (ys < mPerp0 * xs + bPerpMax)
+        if sum(fitPoints) < paramDict["minObjectForFit"]:
+            fitParams = _setFitParamsNans(fitParams, fitPoints, paramDict)
+            return fitParams
+
         p1 = np.array([0, bODR0])
         p2 = np.array([-bODR0 / mODR0, 0])
-        if np.abs(sum(p1 - p2) < 1e12):
+        if np.abs(sum(p1 - p2) < 1e12):  # p1 and p2 must be different.
             p2 = np.array([(1.0 - bODR0 / mODR0), 1.0])
 
         # Sigma clip points based on perpendicular distance (in mmag) to
@@ -157,6 +168,9 @@ def stellarLocusFit(xs, ys, mags, paramDict):
         allDists = np.array(perpDistance(p1, p2, zip(xs, ys))) * 1000
         keep = np.abs(allDists) <= clippedStats.clipValue
         fitPoints &= keep
+        if sum(fitPoints) < paramDict["minObjectForFit"]:
+            fitParams = _setFitParamsNans(fitParams, fitPoints, paramDict)
+            return fitParams
         fitData = scipyODR.Data(xs[fitPoints], ys[fitPoints])
         odr = scipyODR.ODR(fitData, linear, beta0=[bODR0, mODR0])
         params = odr.run()
@@ -174,6 +188,18 @@ def stellarLocusFit(xs, ys, mags, paramDict):
     fitParams["fitPoints"] = fitPoints
     fitParams["paramDict"] = paramDict
 
+    return fitParams
+
+
+def _setFitParamsNans(fitParams, fitPoints, paramDict):
+    fitParams["bPerpMin"] = np.nan
+    fitParams["bPerpMax"] = np.nan
+    fitParams["mODR"] = np.nan
+    fitParams["bODR"] = np.nan
+    fitParams["mPerp"] = np.nan
+    fitParams["goodPoints"] = np.nan
+    fitParams["fitPoints"] = fitPoints
+    fitParams["paramDict"] = paramDict
     return fitParams
 
 
@@ -277,7 +303,8 @@ class StellarLocusFitAction(KeyedDataAction):
         "for a given dataset (and should be derived from data).  They are used here as an "
         "initial guess for the fitting. nSigmaToClip1/2 set the number of sigma to clip "
         "perpendicular the fit in the first and second fit iterations after the initial "
-        "guess and point selection fit.",
+        "guess and point selection fit.  minObjectForFit sets a minimum number of points "
+        "deemed suitable for inclusion in the fit in order to bother attempting the fit.",
         default={
             "xMin": 0.1,
             "xMax": 0.2,
@@ -287,6 +314,7 @@ class StellarLocusFitAction(KeyedDataAction):
             "bHW": 0.0,
             "nSigmaToClip1": 3.5,
             "nSigmaToClip2": 5.0,
+            "minObjectForFit": 3,
         },
     )
 
@@ -306,6 +334,13 @@ class StellarLocusFitAction(KeyedDataAction):
         mags = cast(Vector, data["mag"])
 
         fitParams = stellarLocusFit(xs, ys, mags, self.stellarLocusFitDict)
+        # Bail out if there were not enough points to fit.
+        for value in fitParams.values():
+            if isinstance(value, float):
+                if np.isnan(value):
+                    fitParams[f"{self.identity or ''}_sigmaMAD"] = np.nan
+                    fitParams[f"{self.identity or ''}_median"] = np.nan
+                    return fitParams
         fitPoints = fitParams["fitPoints"]
 
         if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
@@ -369,4 +404,4 @@ class StellarLocusFitAction(KeyedDataAction):
         fitParams[f"{self.identity or ''}_sigmaMAD"] = fit_sigma
         fitParams[f"{self.identity or ''}_median"] = fit_med
 
-        return fitParams  # type: ignore
+        return fitParams

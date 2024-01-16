@@ -94,7 +94,7 @@ class WPerpPSF(StellarLocusBase):
         self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.wPerp_psfFlux = StellarLocusFitAction()
-        self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 0.28,
             "xMax": 1.0,
             "yMin": 0.02,
@@ -104,6 +104,8 @@ class WPerpPSF(StellarLocusBase):
             "mHW": 0.483,
             "bHW": -0.042,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "wPerp_psfFlux_sigmaMAD": "mmag",
@@ -140,7 +142,7 @@ class WPerpCModel(WPerpPSF):
         self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.wPerp_cModelFlux = StellarLocusFitAction()
-        self.process.calculateActions.wPerp_cModelFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 0.28,
             "xMax": 1.0,
             "yMin": 0.02,
@@ -150,6 +152,8 @@ class WPerpCModel(WPerpPSF):
             "mHW": 0.483,
             "bHW": -0.042,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.wPerp_cModelFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "wPerp_cModelFlux_sigmaMAD": "mmag",
@@ -174,7 +178,7 @@ class XPerpPSF(WPerpPSF):
         fluxType = "psfFlux"
 
         self.process.calculateActions.xPerp_psfFlux = StellarLocusFitAction()
-        self.process.calculateActions.xPerp_psfFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 1.05,
             "xMax": 1.55,
             "yMin": 0.78,
@@ -184,6 +188,8 @@ class XPerpPSF(WPerpPSF):
             "mHW": 60.0,
             "bHW": -75.0,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.xPerp_psfFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "xPerp_psfFlux_sigmaMAD": "mmag",
@@ -198,7 +204,7 @@ class XPerpCModel(WPerpCModel):
         fluxType = "cModelFlux"
 
         self.process.calculateActions.xPerp_cModelFlux = StellarLocusFitAction()
-        self.process.calculateActions.xPerp_cModelFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 1.05,
             "xMax": 1.55,
             "yMin": 0.78,
@@ -208,6 +214,8 @@ class XPerpCModel(WPerpCModel):
             "mHW": 60.0,
             "bHW": -75.0,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.xPerp_cModelFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "xPerp_cModelFlux_sigmaMAD": "mmag",
@@ -239,7 +247,7 @@ class YPerpPSF(StellarLocusBase):
         self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.yPerp_psfFlux = StellarLocusFitAction()
-        self.process.calculateActions.yPerp_psfFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 0.82,
             "xMax": 2.01,
             "yMin": 0.37,
@@ -249,6 +257,8 @@ class YPerpPSF(StellarLocusBase):
             "mHW": 0.385,
             "bHW": 0.064,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.yPerp_psfFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "yPerp_psfFlux_sigmaMAD": "mmag",
@@ -285,7 +295,7 @@ class YPerpCModel(YPerpPSF):
         self.process.buildActions.mag = ConvertFluxToMag(vectorKey=colorBands[1] + "_" + fluxType)
 
         self.process.calculateActions.yPerp_cModelFlux = StellarLocusFitAction()
-        self.process.calculateActions.yPerp_cModelFlux.stellarLocusFitDict = {
+        stellarLocusFitDict = {
             "xMin": 0.82,
             "xMax": 2.01,
             "yMin": 0.37,
@@ -295,6 +305,8 @@ class YPerpCModel(YPerpPSF):
             "mHW": 0.385,
             "bHW": 0.064,
         }
+        for item in stellarLocusFitDict.items():
+            self.process.calculateActions.yPerp_cModelFlux.stellarLocusFitDict.update([item])
 
         self.produce.metric.units = {
             "yPerp_cModelFlux_sigmaMAD": "mmag",

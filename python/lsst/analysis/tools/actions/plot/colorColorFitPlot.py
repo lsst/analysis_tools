@@ -62,6 +62,9 @@ class ColorColorFitPlot(PlotAction):
         doc="Minimum number of valid objects to bother attempting a fit.",
         default=5,
         min=1,
+        deprecated="This field is no longer used. The value should go as an "
+        "entry to the paramsDict keyed as minObjectForFit.  Will be removed "
+        "after v27.",
     )
 
     xLims = ListField[float](
@@ -228,6 +231,20 @@ class ColorColorFitPlot(PlotAction):
         fitPoints = data.pop("fitPoints")
         # Points with finite values for x, y, and mag.
         goodPoints = data.pop("goodPoints")
+
+        # TODO: Make a no data fig function and use here.
+        if sum(fitPoints) < paramDict["minObjectForFit"]:
+            fig = plt.figure(dpi=120)
+            ax = fig.add_axes([0.12, 0.25, 0.43, 0.62])
+            ax.tick_params(labelsize=7)
+            noDataText = (
+                "Number of objects after cuts ({})\nis less than the minimum required\nby "
+                "paramDict[minObjectForFit] ({})".format(sum(fitPoints), int(paramDict["minObjectForFit"]))
+            )
+            plt.text(0.5, 0.5, noDataText, ha="center", va="center", fontsize=8)
+            fig = addPlotInfo(plt.gcf(), plotInfo)
+            return fig
+
         # Define new colormaps.
         newBlues = mkColormap(["darkblue", "paleturquoise"])
         newGrays = mkColormap(["lightslategray", "white"])
@@ -244,17 +261,6 @@ class ColorColorFitPlot(PlotAction):
         xs = cast(Vector, data["x"])
         ys = cast(Vector, data["y"])
         mags = cast(Vector, data["mag"])
-
-        # TODO: Make a no data fig function and use here
-        if len(fitPoints) < self.minPointsForFit:
-            fig = plt.figure(dpi=120)
-            noDataText = (
-                "Number of objects after cuts ({}) is less than the\nminimum required by "
-                "minPointsForFit ({})".format(len(fitPoints), self.minPointsForFit)
-            )
-            fig.text(0.5, 0.5, noDataText, ha="center", va="center")
-            fig = addPlotInfo(plt.gcf(), plotInfo)
-            return fig
 
         # Plot the initial fit box.
         (initialBox,) = ax.plot(

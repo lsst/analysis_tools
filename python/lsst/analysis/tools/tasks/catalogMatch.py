@@ -156,6 +156,18 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
         default="dec",
     )
 
+    raColumn = pexConfig.Field[str](
+        doc="RA column.",
+        default="coord_ra",
+        deprecated="This field was replaced with targetRaColumn and is unused. Will be removed after v27.",
+    )
+
+    decColumn = pexConfig.Field[str](
+        doc="Dec column.",
+        default="coord_dec",
+        deprecated="This field was replaced with targetDecColumn and is unused. Will be removed after v27.",
+    )
+
     patchColumn = pexConfig.Field[str](doc="Patch column.", default="patch")
 
     matchesRefCat = pexConfig.Field[bool](

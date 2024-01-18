@@ -22,10 +22,23 @@
 __all__ = ("PixelMaskMetrics",)
 
 from ..interfaces import AnalysisTool
+from .genericPrep import ExposurePrep
+from ..actions.scalar import FracPixels
 
 
 class PixelMaskMetrics(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        # self.prep.selectors.maskSelector =
+        self.prep = ExposurePrep
+
+        self.process.calculateActions.saturatedFraction = FracPixels()
+        self.process.calculateActions.saturatedFraction.maskKey = "SAT"
+
+        self.process.calculateActions.detectedFraction = FracPixels()
+        self.process.calculateActions.detectedFraction.maskKey = "DETECTED"
+
+        self.produce.metric.units = {
+            "saturatedFraction": "",
+            "detectedFraction": "",
+        }

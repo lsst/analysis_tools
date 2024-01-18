@@ -29,11 +29,11 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
-from lsst.daf.butler.datastore import DatasetRefURIs, DatastoreOpaqueTable
+from lsst.daf.butler.datastore import DatasetRefURIs, DatastoreConfig, DatastoreOpaqueTable
 from lsst.daf.butler.datastore.generic_base import GenericBaseDatastore
 from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
-from lsst.resources import ResourcePath
+from lsst.resources import ResourcePath, ResourcePathExpression
 
 from . import SasquatchDispatcher
 
@@ -84,7 +84,7 @@ class SasquatchDatastore(GenericBaseDatastore):
 
     def __init__(
         self,
-        config: Config | str,
+        config: DatastoreConfig,
         bridgeManager: DatastoreRegistryBridgeManager,
         butlerRoot: str | None = None,
     ):
@@ -104,6 +104,18 @@ class SasquatchDatastore(GenericBaseDatastore):
         self.namespace = self.config.get("namespace", "lsst.dm")
 
         self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
+
+    @classmethod
+    def _create_from_config(
+        cls,
+        config: DatastoreConfig,
+        bridgeManager: DatastoreRegistryBridgeManager,
+        butlerRoot: ResourcePathExpression | None,
+    ) -> SasquatchDatastore:
+        return SasquatchDatastore(config, bridgeManager)
+
+    def clone(self, bridgeManager: DatastoreRegistryBridgeManager) -> SasquatchDatastore:
+        return SasquatchDatastore(self.config, bridgeManager)
 
     @property
     def bridge(self) -> DatastoreRegistryBridge:

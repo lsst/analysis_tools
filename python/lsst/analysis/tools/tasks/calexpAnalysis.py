@@ -24,11 +24,8 @@ __all__ = (
     "CalexpAnalysisTask",
 )
 
-from collections.abc import Iterable
-from ..interfaces._interfaces import KeyedData
 from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as ct
-from lsst.pex.config import ListField
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -48,7 +45,7 @@ class CalexpAnalysisConnections(
 
 
 class CalexpAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CalexpAnalysisConnections):
-    images = ListField[str](doc="Images to extract from the exposure.", default=["image", "mask", "variance"])
+    pass
 
 
 class CalexpAnalysisTask(AnalysisPipelineTask):
@@ -64,10 +61,11 @@ class CalexpAnalysisTask(AnalysisPipelineTask):
         # Docstring inherited.
 
         inputs = butlerQC.get(inputRefs)
-        dataId = butlerQC.quantum.dataId
+        planesDict = {
+            "image": inputs["data"].image,
+            "pixelMask": inputs["data"].mask,
+            "variance": inputs["data"].variance,
+        }
 
-        imageDict = {}
-        for image in self.config.images:
-            imageDict[image] = getattr(inputs["data"], image).getArray()
-
-        outputs = self.run(data={"imageArrays": imageDict})
+        outputs = self.run(data=planesDict)
+        butlerQC.put(outputs, outputRefs)

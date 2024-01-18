@@ -21,9 +21,9 @@
 
 __all__ = ("PixelMaskMetrics",)
 
+from ..actions.scalar import FracPixels
 from ..interfaces import AnalysisTool
 from .genericPrep import ExposurePrep
-from ..actions.scalar import FracPixels
 
 
 class PixelMaskMetrics(AnalysisTool):

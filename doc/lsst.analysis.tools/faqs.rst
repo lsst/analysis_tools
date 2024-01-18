@@ -48,3 +48,27 @@ in the pipeline YAML.
 The first line calls the action defined in python, after that the specific configuration is set in the
 pipeline YAML. This is a good balance between defining the entire action in YAML and having duplicate actions 
 defined in the python with only very mild differences.
+
+Can analysis tools put things in the butler?
+--------------------------------------------
+
+Short answer, yes! Long answer, while the tools themselves do not put things in the butler the tasks in the
+pipelines contained in analysis tools can. As an example lets look at the plots and metrics calculated from
+matching to the reference catalogues. First there is a task that matches the input data to the reference 
+catalogue. This then saves in the butler the matched output so that it can be read in later by multiple
+atools and also used in a notebook or script if further QA is required. After the matched catalogue is made 
+the plotting/metric/calculation atools read it in, then act on it. The atools themselves do not butler put 
+the metric/plot/calculated data but return them to the task that ran them which then puts them in the right
+place. Most of this is hidden from the user and the interfaces handle putting plots and metrics themselves.
+
+Does analysis tools only work on tabular data?
+----------------------------------------------
+
+No, while a lot of the plots and metrics are written to work on tables (or keyed data of some variety) you can
+implement tasks to read in and manipulate any sort of data. If you have a specific datatype that you are
+struggling with please reach out to #rubinobs-analysis-tools-support on Slack.
+
+Do atools only work on a per detector/patch/tract/visit basis?
+--------------------------------------------------------------
+
+You can write an atool that rolls up the data from a bunch of smaller parts.

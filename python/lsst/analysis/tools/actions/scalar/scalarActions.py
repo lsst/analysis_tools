@@ -39,6 +39,7 @@ __all__ = (
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
+    "FracPixels",
 )
 
 import operator
@@ -412,3 +413,33 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+class FracPixels(ScalarAction):
+    """Compute the fraction of pixels flagged in a pixelMask."""
+
+    maskKey = Field[str](doc="Key of the mask plane dictionary to evaluate")
+
+    percent = Field[bool](doc="Express result as percentage", default=False)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.maskKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        values = data["pixelMask"].getArray()
+        values = values[np.logical_not(np.isnan(values))]
+        n_values = values.size
+        if n_values == 0:
+            return np.nan
+
+        planeBitMask = data["pixelMask"].getPlaneBitMask(self.maskKey)
+        flaggedPixels = (values & planeBitMask) == planeBitMask
+
+        result = cast(
+            Scalar,
+            float(np.sum(flaggedPixels) / n_values),  # type: ignore
+        )
+        if self.percent:
+            return 100.0 * result
+        else:
+            return result

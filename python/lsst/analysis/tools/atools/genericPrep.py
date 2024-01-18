@@ -20,10 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddPrep", "VisitPrep")
+__all__ = ("CoaddPrep", "VisitPrep", "ExposurePrep")
 
 from ..actions.vector import CoaddPlotFlagSelector, SnSelector, VisitPlotFlagSelector
-from ..interfaces import BasePrep
+from ..interfaces import BasePrep, KeyedData, KeyedDataSchema
 
 
 class CoaddPrep(BasePrep):
@@ -47,3 +47,14 @@ class VisitPrep(BasePrep):
         self.selectors.snSelector = SnSelector()
         self.selectors.snSelector.fluxType = "psfFlux"
         self.selectors.snSelector.threshold = 100
+
+
+class ExposurePrep(BasePrep):
+    def setDefaults(self):
+        super().setDefaults()
+
+    def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
+        pass
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        return data

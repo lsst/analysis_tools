@@ -24,7 +24,15 @@ from __future__ import annotations
 be a subclass of `Context`, and should contain a description of what the
 context is for as it's docstring.
 """
-__all__ = ("VisitContext", "CoaddContext", "MatchedRefDiffContext", "MatchedRefChiContext", "RefMatchContext")
+__all__ = (
+    "VisitContext",
+    "CoaddContext",
+    "MatchedRefDiffContext",
+    "MatchedRefChiContext",
+    "RefMatchContext",
+    "DrpContext",
+    "ApContext",
+)
 
 from ._baseContext import Context
 
@@ -60,4 +68,16 @@ class MatchedRefChiContext(Context):
 class RefMatchContext(Context):
     """A context which indicates that `AnalysisActions` are being computed
     on HSC data matched to the Gaia or PS reference catalogues.
+    """
+
+
+class DrpContext(Context):
+    """A context which indicates the analysis tool is built for DRP style
+    data products/catalogs and will use the appropriate column names.
+    """
+
+
+class ApContext(Context):
+    """A context which indicates the analysis tool is built for AP style
+    data products/catalogs and will use appropriate column names.
     """

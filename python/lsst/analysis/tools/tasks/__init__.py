@@ -18,3 +18,4 @@ from .refCatSourceAnalysis import *
 from .refCatSourcePhotometricAnalysis import *
 from .sourceTableVisitAnalysis import *
 from .trailedDiaSrcDetectorVisitAnalysis import *
+from .diaSourceTableTractAnalysis import *

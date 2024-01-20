@@ -96,7 +96,7 @@ def stellarLocusFit(xs, ys, mags, paramDict):
     Notes
     -----
     The code does two rounds of fitting, the first is initiated using the
-    hardwired values given in ``paramDict`` and is done using an Orthogonal
+    fixed values given in ``paramDict`` and is done using an Orthogonal
     Distance Regression (ODR) fit to the points defined by the box with limits
     defined by the keys: xMin, xMax, yMin, and yMax. Once this fitting has been
     done a perpendicular bisector is calculated at either end of the line and
@@ -124,7 +124,7 @@ def stellarLocusFit(xs, ys, mags, paramDict):
     linear = scipyODR.polynomial(1)
 
     fitData = scipyODR.Data(xs[fitPoints], ys[fitPoints])
-    odr = scipyODR.ODR(fitData, linear, beta0=[paramDict["bHW"], paramDict["mHW"]])
+    odr = scipyODR.ODR(fitData, linear, beta0=[paramDict["bFixed"], paramDict["mFixed"]])
     params = odr.run()
     mODR0 = float(params.beta[1])
     bODR0 = float(params.beta[0])
@@ -343,15 +343,19 @@ class StellarLocusFitAction(KeyedDataAction):
                     return fitParams
         fitPoints = fitParams["fitPoints"]
 
-        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
-            ysFitLineHW = np.array([self.stellarLocusFitDict["yMin"], self.stellarLocusFitDict["yMax"]])
-            xsFitLineHW = (ysFitLineHW - self.stellarLocusFitDict["bHW"]) / self.stellarLocusFitDict["mHW"]
+        if np.fabs(self.stellarLocusFitDict["mFixed"]) > 1:
+            ysFitLineFixed = np.array([self.stellarLocusFitDict["yMin"], self.stellarLocusFitDict["yMax"]])
+            xsFitLineFixed = (ysFitLineFixed - self.stellarLocusFitDict["bFixed"]) / self.stellarLocusFitDict[
+                "mFixed"
+            ]
             ysFitLine = np.array([self.stellarLocusFitDict["yMin"], self.stellarLocusFitDict["yMax"]])
             xsFitLine = (ysFitLine - fitParams["bODR"]) / fitParams["mODR"]
 
         else:
-            xsFitLineHW = np.array([self.stellarLocusFitDict["xMin"], self.stellarLocusFitDict["xMax"]])
-            ysFitLineHW = self.stellarLocusFitDict["mHW"] * xsFitLineHW + self.stellarLocusFitDict["bHW"]
+            xsFitLineFixed = np.array([self.stellarLocusFitDict["xMin"], self.stellarLocusFitDict["xMax"]])
+            ysFitLineFixed = (
+                self.stellarLocusFitDict["mFixed"] * xsFitLineFixed + self.stellarLocusFitDict["bFixed"]
+            )
             xsFitLine = [self.stellarLocusFitDict["xMin"], self.stellarLocusFitDict["xMax"]]
             ysFitLine = np.array(
                 [
@@ -372,7 +376,7 @@ class StellarLocusFitAction(KeyedDataAction):
         # Now we have the information for the perpendicular line we
         # can use it to calculate the points at the ends of the
         # perpendicular lines that intersect at the box edges.
-        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
+        if np.fabs(self.stellarLocusFitDict["mFixed"]) > 1:
             xMid = (self.stellarLocusFitDict["yMin"] - fitParams["bODR"]) / fitParams["mODR"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
             ys = fitParams["mPerp"] * xs + fitParams["bPerpMin"]
@@ -386,7 +390,7 @@ class StellarLocusFitAction(KeyedDataAction):
             )
             ys = xs * fitParams["mPerp"] + fitParams["bPerpMin"]
 
-        if np.fabs(self.stellarLocusFitDict["mHW"]) > 1:
+        if np.fabs(self.stellarLocusFitDict["mFixed"]) > 1:
             xMid = (self.stellarLocusFitDict["yMax"] - fitParams["bODR"]) / fitParams["mODR"]
             xs = np.array([xMid - 0.5, xMid, xMid + 0.5])
             ys = fitParams["mPerp"] * xs + fitParams["bPerpMax"]

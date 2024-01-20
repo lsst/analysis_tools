@@ -180,13 +180,13 @@ class ColorColorFitPlot(PlotAction):
                   The median of the distances to the line fit.
 
          * Parameters from the fitting code that are illustrated on the plot:
-            * ``"bHW"``
-                  The hardwired intercept to fall back on.
+            * ``"bFixed"``
+                  The fixed intercept to fall back on.
+            * ``"mFixed"``
+                  The fixed gradient to fall back on.
             * ``"bODR"``
                   The intercept calculated by the final orthogonal distance
                   regression fitting.
-            * ``"mHW"``
-                  The hardwired gradient to fall back on.
             * ``"mODR"``
                   The gradient calculated by the final orthogonal distance
                   regression fitting.
@@ -268,7 +268,7 @@ class ColorColorFitPlot(PlotAction):
             [paramDict["yMin"], paramDict["yMin"], paramDict["yMax"], paramDict["yMax"], paramDict["yMin"]],
             "k",
             alpha=0.3,
-            label="Initial Fit Limits",
+            label="Initial selection",
         )
 
         # Add some useful information to the plot.
@@ -339,15 +339,15 @@ class ColorColorFitPlot(PlotAction):
             ax.set_ylim(percsY[0] - y5, percsY[1] + y5)
 
         # Plot the fit lines.
-        if np.fabs(paramDict["mHW"]) > 1:
-            ysFitLineHW = np.array([paramDict["yMin"], paramDict["yMax"]])
-            xsFitLineHW = (ysFitLineHW - paramDict["bHW"]) / paramDict["mHW"]
+        if np.fabs(paramDict["mFixed"]) > 1:
+            ysFitLineFixed = np.array([paramDict["yMin"], paramDict["yMax"]])
+            xsFitLineFixed = (ysFitLineFixed - paramDict["bFixed"]) / paramDict["mFixed"]
             ysFitLine = np.array([paramDict["yMin"], paramDict["yMax"]])
             xsFitLine = (ysFitLine - data["bODR"]) / data["mODR"]
 
         else:
-            xsFitLineHW = np.array([paramDict["xMin"], paramDict["xMax"]])
-            ysFitLineHW = paramDict["mHW"] * xsFitLineHW + paramDict["bHW"]  # type: ignore
+            xsFitLineFixed = np.array([paramDict["xMin"], paramDict["xMax"]])
+            ysFitLineFixed = paramDict["mFixed"] * xsFitLineFixed + paramDict["bFixed"]
             xsFitLine = np.array([paramDict["xMin"], paramDict["xMax"]])
             ysFitLine = np.array(
                 [
@@ -356,11 +356,13 @@ class ColorColorFitPlot(PlotAction):
                 ]
             )
 
-        ax.plot(xsFitLineHW, ysFitLineHW, "w", lw=1.5)
-        (lineHW,) = ax.plot(xsFitLineHW, ysFitLineHW, "tab:green", lw=1, ls="--", label="Hardwired Fit")
+        ax.plot(xsFitLineFixed, ysFitLineFixed, "w", lw=1.5)
+        (lineFixed,) = ax.plot(xsFitLineFixed, ysFitLineFixed, "tab:green", lw=1, ls="--", label="Fixed")
         ax.plot(xsFitLine, ysFitLine, "w", lw=1.5)
         (lineOdrFit,) = ax.plot(xsFitLine, ysFitLine, "k", lw=1, ls="--", label="ODR Fit")
-        ax.legend(handles=[initialBox, lineHW, lineOdrFit], fontsize=6, loc="lower right")
+        ax.legend(
+            handles=[initialBox, lineFixed, lineOdrFit], handlelength=1.5, fontsize=6, loc="lower right"
+        )
 
         # Calculate the distances (in mmag) to the line for the data used in
         # the fit. Two points are needed to characterize the lines we want
@@ -368,43 +370,43 @@ class ColorColorFitPlot(PlotAction):
         p1 = np.array([xsFitLine[0], ysFitLine[0]])
         p2 = np.array([xsFitLine[1], ysFitLine[1]])
 
-        p1HW = np.array([xsFitLineHW[0], ysFitLineHW[0]])
-        p2HW = np.array([xsFitLineHW[1], ysFitLineHW[1]])
+        p1Fixed = np.array([xsFitLineFixed[0], ysFitLineFixed[0]])
+        p2Fixed = np.array([xsFitLineFixed[1], ysFitLineFixed[1]])
 
         # Convert to millimags.
         statsUnitStr = "mmag"
-        distsHW = np.array(perpDistance(p1HW, p2HW, zip(xs[fitPoints], ys[fitPoints]))) * 1000
+        distsFixed = np.array(perpDistance(p1Fixed, p2Fixed, zip(xs[fitPoints], ys[fitPoints]))) * 1000
         dists = np.array(perpDistance(p1, p2, zip(xs[fitPoints], ys[fitPoints]))) * 1000
         maxDist = np.abs(np.nanmax(dists)) / 1000  # These will be used to set the fit boundary line limits.
         minDist = np.abs(np.nanmin(dists)) / 1000
         # Now we have the information for the perpendicular line we can use it
         # to calculate the points at the ends of the perpendicular lines that
         # intersect at the box edges.
-        if np.fabs(paramDict["mHW"]) > 1:
+        if np.fabs(paramDict["mFixed"]) > 1:
             xMid = (paramDict["yMin"] - data["bODR"]) / data["mODR"]
             xsFit = np.array([xMid - max(0.2, maxDist), xMid, xMid + max(0.2, minDist)])
             ysFit = data["mPerp"] * xsFit + data["bPerpMin"]
         else:
             xsFit = np.array(
                 [
-                    paramDict["xMin"] - max(0.2, np.fabs(paramDict["mHW"]) * maxDist),
+                    paramDict["xMin"] - max(0.2, np.fabs(paramDict["mFixed"]) * maxDist),
                     paramDict["xMin"],
-                    paramDict["xMin"] + max(0.2, np.fabs(paramDict["mHW"]) * minDist),
+                    paramDict["xMin"] + max(0.2, np.fabs(paramDict["mFixed"]) * minDist),
                 ]
             )
             ysFit = xsFit * data["mPerp"] + data["bPerpMin"]
         ax.plot(xsFit, ysFit, "k--", alpha=0.7, lw=1)
 
-        if np.fabs(paramDict["mHW"]) > 1:
+        if np.fabs(paramDict["mFixed"]) > 1:
             xMid = (paramDict["yMax"] - data["bODR"]) / data["mODR"]
             xsFit = np.array([xMid - max(0.2, maxDist), xMid, xMid + max(0.2, minDist)])
             ysFit = data["mPerp"] * xsFit + data["bPerpMax"]
         else:
             xsFit = np.array(
                 [
-                    paramDict["xMax"] - max(0.2, np.fabs(paramDict["mHW"]) * maxDist),
+                    paramDict["xMax"] - max(0.2, np.fabs(paramDict["mFixed"]) * maxDist),
                     paramDict["xMax"],
-                    paramDict["xMax"] + max(0.2, np.fabs(paramDict["mHW"]) * minDist),
+                    paramDict["xMax"] + max(0.2, np.fabs(paramDict["mFixed"]) * minDist),
                 ]
             )
             ysFit = xsFit * data["mPerp"] + data["bPerpMax"]
@@ -491,18 +493,18 @@ class ColorColorFitPlot(PlotAction):
         )
 
         axHist.hist(dists, bins=100, histtype="stepfilled", label="ODR Fit", color="k", ec="k", alpha=0.3)
-        axHist.hist(distsHW, bins=100, histtype="step", label="HW", color="tab:green", alpha=1.0)
+        axHist.hist(distsFixed, bins=100, histtype="step", label="Fixed", color="tab:green", alpha=1.0)
         if self.doPlotRedBlueHists:
             axHist.hist(blueDists, bins=100, histtype="stepfilled", color="blue", ec="blue", alpha=0.3)
             axHist.hist(redDists, bins=100, histtype="stepfilled", color="red", ec="red", alpha=0.3)
 
         handles = [Rectangle((0, 0), 1, 1, color="k", alpha=0.4)]
         handles.append(Rectangle((0, 0), 1, 1, color="none", ec="tab:green", alpha=1.0))
-        labels = ["ODR Fit", "HW"]
+        labels = ["ODR Fit", "Fixed"]
         if self.doPlotRedBlueHists:
             handles.append(Rectangle((0, 0), 1, 1, color="blue", alpha=0.3))
             handles.append(Rectangle((0, 0), 1, 1, color="red", alpha=0.3))
-            labels = ["ODR Fit", "Blue Stars", "Red Stars", "HW"]
+            labels = ["ODR Fit", "Blue Stars", "Red Stars", "Fixed"]
         axHist.legend(handles, labels, fontsize=5, loc="upper right")
 
         if self.doPlotDistVsColor:

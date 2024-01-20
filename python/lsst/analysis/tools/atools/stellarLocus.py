@@ -99,10 +99,10 @@ class WPerpPSF(StellarLocusBase):
             "xMax": 1.0,
             "yMin": 0.02,
             "yMax": 0.48,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 0.483,
-            "bHW": -0.042,
+            "mFixed": 0.483,
+            "bFixed": -0.042,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.wPerp_psfFlux.stellarLocusFitDict.update([item])
@@ -147,10 +147,10 @@ class WPerpCModel(WPerpPSF):
             "xMax": 1.0,
             "yMin": 0.02,
             "yMax": 0.48,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 0.483,
-            "bHW": -0.042,
+            "mFixed": 0.483,
+            "bFixed": -0.042,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.wPerp_cModelFlux.stellarLocusFitDict.update([item])
@@ -183,10 +183,10 @@ class XPerpPSF(WPerpPSF):
             "xMax": 1.55,
             "yMin": 0.78,
             "yMax": 1.62,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 60.0,
-            "bHW": -75.0,
+            "mFixed": 60.0,
+            "bFixed": -75.0,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.xPerp_psfFlux.stellarLocusFitDict.update([item])
@@ -209,10 +209,10 @@ class XPerpCModel(WPerpCModel):
             "xMax": 1.55,
             "yMin": 0.78,
             "yMax": 1.62,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 60.0,
-            "bHW": -75.0,
+            "mFixed": 60.0,
+            "bFixed": -75.0,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.xPerp_cModelFlux.stellarLocusFitDict.update([item])
@@ -252,10 +252,10 @@ class YPerpPSF(StellarLocusBase):
             "xMax": 2.01,
             "yMin": 0.37,
             "yMax": 0.90,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 0.385,
-            "bHW": 0.064,
+            "mFixed": 0.385,
+            "bFixed": 0.064,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.yPerp_psfFlux.stellarLocusFitDict.update([item])
@@ -300,10 +300,10 @@ class YPerpCModel(YPerpPSF):
             "xMax": 2.01,
             "yMin": 0.37,
             "yMax": 0.90,
-            # The hardwired values were roughly derived from w_2023_50 HSC-RC2
+            # The "fixed" values were roughly derived from w_2023_50 HSC-RC2
             # processing (DM-42194). See commit message for further details.
-            "mHW": 0.385,
-            "bHW": 0.064,
+            "mFixed": 0.385,
+            "bFixed": 0.064,
         }
         for item in stellarLocusFitDict.items():
             self.process.calculateActions.yPerp_cModelFlux.stellarLocusFitDict.update([item])

@@ -39,11 +39,12 @@ __all__ = (
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
+    "FracPixels",
 )
 
 import operator
 from math import nan
-from typing import cast
+from typing import Mapping, cast
 
 import numpy as np
 from lsst.pex.config import ChoiceField, Field
@@ -202,7 +203,7 @@ class FracThreshold(ScalarFromVectorAction):
     )
     threshold = Field[float](doc="Threshold to apply.")
     percent = Field[bool](doc="Express result as percentage", default=False)
-    relative_to_median = Field[bool](doc="Calculate threshold relative to " "the median?", default=False)
+    relative_to_median = Field[bool](doc="Calculate threshold relative to the median?", default=False)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
@@ -412,3 +413,35 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+class FracPixels(ScalarAction):
+    """Compute the fraction of pixels flagged in a pixelMask."""
+
+    vectorKey = Field[str](doc="Key of plane", default="mask")
+    maskPlaneKey = Field[str](doc="Key of the mask plane dictionary to evaluate", optional=False)
+    percent = Field[bool](doc="Express result as percentage", default=False)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, maskPlaneDict: Mapping[str, int] | None = None, **kwargs) -> Scalar:
+        if maskPlaneDict is None:
+            raise ValueError("maskPlaneDict must be supplied")
+        values = data[self.vectorKey]
+        values = values[np.logical_not(np.isnan(values))]
+        n_values = values.size
+        if n_values == 0:
+            return np.nan
+
+        planeBitMask = 2 ** maskPlaneDict[self.maskPlaneKey]
+        flaggedPixels = (values & planeBitMask) == planeBitMask
+
+        result = cast(
+            Scalar,
+            float(np.sum(flaggedPixels) / n_values),  # type: ignore
+        )
+        if self.percent:
+            return 100.0 * result
+        else:
+            return result

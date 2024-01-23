@@ -22,7 +22,7 @@ import unittest
 
 import lsst.utils.tests
 import numpy as np
-from lsst.analysis.tools.actions.keyedData.stellarLocusFit import perpDistance, stellarLocusFit
+from lsst.analysis.tools.actions.keyedData.stellarLocusFit import _stellarLocusFit, perpDistance
 from lsst.analysis.tools.actions.plot.plotUtils import shorten_list
 
 
@@ -49,9 +49,9 @@ class FitTest(lsst.utils.tests.TestCase):
             "nSigmaToClip2": 5.0,
             "minObjectForFit": 3,
         }
-        paramsOut = stellarLocusFit(xs, ys, mags, testParams)
+        paramsOut = _stellarLocusFit(xs, ys, mags, testParams)
 
-        # stellarLocusFit performs two iterations of fitting and also
+        # _stellarLocusFit performs two iterations of fitting and also
         # calculates the perpendicular gradient to the fit line and
         # the points of intersection between the box and the fit
         # line. Test that these are returning what is expected.

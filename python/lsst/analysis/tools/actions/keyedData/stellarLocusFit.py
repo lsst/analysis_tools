@@ -34,7 +34,7 @@ from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar, V
 from ...math import sigmaMad
 
 
-def stellarLocusFit(xs, ys, mags, paramDict):
+def _stellarLocusFit(xs, ys, mags, paramDict):
     """Make a fit to the stellar locus.
 
     Parameters
@@ -333,7 +333,7 @@ class StellarLocusFitAction(KeyedDataAction):
         ys = cast(Vector, data["y"])
         mags = cast(Vector, data["mag"])
 
-        fitParams = stellarLocusFit(xs, ys, mags, self.stellarLocusFitDict)
+        fitParams = _stellarLocusFit(xs, ys, mags, self.stellarLocusFitDict)
         # Bail out if there were not enough points to fit.
         for value in fitParams.values():
             if isinstance(value, float):

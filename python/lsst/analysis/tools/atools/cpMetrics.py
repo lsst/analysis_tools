@@ -48,7 +48,11 @@ __all__ = (
 )
 
 
-class CalibrationMetric(AnalysisTool):
+class CalibrationTool(AnalysisTool):
+    """Class to generate common calibration metrics for value/scatter
+    quantities.
+    """
+
     parameterizedBand: bool = False
 
     def __init_subclass__(cls, **kwargs):
@@ -58,6 +62,17 @@ class CalibrationMetric(AnalysisTool):
         cls.newNames = {}
 
     def addPair(self, vectorKey, name, longName):
+        """Add a pair of value/scatter metrics from a given catalog key.
+
+        Parameters
+        ----------
+        vectorKey : `str`
+            Name of the catalog key to load.
+        name : `str`
+            Short name for this metric.
+        longName : `str`
+            Detailed metric name, including calibration stage and product.
+        """
         setattr(self.process.calculateActions, f"{name}Median", MedianAction(vectorKey=vectorKey))
         setattr(self.process.calculateActions, f"{name}Sigma", SigmaMadAction(vectorKey=vectorKey))
 
@@ -65,16 +80,22 @@ class CalibrationMetric(AnalysisTool):
         self.newNames.update({f"{name}Median": f"{longName}_median", f"{name}Sigma": f"{longName}_sigmaMad"})
 
     def addFpPlot(self, vectorKey, statistic, label):
-        self.process.buildActions.x = LoadVector()
-        self.process.buildActions.x.vectorKey = "detector"
-        self.process.buildActions.y = LoadVector()
-        self.process.buildActions.y.vectorKey = "amplifier"
-        self.process.buildActions.detector = LoadVector()
-        self.process.buildActions.detector.vectorKey = "detector"
-        self.process.buildActions.amplifier = LoadVector()
-        self.process.buildActions.amplifier.vectorKey = "amplifier"
-        self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = vectorKey
+        """Add focal plan geometry plot.
+
+        Parameters
+        ----------
+        vectorKey : `str`
+             Name of the catalog key to load.
+        statistic : `str`
+             Statistic to use in binning per-amplifier data points.
+        label : `str`
+             Label to apply to the output z-axis.
+        """
+        self.process.buildActions.x = LoadVector(vectorKey="detector")
+        self.process.buildActions.y = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+        self.process.buildActions.amplifier = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.z = LoadVector(vectorKey=vectorKey)
         self.process.buildActions.statMask = VectorSelector()
         self.process.buildActions.statMask.vectorKey = "statMask"
 
@@ -85,7 +106,7 @@ class CalibrationMetric(AnalysisTool):
         self.produce.plot.zAxisLabel = label
 
 
-class BiasScalarMetrics(CalibrationMetric):
+class BiasScalarMetrics(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addPair("MEAN", "mean", "bias_residual_mean")
@@ -97,31 +118,31 @@ class BiasScalarMetrics(CalibrationMetric):
         self.produce.metric.newNames = self.newNames
 
 
-class BiasResidualMeanMedianFP(CalibrationMetric):
+class BiasResidualMeanMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "median", "median per-amplifier residual mean (ADU)")
 
 
-class BiasResidualMeanStdevFP(CalibrationMetric):
+class BiasResidualMeanStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "std", "stdev per-amplifier residual mean (ADU)")
 
 
-class BiasReadNoiseMedianFP(CalibrationMetric):
+class BiasReadNoiseMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("READ_NOISE", "median", "median read noise (ADU)")
 
 
-class BiasReadNoiseStdevFP(CalibrationMetric):
+class BiasReadNoiseStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("READ_NOISE", "std", "median read noise (ADU)")
 
 
-class DarkScalarMetrics(CalibrationMetric):
+class DarkScalarMetrics(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addPair("MEAN", "mean", "dark_residual_mean")
@@ -133,31 +154,31 @@ class DarkScalarMetrics(CalibrationMetric):
         self.produce.metric.newNames = self.newNames
 
 
-class DarkResidualMeanMedianFP(CalibrationMetric):
+class DarkResidualMeanMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "median", "median per-amplifier residual mean (ADU)")
 
 
-class DarkResidualMeanStdevFP(CalibrationMetric):
+class DarkResidualMeanStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "std", "stdev per-amplifier residual mean (ADU)")
 
 
-class DarkReadNoiseMedianFP(CalibrationMetric):
+class DarkReadNoiseMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("READ_NOISE", "median", "median read noise (ADU)")
 
 
-class DarkReadNoiseStdevFP(CalibrationMetric):
+class DarkReadNoiseStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("READ_NOISE", "std", "median read noise (ADU)")
 
 
-class FlatScalarMetrics(CalibrationMetric):
+class FlatScalarMetrics(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addPair("MEAN", "mean", "flat_residual_mean")
@@ -167,31 +188,31 @@ class FlatScalarMetrics(CalibrationMetric):
         self.produce.metric.newNames = self.newNames
 
 
-class FlatResidualMeanMedianFP(CalibrationMetric):
+class FlatResidualMeanMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "median", "median per-amplifier residual mean (ADU)")
 
 
-class FlatResidualMeanStdevFP(CalibrationMetric):
+class FlatResidualMeanStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("MEAN", "std", "stdev per-amplifier residual mean (ADU)")
 
 
-class FlatNoiseMedianFP(CalibrationMetric):
+class FlatNoiseMedianFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("NOISE", "median", "median noise (ADU)")
 
 
-class FlatNoiseStdevFP(CalibrationMetric):
+class FlatNoiseStdevFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.addFpPlot("NOISE", "std", "median noise (ADU)")
 
 
-class PtcGainFP(CalibrationMetric):
+class PtcGainFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
@@ -199,7 +220,7 @@ class PtcGainFP(CalibrationMetric):
         self.addFpPlot("PTC_GAIN", "median", "PTC gain")
 
 
-class PtcNoiseFP(CalibrationMetric):
+class PtcNoiseFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
@@ -207,7 +228,7 @@ class PtcNoiseFP(CalibrationMetric):
         self.addFpPlot("PTC_NOISE", "median", "PTC read noise")
 
 
-class PtcA00FP(CalibrationMetric):
+class PtcA00FP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
@@ -215,7 +236,7 @@ class PtcA00FP(CalibrationMetric):
         self.addFpPlot("PTC_BFE_A00", "median", "PTC A00")
 
 
-class PtcTurnoffFP(CalibrationMetric):
+class PtcTurnoffFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't

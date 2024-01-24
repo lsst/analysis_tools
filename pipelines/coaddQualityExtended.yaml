@@ -7,6 +7,7 @@ tasks:
       connections.outputName: objectTableExtended
       # set plots to run
       atools.ap12PsfSky: Ap12PsfSkyPlot
+      atools.psfCModelSky: PsfCModelSkyPlot
       atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
       atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
       atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"

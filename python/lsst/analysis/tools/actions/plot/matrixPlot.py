@@ -80,7 +80,10 @@ class MatrixPlot(PlotAction):
     Note that when `component1Key` and `component2Key` are specified, the x and
     y tick values and labels will be dynamically configured, thereby
     eliminating the need for providing `x/yAxisTickValues` and
-    `x/yAxisTickLabels`.
+    `x/yAxisTickLabels`. When `componentGroup1Key` and `componentGroup2Key` are
+    specified, the x and y axis labels are dynamically updated to include the
+    group names, prefixed by `xAxisLabel` and `yAxisLabel` for a more
+    descriptive labeling.
     """
 
     inputDim = ChoiceField[int](
@@ -99,7 +102,8 @@ class MatrixPlot(PlotAction):
     )
 
     matrixOrigin = ChoiceField[str](
-        doc="Determines the starting corner ('upper', 'lower') for matrix plots.",
+        doc="Determines the starting corner ('upper', 'lower') for matrix plots. It only affects the visual "
+        "appearance of the plot.",
         default="upper",
         allowed={
             "upper": "The origin is at the upper left corner.",
@@ -109,15 +113,29 @@ class MatrixPlot(PlotAction):
     )
 
     component1Key = Field[str](
-        doc="The key to access a list of names for the first component set in a correlation analysis. This "
-        "will be used to determine x-axis tick values and labels.",
+        doc="The key to access a list of names for the first set of components in a correlation analysis. "
+        "This will be used to determine x-axis tick values and tick labels.",
         default=None,
         optional=True,
     )
 
     component2Key = Field[str](
-        doc="The key to access a list of names for the second component set in a correlation analysis. This "
-        "will be used to determine y-axis tick values and labels.",
+        doc="The key to access a list of names for the second set of components in a correlation analysis. "
+        "This will be used to determine y-axis tick values and tick labels.",
+    )
+
+    componentGroup1Key = Field[str](
+        doc="The key to access a list of group names for the first set of components in a correlation "
+        "analysis. This will be used to determine the x-axis label.",
+        default=None,
+        optional=True,
+    )
+
+    componentGroup2Key = Field[str](
+        doc="The key to access a list of group names for the second set of components in a correlation "
+        "analysis. This will be used to determine the y-axis label.",
+        default=None,
+        optional=True,
     )
 
     xAxisLabel = Field[str](
@@ -374,11 +392,23 @@ class MatrixPlot(PlotAction):
         if self.title:
             ax.set_title(self.title, fontsize=self.titleFontSize)
 
-        if self.xAxisLabel:
-            ax.set_xlabel(self.xAxisLabel, fontsize=self.axisLabelFontSize)
+        if self.componentGroup1Key is not None and self.componentGroup2Key is not None:
+            componentGroup1 = set(data[self.componentGroup1Key])
+            componentGroup2 = set(data[self.componentGroup2Key])
+            if len(componentGroup1) != 1 or len(componentGroup2) != 1:
+                raise ValueError(
+                    f"Each column specified by {self.componentGroup1Key} and {self.componentGroup2Key} must "
+                    "contain identical values within itself, but they do not."
+                )
+            else:
+                xAxisLabel = self.xAxisLabel + str(componentGroup1.pop())
+                yAxisLabel = self.yAxisLabel + str(componentGroup2.pop())
+        else:
+            xAxisLabel = self.xAxisLabel
+            yAxisLabel = self.yAxisLabel
 
-        if self.yAxisLabel:
-            ax.set_ylabel(self.yAxisLabel, fontsize=self.axisLabelFontSize)
+        ax.set_xlabel(xAxisLabel, fontsize=self.axisLabelFontSize)
+        ax.set_ylabel(yAxisLabel, fontsize=self.axisLabelFontSize)
 
         # Set the colorbar and draw the image.
         norm = ImageNormalize(vmin=vrange[0], vmax=vrange[1])
@@ -403,10 +433,10 @@ class MatrixPlot(PlotAction):
         shift = 0.5 if self.setPositionsAtPixelBoundaries else 0
 
         if self.component1Key is not None and self.component2Key is not None:
-            xAxisTickValues = np.arange(matrix.shape[0] + shift)
-            yAxisTickValues = np.arange(matrix.shape[1] + shift)
-            xAxisTickLabels = {key + shift: str(val) for key, val in zip(range(matrix.shape[0]), comp1[0, :])}
-            yAxisTickLabels = {key + shift: str(val) for key, val in zip(range(matrix.shape[1]), comp2[:, 0])}
+            xAxisTickValues = np.arange(matrix.shape[1] + shift)
+            yAxisTickValues = np.arange(matrix.shape[0] + shift)
+            xAxisTickLabels = {key + shift: str(val) for key, val in zip(range(matrix.shape[1]), comp1[0, :])}
+            yAxisTickLabels = {key + shift: str(val) for key, val in zip(range(matrix.shape[0]), comp2[:, 0])}
         else:
             xAxisTickValues = self.xAxisTickValues
             yAxisTickValues = self.yAxisTickValues
@@ -550,6 +580,7 @@ class MatrixPlot(PlotAction):
                         mpl_path_effects.Normal(),
                     ]
                 )
+
         # Add plot info if provided.
         if plotInfo is not None:
             fig = addPlotInfo(fig, plotInfo)

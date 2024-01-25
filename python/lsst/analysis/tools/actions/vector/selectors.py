@@ -38,6 +38,7 @@ __all__ = (
     "BandSelector",
     "MatchingFlagSelector",
     "MagSelector",
+    "InjectedCoaddPlotFlagSelector",
 )
 
 import operator
@@ -620,3 +621,13 @@ class MagSelector(SelectorBase):
 
         # It should not be possible for mask to be a None now
         return np.array(cast(Vector, mask))
+
+
+class InjectedCoaddPlotFlagSelector(CoaddPlotFlagSelector):
+    """Selects sources that were injected successfully and are not coadd patch
+    overlap duplicates.
+    """
+
+    def setDefaults(self):
+        self.selectWhenFalse = ["injection_flag"]
+        self.selectWhenTrue = ["injected_isPatchInner"]

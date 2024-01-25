@@ -20,13 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("Ap12PsfSkyPlot", "PsfCModelSkyPlot", "PsfApRatio")
+__all__ = ("Ap12PsfSkyPlot", "PsfCModelSkyPlot", "PsfCModelScatterPlot", "PsfApRatio")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
+from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
 from ..actions.vector import (
     CoaddPlotFlagSelector,
+    ConvertFluxToMag,
     DivideVector,
     ExtinctionCorrectedMagDiff,
     LoadVector,
@@ -117,15 +119,6 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.process.buildActions.zStars.col1 = "{band}_psfFlux"
         self.process.buildActions.zStars.col2 = "{band}_cModelFlux"
 
-        self.process.calculateActions.median = MedianAction()
-        self.process.calculateActions.median.vectorKey = "zStars"
-
-        self.process.calculateActions.mean = MeanAction()
-        self.process.calculateActions.mean.vectorKey = "zStars"
-
-        self.process.calculateActions.sigmaMad = SigmaMadAction()
-        self.process.calculateActions.sigmaMad.vectorKey = "zStars"
-
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.plotName = "{band}_psf-cModel"
@@ -133,6 +126,50 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
         self.produce.plot.zAxisLabel = "PSF - cModel [mmag]"
         self.produce.plot.plotOutlines = False
+
+
+class PsfCModelScatterPlot(AnalysisTool):
+    """Creates a scatterPlot showing the difference between
+    PSF and CModel mags"""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.flagSelector.bands = []
+
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.threshold = 300
+
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
+
+        self.process.buildActions.xStars = ConvertFluxToMag()
+        self.process.buildActions.xStars.vectorKey = "{band}_psfFlux"
+        self.process.buildActions.yStars = MagDiff()
+        self.process.buildActions.yStars.col1 = "{band}_psfFlux"
+        self.process.buildActions.yStars.col2 = "{band}_cModelFlux"
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
+
+        self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="yStars")
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "{band}_psfFlux"
+        self.process.calculateActions.stars.highSNSelector.fluxType = "{band}_psfFlux"
+        self.process.calculateActions.stars.fluxType = "{band}_psfFlux"
+
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "yStars"
+
+        self.process.calculateActions.mean = MeanAction()
+        self.process.calculateActions.mean.vectorKey = "yStars"
+
+        self.process.calculateActions.sigmaMad = SigmaMadAction()
+        self.process.calculateActions.sigmaMad.vectorKey = "yStars"
+
+        self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.xAxisLabel = "PSF Magnitude (Mag)"
+        self.produce.plot.yAxisLabel = "PSF - cModel [mmag]"
+        self.produce.plot.magLabel = "PSF Magnitude (mag)"
 
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 

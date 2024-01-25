@@ -1,11 +1,12 @@
 description: |
-  LATISS-VerifyBias
-instrument: lsst.obs.lsst.Latiss
+  Core-level plots and metrics for exposure-level data.
 tasks:
   VerifyBias:
     class: lsst.analysis.tools.tasks.VerifyBiasAnalysisTask
     config:
       connections.outputName: VerifyBias
       atools.ReadNoisePerAmp: MedReadNoiseFocalPlanePlot
+      atools.ampBiasProfile: AmpBiasProfileTool
+      atools.ampBiasProfile.quantityKey: biasSerialProfile
       python: |
         from lsst.analysis.tools.atools import *

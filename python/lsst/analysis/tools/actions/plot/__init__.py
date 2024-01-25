@@ -3,6 +3,7 @@ from .calculateRange import *
 from .colorColorFitPlot import *
 from .diaSkyPlot import *
 from .focalPlanePlot import *
+from .gridPlot import *
 from .histPlot import *
 from .multiVisitCoveragePlot import *
 from .propertyMapPlot import *

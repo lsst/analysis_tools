@@ -1,0 +1,117 @@
+# This file is part of analysis_tools.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from __future__ import annotations
+
+__all__ = ("GridPlot",)
+
+from typing import TYPE_CHECKING
+
+import matplotlib.pyplot as plt
+from lsst.pex.config import Config, ConfigDictField, DictField, Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
+from matplotlib.gridspec import GridSpec
+
+from ...interfaces import PlotAction, PlotElement
+
+if TYPE_CHECKING:
+    from lsst.analysis.tools.interfaces import KeyedData, PlotResultType
+
+
+class PlotElementConfig(Config):
+    plotElement = ConfigurableActionField[PlotElement](
+        doc="Plot element.",
+    )
+    title = Field[str](
+        doc="Title.",
+    )
+
+
+class GridPlot(PlotAction):
+    """Configuration options for GridPlot.
+
+    Attributes
+    ----------
+    """
+
+    plotElements = ConfigDictField(
+        doc="Plot elements.",
+        keytype=int,
+        itemtype=PlotElementConfig,
+    )
+    numRows = Field[int](
+        doc="Number of rows.",
+        default=1,
+    )
+    numCols = Field[int](
+        doc="Number of columns.",
+        default=1,
+    )
+    xDataKeys = DictField[int, str](
+        doc="Key to subset data.",
+        default={},
+    )
+    valsGroupBy = DictField[int, str](
+        doc="The key of the dict is the panel ID. The values are keys (comma-separated for multiple) of "
+        "data to plot, where each key may be a subset of a full key.",
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
+        """Plot data."""
+        fig = plt.figure()
+        gs = GridSpec(self.numRows, self.numCols, figure=fig)
+
+        for row in range(self.numRows):
+            for col in range(self.numCols):
+                index = row * self.numCols + col
+                if index not in self.valsGroupBy.keys():
+                    continue
+                ax = fig.add_subplot(gs[row : row + 1, col : col + 1])
+
+                xList = x.split(",") if (x := self.xDataKeys.get(index)) else None
+                valList = self.valsGroupBy[index].split(",")
+
+                for i, val in enumerate(valList):
+                    for key in data:
+                        newData = {}
+                        if val not in key:
+                            continue
+                        namedKey = self.plotElements[index].plotElement.valsKey
+                        newData[namedKey] = data[key]
+                        if xList is not None:
+                            namedKey = self.plotElements[index].plotElement.xKey
+                            newData[namedKey] = data[xList[i]]
+
+                        _ = self.plotElements[index].plotElement(data=newData, ax=ax, **kwargs)
+
+                ax.set_title(self.plotElements[index].title)
+
+        plt.tight_layout()
+        fig.show()
+        return fig
+
+    def validate(self):
+        """Validate configuration."""
+        super().validate()
+        if self.xDataKeys is not None and len(self.xDataKeys) != self.numRows * self.numCols:
+            raise RuntimeError("Number of xDataKeys keys must match number of rows * columns.")
+        if len(self.valsGroupBy) != self.numRows * self.numCols:
+            raise RuntimeError("Number of valsGroupBy keys must match number of rows * columns.")

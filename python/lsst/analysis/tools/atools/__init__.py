@@ -1,3 +1,4 @@
+from .ampBiasProfile import *
 from .astrometricRepeatability import *
 from .calibration import *
 from .coveragePlots import *

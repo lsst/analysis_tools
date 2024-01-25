@@ -28,7 +28,7 @@ import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table, hstack, vstack
 from astropy.time import Time
-from lsst.pipe.tasks.configurableActions import ConfigurableActionStructField
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 from lsst.skymap import BaseSkyMap
 from smatch import Matcher

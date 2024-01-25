@@ -285,7 +285,7 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     photocalibDataset = "None"
     astroDataset = "None"
 
-    fig.text(0.01, 0.99, plotInfo["plotName"], fontsize=8, transform=fig.transFigure, ha="left", va="top")
+    fig.text(0.01, 0.99, plotInfo["plotName"], fontsize=7, transform=fig.transFigure, ha="left", va="top")
 
     run = plotInfo["run"]
     datasetsUsed = f"\nPhotoCalib: {photocalibDataset}, Astrometry: {astroDataset}"
@@ -301,9 +301,28 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     for band in plotInfo["bands"]:
         bandText += band + ", "
     bandsText = f", Bands: {bandText[:-2]}"
-    SNText = f", S/N: {plotInfo.get('SN', 'N/A')}"
-    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}{SNText}"
-    fig.text(0.01, 0.98, infoText, fontsize=7, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
+    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+
+    # Find S/N and mag keys, if present.
+    snKey = None
+    for key, value in plotInfo.items():
+        if "SN" in key or "S/N" in key:
+            snKey = key
+            break
+    magKey = None
+    for key, value in plotInfo.items():
+        if "Mag" in key:
+            magKey = key
+            break
+    # Add S/N and mag values to label, if present.
+    if snKey is not None:
+        if magKey is None:
+            infoText += f", {snKey}{plotInfo.get(snKey)}"
+        else:
+            infoText += f"\n{snKey}{plotInfo.get(snKey)}"
+    if magKey is not None:
+        infoText += f", {magKey}{plotInfo.get(magKey)}"
+    fig.text(0.01, 0.984, infoText, fontsize=6, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
 
     return fig
 

@@ -12,3 +12,6 @@ tasks:
     config:
       # This will be used as the first part of the butler data product name
       connections.outputName: diaSourceTableTract
+      atools.streakDiaSourcePlot: PlotStreakDiaSources
+      python: |
+        from lsst.analysis.tools.atools import *

@@ -23,12 +23,15 @@ __all__ = (
     "NumDiaSourcesMetric",
     "NumStreakDiaSourcesMetric",
     "NumStreakCenterDiaSourcesMetric",
+    "PlotStreakDiaSources",
 )
 
+from ..actions.keyedData import KeyedDataSelectorAction
+from ..actions.plot.diaSkyPlot import DiaSkyPanel, DiaSkyPlot
 from ..actions.scalar import CountAction
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector
-from ..interfaces import AnalysisTool
+from ..actions.vector import FlagSelector, GoodDiaSourceSelector, LoadVector
 from ..contexts import DrpContext
+from ..interfaces import AnalysisTool
 
 
 class NumDiaSourcesMetric(AnalysisTool):
@@ -81,3 +84,57 @@ class NumStreakCenterDiaSourcesMetric(AnalysisTool):
         self.produce.metric.units = {"numStreakCenterDiaSources": "ct"}
         # Use, e.g., `pixelFlags_thing`, not `base_PixelFlags_flag_thing`
         self.applyContext(DrpContext)
+
+
+class PlotStreakDiaSources(AnalysisTool):
+    """Plot all good DiaSources, and indicate which coincide with a streak."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.rasAll = LoadVector()
+        self.process.buildActions.rasAll.vectorKey = "ra"
+        self.process.buildActions.decsAll = LoadVector()
+        self.process.buildActions.decsAll.vectorKey = "dec"
+
+        # First, select "good" DiaSources that are not obvious garbage
+        self.process.buildActions.coordsGood = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
+        self.process.buildActions.coordsGood.selectors.selectorGood = GoodDiaSourceSelector()
+        self.applyContext(DrpContext)
+
+        # Second, select DiaSources with STREAK flag set in the footprint
+        self.process.buildActions.coordsStreak = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
+        self.process.buildActions.coordsStreak.selectors.selectorStreak = FlagSelector(
+            selectWhenTrue=["pixelFlags_streak"]
+        )
+        self.applyContext(DrpContext)
+
+        # Finally, select DiaSources with STREAK flag set in the source center
+        self.process.buildActions.coordsStreakCenter = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
+        self.process.buildActions.coordsStreakCenter.selectors.selectorStreakCenter = FlagSelector(
+            selectWhenTrue=["pixelFlags_streakCenter"]
+        )
+        self.applyContext(DrpContext)
+
+        self.produce.plot = DiaSkyPlot()
+
+        self.produce.plot.panels["panel_main"] = DiaSkyPanel()
+        self.produce.plot.panels["panel_main"].xlabel = "RA (deg)"
+        self.produce.plot.panels["panel_main"].ylabel = "Dec (deg)"
+        self.produce.plot.panels["panel_main"].ras = [
+            "rasAll",
+            "coordsGood_ra",
+            "coordsStreak_ra",
+            "coordsStreakCenter_ra",
+        ]
+        self.produce.plot.panels["panel_main"].decs = [
+            "decsAll",
+            "coordsGood_dec",
+            "coordsStreak_dec",
+            "coordsStreakCenter_dec",
+        ]
+        self.produce.plot.panels["panel_main"].rightSpinesVisible = False
+
+        # TODO: plot color, point size, and legend customizations

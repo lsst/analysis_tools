@@ -126,7 +126,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
         result = {}
         for key in self.vectorKeys:
             key_arg = key.format_map(kwargs)
-            result[key_arg] = data[key_arg]
+            result[f"{self.identity}_{key_arg}"] = data[key_arg]
         if mask is not None:
             return {key: cast(Vector, col)[mask] for key, col in result.items()}
         else:

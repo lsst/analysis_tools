@@ -26,6 +26,7 @@ from collections import abc
 from typing import Any, cast
 
 import astropy.units as apu
+from healsparse import HealSparseMap
 from lsst.pex.config import ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.dictField import DictField
@@ -38,6 +39,7 @@ from ._actions import (
     MetricAction,
     MetricResultType,
     NoPlot,
+    Tensor,
     VectorAction,
 )
 from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vector
@@ -46,19 +48,27 @@ from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vec
 class BasePrep(KeyedDataAction):
     """Base class for actions which prepare data for processing."""
 
-    vectorKeys = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
+    keysToLoad = ListField[str](doc="Keys to extract from KeyedData and return", default=[])
+
+    vectorKeys = ListField[str](doc="Keys from the input data which selectors will be applied", default=[])
 
     selectors = ConfigurableActionStructField[VectorAction](
         doc="Selectors for selecting rows, will be AND together",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from ((column, Vector | Scalar) for column in self.vectorKeys)  # type: ignore
+        yield from (
+            (column, Vector | Scalar | HealSparseMap | Tensor)
+            for column in set(self.keysToLoad).union(self.vectorKeys)
+        )
         for action in self.selectors:
             yield from action.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
-        return ((column, Vector | Scalar) for column in self.vectorKeys)  # type: ignore
+        return (
+            (column, Vector | Scalar | HealSparseMap | Tensor)
+            for column in set(self.keysToLoad).union(self.vectorKeys)
+        )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask: Vector | None = None
@@ -69,16 +79,22 @@ class BasePrep(KeyedDataAction):
             else:
                 mask *= subMask  # type: ignore
         result: dict[str, Any] = {}
-        for key in self.vectorKeys:
+        for key in set(self.keysToLoad).union(self.vectorKeys):
             formattedKey = key.format_map(kwargs)
             result[formattedKey] = cast(Vector, data[formattedKey])
         if mask is not None:
-            return {key: cast(Vector, col)[mask] for key, col in result.items()}
-        else:
-            return result
+            for key in self.vectorKeys:
+                # ignore type since there is not fully proper mypy support for
+                # vector type casting. In the future there will be, and this
+                # makes it clearer now what type things should be.
+                result[key] = cast(Vector, result[key])[mask]  # type: ignore
+        return result
 
     def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
-        self.vectorKeys = [name for name, _ in inputSchema]
+        existing = list(self.keysToLoad)
+        for name, _ in inputSchema:
+            existing.append(name)
+        self.keysToLoad = existing
 
 
 class BaseProcess(KeyedDataAction):

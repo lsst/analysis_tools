@@ -45,7 +45,7 @@ import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 
 from ..contexts import ContextApplier
-from ._interfaces import KeyedData, KeyedDataSchema, MetricResultType, PlotResultType, Scalar, Vector
+from ._interfaces import KeyedData, KeyedDataSchema, MetricResultType, PlotResultType, Scalar, Tensor, Vector
 
 
 class AnalysisAction(ConfigurableAction):
@@ -152,6 +152,16 @@ class VectorAction(AnalysisAction):
 
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        raise NotImplementedError("This is not implemented on the base class")
+
+
+class TensorAction(AnalysisAction):
+    """A `TensorAction` is an `AnalysisAction` that returns a `Tensor` when
+    called.
+    """
+
+    @abstractmethod
+    def __call__(self, data: KeyedData, **kwargs) -> Tensor:
         raise NotImplementedError("This is not implemented on the base class")
 
 

@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "Tensor",
     "Scalar",
     "ScalarType",
     "KeyedData",
@@ -34,13 +35,43 @@ __all__ = (
 
 from abc import ABCMeta
 from numbers import Number
-from typing import Any, Iterable, Mapping, MutableMapping, TypeAlias
+from typing import Any, Iterable, Mapping, MutableMapping, Protocol, TypeAlias, runtime_checkable
 
 import numpy as np
 from healsparse import HealSparseMap
 from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
+
+
+@runtime_checkable
+class Tensor(Protocol):
+    r"""This is an interface only class and is intended to represent data that
+    is 2+ dimensions.
+
+    Technically one could use this for scalars or 1D arrays,
+    but for those the Scalar or Vector interface should be preferred.
+
+    `Tensor`\ s abstract around the idea of a multidimensional array, and work
+    with a variety of backends including Numpy, CuPy, Tensorflow, PyTorch,
+    MXNet, TVM, and mpi4py. This intentionally has a minimum interface to
+    comply with the industry standard dlpack which ensures each of these
+    backend native types will work.
+
+    To ensure that a `Tensor` is in a desired container (e.g. ndarray) one can
+    call the corresponding ``from_dlpack`` method. Whenever possible this will
+    be a zero copy action. For instance to work with a Tensor named
+    ``input_tensor`` as if it were a numpy object, one would do
+    ``image = np.from_dlpack(input_tensor)``.
+    """
+
+    ndim: int
+    shape: tuple[int, ...]
+    strides: tuple[int, ...]
+
+    def __dlpack__(self, /, *, stream: int | None = ...) -> Any: ...
+
+    def __dlpack_device__(self) -> tuple[int, int]: ...
 
 
 class ScalarMeta(ABCMeta):
@@ -72,18 +103,18 @@ Vector = NDArray
 like an NDArray should be considered a Vector.
 """
 
-KeyedData = MutableMapping[str, Vector | Scalar | HealSparseMap]
+KeyedData = MutableMapping[str, Vector | Scalar | HealSparseMap | Tensor]
 """KeyedData is an interface where either a `Vector` or `Scalar` can be
 retrieved using a key which is of str type.
 """
 
-KeyedDataTypes = MutableMapping[str, type[Vector] | ScalarType | type[HealSparseMap]]
+KeyedDataTypes = MutableMapping[str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor]]
 r"""A mapping of str keys to the Types which are valid in `KeyedData` objects.
 This is useful in conjunction with `AnalysisAction`\ 's ``getInputSchema`` and
 ``getOutputSchema`` methods.
 """
 
-KeyedDataSchema = Iterable[tuple[str, type[Vector] | ScalarType | type[HealSparseMap]]]
+KeyedDataSchema = Iterable[tuple[str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor]]]
 r"""An interface that represents a type returned by `AnalysisAction`\ 's
 ``getInputSchema`` and ``getOutputSchema`` methods.
 """

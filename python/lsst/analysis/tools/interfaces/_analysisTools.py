@@ -39,8 +39,7 @@ from ._stages import BasePrep, BaseProcess, BaseProduce
 
 @runtime_checkable
 class _HasOutputNames(Protocol):
-    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
-        ...
+    def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]: ...
 
 
 def _finalizeWrapper(
@@ -116,6 +115,7 @@ class AnalysisTool(AnalysisAction):
     The stages themselves are also configurable, allowing control over various
     aspects of the individual `AnalysisAction`\ s.
     """
+
     prep = ConfigurableActionField[AnalysisAction](doc="Action to run to prepare inputs", default=BasePrep)
     process = ConfigurableActionField[AnalysisAction](
         doc="Action to process data into intended form", default=BaseProcess
@@ -177,9 +177,9 @@ class AnalysisTool(AnalysisAction):
         kwargs["metric_tags"] = list(self.metric_tags or ())
         prepped: KeyedData = self.prep(data, **kwargs)  # type: ignore
         processed: KeyedData = self.process(prepped, **kwargs)  # type: ignore
-        finalized: Mapping[str, PlotTypes] | PlotTypes | Mapping[
-            str, Measurement
-        ] | Measurement | JointResults = self.produce(
+        finalized: (
+            Mapping[str, PlotTypes] | PlotTypes | Mapping[str, Measurement] | Measurement | JointResults
+        ) = self.produce(
             processed, **kwargs
         )  # type: ignore
         return self._process_single_results(finalized)

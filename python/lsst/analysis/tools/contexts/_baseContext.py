@@ -68,12 +68,10 @@ class ContextApplier:
     @overload
     def __get__(
         self, instance: AnalysisAction, klass: type[AnalysisAction] | None = None
-    ) -> Callable[[ContextType], None]:
-        ...
+    ) -> Callable[[ContextType], None]: ...
 
     @overload
-    def __get__(self, instance: None, klass: type[AnalysisAction] | None = None) -> ContextApplier:
-        ...
+    def __get__(self, instance: None, klass: type[AnalysisAction] | None = None) -> ContextApplier: ...
 
     def __get__(
         self, instance: AnalysisAction | None, klass: type[AnalysisAction] | None = None

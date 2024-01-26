@@ -64,15 +64,14 @@ class Tensor(Protocol):
     ``input_tensor`` as if it were a numpy object, one would do
     ``image = np.from_dlpack(input_tensor)``.
     """
+
     ndim: int
     shape: tuple[int, ...]
     strides: tuple[int, ...]
 
-    def __dlpack__(self, /, *, stream: int | None = ...) -> Any:
-        ...
+    def __dlpack__(self, /, *, stream: int | None = ...) -> Any: ...
 
-    def __dlpack_device__(self) -> tuple[int, int]:
-        ...
+    def __dlpack_device__(self) -> tuple[int, int]: ...
 
 
 class ScalarMeta(ABCMeta):

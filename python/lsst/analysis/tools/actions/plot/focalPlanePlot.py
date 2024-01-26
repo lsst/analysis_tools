@@ -32,11 +32,13 @@ from lsst.afw.cameraGeom import FOCAL_PLANE, PIXELS, Camera
 from lsst.pex.config import ChoiceField, Field
 from matplotlib.collections import PatchCollection
 from matplotlib.figure import Figure
+from matplotlib.offsetbox import AnchoredText
 from matplotlib.patches import Polygon
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.stats import binned_statistic_2d, binned_statistic_dd
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
-from ...math import nanMedian, nanSigmaMad
+from ...math import nanMax, nanMedian, nanMin, nanSigmaMad
 from .plotUtils import addPlotInfo, sortAllArrays
 
 
@@ -49,10 +51,9 @@ class FocalPlanePlot(PlotAction):
     focal plane coordinates.
     """
 
-    xAxisLabel = Field[str](doc="Label to use for the x axis.", optional=False)
-    yAxisLabel = Field[str](doc="Label to use for the y axis.", optional=False)
+    xAxisLabel = Field[str](doc="Label to use for the x axis.", default="x (mm)", optional=True)
+    yAxisLabel = Field[str](doc="Label to use for the y axis.", default="y (mm)", optional=True)
     zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
-
     nBins = Field[int](
         doc="Number of bins to use within the effective plot ranges along the spatial directions.",
         default=200,
@@ -67,6 +68,19 @@ class FocalPlanePlot(PlotAction):
         doc="Operation to perform in binned_statistic_2d",
         default="mean",
     )
+    plotMin = Field[float](
+        doc="Minimum in z-value to display in the focal plane plot and in the histogram plot, if applicable",
+        default=None,
+        optional=True,
+    )
+    plotMax = Field[float](
+        doc="Maximum in z-value to display in the focal plane plot and in the histogram plot, if applicable",
+        default=None,
+        optional=True,
+    )
+    showStats = Field[bool](doc="Show statistics for plotted data", default=True)
+    addHistogram = Field[bool](doc="Add a histogram of all input points", default=False)
+    histBins = Field[int](doc="Number of bins to use in histogram", default=30)
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         self._validateInput(data, **kwargs)
@@ -115,6 +129,22 @@ class FocalPlanePlot(PlotAction):
         )
 
         return med, sigMad, statsText
+
+    def _addHistogram(self, histAx, data):
+        bins = np.linspace(
+            (self.plotMin if self.plotMin else nanMin(data.astype(float))),
+            (self.plotMax if self.plotMax else nanMax(data.astype(float))),
+            self.histBins,
+        )
+        histAx.hist(data.astype(float), bins=bins)
+        histAx.set_xlabel(self.zAxisLabel)
+        histAx.set_ylabel("Bin count")
+        underflow = np.count_nonzero(data < bins[0])
+        overflow = np.count_nonzero(data > bins[-1])
+        nonfinite = np.count_nonzero(~np.isfinite(data))
+        text = f"Underflow = {underflow}\nOverflow = {overflow}\nNon-Finite = {nonfinite}"
+        anchored_text = AnchoredText(text, loc=1, pad=0.5)
+        histAx.add_artist(anchored_text)
 
     def makePlot(
         self,
@@ -168,8 +198,11 @@ class FocalPlanePlot(PlotAction):
             noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
-        fig = plt.figure(dpi=300)
-        ax = fig.add_subplot(111)
+        if self.addHistogram:
+            fig, [ax, histAx] = plt.subplots(1, 2, dpi=300, figsize=(12, 6), width_ratios=[3, 2])
+        else:
+            fig = plt.figure(dpi=300)
+            ax = fig.add_subplot(111)
 
         detectorIds = np.unique(data["detector"])
         focalPlane_x = np.zeros(len(data["x"]))
@@ -209,22 +242,24 @@ class FocalPlanePlot(PlotAction):
         )
         binExtent = [x_edge[0], x_edge[-1], y_edge[0], y_edge[-1]]
 
-        sortedArrs = sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
-        [colorVals, xs, ys, stat] = sortedArrs
-        statMed, statMad, statsText = self.statsAndText(colorVals, mask=stat)
-        bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
-        ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+        if self.showStats:
+            sortedArrs = sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
+            [colorVals, xs, ys, stat] = sortedArrs
+            statMed, statMad, statsText = self.statsAndText(colorVals, mask=stat)
+            bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
+            ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
 
         median = nanMedian(statistic.ravel())
         mad = nanSigmaMad(statistic.ravel())
 
-        vmin = median - 2 * mad
-        vmax = median + 2 * mad
+        vmin = self.plotMin if (self.plotMin is not None) else (median - 2 * mad)
+        vmax = self.plotMax if (self.plotMax is not None) else (median + 2 * mad)
 
         plot = ax.imshow(statistic.T, extent=binExtent, vmin=vmin, vmax=vmax, origin="lower")
 
-        cax = fig.add_axes([0.87 + 0.04, 0.11, 0.04, 0.77])
-        plt.colorbar(plot, cax=cax, extend="both")
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        fig.colorbar(plot, cax=cax, extend="both")
         text = cax.text(
             0.5,
             0.5,
@@ -245,10 +280,14 @@ class FocalPlanePlot(PlotAction):
         ax.tick_params(labelsize=7)
 
         ax.set_aspect("equal")
+
+        if self.addHistogram:
+            self._addHistogram(histAx, data["z"])
+
         plt.draw()
 
         # Add useful information to the plot
-        plt.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
+        plt.subplots_adjust(left=0.05, right=0.95)
         fig = plt.gcf()
         fig = addPlotInfo(fig, plotInfo)
 
@@ -352,8 +391,11 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
             noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
-        fig = plt.figure(dpi=300)
-        ax = fig.add_subplot(111)
+        if self.addHistogram:
+            fig, [ax, histAx] = plt.subplots(1, 2, dpi=300, figsize=(12, 6), width_ratios=[3, 2])
+        else:
+            fig = plt.figure(dpi=300)
+            ax = fig.add_subplot(111)
 
         detectorIds = np.unique(data["detector"])
         focalPlane_x = np.zeros(len(data["z"]))
@@ -483,15 +525,23 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         ax.set_ylim(plotLimit_y)
 
         # Do not mask values.
-        statMed, statMad, statsText = self.statsAndText(values, mask=None)
-        bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
-        ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+        if self.showStats:
+            statMed, statMad, statsText = self.statsAndText(values, mask=None)
+            bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
+            ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
 
         patchCollection = PatchCollection(patches, alpha=0.4, edgecolor="black")
         patchCollection.set_array(values)
+        if self.plotMin is not None:
+            currentLimits = patchCollection.get_clim()
+            patchCollection.set_clim(self.plotMin, currentLimits[1])
+        if self.plotMax is not None:
+            currentLimits = patchCollection.get_clim()
+            patchCollection.set_clim(currentLimits[0], self.plotMax)
         ax.add_collection(patchCollection)
 
-        cax = fig.add_axes([0.87 + 0.04, 0.11, 0.04, 0.77])
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
         fig.colorbar(patchCollection, cax=cax, extend="both")
         text = cax.text(
             0.5,
@@ -513,10 +563,14 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         ax.tick_params(labelsize=7)
 
         ax.set_aspect("equal")
+
+        if self.addHistogram:
+            self._addHistogram(histAx, data["z"])
+
         plt.draw()
 
         # Add useful information to the plot
-        plt.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
+        fig.subplots_adjust(left=0.05, right=0.95)
         fig = plt.gcf()
         fig = addPlotInfo(fig, plotInfo)
 

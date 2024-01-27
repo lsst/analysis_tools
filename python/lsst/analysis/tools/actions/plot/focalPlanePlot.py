@@ -278,6 +278,15 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         },
     )
 
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        base = []
+        base.append(("detector", Vector))
+        if self.level == "amplifier":
+            base.append(("amplifier", Vector))
+        base.append(("z", Vector))
+
+        return base
+
     def makePlot(
         self,
         data: KeyedData,

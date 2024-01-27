@@ -37,7 +37,6 @@ from matplotlib.ticker import FormatStrFormatter
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin
-from ..keyedData import KeyedDataSelectorAction
 from ..vector.selectors import RangeSelector
 from .plotUtils import mkColormap, plotProjectionWithBinning
 
@@ -840,10 +839,9 @@ class MultiVisitCoveragePlot(PlotAction):
         """
         xSelector = RangeSelector(key=xKey, minimum=xMin, maximum=xMax)
         ySelector = RangeSelector(key=yKey, minimum=yMin, maximum=yMax)
-        keyedSelector = KeyedDataSelectorAction(vectorKeys=data.keys())
-        keyedSelector.selectors.xSelector = xSelector
-        keyedSelector.selectors.ySelector = ySelector
-        downSelectedData = keyedSelector(data)
+
+        totMask = xSelector(data) & ySelector(data)
+        downSelectedData = data[totMask]
 
         return downSelectedData
 

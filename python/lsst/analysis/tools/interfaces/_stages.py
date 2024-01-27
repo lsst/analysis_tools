@@ -87,14 +87,19 @@ class BasePrep(KeyedDataAction):
                 # ignore type since there is not fully proper mypy support for
                 # vector type casting. In the future there will be, and this
                 # makes it clearer now what type things should be.
-                result[key] = cast(Vector, result[key])[mask]  # type: ignore
+                tempFormat = key.format_map(kwargs)
+                result[tempFormat] = cast(Vector, result[tempFormat])[mask]  # type: ignore
         return result
 
     def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
         existing = list(self.keysToLoad)
-        for name, _ in inputSchema:
+        existingVectors = list(self.vectorKeys)
+        for name, typ in inputSchema:
             existing.append(name)
+            if typ == Vector:
+                existingVectors.append(name)
         self.keysToLoad = existing
+        self.vectorKeys = existingVectors
 
 
 class BaseProcess(KeyedDataAction):

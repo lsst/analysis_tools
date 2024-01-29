@@ -98,8 +98,8 @@ class BasePrep(KeyedDataAction):
             existing.append(name)
             if typ == Vector:
                 existingVectors.append(name)
-        self.keysToLoad = existing
-        self.vectorKeys = existingVectors
+        self.keysToLoad = set(existing)
+        self.vectorKeys = set(existingVectors)
 
 
 class BaseProcess(KeyedDataAction):

@@ -5,6 +5,7 @@ from .diaSkyPlot import *
 from .focalPlanePlot import *
 from .histPlot import *
 from .multiVisitCoveragePlot import *
+from .percentilePlot import *
 from .propertyMapPlot import *
 from .rhoStatisticsPlot import *
 from .scatterplotWithTwoHists import *

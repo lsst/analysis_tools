@@ -1,3 +1,4 @@
+from .amplifierAnalysis import *
 from .assocDiaSrcDetectorVisitAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .astrometricCatalogMatch import *

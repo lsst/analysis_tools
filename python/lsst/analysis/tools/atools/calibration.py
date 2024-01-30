@@ -151,3 +151,11 @@ class PtcMaxRawMeansFP(CalibrationTool):
         # This should only have one entry, so the statistic doesn't
         # matter much.
         self.addFpPlot("ptcMaxRawMeans", "median", "PTC max of raw means")
+
+
+class PtcRowMeanVarianceSlopeFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("ptcRowMeanVarianceSlope", "median", "PTC slope of row means vs variance")

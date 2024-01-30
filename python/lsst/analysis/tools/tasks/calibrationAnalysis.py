@@ -20,9 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("VerifyBiasAnalysisConfig", "VerifyBiasAnalysisTask")
+__all__ = (
+    "VerifyPtcAnalysisConfig",
+    "VerifyPtcAnalysisTask",
+    "VerifyBiasAnalysisConfig",
+    "VerifyBiasAnalysisTask",
+)
 
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base import connectionTypes as cT
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -32,7 +37,7 @@ class VerifyBiasAnalysisConnections(
     dimensions=("instrument",),
     defaultTemplates={"inputName": "verifyBiasResults"},
 ):
-    data = ct.Input(
+    data = cT.Input(
         doc="Table containing bias verification data to load from the butler",
         name="verifyBiasResults",
         storageClass="ArrowAstropy",
@@ -40,7 +45,7 @@ class VerifyBiasAnalysisConnections(
         deferLoad=True,
     )
 
-    camera = ct.PrerequisiteInput(
+    camera = cT.PrerequisiteInput(
         doc="Input camera to use for focal plane geometry.",
         name="camera",
         storageClass="Camera",
@@ -56,6 +61,55 @@ class VerifyBiasAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyBia
 class VerifyBiasAnalysisTask(AnalysisPipelineTask):
     ConfigClass = VerifyBiasAnalysisConfig
     _DefaultName = "verifyBiasAnalysis"
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        # Docs inherited from base class.
+        inputs = butlerQC.get(inputRefs)
+        dataId = butlerQC.quantum.dataId
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+        data = self.loadData(inputs["data"])
+        camera = inputs["camera"]
+
+        outputs = self.run(
+            data=data,
+            plotInfo=plotInfo,
+            camera=camera,
+        )
+        butlerQC.put(outputs, outputRefs)
+
+
+# Photon Transfer Curve: PTC
+class VerifyPtcAnalysisConnections(
+    AnalysisBaseConnections,
+    dimensions=("instrument",),
+    defaultTemplates={"inputName": "verifyPtcResults"},
+):
+    data = cT.Input(
+        doc="Table containing PTC verification data to load from the butler",
+        name="verifyPtcResults",
+        storageClass="ArrowAstropy",
+        dimensions=("instrument",),
+        deferLoad=True,
+    )
+
+    camera = cT.PrerequisiteInput(
+        doc="Input camera to use for focal plane geometry.",
+        name="camera",
+        storageClass="Camera",
+        dimensions=("instrument",),
+        isCalibration=True,
+    )
+
+
+class VerifyPtcAnalysisConfig(AnalysisBaseConfig,
+                              pipelineConnections=VerifyPtcAnalysisConnections):
+    def setDefaults(self):
+        super().setDefaults()
+
+
+class VerifyPtcAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = VerifyPtcAnalysisConfig
+    _DefaultName = "verifyPtcAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         # Docs inherited from base class.

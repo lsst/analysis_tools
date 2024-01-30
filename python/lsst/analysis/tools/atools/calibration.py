@@ -29,7 +29,7 @@ __all__ = (
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.scalar.scalarActions import MedianAction, SigmaMadAction
-from ..actions.vector import LoadVector, VectorSelector
+from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -80,8 +80,6 @@ class CalibrationTool(AnalysisTool):
         self.process.buildActions.detector = LoadVector(vectorKey="detector")
         self.process.buildActions.amplifier = LoadVector(vectorKey="amplifier")
         self.process.buildActions.z = LoadVector(vectorKey=vectorKey)
-        self.process.buildActions.statMask = VectorSelector()
-        self.process.buildActions.statMask.vectorKey = "statMask"
 
         self.produce.plot = FocalPlaneGeometryPlot()
         self.produce.plot.statistic = statistic
@@ -120,7 +118,7 @@ class PtcGainFP(CalibrationTool):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
         # matter much.
-        self.addFpPlot("PTC_GAIN", "median", "PTC gain")
+        self.addFpPlot("ptcGain", "median", "PTC gain")
 
 
 class PtcNoiseFP(CalibrationTool):
@@ -128,7 +126,7 @@ class PtcNoiseFP(CalibrationTool):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
         # matter much.
-        self.addFpPlot("PTC_NOISE", "median", "PTC read noise")
+        self.addFpPlot("ptcNoise", "median", "PTC read noise")
 
 
 class PtcA00FP(CalibrationTool):
@@ -136,7 +134,7 @@ class PtcA00FP(CalibrationTool):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
         # matter much.
-        self.addFpPlot("PTC_BFE_A00", "median", "PTC A00")
+        self.addFpPlot("ptcBfeA00", "median", "PTC BFE A00")
 
 
 class PtcTurnoffFP(CalibrationTool):
@@ -144,4 +142,4 @@ class PtcTurnoffFP(CalibrationTool):
         super().setDefaults()
         # This should only have one entry, so the statistic doesn't
         # matter much.
-        self.addFpPlot("PTC_TURNOFF", "median", "PTC turnoff")
+        self.addFpPlot("ptcTurnoff", "median", "PTC turnoff")

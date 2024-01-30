@@ -20,11 +20,74 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MedReadNoiseFocalPlanePlot",)
+__all__ = (
+    "MedReadNoiseFocalPlanePlot",
+    "PtcGainFP",
+    "PtcNoiseFP",
+    "PtcA00FP",
+    "PtcTurnoffFP")
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
-from ..actions.vector import LoadVector
+from ..actions.scalar.scalarActions import MedianAction, SigmaMadAction
+from ..actions.vector import LoadVector, VectorSelector
 from ..interfaces import AnalysisTool
+
+
+class CalibrationTool(AnalysisTool):
+    """Class to generate common calibration metrics for value/scatter
+    quantities (from python/lsst/analysis/tools/atools/cpMetrics.py
+    in DM-40473)
+    """
+
+    parameterizedBand: bool = False
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        cls.units = {}
+        cls.newNames = {}
+
+    def addPair(self, vectorKey, name, longName):
+        """Add a pair of value/scatter metrics from a given catalog key.
+        Parameters
+        ----------
+        vectorKey : `str`
+            Name of the catalog key to load.
+        name : `str`
+            Short name for this metric.
+        longName : `str`
+            Detailed metric name, including calibration stage and product.
+        """
+        setattr(self.process.calculateActions, f"{name}Median", MedianAction(vectorKey=vectorKey))
+        setattr(self.process.calculateActions, f"{name}Sigma", SigmaMadAction(vectorKey=vectorKey))
+
+        self.units.update({f"{name}Median": "adu", f"{name}Sigma": "adu"})
+        self.newNames.update({f"{name}Median": f"{longName}_median", f"{name}Sigma": f"{longName}_sigmaMad"})
+
+    def addFpPlot(self, vectorKey, statistic, label):
+        """Add focal plan geometry plot.
+        Parameters
+        ----------
+        vectorKey : `str`
+             Name of the catalog key to load.
+        statistic : `str`
+             Statistic to use in binning per-amplifier data points.
+        label : `str`
+             Label to apply to the output z-axis.
+        """
+        self.process.buildActions.x = LoadVector(vectorKey="detector")
+        self.process.buildActions.y = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+        self.process.buildActions.amplifier = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.z = LoadVector(vectorKey=vectorKey)
+        self.process.buildActions.statMask = VectorSelector()
+        self.process.buildActions.statMask.vectorKey = "statMask"
+
+        self.produce.plot = FocalPlaneGeometryPlot()
+        self.produce.plot.statistic = statistic
+        self.produce.plot.xAxisLabel = "x (focal plane)"
+        self.produce.plot.yAxisLabel = "y (focal plane)"
+        self.produce.plot.zAxisLabel = label
 
 
 class MedReadNoiseFocalPlanePlot(AnalysisTool):
@@ -50,3 +113,35 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         self.produce.plot.yAxisLabel = "y (mm)"
         self.produce.plot.zAxisLabel = "Med. Readnoise"
         self.produce.plot.statistic = "median"
+
+
+class PtcGainFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("PTC_GAIN", "median", "PTC gain")
+
+
+class PtcNoiseFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("PTC_NOISE", "median", "PTC read noise")
+
+
+class PtcA00FP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("PTC_BFE_A00", "median", "PTC A00")
+
+
+class PtcTurnoffFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("PTC_TURNOFF", "median", "PTC turnoff")

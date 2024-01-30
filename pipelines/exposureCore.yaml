@@ -1,0 +1,11 @@
+description: |
+  LATISS-VerifyBias
+instrument: lsst.obs.lsst.Latiss
+tasks:
+  VerifyBias:
+    class: lsst.analysis.tools.tasks.VerifyBiasAnalysisTask
+    config:
+      connections.outputName: VerifyBias
+      atools.ReadNoisePerAmp: MedReadNoiseFocalPlanePlot
+      python: |
+        from lsst.analysis.tools.atools import *

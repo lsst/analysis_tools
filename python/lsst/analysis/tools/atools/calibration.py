@@ -143,3 +143,11 @@ class PtcTurnoffFP(CalibrationTool):
         # This should only have one entry, so the statistic doesn't
         # matter much.
         self.addFpPlot("ptcTurnoff", "median", "PTC turnoff")
+
+
+class PtcMaxRawMeansFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        # This should only have one entry, so the statistic doesn't
+        # matter much.
+        self.addFpPlot("ptcMaxRawMeans", "median", "PTC max of raw means")

@@ -8,5 +8,7 @@ tasks:
       atools.ptcNoiseFP: PtcNoiseFP
       atools.ptcA00FP: PtcA00FP
       atools.ptcTurnoffFP: PtcTurnoffFP
+      atools.ptcMaxRawMeans: PtcMaxRawMeansFP
+      atools.PtcRowMeanVarianceSlopeFP: PtcRowMeanVarianceSlopeFP
       python: |
         from lsst.analysis.tools.atools import *

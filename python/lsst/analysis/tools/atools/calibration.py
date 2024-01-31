@@ -25,10 +25,11 @@ __all__ = (
     "PtcGainFP",
     "PtcNoiseFP",
     "PtcA00FP",
-    "PtcTurnoffFP")
+    "PtcTurnoffFP",
+    "PtcMaxRawMeansFP",
+    "PtcRowMeanVarianceSlopeFP",)
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
-from ..actions.scalar.scalarActions import MedianAction, SigmaMadAction
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
@@ -46,23 +47,6 @@ class CalibrationTool(AnalysisTool):
 
         cls.units = {}
         cls.newNames = {}
-
-    def addPair(self, vectorKey, name, longName):
-        """Add a pair of value/scatter metrics from a given catalog key.
-        Parameters
-        ----------
-        vectorKey : `str`
-            Name of the catalog key to load.
-        name : `str`
-            Short name for this metric.
-        longName : `str`
-            Detailed metric name, including calibration stage and product.
-        """
-        setattr(self.process.calculateActions, f"{name}Median", MedianAction(vectorKey=vectorKey))
-        setattr(self.process.calculateActions, f"{name}Sigma", SigmaMadAction(vectorKey=vectorKey))
-
-        self.units.update({f"{name}Median": "adu", f"{name}Sigma": "adu"})
-        self.newNames.update({f"{name}Median": f"{longName}_median", f"{name}Sigma": f"{longName}_sigmaMad"})
 
     def addFpPlot(self, vectorKey, statistic, label):
         """Add focal plan geometry plot.

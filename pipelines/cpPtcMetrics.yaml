@@ -9,6 +9,6 @@ tasks:
       atools.ptcA00FP: PtcA00FP
       atools.ptcTurnoffFP: PtcTurnoffFP
       atools.ptcMaxRawMeans: PtcMaxRawMeansFP
-      atools.PtcRowMeanVarianceSlopeFP: PtcRowMeanVarianceSlopeFP
+      atools.ptcRowMeanVarianceSlopeFP: PtcRowMeanVarianceSlopeFP
       python: |
         from lsst.analysis.tools.atools import *

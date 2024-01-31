@@ -25,10 +25,53 @@ from lsst.analysis.tools.interfaces._interfaces import KeyedDataSchema
 __all__ = ("AmpBiasProfileTool",)
 
 from lsst.pex.config import Field
+from typing import cast
 
 from ..actions.plot.elements.scatterElement import ScatterElement
 from ..actions.plot.gridPlot import GridPlot, PlotElementConfig
-from ..interfaces import AnalysisTool, Vector
+from ..interfaces import AnalysisTool, Vector, KeyedDataAction, KeyedData
+
+
+class PrepRepacker(KeyedDataAction):
+    panelKey = Field[str](
+        doc="Panel selector.",
+    )
+    dataKey = Field[str](
+        doc="Data selector.",
+    )
+    quantityKey = Field[str](
+        doc="Quantity selector.",
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        newData = {}
+        for i in range(len(cast(Vector, data[self.panelKey]))):
+            panelVec = cast(Vector, data[self.panelKey])
+            dataVec = cast(Vector, data[self.dataKey])
+            quantityVec = cast(Vector, data[self.quantityKey])
+            newData[f"{panelVec[i]}_{dataVec[i]}_{self.quantityKey}"] = quantityVec[i]
+        return newData
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.panelKey, Vector),
+            (self.dataKey, Vector),
+            (self.quantityKey, Vector),
+        )
+
+    def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
+        pass
+
+
+class PassThrough(KeyedDataAction):
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        return data
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        # in general this method must be implemented, but we are ALSO
+        # implementing the prep step and know this methods results are
+        # not needed because it is doing something special with the inputs
+        return ()
 
 
 class AmpBiasProfileTool(AnalysisTool):
@@ -44,27 +87,13 @@ class AmpBiasProfileTool(AnalysisTool):
         doc="Quantity selector.",
     )
 
-    def _call_single(self, data: KeyedData, **kwargs) -> PlotResultType:
-        # Repack data here.
-        newData = {}
-        for i in range(len(data[self.panelKey])):
-            newData[f"{data[self.panelKey][i]}_{data[self.dataKey][i]}_{self.quantityKey}"] = data[
-                self.quantityKey
-            ][i]
-        return super()._call_single(newData, **kwargs)
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return (
-            (self.panelKey, Vector),
-            (self.dataKey, Vector),
-            (self.quantityKey, Vector),
-        )
-
     def setDefaults(self):
         super().setDefaults()
-        self.panelKey = "amplifier"
-        self.dataKey = "mjd"
-        self.quantityKey = "biasSerialProfile"
+        self.prep = PrepRepacker()
+        self.prep.panelKey = "amplifier"
+        self.prep.dataKey = "mjd"
+        self.prep.quantityKey = "biasSerialProfile"
+        self.process = PassThrough()
 
         # # Make these input data columns available for subsequent use
         # self.prep.keysToLoad = ["amplifier", "mjd", "biasSerialProfile"]

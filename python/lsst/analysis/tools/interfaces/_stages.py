@@ -71,7 +71,6 @@ class BasePrep(KeyedDataAction):
         )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        return data
         mask: Vector | None = None
         for selector in self.selectors:
             subMask = selector(data, **kwargs)
@@ -153,7 +152,6 @@ class BaseProcess(KeyedDataAction):
                     yield from outSchema
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        return data
         action: AnalysisAction
         results = {}
         data = dict(data)
@@ -181,7 +179,7 @@ class BaseProcess(KeyedDataAction):
                         results[key] = result
                 case item:
                     results[name] = item
-        return data | results
+        return results
 
 
 class BaseMetricAction(MetricAction):

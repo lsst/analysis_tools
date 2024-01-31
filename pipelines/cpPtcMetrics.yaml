@@ -1,4 +1,4 @@
-description: PTC metrics and plots 
+description: PTC metrics and plots
 tasks:
   ptcMetrics_test:
     class: lsst.analysis.tools.tasks.VerifyPtcAnalysisTask

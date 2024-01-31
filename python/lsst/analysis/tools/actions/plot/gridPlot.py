@@ -26,7 +26,7 @@ __all__ = ("GridPlot",)
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
-from lsst.pex.config import Config, ConfigDictField, DictField, Field
+from lsst.pex.config import Config, ConfigDictField, DictField, Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from matplotlib.gridspec import GridSpec
 
@@ -40,17 +40,21 @@ class PlotElementConfig(Config):
     plotElement = ConfigurableActionField[PlotElement](
         doc="Plot element.",
     )
-    title = Field[str](
-        doc="Title.",
+    title = DictField[str, str](
+        doc="String arguments passed into ax.set_title() defining the plot element title.",
+    )
+    titleY = Field[float](
+        doc="Y position of plot element title.",
+        default=None,
+    )
+    aspect = Field[float](
+        doc="Aspect ratio of plot element.",
+        optional=True,
     )
 
 
 class GridPlot(PlotAction):
-    """Configuration options for GridPlot.
-
-    Attributes
-    ----------
-    """
+    """Plot a series of plot elements onto a regularly spaced grid."""
 
     plotElements = ConfigDictField(
         doc="Plot elements.",
@@ -66,17 +70,32 @@ class GridPlot(PlotAction):
         default=1,
     )
     xDataKeys = DictField[int, str](
-        doc="Key to subset data.",
+        doc="Dependent data definitions. The key of this dict is the panel ID. The values are keys of data "
+        "to plot (comma-separated for multiple) where each key may be a subset of a full key.",
         default={},
     )
     valsGroupBy = DictField[int, str](
-        doc="The key of the dict is the panel ID. The values are keys (comma-separated for multiple) of "
-        "data to plot, where each key may be a subset of a full key.",
+        doc="Independent data definitions. The key of this dict is the panel ID. The values are keys of data "
+        "to plot (comma-separated for multiple) where each key may be a subset of a full key.",
+    )
+    figsize = ListField[float](
+        doc="Figure size.",
+        default=[8, 8],
+    )
+    dpi = Field[float](
+        doc="Dots per inch.",
+        default=150,
+    )
+    suptitle = DictField[str, str](
+        doc="String arguments passed into fig.suptitle() defining the figure title.",
+        optional=True,
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         """Plot data."""
-        fig = plt.figure()
+        fig = plt.figure(figsize=self.figsize, dpi=self.dpi)
+        if self.suptitle is not None:
+            fig.suptitle(**self.suptitle)
         gs = GridSpec(self.numRows, self.numCols, figure=fig)
 
         for row in range(self.numRows):
@@ -102,7 +121,7 @@ class GridPlot(PlotAction):
 
                         _ = self.plotElements[index].plotElement(data=newData, ax=ax, **kwargs)
 
-                ax.set_title(self.plotElements[index].title)
+                ax.set_title(**self.plotElements[index].title, y=self.plotElements[index].titleY)
 
         plt.tight_layout()
         fig.show()

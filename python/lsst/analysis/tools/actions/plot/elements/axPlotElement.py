@@ -21,11 +21,11 @@
 
 from __future__ import annotations
 
-__all__ = ("ScatterElement",)
+__all__ = ("AxPlotElement",)
 
 from typing import TYPE_CHECKING
 
-from lsst.pex.config import Field, ListField
+from lsst.pex.config import Field
 
 from ....interfaces import PlotElement
 
@@ -34,73 +34,76 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
 
-class ScatterElement(PlotElement):
+class AxPlotElement(PlotElement):
     """Configuration options for ScatterPlot elements.
 
     Attributes
     ----------
-    x : `~lsst.pex.config.Field`
-        X-axis data vector.
-    y : `~lsst.pex.config.Field`
-        Y-axis data vector.
+    xKey : `~lsst.pex.config.Field`
+        X-axis data vector key. If None, the index of the values are used.
+    valsKey : `~lsst.pex.config.Field`
+        Y-axis data vector key. Plotted against the index if no xKey is given.
     color : `~lsst.pex.config.Field`
-        Point color.
-    size : `~lsst.pex.config.Field`
-        Point size.
-    alpha : `~lsst.pex.config.Field`
-        Point transparency.
-    symbol : `~lsst.pex.config.Field`
-        Point symbol.
+        Color.
+    marker : `~lsst.pex.config.Field`
+        Point marker.
+    linestyle : `~lsst.pex.config.Field`
+        Linestyle.
+    linewidth : `~lsst.pex.config.Field`
+        Linewidth.
+    markersize : `~lsst.pex.config.Field`
+        Markersize.
     """
 
     xKey = Field[str](
-        doc="X-axis data vector.",
+        doc="X-axis data vector key. If None, the index of the values are used.",
         optional=True,
     )
     valsKey = Field[str](
-        doc="Y-axis data vector.",
+        doc="Y-axis data vector key. Plotted against the index if no xKey is given.",
         default="value",
     )
     color = Field[str](
-        doc="Point color",
+        doc="Color",
         optional=True,
     )
-    size = Field[float](
-        doc="Point size",
-        default=5,
+    marker = Field[float](
+        doc="Point marker",
+        optional=True,
     )
-    alpha = Field[float](
-        doc="Point transparency",
-        default=1,
+    linestyle = Field[float](
+        doc="Linestyle",
+        optional=True,
     )
-    symbol = Field[str](
-        doc="Point symbol",
-        default="o",
+    linewidth = Field[float](
+        doc="Linewidth",
+        optional=True,
+    )
+    markersize = Field[float](
+        doc="Markersize",
+        optional=True,
     )
 
     def __call__(self, data: KeyedData, ax: Axes, **kwargs) -> KeyedData:
-        """Plot data as a scatter plot.
+        """Plot y versus x as lines and/or markers.
 
         Parameters
         ----------
         data : `~lsst.analysis.tools.interfaces.KeyedData`
-            Data to plot.
+            Keyed data containing the data to plot.
         ax : `~matplotlib.axes.Axes`
             Axes to plot on.
 
         Returns
         -------
         data : `~lsst.analysis.tools.interfaces.KeyedData`
-            Metadata generated during plotting.
+            Data used for plotting.
         """
         self._validateInputs(data)
         ax.plot(
             data[self.xKey] if self.xKey is not None else range(len(data[self.valsKey])),  # type: ignore
             data[self.valsKey],  # type: ignore
-            # c=self.color,  # type: ignore
-            # s=self.size,  # type: ignore
-            # alpha=self.alpha,  # type: ignore
-            # marker=self.symbol,  # type: ignore
+            color=self.color if self.color is not None else None,
         )
 
         return data

@@ -1,11 +1,35 @@
 description: |
-  LATISS-VerifyBias
-instrument: lsst.obs.lsst.Latiss
+  Tier1 plots to assess validity of calibration exposures.
 tasks:
-  VerifyBias:
-    class: lsst.analysis.tools.tasks.VerifyBiasAnalysisTask
+  analyseBiasCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
     config:
-      connections.outputName: VerifyBias
-      atools.ReadNoisePerAmp: MedReadNoiseFocalPlanePlot
+      connections.outputName: biasCore
+      connections.data: verifyBiasResults
+      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: biasReadNoise
+      atools.MeanBiasPerAmp: CalibStatisticFocalPlanePlot
+      atools.MeanBiasPerAmp.process.buildActions.z.vectorKey: biasMean
+      atools.BiasNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.BiasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
+      atools.BiasCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.BiasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
+      bands: ['u']
+      python: |
+        from lsst.analysis.tools.atools import *
+  analyseDarkCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: darkCore
+      connections.data: verifyDarkResults
+      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: darkReadNoise
+      atools.MeanDarkPerAmp: CalibStatisticFocalPlanePlot
+      atools.MeanDarkPerAmp.process.buildActions.z.vectorKey: darkMean
+      atools.DarkNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.DarkNoisePerAmp.process.buildActions.z.vectorKey: darkNoise
+      atools.DarkCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.DarkCrNoisePerAmp.process.buildActions.z.vectorKey: darkCrNoise
+      bands: ['u']
       python: |
         from lsst.analysis.tools.atools import *

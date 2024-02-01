@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MedReadNoiseFocalPlanePlot",)
+__all__ = ("CalibStatisticFocalPlanePlot",)
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
 
-class MedReadNoiseFocalPlanePlot(AnalysisTool):
+class CalibStatisticFocalPlanePlot(AnalysisTool):
     """Generates a plot of the focal plane, color-coded according to the
     median bias read noise on a per-amp basis. The median is across
     multiple bias exposures.
@@ -37,7 +37,7 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         super().setDefaults()
 
         self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = "biasReadNoise"
+        self.process.buildActions.z.vectorKey = "biasMean"
         self.process.buildActions.detector = LoadVector()
         self.process.buildActions.detector.vectorKey = "detector"
         self.process.buildActions.amplifier = LoadVector()
@@ -46,7 +46,11 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         self.produce.plot = FocalPlaneGeometryPlot()
         # TO DO: In anticipation of the addHistogram option
         # self.produce.plot.addHistogram = True
+        self.produce.plot.statistic = "median"
         self.produce.plot.xAxisLabel = "x (mm)"
         self.produce.plot.yAxisLabel = "y (mm)"
-        self.produce.plot.zAxisLabel = "Med. Readnoise"
-        self.produce.plot.statistic = "median"
+        self.produce.plot.zAxisLabel = "Median of biasMean"
+
+    def finalize(self):
+        zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
+        self.produce.plot.zAxisLabel = zAxislabel.capitalize()

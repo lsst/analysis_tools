@@ -6,14 +6,22 @@ tasks:
     config:
       connections.outputName: biasCore
       connections.data: verifyBiasResults
-      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: biasReadNoise
-      atools.MeanBiasPerAmp: CalibStatisticFocalPlanePlot
-      atools.MeanBiasPerAmp.process.buildActions.z.vectorKey: biasMean
-      atools.BiasNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.BiasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
-      atools.BiasCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.BiasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
+      atools.ReadNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.ReadNoisePerAmpPlot.quantity: biasReadNoise
+      atools.MeanBiasPerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.MeanBiasPerAmpPlot.quantity: biasMean
+      atools.BiasNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.BiasNoisePerAmpPlot.quantity: biasNoise
+      atools.BiasCrNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.BiasCrNoisePerAmpPlot.quantity: biasCrNoise
+      atools.ReadNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.ReadNoisePerAmpMetric.quantity: biasReadNoise
+      atools.MeanBiasPerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.MeanBiasPerAmpMetric.quantity: biasMean
+      atools.BiasNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.BiasNoisePerAmpMetric.quantity: biasNoise
+      atools.BiasCrNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.BiasCrNoisePerAmpMetric.quantity: biasCrNoise
       bands: ['u']
       python: |
         from lsst.analysis.tools.atools import *
@@ -22,14 +30,22 @@ tasks:
     config:
       connections.outputName: darkCore
       connections.data: verifyDarkResults
-      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: darkReadNoise
-      atools.MeanDarkPerAmp: CalibStatisticFocalPlanePlot
-      atools.MeanDarkPerAmp.process.buildActions.z.vectorKey: darkMean
-      atools.DarkNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.DarkNoisePerAmp.process.buildActions.z.vectorKey: darkNoise
-      atools.DarkCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.DarkCrNoisePerAmp.process.buildActions.z.vectorKey: darkCrNoise
+      atools.ReadNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.ReadNoisePerAmpPlot.quantity: darkReadNoise
+      atools.MeanDarkPerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.MeanDarkPerAmpPlot.quantity: darkMean
+      atools.DarkNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.DarkNoisePerAmpPlot.quantity: darkNoise
+      atools.DarkCrNoisePerAmpPlot: CalibStatisticFocalPlanePlot
+      atools.DarkCrNoisePerAmpPlot.quantity: darkCrNoise
+      atools.ReadNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.ReadNoisePerAmpMetric.quantity: darkReadNoise
+      atools.MeanDarkPerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.MeanDarkPerAmpMetric.quantity: darkMean
+      atools.DarkNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.DarkNoisePerAmpMetric.quantity: darkNoise
+      atools.DarkCrNoisePerAmpMetric: CalibStatisticFocalPlaneMetric
+      atools.DarkCrNoisePerAmpMetric.quantity: darkCrNoise
       bands: ['u']
       python: |
         from lsst.analysis.tools.atools import *

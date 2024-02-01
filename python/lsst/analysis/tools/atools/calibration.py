@@ -36,6 +36,11 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
     The median is across multiple bias exposures.
     """
 
+    quantity = Field[str](
+        doc="Qauntity on which to perform statistics.",
+        default="biasNoise",
+    )
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -56,17 +61,20 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
         self.produce.plot.statistic = "median"
 
     def finalize(self):
+        self.process.buildActions.z.vectorKey = self.quantity
         zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
         self.produce.plot.zAxisLabel = zAxislabel.capitalize()
 
 
 class CalibStatisticFocalPlaneMetric(AnalysisTool):
-    """Generates a plot of the focal plane, color-coded according to the
-    the median of the specified vectorKey on a per-amp basis. The median
-    is across multiple bias exposures.
+    """Calculates the median value of a quantity (default: biasNoise) across
+    multiple exposures on a per-amp-per-detector basis.
     """
 
-    quantity = Field[str](doc="Qauntity on which to perform statistics.", default="biasNoise")
+    quantity = Field[str](
+        doc="Qauntity on which to perform statistics.",
+        default="biasNoise",
+    )
 
     _n_detectors = 1
     _n_amplifiers = 16

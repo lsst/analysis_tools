@@ -23,8 +23,8 @@ from __future__ import annotations
 __all__ = (
     "VerifyPtcAnalysisConfig",
     "VerifyPtcAnalysisTask",
-    "VerifyBiasAnalysisConfig",
-    "VerifyBiasAnalysisTask",
+    "VerifyCalibAnalysisConfig",
+    "VerifyCalibAnalysisTask",
 )
 
 from lsst.pipe.base import connectionTypes as cT
@@ -32,7 +32,7 @@ from lsst.pipe.base import connectionTypes as cT
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class VerifyBiasAnalysisConnections(
+class VerifyCalibAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("instrument",),
     defaultTemplates={"inputName": "verifyBiasResults"},
@@ -54,13 +54,13 @@ class VerifyBiasAnalysisConnections(
     )
 
 
-class VerifyBiasAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyBiasAnalysisConnections):
+class VerifyCalibAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyCalibAnalysisConnections):
     pass
 
 
-class VerifyBiasAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = VerifyBiasAnalysisConfig
-    _DefaultName = "verifyBiasAnalysis"
+class VerifyCalibAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = VerifyCalibAnalysisConfig
+    _DefaultName = "verifyCalibAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         # Docs inherited from base class.

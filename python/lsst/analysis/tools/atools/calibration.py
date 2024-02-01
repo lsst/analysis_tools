@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "MedReadNoiseFocalPlanePlot",
+    "CalibStatisticFocalPlanePlot",
     "PtcGainFP",
     "PtcNoiseFP",
     "PtcA00FP",
@@ -53,7 +53,7 @@ class CalibrationTool(AnalysisTool):
         self.produce.plot.statistic = "median"
 
 
-class MedReadNoiseFocalPlanePlot(AnalysisTool):
+class CalibStatisticFocalPlanePlot(AnalysisTool):
     """Generates a plot of the focal plane, color-coded according to the
     median bias read noise on a per-amp basis. The median is across
     multiple bias exposures.
@@ -63,7 +63,7 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         super().setDefaults()
 
         self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = "biasReadNoise"
+        self.process.buildActions.z.vectorKey = "biasMean"
         self.process.buildActions.detector = LoadVector()
         self.process.buildActions.detector.vectorKey = "detector"
         self.process.buildActions.amplifier = LoadVector()

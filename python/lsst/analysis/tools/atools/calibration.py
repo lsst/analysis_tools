@@ -35,7 +35,7 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
     median of a given measurement (default: "biasMean") on a per-amp basis.
     The median is across multiple bias exposures.
     """
-    
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -54,6 +54,10 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
         self.produce.plot.yAxisLabel = "y (mm)"
         self.produce.plot.zAxisLabel = "Median of Mean Bias"
         self.produce.plot.statistic = "median"
+
+    def finalize(self):
+        zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
+        self.produce.plot.zAxisLabel = zAxislabel.capitalize()
 
 
 class CalibStatisticFocalPlaneMetric(AnalysisTool):

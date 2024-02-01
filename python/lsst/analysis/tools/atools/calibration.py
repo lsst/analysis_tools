@@ -55,8 +55,8 @@ class CalibrationTool(AnalysisTool):
 
 class CalibStatisticFocalPlanePlot(AnalysisTool):
     """Generates a plot of the focal plane, color-coded according to the
-    median bias read noise on a per-amp basis. The median is across
-    multiple bias exposures.
+    median of a given measurement (default: "biasMean") on a per-amp basis.
+    The median is across multiple bias exposures.
     """
 
     def setDefaults(self):

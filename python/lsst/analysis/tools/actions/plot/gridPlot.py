@@ -21,7 +21,7 @@
 
 from __future__ import annotations
 
-__all__ = ("GridPlot",)
+__all__ = ("GridPlot", "GridPanelConfig")
 
 from typing import TYPE_CHECKING
 
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from lsst.analysis.tools.interfaces import KeyedData, PlotResultType
 
 
-class PlotElementConfig(Config):
+class GridPanelConfig(Config):
     plotElement = ConfigurableActionField[PlotElement](
         doc="Plot element.",
     )
@@ -47,10 +47,6 @@ class PlotElementConfig(Config):
         doc="Y position of plot element title.",
         default=None,
     )
-    aspect = Field[float](
-        doc="Aspect ratio of plot element.",
-        optional=True,
-    )
 
 
 class GridPlot(PlotAction):
@@ -59,7 +55,7 @@ class GridPlot(PlotAction):
     plotElements = ConfigDictField(
         doc="Plot elements.",
         keytype=int,
-        itemtype=PlotElementConfig,
+        itemtype=GridPanelConfig,
     )
     numRows = Field[int](
         doc="Number of rows.",
@@ -103,7 +99,7 @@ class GridPlot(PlotAction):
                 index = row * self.numCols + col
                 if index not in self.valsGroupBy.keys():
                     continue
-                ax = fig.add_subplot(gs[row : row + 1, col : col + 1])
+                ax = fig.add_subplot(gs[row, col])
 
                 xList = x.split(",") if (x := self.xDataKeys.get(index)) else None
                 valList = self.valsGroupBy[index].split(",")
@@ -121,7 +117,8 @@ class GridPlot(PlotAction):
 
                         _ = self.plotElements[index].plotElement(data=newData, ax=ax, **kwargs)
 
-                ax.set_title(**self.plotElements[index].title, y=self.plotElements[index].titleY)
+                if self.plotElements[index].title is not None:
+                    ax.set_title(**self.plotElements[index].title, y=self.plotElements[index].titleY)
 
         plt.tight_layout()
         fig.show()
@@ -130,7 +127,7 @@ class GridPlot(PlotAction):
     def validate(self):
         """Validate configuration."""
         super().validate()
-        if self.xDataKeys is not None and len(self.xDataKeys) != self.numRows * self.numCols:
+        if self.xDataKeys and len(self.xDataKeys) != self.numRows * self.numCols:
             raise RuntimeError("Number of xDataKeys keys must match number of rows * columns.")
         if len(self.valsGroupBy) != self.numRows * self.numCols:
             raise RuntimeError("Number of valsGroupBy keys must match number of rows * columns.")

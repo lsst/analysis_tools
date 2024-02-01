@@ -21,7 +21,7 @@
 
 from __future__ import annotations
 
-__all__ = ("AxPlotElement",)
+__all__ = ("ScatterElement",)
 
 from typing import TYPE_CHECKING
 
@@ -34,8 +34,8 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
 
-class AxPlotElement(PlotElement):
-    """Configuration options for ScatterPlot elements.
+class ScatterElement(PlotElement):
+    """Configuration options for scatter plot plot elements.
 
     Attributes
     ----------
@@ -67,11 +67,11 @@ class AxPlotElement(PlotElement):
         doc="Color",
         optional=True,
     )
-    marker = Field[float](
+    marker = Field[str](
         doc="Point marker",
         optional=True,
     )
-    linestyle = Field[float](
+    linestyle = Field[str](
         doc="Linestyle",
         optional=True,
     )
@@ -104,6 +104,10 @@ class AxPlotElement(PlotElement):
             data[self.xKey] if self.xKey is not None else range(len(data[self.valsKey])),  # type: ignore
             data[self.valsKey],  # type: ignore
             color=self.color if self.color is not None else None,
+            marker=self.marker if self.marker is not None else None,
+            linestyle=self.linestyle if self.linestyle is not None else None,
+            linewidth=self.linewidth if self.linewidth is not None else None,
+            markersize=self.markersize if self.markersize is not None else None,
         )
 
         return data

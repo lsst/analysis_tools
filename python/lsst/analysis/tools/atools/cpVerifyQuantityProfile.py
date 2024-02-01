@@ -22,15 +22,20 @@ from __future__ import annotations
 
 from lsst.analysis.tools.interfaces._interfaces import KeyedDataSchema
 
-__all__ = ("CPVerifyQuantityProfileTool",)
+__all__ = (
+    "CPVerifyQuantityBaseTool",
+    "CPVerifyQuantityAmpProfileScatterTool",
+    "CPVerifyQuantityAmpProfileHistTool",
+)
 
 from typing import cast
 
 from lsst.pex.config import Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
-from ..actions.plot.elements.axPlotElement import AxPlotElement
-from ..actions.plot.gridPlot import GridPlot, PlotElementConfig
-from ..interfaces import AnalysisTool, KeyedData, KeyedDataAction, Vector
+from ..actions.plot.elements import HistElement, ScatterElement
+from ..actions.plot.gridPlot import GridPanelConfig, GridPlot
+from ..interfaces import AnalysisTool, KeyedData, KeyedDataAction, PlotElement, Vector
 
 
 class PrepRepacker(KeyedDataAction):
@@ -78,17 +83,18 @@ class PassThrough(KeyedDataAction):
         return ()
 
 
-class CPVerifyQuantityProfileTool(AnalysisTool):
+class CPVerifyQuantityBaseTool(AnalysisTool):
     parameterizedBand: bool = False
+
+    plotElement = ConfigurableActionField[PlotElement](
+        doc="Plot element.",
+    )
 
     def setDefaults(self):
         super().setDefaults()
 
         # Repack the input data into a usable format
         self.prep = PrepRepacker()
-        self.prep.panelKey = "amplifier"
-        self.prep.dataKey = "mjd"
-        self.prep.quantityKey = "biasSerialProfile"
 
         # A simple pass-through process action to keep the data unchanged
         self.process = PassThrough()
@@ -98,7 +104,6 @@ class CPVerifyQuantityProfileTool(AnalysisTool):
         self.produce.plot.plotElements = {}
         self.produce.plot.numRows = 4
         self.produce.plot.numCols = 4
-        self.produce.plot.suptitle = {"t": "biasSerialProfile"}
 
         # Values to group by to distinguish between data in differing panels
         self.produce.plot.valsGroupBy = {
@@ -120,11 +125,30 @@ class CPVerifyQuantityProfileTool(AnalysisTool):
             15: "C17",
         }
 
-        # Set the plot element for each panel to an AxPlotElement
+    def finalize(self):
+        super().finalize()
+
+        # Configure each panel
         for key, value in self.produce.plot.valsGroupBy.items():
-            plotElementConfig = PlotElementConfig(
-                plotElement=AxPlotElement(),
+            gridPanelConfig = GridPanelConfig(
+                plotElement=self.plotElement,
                 title={"label": str(value), "fontsize": "10"},
                 titleY=0.85,
             )
-            self.produce.plot.plotElements[key] = plotElementConfig
+            self.produce.plot.plotElements[key] = gridPanelConfig
+
+
+class CPVerifyQuantityAmpProfileScatterTool(CPVerifyQuantityBaseTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.plotElement = ScatterElement()
+        self.prep.panelKey = "amplifier"
+        self.prep.dataKey = "mjd"
+
+
+class CPVerifyQuantityAmpProfileHistTool(CPVerifyQuantityBaseTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.plotElement = HistElement()
+        self.prep.panelKey = "amplifier"
+        self.prep.dataKey = "mjd"

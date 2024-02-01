@@ -6,7 +6,14 @@ tasks:
     config:
       connections.outputName: VerifyBias
       atools.ReadNoisePerAmp: MedReadNoiseFocalPlanePlot
-      atools.ampBiasProfile: AmpBiasProfileTool
-      atools.ampBiasProfile.quantityKey: biasSerialProfile
+      atools.ampBiasProfileScatter: CPVerifyQuantityAmpProfileScatterTool
+      atools.ampBiasProfileScatter.prep.quantityKey: biasSerialProfile
+      atools.ampBiasProfileScatter.produce.plot.suptitle:
+        t: biasSerialProfile
+      atools.ampBiasProfileHist: CPVerifyQuantityAmpProfileHistTool
+      atools.ampBiasProfileHist.prep.quantityKey: biasSerialProfile
+      atools.ampBiasProfileHist.produce.plot.suptitle:
+        t: biasSerialProfile
       python: |
         from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.actions.plot.elements import *

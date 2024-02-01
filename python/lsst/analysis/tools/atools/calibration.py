@@ -20,10 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CalibStatisticFocalPlanePlot",)
+__all__ = ("CalibStatisticFocalPlanePlot", "CalibStatisticFocalPlaneMetric")
 
-from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
-from ..actions.vector import LoadVector
+from lsst.pex.config import Field
+
+from ..actions.vector import LoadVector, MultiCriteriaDownselectVector, ThresholdSelector, BandSelector
+from ..actions.scalar import MedianAction
+from ..actions.plot import FocalPlaneGeometryPlot
 from ..interfaces import AnalysisTool
 
 
@@ -32,7 +35,7 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
     median of a given measurement (default: "biasMean") on a per-amp basis.
     The median is across multiple bias exposures.
     """
-
+    
     def setDefaults(self):
         super().setDefaults()
 
@@ -49,8 +52,47 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
         self.produce.plot.statistic = "median"
         self.produce.plot.xAxisLabel = "x (mm)"
         self.produce.plot.yAxisLabel = "y (mm)"
-        self.produce.plot.zAxisLabel = "Median of biasMean"
+        self.produce.plot.zAxisLabel = "Median of Mean Bias"
+        self.produce.plot.statistic = "median"
+
+
+class CalibStatisticFocalPlaneMetric(AnalysisTool):
+    """Generates a plot of the focal plane, color-coded according to the
+    the median of the specified vectorKey on a per-amp basis. The median
+    is across multiple bias exposures.
+    """
+
+    quantity = Field[str](doc="Qauntity on which to perform statistics.", default="biasNoise")
+
+    _n_detectors = 1
+    _n_amplifiers = 16
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        for detectorId in range(self._n_detectors):
+            for ampId in range(self._n_amplifiers):
+                ampName = f"C{ampId:02}"
+                self.process.filterActions.quantity = MultiCriteriaDownselectVector(
+                    vectorKey="biasMean",
+                )
+                self.process.filterActions.quantity.selectors.amp = BandSelector(
+                    vectorKey="amplifier",
+                    bands=[ampName],
+                )
+                self.process.filterActions.quantity.selectors.detector = ThresholdSelector(
+                    op="eq",
+                    threshold=detectorId,
+                    vectorKey="detector",
+                )
+
+                attrName = f"D{detectorId:03}_C{ampId:02}"
+                setattr(
+                    self.process.calculateActions,
+                    attrName,
+                    MedianAction(vectorKey="quantity"),
+                )
+                self.produce.metric.units[attrName] = "count"
 
     def finalize(self):
-        zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
-        self.produce.plot.zAxisLabel = zAxislabel.capitalize()
+        self.process.filterActions.quantity.vectorKey = self.quantity

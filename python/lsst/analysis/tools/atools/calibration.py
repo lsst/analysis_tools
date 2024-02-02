@@ -27,7 +27,8 @@ __all__ = (
     "PtcA00FP",
     "PtcTurnoffFP",
     "PtcMaxRawMeansFP",
-    "PtcRowMeanVarianceSlopeFP",)
+    "PtcRowMeanVarianceSlopeFP",
+)
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector

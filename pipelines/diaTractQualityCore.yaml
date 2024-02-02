@@ -7,11 +7,12 @@ description: |
 tasks:
   analyzeDiaSourceTableTract:
     class: lsst.analysis.tools.tasks.DiaSourceTableTractAnalysisTask
-    # This task is designed to automatically run all the relevant metric
-    # atools, so only plots need to be configured here.
     config:
       # This will be used as the first part of the butler data product name
       connections.outputName: diaSourceTableTract
+      atools.NumDiaSources: NumDiaSourcesMetric
+      atools.NumStreakDiaSources: NumStreakDiaSourcesMetric
+      atools.NumStreakCenterDiaSources: NumStreakCenterDiaSourcesMetric
       atools.streakDiaSourcePlot: PlotStreakDiaSources
       python: |
         from lsst.analysis.tools.atools import *

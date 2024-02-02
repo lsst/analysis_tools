@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 from lsst.pex.config import ConfigDictField, Field, ListField
 from matplotlib.figure import Figure
 
-from ...interfaces import KeyedData, PlotAction
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import PanelConfig
 
 
@@ -82,6 +82,16 @@ class DiaSkyPlot(PlotAction):
         default={},
     )
 
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
+        """Defines the schema this plot action expects (the keys it looks
+        for and what type they should be). In other words, verifies that
+        the input data has the columns we are expecting with the right dtypes.
+        """
+        for ra in self.panels.ras.values():
+            yield (ra, Vector)
+        for dec in self.panels.decs.values():
+            yield (dec, Vector)
+
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         return self.makePlot(data, **kwargs)
 
@@ -99,9 +109,9 @@ class DiaSkyPlot(PlotAction):
         """
         if "figsize" in kwargs:
             figsize = kwargs.pop("figsize", "")
-            fig = plt.figure(figsize=figsize, dpi=1000)
+            fig = plt.figure(figsize=figsize, dpi=600)
         else:
-            fig = plt.figure(figsize=(8, 6), dpi=1000)
+            fig = plt.figure(figsize=(12, 9), dpi=600)
         axs = self._makeAxes(fig)
         for panel, ax in zip(self.panels.values(), axs):
             self._makePanel(data, panel, ax, **kwargs)
@@ -147,11 +157,10 @@ class DiaSkyPlot(PlotAction):
         color : `str`
         """
         for ra, dec in zip(panel.ras, panel.decs):  # loop over column names (dict keys)
-            ax.scatter(
-                data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0
-            )
-            # TODO: implement lists of colors, sizes, alphas, etc.
-            # Right now, color is excluded so each series gets the next default
+            ax.scatter(data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0)
+            # TODO DM-42768: implement lists of colors, sizes, alphas, etc.
+            # and add better support for multi-panel plots.
+            # Right now, color is excluded, each series gets the next default.
 
         ax.set_xlabel(panel.xlabel)
         ax.set_ylabel(panel.ylabel)

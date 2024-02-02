@@ -25,7 +25,6 @@ from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-from ..atools import diaSourceTableTractMetrics
 
 
 class DiaSourceTableTractAnalysisConnections(
@@ -58,13 +57,7 @@ class DiaSourceTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=DiaSourceTableTractAnalysisConnections
 ):
     def setDefaults(self):
-        """All the metrics are turned on in this task by default,
-        so it is not necessary to configure each one in a pipeline
-        """
         super().setDefaults()
-        self.atools.NumDiaSources = diaSourceTableTractMetrics.NumDiaSourcesMetric()
-        self.atools.NumStreakDiaSources = diaSourceTableTractMetrics.NumStreakDiaSourcesMetric()
-        self.atools.NumStreakCenterDiaSources = diaSourceTableTractMetrics.NumStreakCenterDiaSourcesMetric()
 
 
 class DiaSourceTableTractAnalysisTask(AnalysisPipelineTask):

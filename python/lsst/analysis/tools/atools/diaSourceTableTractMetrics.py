@@ -69,7 +69,8 @@ class NumStreakDiaSourcesMetric(AnalysisTool):
 
 
 class NumStreakCenterDiaSourcesMetric(AnalysisTool):
-    """Count DiaSources that have the STREAK flag in the center of the source."""
+    """Count DiaSources that have the STREAK flag in the center
+    of the source."""
 
     def setDefaults(self):
         super().setDefaults()
@@ -102,22 +103,21 @@ class PlotStreakDiaSources(AnalysisTool):
         # First, select "good" DiaSources that are not obvious garbage
         self.process.buildActions.coordsGood = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
         self.process.buildActions.coordsGood.selectors.selectorGood = GoodDiaSourceSelector()
-        self.applyContext(DrpContext)
 
         # Second, select DiaSources with STREAK flag set in the footprint
         self.process.buildActions.coordsStreak = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
         self.process.buildActions.coordsStreak.selectors.selectorStreak = FlagSelector(
             selectWhenTrue=["pixelFlags_streak"]
         )
-        self.applyContext(DrpContext)
 
         # Finally, select DiaSources with STREAK flag set in the source center
         self.process.buildActions.coordsStreakCenter = KeyedDataSelectorAction(vectorKeys=["ra", "dec"])
         self.process.buildActions.coordsStreakCenter.selectors.selectorStreakCenter = FlagSelector(
             selectWhenTrue=["pixelFlags_streakCenter"]
         )
-        self.applyContext(DrpContext)
 
+        # Use the DRP column names for all of the above, and generate the plot
+        self.applyContext(DrpContext)
         self.produce.plot = DiaSkyPlot()
 
         self.produce.plot.panels["panel_main"] = DiaSkyPanel()
@@ -136,5 +136,3 @@ class PlotStreakDiaSources(AnalysisTool):
             "coordsStreakCenter_dec",
         ]
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False
-
-        # TODO: plot color, point size, and legend customizations

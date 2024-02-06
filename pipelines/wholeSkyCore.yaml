@@ -1,0 +1,14 @@
+description: |
+  Tier1 plots and metrics to assess the data quality across the whole sky
+tasks:
+  makeMetricTableOTC:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.outputName: wholeSkyMetricTableOTC
+  metricPlotsOTC:
+    class: lsst.analysis.tools.tasks.MetricAnalysisTask
+    config:
+      connections.outputName: wholeSkyMetricsOTC
+      #atools.psfCModelScatter: PsfCModelScatterPlot
+      python: |
+        from lsst.analysis.tools.atools import *

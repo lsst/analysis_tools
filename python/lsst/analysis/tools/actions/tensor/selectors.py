@@ -20,9 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "PixelMaskSelector",
-)
+__all__ = ("PixelMaskSelector",)
 
 from typing import Optional, Mapping, cast
 
@@ -31,18 +29,17 @@ from lsst.pex.config.listField import ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Tensor, TensorAction
 
+
 class PixelMaskSelector(TensorAction):
-    """Select pixels based on the image pixel mask.
-    """
+    """Select pixels based on the image pixel mask."""
 
     maskPlaneKeys = ListField[str](doc="Keys of the mask plane dictionary to evaluate", optional=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((key, Tensor) for key in maskPlaneKeys)
+        return ((key, Tensor) for key in self.maskPlaneKeys)
 
     def __call__(self, data: KeyedData, maskPlaneDict: Mapping[str, int] | None = None, **kwargs) -> Tensor:
-        """Select on the given mask plane keys
-        """
+        """Select on the given mask plane keys"""
 
         if maskPlaneDict is None:
             raise ValueError("maskPlaneDict must be supplied")
@@ -50,7 +47,7 @@ class PixelMaskSelector(TensorAction):
             raise RuntimeError("No mask plane keys provided")
         results: Optional[Tensor] = None
 
-        pixelMask = data['mask']
+        pixelMask = data["mask"]
         for key in self.maskPlaneKeys:
             planeBitMask = 2 ** maskPlaneDict[key]
             temp = np.array(pixelMask & planeBitMask) == planeBitMask

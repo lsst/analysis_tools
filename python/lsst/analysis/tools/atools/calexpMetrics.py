@@ -30,16 +30,12 @@ class PixelMaskMetrics(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.prep.selectors.saturated = PixelMaskSelector()
-        self.prep.selectors.saturated.maskPlaneKeys = ["SAT"]
+        self.prep.selectors.detected = PixelMaskSelector()
+        self.prep.selectors.detected.maskPlaneKeys = ["DETECTED"]
 
         self.process.calculateActions.saturatedFraction = FracPixels()
         self.process.calculateActions.saturatedFraction.maskPlaneKey = "SAT"
 
-        self.process.calculateActions.detectedFraction = FracPixels()
-        self.process.calculateActions.detectedFraction.maskPlaneKey = "DETECTED"
-
         self.produce.metric.units = {
-            "saturatedFraction": "",
-            "detectedFraction": "",
+            "saturatedDetectedFraction": "",
         }

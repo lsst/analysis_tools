@@ -39,10 +39,9 @@ from ._actions import (
     MetricAction,
     MetricResultType,
     NoPlot,
-    Tensor,
     VectorAction,
 )
-from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vector
+from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vector, Tensor
 
 
 class BasePrep(KeyedDataAction):
@@ -96,7 +95,7 @@ class BasePrep(KeyedDataAction):
         existingVectors = list(self.vectorKeys)
         for name, typ in inputSchema:
             existing.append(name)
-            if typ == Vector:
+            if typ == Vector or typ == Tensor:
                 existingVectors.append(name)
         self.keysToLoad = set(existing)
         self.vectorKeys = set(existingVectors)

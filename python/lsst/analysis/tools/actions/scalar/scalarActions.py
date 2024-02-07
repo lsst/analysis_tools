@@ -50,7 +50,7 @@ import numpy as np
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
-from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector, Tensor
 from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
 
 
@@ -418,17 +418,17 @@ class DivideScalar(ScalarAction):
 class FracPixels(ScalarAction):
     """Compute the fraction of pixels flagged in a pixelMask."""
 
-    vectorKey = Field[str](doc="Key of plane", default="mask")
+    tensorKey = Field[str](doc="Key of image tensor", default="mask")
     maskPlaneKey = Field[str](doc="Key of the mask plane dictionary to evaluate", optional=False)
     percent = Field[bool](doc="Express result as percentage", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.vectorKey, Vector),)
+        return ((self.tensorKey, Tensor),)
 
     def __call__(self, data: KeyedData, maskPlaneDict: Mapping[str, int] | None = None, **kwargs) -> Scalar:
         if maskPlaneDict is None:
             raise ValueError("maskPlaneDict must be supplied")
-        values = data[self.vectorKey]
+        values = data[self.tensorKey]
         values = values[np.logical_not(np.isnan(values))]
         n_values = values.size
         if n_values == 0:

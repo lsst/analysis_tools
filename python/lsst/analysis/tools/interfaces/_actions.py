@@ -25,6 +25,7 @@ __all__ = (
     "AnalysisAction",
     "KeyedDataAction",
     "VectorAction",
+    "TensorAction",
     "ScalarAction",
     "MetricResultType",
     "MetricAction",

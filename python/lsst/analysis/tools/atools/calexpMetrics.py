@@ -21,6 +21,7 @@
 
 __all__ = ("PixelMaskMetrics",)
 
+from ..actions.tensor.selectors import PixelMaskSelector
 from ..actions.scalar import FracPixels
 from ..interfaces import AnalysisTool
 
@@ -28,6 +29,9 @@ from ..interfaces import AnalysisTool
 class PixelMaskMetrics(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
+
+        self.prep.selectors.saturated = PixelMaskSelector()
+        self.prep.selectors.saturated.maskPlaneKeys = ["SAT"]
 
         self.process.calculateActions.saturatedFraction = FracPixels()
         self.process.calculateActions.saturatedFraction.maskPlaneKey = "SAT"

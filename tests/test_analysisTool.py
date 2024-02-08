@@ -23,6 +23,10 @@ from unittest import TestCase, main
 
 import lsst.pex.config as pexConfig
 import lsst.utils.tests
+
+# This is needed to work around a bug with pyproj when it is imported
+# inside a function, in this case through a pipeline
+import skyproj  # noqa: F401
 from lsst.analysis.tools.interfaces import AnalysisTool
 
 
@@ -80,6 +84,29 @@ class FinalizeTestCase(TestCase):
         self.assertEqual(self.d.name, "BD_final")
         self.e.finalize()
         self.assertEqual(self.e.name, "BE_final")
+
+
+class LoadFromPipelineTestCase(TestCase):
+    """Test that analysis tools can be loaded from a pipeline"""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.pipeline = "$ANALYSIS_TOOLS_DIR/pipelines/coaddQualityExtended.yaml"
+
+    def testLoadRelative(self) -> None:
+        # test that relative names can be loaded
+        tool = AnalysisTool.fromPipeline(self.pipeline, "shapeSizeDetRadiusVsCmodelMag")
+        self.assertIsNotNone(tool)
+        self.assertEqual(tool.mag_x, "cmodel_err")  # type: ignore
+        self.assertEqual(tool.size_y, "shape_slot")  # type: ignore
+
+    def testLoadAbs(self) -> None:
+        ...
+        # test that relative names can be loaded
+        tool = AnalysisTool.fromPipeline(self.pipeline, "atools.shapeSizeDetRadiusVsCmodelMag", fullpath=True)
+        self.assertIsNotNone(tool)
+        self.assertEqual(tool.mag_x, "cmodel_err")  # type: ignore
+        self.assertEqual(tool.size_y, "shape_slot")  # type: ignore
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

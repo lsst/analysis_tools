@@ -37,6 +37,8 @@ from ..interfaces import AnalysisTool
 class NumDiaSourcesMetric(AnalysisTool):
     """Count all DiaSources that do not have known bad/quality flags."""
 
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -52,6 +54,8 @@ class NumDiaSourcesMetric(AnalysisTool):
 
 class NumStreakDiaSourcesMetric(AnalysisTool):
     """Count DiaSources that fall in a STREAK flag footprint region."""
+
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -71,6 +75,8 @@ class NumStreakDiaSourcesMetric(AnalysisTool):
 class NumStreakCenterDiaSourcesMetric(AnalysisTool):
     """Count DiaSources that have the STREAK flag in the center
     of the source."""
+
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -123,6 +129,8 @@ class PlotStreakDiaSources(AnalysisTool):
         self.produce.plot.panels["panel_main"] = DiaSkyPanel()
         self.produce.plot.panels["panel_main"].xlabel = "RA (deg)"
         self.produce.plot.panels["panel_main"].ylabel = "Dec (deg)"
+        self.produce.plot.panels["panel_main"].subplot2gridRowspan = 10
+        self.produce.plot.panels["panel_main"].subplot2gridColspan = 10
         self.produce.plot.panels["panel_main"].ras = [
             "rasAll",
             "coordsGood_ra",
@@ -134,5 +142,11 @@ class PlotStreakDiaSources(AnalysisTool):
             "coordsGood_dec",
             "coordsStreak_dec",
             "coordsStreakCenter_dec",
+        ]
+        self.produce.plot.panels["panel_main"].legendLabels = [
+            "All DiaSources",
+            "Good DiaSources",
+            "Streak footprint DiaSources",
+            "Streak center DiaSources",
         ]
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False

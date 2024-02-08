@@ -46,13 +46,9 @@ class DiaSkyPanel(PanelConfig):
         doc="Invert x-axis?",
         default=True,
     )
-    color = Field[str](
-        doc="Point color",
-        default="C0",
-    )
     size = Field[float](
         doc="Point size",
-        default=5,
+        default=20,
     )
     alpha = Field[float](
         doc="Point transparency",
@@ -67,6 +63,14 @@ class DiaSkyPanel(PanelConfig):
     decs = ListField[str](
         doc="Names of Dec columns",
         optional=False,
+    )
+    colorList = Field[str](
+        doc="Colors for the points",
+        optional=True,
+    )
+    legendLabels = ListField[str](
+        doc="Labels for the legend",
+        optional=True,
     )
 
 
@@ -109,9 +113,9 @@ class DiaSkyPlot(PlotAction):
         """
         if "figsize" in kwargs:
             figsize = kwargs.pop("figsize", "")
-            fig = plt.figure(figsize=figsize, dpi=600)
+            fig = plt.figure(figsize=figsize, dpi=300)
         else:
-            fig = plt.figure(figsize=(12, 9), dpi=600)
+            fig = plt.figure(figsize=(12, 9), dpi=300)
         axs = self._makeAxes(fig)
         for panel, ax in zip(self.panels.values(), axs):
             self._makePanel(data, panel, ax, **kwargs)
@@ -156,15 +160,25 @@ class DiaSkyPlot(PlotAction):
         ax : matplotlib axis
         color : `str`
         """
-        for ra, dec in zip(panel.ras, panel.decs):  # loop over column names (dict keys)
-            ax.scatter(data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0)
-            # TODO DM-42768: implement lists of colors, sizes, alphas, etc.
+        artists = []  # Placeholder for each series being plotted
+        for idx, (ra, dec) in enumerate(zip(panel.ras, panel.decs)):  # loop over column names (dict keys)
+            if panel.colorList:
+                color = panel.colorList[idx]
+                artist = ax.scatter(
+                    data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0, c=color
+                )
+            else:  # Use matplotlib default colors
+                artist = ax.scatter(
+                    data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0
+                )
+            artists.append(artist)
+            # TODO DM-42768: implement lists of sizes, alphas, etc.
             # and add better support for multi-panel plots.
-            # Right now, color is excluded, each series gets the next default.
 
         ax.set_xlabel(panel.xlabel)
         ax.set_ylabel(panel.ylabel)
-
+        if panel.legendLabels:
+            ax.legend(artists, panel.legendLabels)
         if panel.invertXAxis:
             ax.invert_xaxis()
         if panel.topSpinesVisible:

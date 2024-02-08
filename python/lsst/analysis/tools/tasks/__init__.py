@@ -8,6 +8,7 @@ from .diaObjectDetectorVisitAnalysis import *
 from .diffimTaskDetectorVisitAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
+from .makeMetricTable import *
 from .metricAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *

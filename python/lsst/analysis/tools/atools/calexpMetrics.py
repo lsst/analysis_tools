@@ -22,7 +22,7 @@
 __all__ = ("PixelMaskMetrics",)
 
 from ..actions.tensor.selectors import PixelMaskSelector
-from ..actions.scalar import FracPixels
+from ..actions.scalar import FracPixels, MeanAction, MedianAction, FracThreshold
 from ..interfaces import AnalysisTool
 
 
@@ -33,9 +33,14 @@ class PixelMaskMetrics(AnalysisTool):
         self.prep.selectors.detected = PixelMaskSelector()
         self.prep.selectors.detected.maskPlaneKeys = ["DETECTED"]
 
-        self.process.calculateActions.saturatedDetectedFraction = FracPixels()
-        self.process.calculateActions.saturatedDetectedFraction.maskPlaneKey = "SAT"
+        self.process.calculateActions.mean = MeanAction(vectorKey='image')
+        self.process.calculateActions.median = MedianAction(vectorKey='image')
+        self.process.calculateActions.fracMask = FracPixels(maskPlaneKey='SAT')
+        self.process.calculateActions.fracThreshold = FracThreshold(vectorKey='image', op='gt', threshold=10.)
 
         self.produce.metric.units = {
-            "saturatedDetectedFraction": "",
+            "mean": "",
+            "median": "",
+            "fracMask": "",
+            "fracThreshold": "",
         }

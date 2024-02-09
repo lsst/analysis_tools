@@ -2,6 +2,7 @@ from .assocDiaSrcDetectorVisitAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .astrometricCatalogMatch import *
 from .calexpAnalysis import *
+from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *

@@ -672,18 +672,18 @@ class ScatterPlotWithTwoHists(PlotAction):
     ) -> None:
         # Top histogram
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
-
-        if "any" in self.plotTypes:
-            x_all = data[f"x{self._datatypes['any'].suffix_xy}"]
-            keys_notall = [x for x in self.plotTypes if x != "any"]
-        else:
-            x_all = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
-            keys_notall = self.plotTypes
-
         x_min, x_max = ax.get_xlim()
         bins = np.linspace(x_min, x_max, 100)
-        topHist.hist(x_all, bins=bins, color="grey", alpha=0.3, log=True, label=f"All ({len(x_all)})")
-        for key in keys_notall:
+
+        if "any" in self.plotTypes:
+            x_any = f"x{self._datatypes['any'].suffix_xy}"
+            keys_notany = [x for x in self.plotTypes if x != "any"]
+            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
+        else:
+            x_any = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notany = self.plotTypes
+
+        for key in keys_notany:
             config_datatype = self._datatypes[key]
             vector = data[f"x{config_datatype.suffix_xy}"]
             topHist.hist(
@@ -711,24 +711,24 @@ class ScatterPlotWithTwoHists(PlotAction):
     ) -> None:
         # Side histogram
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
-
-        if "any" in self.plotTypes:
-            y_all = data[f"y{self._datatypes['any'].suffix_xy}"]
-            keys_notall = [x for x in self.plotTypes if x != "any"]
-        else:
-            y_all = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
-            keys_notall = self.plotTypes
-
         y_min, y_max = ax.get_ylim()
         bins = np.linspace(y_min, y_max, 100)
-        sideHist.hist(np.array(y_all), bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+
+        if "any" in self.plotTypes:
+            y_any = f"y{self._datatypes['any'].suffix_xy}"
+            keys_notany = [x for x in self.plotTypes if x != "any"]
+            sideHist.hist(y_any, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        else:
+            y_any = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            keys_notany = self.plotTypes
+
         kwargs_hist = dict(
             bins=bins,
             histtype="step",
             log=True,
             orientation="horizontal",
         )
-        for key in keys_notall:
+        for key in keys_notany:
             config_datatype = self._datatypes[key]
             vector = data[f"y{config_datatype.suffix_xy}"]
             sideHist.hist(

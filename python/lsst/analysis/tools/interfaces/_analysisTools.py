@@ -353,8 +353,6 @@ class AnalysisTool(AnalysisAction):
         for task in pipelineGraph.tasks.values():
             config = task.config
             try:
-                # if hasattr(config, 'atools'):
-                # breakpoint()
                 attr = attrgetter(name)(config)
             except AttributeError:
                 continue

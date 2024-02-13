@@ -39,7 +39,7 @@ from scipy.stats import binned_statistic_2d, binned_statistic_dd
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMedian, nanMin, nanSigmaMad
-from .plotUtils import addPlotInfo, sortAllArrays
+from .plotUtils import addPlotInfo, mkColormap, sortAllArrays
 
 
 class FocalPlanePlot(PlotAction):
@@ -382,6 +382,10 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         fig : `matplotlib.figure.Figure`
             The resulting figure.
         """
+
+        cmap = mkColormap(["midnightBlue", "lightcyan", "darkgreen"])
+        cmap.set_bad(color="none")
+
         if plotInfo is None:
             plotInfo = {}
 
@@ -530,14 +534,23 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
             bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
             ax.text(0.8, 0.91, statsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
 
-        patchCollection = PatchCollection(patches, alpha=0.4, edgecolor="black")
-        patchCollection.set_array(values)
+        # Defaults to med + 4 sigma Mad to match
+        # the camera team plots
         if self.plotMin is not None:
-            currentLimits = patchCollection.get_clim()
-            patchCollection.set_clim(self.plotMin, currentLimits[1])
+            vmin = self.plotMin
+        else:
+            vmin = statMed - 4.0 * statMad
         if self.plotMax is not None:
-            currentLimits = patchCollection.get_clim()
-            patchCollection.set_clim(currentLimits[0], self.plotMax)
+            vmax = self.plotMax
+        else:
+            vmax = statMed + 4.0 * statMad
+
+        valuesPlot = np.clip(values, vmin, vmax)
+
+        patchCollection = PatchCollection(
+            patches, edgecolor="white", cmap=cmap, linewidth=0.5, linestyle=(0, (0.5, 3))
+        )
+        patchCollection.set_array(valuesPlot)
         ax.add_collection(patchCollection)
 
         divider = make_axes_locatable(ax)

@@ -25,11 +25,14 @@ __all__ = ("AnalysisTool",)
 
 from collections.abc import Mapping
 from functools import wraps
+from operator import attrgetter
 from typing import Callable, Iterable, Protocol, runtime_checkable
 
 import lsst.pex.config as pexConfig
-from lsst.pex.config import Field, ListField
+from lsst.obs.base import Instrument
+from lsst.pex.config import Field, FieldValidationError, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
+from lsst.pipe.base import Pipeline
 from lsst.verify import Measurement
 
 from ._actions import AnalysisAction, JointAction, JointResults, NoPlot, PlotAction
@@ -281,6 +284,84 @@ class AnalysisTool(AnalysisAction):
         else:
             results.append("_".join(x for x in (prefix, suffix) if x))
         return results
+
+    @classmethod
+    def fromPipeline(
+        cls,
+        pipeline: str | Pipeline,
+        name: str,
+        fullpath: bool = False,
+        instrument: Instrument | str | None = None,
+    ) -> AnalysisTool | None:
+        """Construct an `AnalysisTool` from a definition written in a
+        `~lsst.pipe.base.Pipeline`.
+
+        Parameters
+        ----------
+        pipeline : `str` or `~lsst.pipe.base.Pipeline`
+            The pipeline to load the `AnalysisTool` from.
+        name : `str`
+            The name of the analysis tool to run. This can either be just the
+            name assigned to the tool, or an absolute name in a config
+            hierarchy.
+        fullpath : `bool`
+            Determines if the name is interpreted as an absolute path in a
+            config hierarchy, or is relative to an `AnalysisTool` ``atools``
+            `~lsst.pex.config.configurableActions.ConfigurableActionStructField`
+            .
+        instrument : `~lsst.daf.butler.instrument.Instrument` or `str` or\
+            `None`
+            Either a derived class object of a `lsst.daf.butler.instrument` or
+            a string corresponding to a fully qualified
+            `lsst.daf.butler.instrument` name or None if no instrument needs
+            specified or if the pipeline contains the instrument in it.
+            Defaults to None.
+
+        Returns
+        -------
+        tool : `AnalysisTool`
+            The loaded `AnalysisTool` as configured in the pipeline.
+
+        Raises
+        ------
+        ValueError
+            Raised if the config field specified does not point to an
+            `AnalysisTool`.
+            Raised if an instrument is specified and it conflicts with the
+            pipelines instrument.
+        """
+        if not isinstance(pipeline, Pipeline):
+            pipeline = Pipeline.fromFile(pipeline)
+        # If the caller specified an instrument, verify it does not conflict
+        # with the pipelines instrument, and add it to the pipeline
+        if instrument is not None:
+            if (pipeInstrument := pipeline.getInstrument()) and pipeInstrument != instrument:
+                raise ValueError(
+                    f"The supplied instrument {instrument} conflicts with the pipelines instrument "
+                    f"{pipeInstrument}."
+                )
+            else:
+                pipeline.addInstrument(instrument)
+        try:
+            pipelineGraph = pipeline.to_graph()
+        except (FieldValidationError, ValueError) as err:
+            raise ValueError(
+                "There was an error instantiating the pipeline, do you need to specify an instrument?"
+            ) from err
+        if not fullpath:
+            name = f"atools.{name}"
+        for task in pipelineGraph.tasks.values():
+            config = task.config
+            try:
+                # if hasattr(config, 'atools'):
+                # breakpoint()
+                attr = attrgetter(name)(config)
+            except AttributeError:
+                continue
+            if not isinstance(attr, AnalysisTool):
+                raise ValueError("The requested name did not refer to an analysisTool")
+            return attr
+        return None
 
     def finalize(self) -> None:
         """Run any finalization code that depends on configuration being

@@ -20,11 +20,39 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MedReadNoiseFocalPlanePlot",)
+__all__ = (
+    "MedReadNoiseFocalPlanePlot",
+    "PtcGainFP",
+    "PtcNoiseFP",
+    "PtcA00FP",
+    "PtcTurnoffFP",
+    "PtcMaxRawMeansFP",
+    "PtcRowMeanVarianceSlopeFP",
+)
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
+
+
+class CalibrationTool(AnalysisTool):
+    """Class to generate common calibration metrics for value/scatter
+    quantities.
+    """
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        self.process.buildActions.x = LoadVector(vectorKey="detector")
+        self.process.buildActions.y = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+        self.process.buildActions.amplifier = LoadVector(vectorKey="amplifier")
+        self.process.buildActions.z = LoadVector()
+
+        self.produce.plot = FocalPlaneGeometryPlot()
+        self.produce.plot.statistic = "median"
+        self.produce.plot.xAxisLabel = "x (focal plane)"
+        self.produce.plot.yAxisLabel = "y (focal plane)"
 
 
 class MedReadNoiseFocalPlanePlot(AnalysisTool):
@@ -44,9 +72,55 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         self.process.buildActions.amplifier.vectorKey = "amplifier"
 
         self.produce.plot = FocalPlaneGeometryPlot()
-        # TO DO: In anticipation of the addHistogram option
-        # self.produce.plot.addHistogram = True
         self.produce.plot.xAxisLabel = "x (mm)"
         self.produce.plot.yAxisLabel = "y (mm)"
         self.produce.plot.zAxisLabel = "Med. Readnoise"
         self.produce.plot.statistic = "median"
+
+
+class PtcGainFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcGain"
+        self.produce.plot.zAxisLabel = "PTC Gain (ADU)"
+        self.produce.metric.newNames = {"z": "PTC_GAIN"}
+
+
+class PtcNoiseFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcNoise"
+        self.produce.plot.zAxisLabel = "PTC Readout Noise (ADU^2)"
+        self.produce.metric.newNames = {"z": "PTC_NOISE"}
+
+
+class PtcA00FP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcBfeA00"
+        self.produce.plot.zAxisLabel = "PTC BFE A00 (1/e-)"
+        self.produce.metric.newNames = {"z": "PTC_BFE_A00"}
+
+
+class PtcTurnoffFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcTurnoff"
+        self.produce.plot.zAxisLabel = "PTC turnoff (ADU)"
+        self.produce.metric.newNames = {"z": "PTC_TURNOFF"}
+
+
+class PtcMaxRawMeansFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcMaxRawMeans"
+        self.produce.plot.zAxisLabel = "PTC Maximum of Raw Mean Flux (ADU)"
+        self.produce.metric.newNames = {"z": "PTC_MAX_RAW_MEANS"}
+
+
+class PtcRowMeanVarianceSlopeFP(CalibrationTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z.vectorKey = "ptcRowMeanVarianceSlope"
+        self.produce.plot.zAxisLabel = "PTC slope of row means vs variance (e-)"
+        self.produce.metric.newNames = {"z": "PTC_ROW_MEAN_VARIANCE_SLOPE"}

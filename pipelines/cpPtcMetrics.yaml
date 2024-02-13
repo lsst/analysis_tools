@@ -1,0 +1,14 @@
+description: PTC metrics and plots
+tasks:
+  ptcMetrics_test:
+    class: lsst.analysis.tools.tasks.VerifyPtcAnalysisTask
+    config:
+      connections.outputName: "ptcMetrics"
+      atools.ptcGainFP: PtcGainFP
+      atools.ptcNoiseFP: PtcNoiseFP
+      atools.ptcA00FP: PtcA00FP
+      atools.ptcTurnoffFP: PtcTurnoffFP
+      atools.ptcMaxRawMeans: PtcMaxRawMeansFP
+      atools.ptcRowMeanVarianceSlopeFP: PtcRowMeanVarianceSlopeFP
+      python: |
+        from lsst.analysis.tools.atools import *

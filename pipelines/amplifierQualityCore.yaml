@@ -1,0 +1,27 @@
+description: |
+  Percentile plots for each amplifier on a detector for a bias, dark, and flat.
+tasks:
+  biasAnalysis:
+    class: lsst.analysis.tools.tasks.amplifierAnalysis.AmplifierAnalysisTask
+    config:
+      connections.inputDataType: verifyBiasResults
+      connections.outputName: biasPercentiles
+      atools.biasPercentilePlot: BiasPercentilePlot
+      python: |
+        from lsst.analysis.tools.atools import *
+  darkAnalysis:
+    class: lsst.analysis.tools.tasks.amplifierAnalysis.AmplifierAnalysisTask
+    config:
+      connections.inputDataType: verifyDarkResults
+      connections.outputName: darkPercentiles
+      atools.darkPercentilePlot: DarkPercentilePlot
+      python: |
+        from lsst.analysis.tools.atools import *
+  flatAnalysis:
+    class: lsst.analysis.tools.tasks.amplifierAnalysis.AmplifierAnalysisTask
+    config:
+      connections.inputDataType: verifyFlatResults
+      connections.outputName: flatPercentiles
+      atools.flatPercentilePlot: FlatPercentilePlot
+      python: |
+        from lsst.analysis.tools.atools import *

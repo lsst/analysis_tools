@@ -57,6 +57,17 @@ from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
 log = logging.getLogger(__name__)
 
 
+def _dataToArray(data):
+    """Convert input data into a numpy array using the appropriate
+    protocol. `np.from_dlpack` is used for Tensor-like arrays
+    where possible.
+    """
+    try:
+        return np.from_dlpack(data)
+    except AttributeError:
+        return np.array(data)
+
+
 class ScalarFromVectorAction(ScalarAction):
     """Calculates a statistic from a single vector."""
 
@@ -71,8 +82,8 @@ class MedianAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = data[self.vectorKey.format(**kwargs)][mask]
-        med = nanMedian(values) if len(values) else np.nan
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        med = nanMedian(values) if values.size else np.NaN
 
         return med
 
@@ -82,8 +93,8 @@ class MeanAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = data[self.vectorKey.format(**kwargs)][mask]
-        mean = nanMean(values) if len(values) else np.nan
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        mean = nanMean(values) if values.size else np.NaN
 
         return mean
 
@@ -93,7 +104,7 @@ class StdevAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return nanStd(data[self.vectorKey.format(**kwargs)][mask])
+        return nanStd(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class RmsAction(ScalarFromVectorAction):
@@ -102,7 +113,7 @@ class RmsAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        vector = data[self.vectorKey.format(**kwargs)][mask]
+        vector = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
         vector = vector[~np.isnan(vector)]
 
         return np.sqrt(np.mean(vector**2))
@@ -120,7 +131,8 @@ class SigmaMadAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return nanSigmaMad(data[self.vectorKey.format(**kwargs)][mask])
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        return nanSigmaMad(values)
 
 
 class CountAction(ScalarAction):
@@ -154,7 +166,7 @@ class CountAction(ScalarAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+        arr = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
 
         # Count NaNs and non-NaNs
         if self.threshold == nan:
@@ -164,7 +176,7 @@ class CountAction(ScalarAction):
                 return cast(Scalar, int(result))
             elif self.op == "ne":
                 # Count number of non-NaNs
-                result = len(arr) - np.isnan(arr).sum()
+                result = arr.size - np.isnan(arr).sum()
                 return cast(Scalar, int(result))
             else:
                 raise ValueError("Invalid operator for counting NaNs.")
@@ -183,8 +195,8 @@ class CountUniqueAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        count = len(np.unique(values))
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        count = np.unique(values).size
         return cast(Scalar, count)
 
 
@@ -193,9 +205,9 @@ class ApproxFloor(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        value = np.sort(data[self.vectorKey.format(**kwargs)][mask])  # type: ignore
-        x = len(value) // 10
-        return nanMedian(value[-x:])
+        values = np.sort(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])  # type: ignore
+        x = values.size // 10
+        return nanMedian(values[-x:])
 
 
 class FracThreshold(ScalarFromVectorAction):
@@ -229,15 +241,14 @@ class FracThreshold(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = data[self.vectorKey.format(**kwargs)]
-        values = values[mask]  # type: ignore
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
         values = values[np.logical_not(np.isnan(values))]
-        n_values = len(values)
+        n_values = values.size
         if n_values == 0:
             return np.nan
         threshold = self.threshold
         # If relative_to_median is set, shift the threshold to be median+thresh
-        if self.relative_to_median and len(values) > 0:
+        if self.relative_to_median and values.size > 0:
             offset = nanMedian(values)
             if np.isfinite(offset):
                 values -= offset
@@ -258,7 +269,7 @@ class MaxAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return nanMax(data[self.vectorKey.format(**kwargs)][mask])
+        return nanMax(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class MinAction(ScalarFromVectorAction):
@@ -266,7 +277,7 @@ class MinAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        return nanMin(data[self.vectorKey.format(**kwargs)][mask])
+        return nanMin(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])
 
 
 class FracInRange(ScalarFromVectorAction):
@@ -280,13 +291,13 @@ class FracInRange(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        nvalues = len(values)
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        nvalues = values.size
         values = values[np.logical_not(np.isnan(values))]
         sel_range = (values >= self.minimum) & (values < self.maximum)
         result = cast(
             Scalar,
-            float(len(values[sel_range]) / nvalues),  # type: ignore
+            float(values[sel_range].size / nvalues),  # type: ignore
         )
         if self.percent:
             return 100.0 * result
@@ -301,12 +312,12 @@ class FracNan(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
-        nvalues = len(values)
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
+        nvalues = values.size
         values = values[np.isnan(values)]
         result = cast(
             Scalar,
-            float(len(values) / nvalues),  # type: ignore
+            float(values.size / nvalues),  # type: ignore
         )
         if self.percent:
             return 100.0 * result
@@ -319,7 +330,7 @@ class SumAction(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        arr = cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
+        arr = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
         return cast(Scalar, np.nansum(arr))
 
 
@@ -356,9 +367,9 @@ class MedianHistAction(ScalarAction):
         return median
 
     def __call__(self, data: KeyedData, **kwargs):
-        if len(data[self.histKey.format(**kwargs)]) != 0:
-            hist = cast(Vector, data[self.histKey.format(**kwargs)])
-            bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
+        hist = _dataToArray(data[self.histKey.format(**kwargs)])
+        if hist.size != 0:
+            bin_mid = _dataToArray(data[self.midKey.format(**kwargs)])
             med = cast(Scalar, float(self.histMedian(hist, bin_mid)))
         else:
             med = np.nan
@@ -401,9 +412,9 @@ class IqrHistAction(ScalarAction):
         return iqr
 
     def __call__(self, data: KeyedData, **kwargs):
-        if len(data[self.histKey.format(**kwargs)]) != 0:
-            hist = cast(Vector, data[self.histKey.format(**kwargs)])
-            bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
+        hist = _dataToArray(data[self.histKey.format(**kwargs)])
+        if hist.size != 0:
+            bin_mid = _dataToArray([self.midKey.format(**kwargs)])
             iqr = cast(Scalar, float(self.histIqr(hist, bin_mid)))
         else:
             iqr = np.nan

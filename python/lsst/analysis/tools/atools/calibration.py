@@ -82,7 +82,7 @@ class PtcGainFP(CalibrationTool):
     def setDefaults(self):
         super().setDefaults()
         self.process.buildActions.z.vectorKey = "ptcGain"
-        self.produce.plot.zAxisLabel = "PTC Gain (ADU)"
+        self.produce.plot.zAxisLabel = "PTC Gain (e-/ADU)"
         self.produce.metric.newNames = {"z": "PTC_GAIN"}
 
 

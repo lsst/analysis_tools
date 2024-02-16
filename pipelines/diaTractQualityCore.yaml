@@ -1,0 +1,18 @@
+description: |
+  Tier 1 metrics to assess difference image analysis (DIA) quality.
+  This is designed to analyze the `diaSourceTable_tract` dataset, which
+  is a consolidated version of `{fakesType}{coaddName}Diff_assocDiaSrcTable`,
+  which is output from DrpAssociationPipeTask on a per-patch-and-tract basis.
+
+tasks:
+  analyzeDiaSourceTableTract:
+    class: lsst.analysis.tools.tasks.DiaSourceTableTractAnalysisTask
+    config:
+      # This will be used as the first part of the butler data product name
+      connections.outputName: diaSourceTableTract
+      atools.NumDiaSources: NumDiaSourcesMetric
+      atools.NumStreakDiaSources: NumStreakDiaSourcesMetric
+      atools.NumStreakCenterDiaSources: NumStreakCenterDiaSourcesMetric
+      atools.streakDiaSourcePlot: PlotStreakDiaSources
+      python: |
+        from lsst.analysis.tools.atools import *

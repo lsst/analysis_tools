@@ -21,10 +21,10 @@
 
 __all__ = ("DiaSkyPanel", "DiaSkyPlot")
 
-from typing import Mapping, cast
+from typing import Mapping
 
 import matplotlib.pyplot as plt
-from lsst.pex.config import ConfigDictField, Field
+from lsst.pex.config import ConfigDictField, Field, ListField
 from matplotlib.figure import Figure
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
@@ -46,13 +46,9 @@ class DiaSkyPanel(PanelConfig):
         doc="Invert x-axis?",
         default=True,
     )
-    color = Field[str](
-        doc="Point color",
-        default="C0",
-    )
     size = Field[float](
         doc="Point size",
-        default=5,
+        default=20,
     )
     alpha = Field[float](
         doc="Point transparency",
@@ -60,13 +56,21 @@ class DiaSkyPanel(PanelConfig):
     )
     # Eventually we might retrieve data from more columns to make the plot
     # prettier/more information rich
-    ra = Field[str](
-        doc="Name of RA column",
+    ras = ListField[str](
+        doc="Names of RA columns",
         optional=False,
     )
-    dec = Field[str](
-        doc="Name of Dec column",
+    decs = ListField[str](
+        doc="Names of Dec columns",
         optional=False,
+    )
+    colorList = Field[str](
+        doc="Colors for the points",
+        optional=True,
+    )
+    legendLabels = ListField[str](
+        doc="Labels for the legend",
+        optional=True,
     )
 
 
@@ -82,14 +86,15 @@ class DiaSkyPlot(PlotAction):
         default={},
     )
 
-    def getInputSchema(self) -> KeyedDataSchema:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         """Defines the schema this plot action expects (the keys it looks
         for and what type they should be). In other words, verifies that
         the input data has the columns we are expecting with the right dtypes.
         """
-        for panel in self.panels.values():
-            yield (panel.ra, Vector)
-            yield (panel.dec, Vector)
+        for ra in self.panels.ras.values():
+            yield (ra, Vector)
+        for dec in self.panels.decs.values():
+            yield (dec, Vector)
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         return self.makePlot(data, **kwargs)
@@ -108,9 +113,9 @@ class DiaSkyPlot(PlotAction):
         """
         if "figsize" in kwargs:
             figsize = kwargs.pop("figsize", "")
-            fig = plt.figure(figsize=figsize, dpi=600)
+            fig = plt.figure(figsize=figsize, dpi=300)
         else:
-            fig = plt.figure(figsize=(8, 6), dpi=600)
+            fig = plt.figure(figsize=(12, 9), dpi=300)
         axs = self._makeAxes(fig)
         for panel, ax in zip(self.panels.values(), axs):
             self._makePanel(data, panel, ax, **kwargs)
@@ -155,13 +160,25 @@ class DiaSkyPlot(PlotAction):
         ax : matplotlib axis
         color : `str`
         """
-        ras = cast(Vector, data[panel.ra])
-        decs = cast(Vector, data[panel.dec])
+        artists = []  # Placeholder for each series being plotted
+        for idx, (ra, dec) in enumerate(zip(panel.ras, panel.decs)):  # loop over column names (dict keys)
+            if panel.colorList:
+                color = panel.colorList[idx]
+                artist = ax.scatter(
+                    data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0, c=color
+                )
+            else:  # Use matplotlib default colors
+                artist = ax.scatter(
+                    data[ra], data[dec], s=panel.size, alpha=panel.alpha, marker=".", linewidths=0
+                )
+            artists.append(artist)
+            # TODO DM-42768: implement lists of sizes, alphas, etc.
+            # and add better support for multi-panel plots.
 
-        ax.scatter(ras, decs, c=panel.color, s=panel.size, alpha=panel.alpha, marker=".", linewidths=0)
         ax.set_xlabel(panel.xlabel)
         ax.set_ylabel(panel.ylabel)
-
+        if panel.legendLabels:
+            ax.legend(artists, panel.legendLabels)
         if panel.invertXAxis:
             ax.invert_xaxis()
         if panel.topSpinesVisible:

@@ -101,7 +101,7 @@ class CPVerifyQuantityBaseTool(AnalysisTool):
 
         # Plot the repacked data in a 4x4 grid
         self.produce.plot = GridPlot()
-        self.produce.plot.plotElements = {}
+        self.produce.plot.panels = {}
         self.produce.plot.numRows = 4
         self.produce.plot.numCols = 4
 
@@ -135,7 +135,7 @@ class CPVerifyQuantityBaseTool(AnalysisTool):
                 title={"label": str(value), "fontsize": "10"},
                 titleY=0.85,
             )
-            self.produce.plot.plotElements[key] = gridPanelConfig
+            self.produce.plot.panels[key] = gridPanelConfig
 
 
 class CPVerifyQuantityAmpProfileScatterTool(CPVerifyQuantityBaseTool):

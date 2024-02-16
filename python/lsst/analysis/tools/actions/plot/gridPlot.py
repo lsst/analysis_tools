@@ -52,7 +52,7 @@ class GridPanelConfig(Config):
 class GridPlot(PlotAction):
     """Plot a series of plot elements onto a regularly spaced grid."""
 
-    plotElements = ConfigDictField(
+    panels = ConfigDictField(
         doc="Plot elements.",
         keytype=int,
         itemtype=GridPanelConfig,
@@ -109,16 +109,16 @@ class GridPlot(PlotAction):
                         newData = {}
                         if val not in key:
                             continue
-                        namedKey = self.plotElements[index].plotElement.valsKey
+                        namedKey = self.panels[index].plotElement.valsKey
                         newData[namedKey] = data[key]
                         if xList is not None:
-                            namedKey = self.plotElements[index].plotElement.xKey
+                            namedKey = self.panels[index].plotElement.xKey
                             newData[namedKey] = data[xList[i]]
 
-                        _ = self.plotElements[index].plotElement(data=newData, ax=ax, **kwargs)
+                        _ = self.panels[index].plotElement(data=newData, ax=ax, **kwargs)
 
-                if self.plotElements[index].title is not None:
-                    ax.set_title(**self.plotElements[index].title, y=self.plotElements[index].titleY)
+                if self.panels[index].title is not None:
+                    ax.set_title(**self.panels[index].title, y=self.panels[index].titleY)
 
         plt.tight_layout()
         fig.show()

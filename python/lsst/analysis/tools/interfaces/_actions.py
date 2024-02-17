@@ -29,6 +29,7 @@ __all__ = (
     "MetricResultType",
     "MetricAction",
     "PlotResultType",
+    "PlotElement",
     "PlotAction",
     "JointResults",
     "JointAction",
@@ -39,13 +40,16 @@ __all__ = (
 import warnings
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 
 from ..contexts import ContextApplier
 from ._interfaces import KeyedData, KeyedDataSchema, MetricResultType, PlotResultType, Scalar, Tensor, Vector
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 
 class AnalysisAction(ConfigurableAction):
@@ -237,6 +241,19 @@ class PlotAction(AnalysisAction):
 
     @abstractmethod
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
+        raise NotImplementedError("This is not implemented on the base class")
+
+
+class PlotElement(AnalysisAction):
+    """PlotElements are the most basic components of a plot. They can be
+    composed together within a `PlotAction` to create rich plots.
+
+    Plot elements may return metadata about creating their element by returning
+    `KeyedData` from their call method.
+    """
+
+    @abstractmethod
+    def __call__(self, data: KeyedData, ax: Axes, **kwargs) -> KeyedData:
         raise NotImplementedError("This is not implemented on the base class")
 
 

@@ -194,6 +194,4 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.buildActions.statMask.fluxType = "psfFlux"
 
         self.produce.plot = FocalPlanePlot()
-        self.produce.plot.xAxisLabel = "x (focal plane)"
-        self.produce.plot.yAxisLabel = "y (focal plane)"
         self.produce.plot.zAxisLabel = "Mag - Mag$_{mean}$ (mmag)"

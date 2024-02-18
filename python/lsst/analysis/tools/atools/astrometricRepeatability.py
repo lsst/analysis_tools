@@ -153,8 +153,6 @@ class StellarAstrometricResidualsRAFocalPlanePlot(StellarAstrometricResidualsBas
         self.process.buildActions.residual.buildAction.buildAction = RAcosDec()
 
         self.produce = FocalPlanePlot()
-        self.produce.xAxisLabel = "x (focal plane)"
-        self.produce.yAxisLabel = "y (focal plane)"
         self.produce.zAxisLabel = "RAcos(Dec) - RAcos(Dec)$_{mean}$ (mArcsec)"
 
 
@@ -171,8 +169,6 @@ class StellarAstrometricResidualStdDevRAFocalPlanePlot(StellarAstrometricResidua
 
         self.produce = FocalPlanePlot()
         self.produce.statistic = "std"
-        self.produce.xAxisLabel = "x (focal plane)"
-        self.produce.yAxisLabel = "y (focal plane)"
         self.produce.zAxisLabel = "Std(RAcos(Dec) - RAcos(Dec)$_{mean}$) (mArcsec)"
 
 
@@ -188,8 +184,6 @@ class StellarAstrometricResidualsDecFocalPlanePlot(StellarAstrometricResidualsBa
         self.process.buildActions.residual.buildAction.buildAction.vectorKey = "coord_dec"
 
         self.produce = FocalPlanePlot()
-        self.produce.xAxisLabel = "x (focal plane)"
-        self.produce.yAxisLabel = "y (focal plane)"
         self.produce.zAxisLabel = "Dec - Dec$_{mean}$ (mArcsec)"
 
 
@@ -206,8 +200,6 @@ class StellarAstrometricResidualStdDevDecFocalPlanePlot(StellarAstrometricResidu
 
         self.produce = FocalPlanePlot()
         self.produce.statistic = "std"
-        self.produce.xAxisLabel = "x (focal plane)"
-        self.produce.yAxisLabel = "y (focal plane)"
         self.produce.zAxisLabel = "Std(Dec - Dec$_{mean}$) (mArcsec)"
 
 

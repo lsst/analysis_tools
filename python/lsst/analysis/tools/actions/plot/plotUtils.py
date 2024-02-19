@@ -616,11 +616,11 @@ def plotProjectionWithBinning(
     yMax,
     xNumBins=45,
     yNumBins=None,
-    fixAroundZero=False,
     nPointBinThresh=5000,
     isSorted=False,
     vmin=None,
     vmax=None,
+    fixAroundZero=False,
     showExtremeOutliers=True,
     scatPtSize=7,
 ):
@@ -654,6 +654,8 @@ def plotProjectionWithBinning(
         extrema of the data).
     vmin, vmax : `float`, optional
         The min and max limits for the colorbar.
+    fixAroundZero : `bool`, optional
+        Whether the center of the colorbar range should be fixed around zero.  
     showExtremeOutliers: `bool`, default True
         Use overlaid scatter points to show the x-y positions of the 15%
         most extreme values.

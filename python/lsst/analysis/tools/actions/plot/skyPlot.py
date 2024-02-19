@@ -84,6 +84,12 @@ class SkyPlot(PlotAction):
         default=True,
     )
 
+    doUseAdaptiveBinning = Field[bool](
+        doc="If set to True, the number of bins is adapted to the source"
+        " density, with lower densities using fewer bins.",
+        default=False,
+    )
+
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
         if "stars" in self.plotTypes:  # type: ignore
@@ -354,6 +360,7 @@ class SkyPlot(PlotAction):
                 maxRa,
                 minDec,
                 maxDec,
+                adaptiveBinning=self.doUseAdaptiveBinning,
                 vmin=minColorVal,
                 vmax=maxColorVal,
                 fixAroundZero=self.fixAroundZero,

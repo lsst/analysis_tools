@@ -616,6 +616,7 @@ def plotProjectionWithBinning(
     yMax,
     xNumBins=45,
     yNumBins=None,
+    adaptiveBinning=False,
     nPointBinThresh=5000,
     isSorted=False,
     vmin=None,
@@ -644,6 +645,9 @@ def plotProjectionWithBinning(
     yNumBins : `int`, optional
         The number of bins along the y-axis. If `None`, this is set to equal
         ``xNumBins``.
+    adaptiveBinning: `bool`, optional
+        If set to True, the number of bins is adapted to the source density,
+        with lower densities using fewer bins.
     nPointBinThresh : `int`, optional
         Threshold number of points above which binning will be implemented
         for the plotting. If the number of data points is lower than this
@@ -655,7 +659,7 @@ def plotProjectionWithBinning(
     vmin, vmax : `float`, optional
         The min and max limits for the colorbar.
     fixAroundZero : `bool`, optional
-        Whether the center of the colorbar range should be fixed around zero.  
+        Whether the center of the colorbar range should be fixed around zero.
     showExtremeOutliers: `bool`, default True
         Use overlaid scatter points to show the x-y positions of the 15%
         most extreme values.
@@ -678,7 +682,19 @@ def plotProjectionWithBinning(
         vmin = -1 * scaleEnd
         vmax = scaleEnd
 
-    yNumBins = xNumBins if yNumBins is None else yNumBins
+    if adaptiveBinning:
+        # Use a course 32x32 binning to determine the mean source density
+        # in regions where there are sources.
+        binsx = np.linspace(xMin - 1e-5, xMax + 1e-5, 33)
+        binsy = np.linspace(yMin - 1e-5, yMax + 1e-5, 33)
+
+        binnedNumSrc = np.histogram2d(xs, ys, bins=[binsx, binsy])[0]
+        meanSrcDensity = np.mean(binnedNumSrc, where=binnedNumSrc > 0.0)
+
+        numBins = int(np.round(16.0 * np.sqrt(meanSrcDensity)))
+        xNumBins = yNumBins = max(numBins, xNumBins)
+    else:
+        yNumBins = xNumBins if yNumBins is None else yNumBins
 
     xBinEdges = np.linspace(xMin, xMax, xNumBins + 1)
     yBinEdges = np.linspace(yMin, yMax, yNumBins + 1)

@@ -21,10 +21,10 @@
 from __future__ import annotations
 
 __all__ = (
-    "VerifyPtcAnalysisConfig",
-    "VerifyPtcAnalysisTask",
     "VerifyCalibAnalysisConfig",
     "VerifyCalibAnalysisTask",
+    "VerifyPtcAnalysisConfig",
+    "VerifyPtcAnalysisTask",
 )
 
 from lsst.pipe.base import connectionTypes as cT

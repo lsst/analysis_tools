@@ -51,8 +51,6 @@ class CalibrationTool(AnalysisTool):
 
         self.produce.plot = FocalPlaneGeometryPlot()
         self.produce.plot.statistic = "median"
-        self.produce.plot.xAxisLabel = "x (focal plane)"
-        self.produce.plot.yAxisLabel = "y (focal plane)"
 
 
 class MedReadNoiseFocalPlanePlot(AnalysisTool):
@@ -72,8 +70,6 @@ class MedReadNoiseFocalPlanePlot(AnalysisTool):
         self.process.buildActions.amplifier.vectorKey = "amplifier"
 
         self.produce.plot = FocalPlaneGeometryPlot()
-        self.produce.plot.xAxisLabel = "x (mm)"
-        self.produce.plot.yAxisLabel = "y (mm)"
         self.produce.plot.zAxisLabel = "Med. Readnoise"
         self.produce.plot.statistic = "median"
 

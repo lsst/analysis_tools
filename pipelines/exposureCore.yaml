@@ -14,6 +14,8 @@ tasks:
       atools.BiasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
       atools.BiasCrNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.BiasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
+      atools.BiasShiftCountPerAmp: CalibStatisticFocalPlanePlot
+      atools.BiasShiftCountPerAmp.process.buildActions.z.vectorKey: biasShiftCount
       atools.ampBiasProfileScatter: CPVerifyQuantityAmpProfileScatterTool
       atools.ampBiasProfileScatter.prep.quantityKey: biasSerialProfile
       atools.ampBiasProfileScatter.produce.plot.suptitle:

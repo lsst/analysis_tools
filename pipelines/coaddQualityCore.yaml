@@ -36,10 +36,7 @@ tasks:
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
         from lsst.analysis.tools.actions.plot import *
-  catalogMatchTract:
-    class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
-    config:
-      connections.refCatalog: gaia_dr3_20230707
+  catalogMatchTract: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
   refCatObjectTract:
     class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
     config:
@@ -53,11 +50,8 @@ tasks:
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
 
-    ## Perform photometric comparison to the reference catalog
-  photometricCatalogMatch:
-    class: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask
-    config:
-      connections.refCatalog: ps1_pv3_3pi_20170110
+  # Perform photometric comparison to the reference catalog
+  photometricCatalogMatch: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask
   photometricRefCatObjectTract:
     class: lsst.analysis.tools.tasks.refCatObjectPhotometricAnalysis.RefCatObjectPhotometricAnalysisTask
     config:

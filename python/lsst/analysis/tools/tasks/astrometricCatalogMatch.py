@@ -51,6 +51,7 @@ class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=Cata
         self.referenceCatalogLoader.doApplyColorTerms = False
         self.referenceCatalogLoader.refObjLoader.requireProperMotion = True
         self.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis = "phot_g_mean"
+        self.connections.refCatalog = "gaia_dr3_20230707"
 
 
 class AstrometricCatalogMatchTask(CatalogMatchTask):

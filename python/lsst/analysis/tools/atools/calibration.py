@@ -70,8 +70,12 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
         self.process.buildActions.amplifier.vectorKey = "amplifier"
 
         self.produce.plot = FocalPlaneGeometryPlot()
-        self.produce.plot.zAxisLabel = "Med. Readnoise"
         self.produce.plot.statistic = "median"
+        self.produce.plot.zAxisLabel = "Median of biasMean"
+
+    def finalize(self):
+        zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
+        self.produce.plot.zAxisLabel = zAxislabel.capitalize()
 
 
 class PtcGainFP(CalibrationTool):

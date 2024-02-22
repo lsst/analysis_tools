@@ -6,16 +6,16 @@ tasks:
     config:
       connections.outputName: biasCore
       connections.data: verifyBiasResults
-      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: biasReadNoise
-      atools.MeanBiasPerAmp: CalibStatisticFocalPlanePlot
-      atools.MeanBiasPerAmp.process.buildActions.z.vectorKey: biasMean
-      atools.BiasNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.BiasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
-      atools.BiasCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.BiasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
-      atools.BiasShiftCountPerAmp: CalibStatisticFocalPlanePlot
-      atools.BiasShiftCountPerAmp.process.buildActions.z.vectorKey: biasShiftCount
+      atools.readNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.readNoisePerAmp.process.buildActions.z.vectorKey: biasReadNoise
+      atools.meanBiasPerAmp: CalibStatisticFocalPlanePlot
+      atools.meanBiasPerAmp.process.buildActions.z.vectorKey: biasMean
+      atools.biasNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
+      atools.biasCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
+      atools.biasShiftCountPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasShiftCountPerAmp.process.buildActions.z.vectorKey: biasShiftCount
       atools.ampBiasProfileScatter: CPVerifyQuantityAmpProfileScatterTool
       atools.ampBiasProfileScatter.prep.quantityKey: biasSerialProfile
       atools.ampBiasProfileScatter.produce.plot.suptitle:
@@ -32,13 +32,13 @@ tasks:
     config:
       connections.outputName: darkCore
       connections.data: verifyDarkResults
-      atools.ReadNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.ReadNoisePerAmp.process.buildActions.z.vectorKey: darkReadNoise
-      atools.MeanDarkPerAmp: CalibStatisticFocalPlanePlot
-      atools.MeanDarkPerAmp.process.buildActions.z.vectorKey: darkMean
-      atools.DarkNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.DarkNoisePerAmp.process.buildActions.z.vectorKey: darkNoise
-      atools.DarkCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.DarkCrNoisePerAmp.process.buildActions.z.vectorKey: darkCrNoise
+      atools.readNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.readNoisePerAmp.process.buildActions.z.vectorKey: darkReadNoise
+      atools.meanDarkPerAmp: CalibStatisticFocalPlanePlot
+      atools.meanDarkPerAmp.process.buildActions.z.vectorKey: darkMean
+      atools.darkNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkNoisePerAmp.process.buildActions.z.vectorKey: darkNoise
+      atools.darkCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkCrNoisePerAmp.process.buildActions.z.vectorKey: darkCrNoise
       python: |
         from lsst.analysis.tools.atools import *

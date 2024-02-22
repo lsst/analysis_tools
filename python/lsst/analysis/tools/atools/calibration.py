@@ -53,7 +53,7 @@ class CalibrationTool(AnalysisTool):
         self.produce.plot.statistic = "median"
 
 
-class CalibStatisticFocalPlanePlot(AnalysisTool):
+class CalibStatisticFocalPlanePlot(CalibrationTool):
     """Generates a plot of the focal plane, color-coded according to the
     median of a given measurement (default: "biasMean") on a per-amp basis.
     The median is across multiple bias exposures.
@@ -62,12 +62,7 @@ class CalibStatisticFocalPlanePlot(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.z = LoadVector()
         self.process.buildActions.z.vectorKey = "biasMean"
-        self.process.buildActions.detector = LoadVector()
-        self.process.buildActions.detector.vectorKey = "detector"
-        self.process.buildActions.amplifier = LoadVector()
-        self.process.buildActions.amplifier.vectorKey = "amplifier"
 
         self.produce.plot = FocalPlaneGeometryPlot()
         self.produce.plot.statistic = "median"

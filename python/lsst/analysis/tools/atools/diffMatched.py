@@ -21,6 +21,9 @@
 from __future__ import annotations
 
 __all__ = (
+    "ReferenceGalaxySelector",
+    "ReferenceObjectSelector",
+    "ReferenceStarSelector",
     "MatchedRefCoaddToolBase",
     "MatchedRefCoaddDiffTool",
     "MatchedRefCoaddDiffMagTool",
@@ -38,12 +41,44 @@ from ..actions.vector import (
     MultiplyVector,
     SubtractVector,
 )
-from ..actions.vector.selectors import RangeSelector, VectorSelector
+from ..actions.vector.selectors import RangeSelector, ThresholdSelector, VectorSelector
 from .genericBuild import ExtendednessTool, MagnitudeXTool
 from .genericProduce import MagnitudeScatterPlot
 
 
-class MatchedRefCoaddToolBase(MagnitudeXTool, ExtendednessTool):
+class ReferenceGalaxySelector(ThresholdSelector):
+    """A selector that selects galaxies from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 0
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceObjectSelector(RangeSelector):
+    """A selector that selects all objects from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceStarSelector(ThresholdSelector):
+    """A selector that selects stars from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 1
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class MatchedRefCoaddToolBase(MagnitudeXTool):
     """Base tool for matched-to-reference metrics/plots on coadds.
 
     Metrics/plots are expected to use the reference magnitude and
@@ -59,6 +94,9 @@ class MatchedRefCoaddToolBase(MagnitudeXTool, ExtendednessTool):
     def setDefaults(self):
         super().setDefaults()
         self.mag_x = "ref_matched"
+        self.process.buildActions.allSelector = ReferenceObjectSelector()
+        self.process.buildActions.galaxySelector = ReferenceGalaxySelector()
+        self.process.buildActions.starSelector = ReferenceStarSelector()
 
     def finalize(self):
         super().finalize()

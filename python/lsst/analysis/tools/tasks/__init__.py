@@ -1,3 +1,4 @@
+from .allDiaSourceAnalysis import *
 from .assocDiaSrcDetectorVisitAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .astrometricCatalogMatch import *

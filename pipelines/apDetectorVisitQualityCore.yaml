@@ -61,3 +61,23 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+
+  fluxHist:
+    class: lsst.analysis.tools.tasks.allDiaSourceAnalysis.AllDiaSourceHistTask
+    config:
+      connections.fakesType: "fakes_"
+  fluxAnalysis:
+    class: lsst.analysis.tools.tasks.allDiaSourceAnalysis.AllDiaSourceAnalysisTask
+    config:
+      atools.plotPsfFluxHistSrc: PlotPsfFluxHistSrc
+      python: |
+        from lsst.analysis.tools.atools import *
+    # class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
+    # config:
+      #connections.data: "fakes_goodSeeingDiff_assocDiaSrc"
+      # connections.fakesType: "fakes_"
+      # connections.outputName: "visitPlot"
+
+      # atools.plotFluxHistSrc: PlotFluxHistSrc
+      # python: |
+      #   from lsst.analysis.tools.atools import PlotFluxHistSrc

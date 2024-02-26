@@ -25,12 +25,15 @@ __all__ = (
     "NumDipolesMetric",
     "NumDiaSourcesSelectionMetric",
     "DiaSourcesGoodVsBadRatioMetric",
+    "PlotPsfFluxHistSrc",
 )
 
 from lsst.pex.config import Field
 
+from ..actions.plot.xyPlot import XYPlot
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector
+from ..actions.scalar.scalarActions import IqrHistAction, MedianHistAction
+from ..actions.vector import ConstantValue, FlagSelector, GoodDiaSourceSelector, LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -110,3 +113,30 @@ class DiaSourcesGoodVsBadRatioMetric(AnalysisTool):
 
         # The units for the quantity (dimensionless, an astropy quantity)
         self.produce.metric.units = {"DiaSourcesGoodVsBadRatio": ""}
+
+
+class PlotPsfFluxHistSrc(AnalysisTool):
+    """Plot distribution of fluxes from 1-2 DIASource tables."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.x = LoadVector()
+        self.process.buildActions.y = LoadVector()
+        self.process.buildActions.x.vectorKey = "bin_mid"
+        self.process.buildActions.y.vectorKey = "hist"
+        self.process.buildActions.xerr = ConstantValue(value=0)
+        self.process.buildActions.yerr = ConstantValue(value=0)
+
+        self.process.calculateActions.median = MedianHistAction()
+        self.process.calculateActions.median.histKey = "hist"
+        self.process.calculateActions.median.midKey = "bin_mid"
+        self.process.calculateActions.iqr = IqrHistAction()
+        self.process.calculateActions.iqr.histKey = "hist"
+        self.process.calculateActions.iqr.midKey = "bin_mid"
+
+        self.produce.plot = XYPlot()
+        self.produce.plot.xAxisLabel = "PSF Flux (nJy)"
+        self.produce.plot.yAxisLabel = "Count"

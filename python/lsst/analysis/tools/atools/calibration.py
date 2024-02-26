@@ -30,6 +30,7 @@ __all__ = (
     "PtcRowMeanVarianceSlopeFP",
 )
 
+from lsst.pex.config import Field
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
@@ -59,6 +60,11 @@ class CalibStatisticFocalPlanePlot(CalibrationTool):
     The median is across multiple bias exposures.
     """
 
+    quantityKey = Field[str](
+        default="biasMean", doc="VectorKey to perform the statistic on and to plot per amp and per detector."
+    )
+    unit = Field[str](default="ADU", doc="Unit of quantity for including on z-axis label.")
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -69,7 +75,8 @@ class CalibStatisticFocalPlanePlot(CalibrationTool):
         self.produce.plot.zAxisLabel = "Median of biasMean"
 
     def finalize(self):
-        zAxislabel = f"{self.produce.plot.statistic} of {self.process.buildActions.z.vectorKey}"
+        self.process.buildActions.z.vectorKey = self.quantityKey
+        zAxislabel = f"{self.produce.plot.statistic} of {self.quantityKey} ({self.unit})"
         self.produce.plot.zAxisLabel = zAxislabel.capitalize()
 
 

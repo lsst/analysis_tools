@@ -6,16 +6,17 @@ tasks:
     config:
       connections.outputName: biasCore
       connections.data: verifyBiasResults
-      atools.readNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.readNoisePerAmp.process.buildActions.z.vectorKey: biasReadNoise
+      atools.biasReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasReadNoisePerAmp.quantityKey: biasReadNoise
       atools.meanBiasPerAmp: CalibStatisticFocalPlanePlot
-      atools.meanBiasPerAmp.process.buildActions.z.vectorKey: biasMean
+      atools.meanBiasPerAmp.quantityKey: biasMean
       atools.biasNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.biasNoisePerAmp.process.buildActions.z.vectorKey: biasNoise
+      atools.biasNoisePerAmp.quantityKey: biasNoise
       atools.biasCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.biasCrNoisePerAmp.process.buildActions.z.vectorKey: biasCrNoise
+      atools.biasCrNoisePerAmp.quantityKey: biasCrNoise
       atools.biasShiftCountPerAmp: CalibStatisticFocalPlanePlot
-      atools.biasShiftCountPerAmp.process.buildActions.z.vectorKey: biasShiftCount
+      atools.biasShiftCountPerAmp.quantityKey: biasShiftCount
+      atools.biasShiftCountPerAmp.unit: count
       atools.ampBiasProfileScatter: CPVerifyQuantityAmpProfileScatterTool
       atools.ampBiasProfileScatter.prep.quantityKey: biasSerialProfile
       atools.ampBiasProfileScatter.produce.plot.suptitle:
@@ -33,12 +34,12 @@ tasks:
       connections.outputName: darkCore
       connections.data: verifyDarkResults
       atools.readNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.readNoisePerAmp.process.buildActions.z.vectorKey: darkReadNoise
+      atools.readNoisePerAmp.quantityKey: darkReadNoise
       atools.meanDarkPerAmp: CalibStatisticFocalPlanePlot
-      atools.meanDarkPerAmp.process.buildActions.z.vectorKey: darkMean
+      atools.meanDarkPerAmp.quantityKey: darkMean
       atools.darkNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.darkNoisePerAmp.process.buildActions.z.vectorKey: darkNoise
+      atools.darkNoisePerAmp.quantityKey: darkNoise
       atools.darkCrNoisePerAmp: CalibStatisticFocalPlanePlot
-      atools.darkCrNoisePerAmp.process.buildActions.z.vectorKey: darkCrNoise
+      atools.darkCrNoisePerAmp.quantityKey: darkCrNoise
       python: |
         from lsst.analysis.tools.atools import *

@@ -31,6 +31,7 @@ __all__ = (
 )
 
 from lsst.pex.config import Field
+
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
@@ -70,7 +71,6 @@ class CalibStatisticFocalPlanePlot(CalibrationTool):
 
         self.process.buildActions.z.vectorKey = "biasMean"
 
-        self.produce.plot = FocalPlaneGeometryPlot()
         self.produce.plot.statistic = "median"
         self.produce.plot.zAxisLabel = "Median of biasMean"
 

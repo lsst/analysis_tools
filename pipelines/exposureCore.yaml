@@ -1,11 +1,22 @@
 description: |
-  Core-level plots and metrics for exposure-level data.
+  Tier1 plots to assess validity of calibration exposures.
 tasks:
-  VerifyBias:
-    class: lsst.analysis.tools.tasks.VerifyBiasAnalysisTask
+  analyseBiasCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
     config:
-      connections.outputName: VerifyBias
-      atools.ReadNoisePerAmp: MedReadNoiseFocalPlanePlot
+      connections.outputName: biasCore
+      connections.data: verifyBiasResults
+      atools.biasReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasReadNoisePerAmp.quantityKey: biasReadNoise
+      atools.meanBiasPerAmp: CalibStatisticFocalPlanePlot
+      atools.meanBiasPerAmp.quantityKey: biasMean
+      atools.biasNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasNoisePerAmp.quantityKey: biasNoise
+      atools.biasCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasCrNoisePerAmp.quantityKey: biasCrNoise
+      atools.biasShiftCountPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasShiftCountPerAmp.quantityKey: biasShiftCount
+      atools.biasShiftCountPerAmp.unit: count
       atools.ampBiasProfileScatter: CPVerifyQuantityAmpProfileScatterTool
       atools.ampBiasProfileScatter.prep.quantityKey: biasSerialProfile
       atools.ampBiasProfileScatter.produce.plot.suptitle:
@@ -17,3 +28,18 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.actions.plot.elements import *
+  analyseDarkCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: darkCore
+      connections.data: verifyDarkResults
+      atools.readNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.readNoisePerAmp.quantityKey: darkReadNoise
+      atools.meanDarkPerAmp: CalibStatisticFocalPlanePlot
+      atools.meanDarkPerAmp.quantityKey: darkMean
+      atools.darkNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkNoisePerAmp.quantityKey: darkNoise
+      atools.darkCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkCrNoisePerAmp.quantityKey: darkCrNoise
+      python: |
+        from lsst.analysis.tools.atools import *

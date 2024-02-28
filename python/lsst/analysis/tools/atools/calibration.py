@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "MedReadNoiseFocalPlanePlot",
+    "CalibStatisticFocalPlanePlot",
     "PtcGainFP",
     "PtcNoiseFP",
     "PtcA00FP",
@@ -29,6 +29,8 @@ __all__ = (
     "PtcMaxRawMeansFP",
     "PtcRowMeanVarianceSlopeFP",
 )
+
+from lsst.pex.config import Field
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.vector import LoadVector
@@ -53,25 +55,29 @@ class CalibrationTool(AnalysisTool):
         self.produce.plot.statistic = "median"
 
 
-class MedReadNoiseFocalPlanePlot(AnalysisTool):
+class CalibStatisticFocalPlanePlot(CalibrationTool):
     """Generates a plot of the focal plane, color-coded according to the
-    median bias read noise on a per-amp basis. The median is across
-    multiple bias exposures.
+    median of a given measurement (default: "biasMean") on a per-amp basis.
+    The median is across multiple bias exposures.
     """
+
+    quantityKey = Field[str](
+        default="biasMean", doc="VectorKey to perform the statistic on and to plot per amp and per detector."
+    )
+    unit = Field[str](default="ADU", doc="Unit of quantity for including on z-axis label.")
 
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.z = LoadVector()
-        self.process.buildActions.z.vectorKey = "biasReadNoise"
-        self.process.buildActions.detector = LoadVector()
-        self.process.buildActions.detector.vectorKey = "detector"
-        self.process.buildActions.amplifier = LoadVector()
-        self.process.buildActions.amplifier.vectorKey = "amplifier"
+        self.process.buildActions.z.vectorKey = "biasMean"
 
-        self.produce.plot = FocalPlaneGeometryPlot()
-        self.produce.plot.zAxisLabel = "Med. Readnoise"
         self.produce.plot.statistic = "median"
+        self.produce.plot.zAxisLabel = "Median of biasMean"
+
+    def finalize(self):
+        self.process.buildActions.z.vectorKey = self.quantityKey
+        zAxislabel = f"{self.produce.plot.statistic} of {self.quantityKey} ({self.unit})"
+        self.produce.plot.zAxisLabel = zAxislabel.capitalize()
 
 
 class PtcGainFP(CalibrationTool):

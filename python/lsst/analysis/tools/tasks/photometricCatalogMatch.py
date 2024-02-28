@@ -72,7 +72,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
 
         # For some reason the imsim filterMaps don't work the same way as
         # the HSC ones do, this is a bit hacky but fixes this
-        if "sim" in bands[0] or "smeared" in bands[0]:
+        if bands[0].startswith("lsst") or "sim" in bands[0] or "smeared" in bands[0]:
             bands = self.config.filterNames
 
         columns = self.prepColumns(bands)

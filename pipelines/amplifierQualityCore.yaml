@@ -1,0 +1,12 @@
+description: |
+  Matrix plots for amp-to-amp correlations on a detector.
+tasks:
+  plotAmpBiasCorrelation:
+    class: lsst.analysis.tools.tasks.ampToAmpCorrelationAnalysis.AmpToAmpCorrelationAnalysisTask
+    config:
+      connections.inputDataType: verifyBiasCorrelations
+      connections.outputName: ampBiasCorrelations
+      atools.imageCorrelationPlot: ImageCorrelationPlot
+      atools.overscanCorrelationPlot: OverscanCorrelationPlot
+      python: |
+        from lsst.analysis.tools.atools import *

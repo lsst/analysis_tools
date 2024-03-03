@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 from astropy.coordinates import SkyCoord
 from lsst.pex.config import Field
+import esutil
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Vector
 
@@ -170,7 +171,7 @@ def matchVisitComputeDistance(visit_obj1, ra_obj1, dec_obj1, visit_obj2, ra_obj2
 
     For each visit shared between visit_obj1 and visit_obj2, calculate the
     spherical distance between the obj1 and obj2. visit_obj1 and visit_obj2 are
-    assumed to be unsorted. This function was borrowed from faro.
+    assumed to be unsorted.
 
     Parameters
     ----------
@@ -188,22 +189,11 @@ def matchVisitComputeDistance(visit_obj1, ra_obj1, dec_obj1, visit_obj2, ra_obj2
         List of Dec in each visit for object 2.  [radians]
     Results
     -------
-    list of float
+    distance_array : `np.ndarray`
         spherical distances (in radians) for matching visits.
     """
-    distances = []
-    visit_obj1_idx = np.argsort(visit_obj1)
-    visit_obj2_idx = np.argsort(visit_obj2)
-    j_raw = 0
-    j = visit_obj2_idx[j_raw]
-    for i in visit_obj1_idx:
-        while (visit_obj2[j] < visit_obj1[i]) and (j_raw < len(visit_obj2_idx) - 1):
-            j_raw += 1
-            j = visit_obj2_idx[j_raw]
-        if visit_obj2[j] == visit_obj1[i]:
-            if np.isfinite([ra_obj1[i], dec_obj1[i], ra_obj2[j], dec_obj2[j]]).all():
-                distances.append(sphDist(ra_obj1[i], dec_obj1[i], ra_obj2[j], dec_obj2[j]))
-    return distances
+    a, b = esutil.numpy_util.match(visit_obj1, visit_obj2)
+    return sphDist(ra_obj1[a], dec_obj1[a], ra_obj2[b], dec_obj2[b])
 
 
 def sphDist(ra_mean, dec_mean, ra, dec):

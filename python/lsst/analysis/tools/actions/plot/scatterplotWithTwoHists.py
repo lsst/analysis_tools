@@ -693,12 +693,17 @@ class ScatterPlotWithTwoHists(PlotAction):
         bins = np.linspace(x_min, x_max, 100)
 
         if "any" in self.plotTypes:
-            x_any = f"x{self._datatypes['any'].suffix_xy}"
+            x_any = f"x{self._datatypes['any'].suffix_xy}{suf}"
             keys_notany = [x for x in self.plotTypes if x != "any"]
         else:
-            x_any = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            x_any = (
+                np.concatenate([data[f"x{self._datatypes[key].suffix_xy}{suf}"] for key in self.plotTypes])
+                if (len(self.plotTypes) > 1)
+                else None
+            )
             keys_notany = self.plotTypes
-        topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
+        if x_any is not None:
+            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
 
         for key in keys_notany:
             config_datatype = self._datatypes[key]
@@ -733,13 +738,24 @@ class ScatterPlotWithTwoHists(PlotAction):
         bins = np.linspace(y_min, y_max, 100)
 
         if "any" in self.plotTypes:
-            y_any = f"y{self._datatypes['any'].suffix_xy}"
+            y_any = f"y{self._datatypes['any'].suffix_xy}{suf}"
             keys_notany = [x for x in self.plotTypes if x != "any"]
         else:
-            y_any = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            y_any = (
+                np.concatenate([data[f"y{self._datatypes[key].suffix_xy}{suf}"] for key in self.plotTypes])
+                if (len(self.plotTypes) > 1)
+                else None
+            )
             keys_notany = self.plotTypes
-
-        sideHist.hist(np.array(y_any), bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        if y_any is not None:
+            sideHist.hist(
+                np.array(y_any),
+                bins=bins,
+                color="grey",
+                alpha=0.3,
+                orientation="horizontal",
+                log=True,
+            )
         kwargs_hist = dict(
             bins=bins,
             histtype="step",

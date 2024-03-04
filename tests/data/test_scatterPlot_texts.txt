@@ -24,7 +24,7 @@ High SN
 
 
 Number
-All (23241)
+Any (23241)
 Galaxies (15770)
 Stars (7471)
 

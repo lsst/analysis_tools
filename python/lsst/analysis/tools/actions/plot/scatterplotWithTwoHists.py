@@ -728,7 +728,8 @@ class ScatterPlotWithTwoHists(PlotAction):
                 else None
             )
             keys_notany = self.plotTypes
-        topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
+        if x_any is not None:
+            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
 
         for key in keys_notany:
             config_datatype = self._datatypes[key]
@@ -772,8 +773,15 @@ class ScatterPlotWithTwoHists(PlotAction):
                 else None
             )
             keys_notany = self.plotTypes
-
-        sideHist.hist(np.array(y_any), bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
+        if y_any is not None:
+            sideHist.hist(
+                np.array(y_any),
+                bins=bins,
+                color="grey",
+                alpha=0.3,
+                orientation="horizontal",
+                log=True,
+            )
         kwargs_hist = dict(
             bins=bins,
             histtype="step",

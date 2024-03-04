@@ -71,6 +71,8 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
         flux_meas = flux_meas[good]
         flux_err = flux_err[good]
 
+        suffix_x, suffix_y = "_x", "_y"
+
         # Configure the plot to show observed vs true mags
         action = ScatterPlotWithTwoHists(
             xAxisLabel="mag",
@@ -83,6 +85,9 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             xLims=(20, 30),
             yLims=(-1000, 1000),
             addSummaryPlot=False,
+            # Make sure adding a suffix works to produce multiple plots
+            suffix_x=suffix_x,
+            suffix_y=suffix_y,
         )
         plot = AnalysisTool()
         plot.produce.plot = action
@@ -113,14 +118,14 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
         for singular, plural in (("galaxy", "Galaxies"), ("star", "Stars")):
             setattr(
                 plot.process.filterActions,
-                f"x{plural}",
+                f"x{plural}{suffix_x}",
                 DownselectVector(
                     vectorKey="mags_ref", selector=VectorSelector(vectorKey=f"{singular}Selector")
                 ),
             )
             setattr(
                 plot.process.filterActions,
-                f"y{plural}",
+                f"y{plural}{suffix_y}",
                 DownselectVector(vectorKey="diff", selector=VectorSelector(vectorKey=f"{singular}Selector")),
             )
             setattr(
@@ -140,10 +145,11 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
 
             # Compute low/high SN summary stats
             statAction = ScatterPlotStatsAction(
-                vectorKey=f"y{plural}",
+                vectorKey=f"y{plural}{suffix_y}",
                 fluxType=f"flux{plural}",
                 highSNSelector=SnSelector(fluxType=f"flux{plural}", threshold=50),
                 lowSNSelector=SnSelector(fluxType=f"flux{plural}", threshold=20),
+                suffix=suffix_x,
             )
             setattr(plot.process.calculateActions, plural.lower(), statAction)
 
@@ -217,7 +223,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             texts_ref = set(x.strip() for x in f.readlines())
         texts_set = set(x.strip().replace(newline, newline_replace) for x in texts)
 
-        self.assertTrue(texts_ref.issuperset(texts_set))
+        self.assertEqual(texts_ref, texts_set)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):

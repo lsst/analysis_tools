@@ -23,14 +23,20 @@ from __future__ import annotations
 __all__ = (
     "MatchedRefCoaddToolBase",
     "MatchedRefCoaddDiffTool",
+    "MatchedRefCoaddDiffColorTool",
     "MatchedRefCoaddDiffMagTool",
     "MatchedRefCoaddDiffPositionTool",
 )
 
-from lsst.pex.config import Field
+import copy
+from typing import Iterable
+
+from lsst.pex.config import Config, ConfigDictField, DictField, Field
 
 from ..actions.vector import (
     CalcBinnedStatsAction,
+    ColorDiff,
+    ColorError,
     ConstantValue,
     DivideVector,
     DownselectVector,
@@ -38,12 +44,111 @@ from ..actions.vector import (
     MultiplyVector,
     SubtractVector,
 )
-from ..actions.vector.selectors import RangeSelector, VectorSelector
-from .genericBuild import ExtendednessTool, MagnitudeXTool
+from ..actions.vector.selectors import RangeSelector, ThresholdSelector, VectorSelector
+from ..interfaces import (
+    BaseMetricAction,
+    KeyedData,
+    KeyedDataSchema,
+    MetricAction,
+    MetricResultType,
+    PlotAction,
+    PlotResultType,
+)
+from .genericBuild import MagnitudeXTool
 from .genericProduce import MagnitudeScatterPlot
 
 
-class MatchedRefCoaddToolBase(MagnitudeXTool, ExtendednessTool):
+class DictMetricAction(MetricAction):
+    """A dictionary of named BaseMetricActions."""
+
+    actions = ConfigDictField[str, BaseMetricAction](doc="Named metric actions")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        # Something is wrong with the typing for DictField key iteration
+        schema = []
+        for action in self.actions.values():
+            schema.extend(action.getInputSchema())
+        return schema
+
+    @property
+    def units(self):
+        units = {}
+        for action in self.actions.values():
+            units.update(action.units)
+        return units
+
+    def __call__(self, data: KeyedData, **kwargs) -> MetricResultType:
+        results = {}
+        for action in self.actions.values():
+            result = action(data=data, **kwargs)
+            results.update(result)
+        return results
+
+
+class DictPlotAction(PlotAction):
+    """A dictionary of named PlotActions."""
+
+    actions = ConfigDictField[str, PlotAction](doc="Named plot actions")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        schema = []
+        for action in self.actions.values():
+            schema.extend(action.getInputSchema())
+        return schema
+
+    def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
+        names = []
+        for key, action in self.actions.items():
+            names_action = action.getOutputNames(config=config)
+            if not names_action:
+                names_action = [key]
+            names.extend(names_action)
+        return tuple(names)
+
+    def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
+        results = {}
+        for key, action in self.actions.items():
+            result = action(data=data, **kwargs)
+            results[key] = result
+        return results
+
+
+class ReferenceGalaxySelector(ThresholdSelector):
+    """A selector that selects galaxies from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 0
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceObjectSelector(RangeSelector):
+    """A selector that selects all objects from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceStarSelector(ThresholdSelector):
+    """A selector that selects stars from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 1
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class MatchedRefCoaddToolBase(MagnitudeXTool):
     """Base tool for matched-to-reference metrics/plots on coadds.
 
     Metrics/plots are expected to use the reference magnitude and
@@ -59,6 +164,9 @@ class MatchedRefCoaddToolBase(MagnitudeXTool, ExtendednessTool):
     def setDefaults(self):
         super().setDefaults()
         self.mag_x = "ref_matched"
+        self.process.buildActions.allSelector = ReferenceObjectSelector()
+        self.process.buildActions.galaxySelector = ReferenceGalaxySelector()
+        self.process.buildActions.starSelector = ReferenceStarSelector()
 
     def finalize(self):
         super().finalize()
@@ -81,14 +189,44 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
     _mag_low_max: int = 27
     _mag_interval: int = 1
 
-    _names = ("stars", "galaxies", "all")
+    _names = {"stars": "star", "galaxies": "galaxy", "all": "all"}
     _types = ("unresolved", "resolved", "all")
+
+    def _set_actions(self, suffix=None):
+        if suffix is None:
+            suffix = ""
+
+        for name_lower, name_singular in self._names.items():
+            name = name_lower.capitalize()
+            key = f"y{name}{suffix}"
+            setattr(
+                self.process.filterActions,
+                key,
+                DownselectVector(
+                    vectorKey=f"diff{suffix}", selector=VectorSelector(vectorKey=f"{name_singular}Selector")
+                ),
+            )
+
+            for minimum in range(self._mag_low_min, self._mag_low_max + 1):
+                setattr(
+                    self.process.calculateActions,
+                    f"{name_lower}{minimum}{suffix}",
+                    CalcBinnedStatsAction(
+                        key_vector=key,
+                        selector_range=RangeSelector(
+                            vectorKey=key,
+                            minimum=minimum,
+                            maximum=minimum + self._mag_interval,
+                        ),
+                    ),
+                )
 
     def configureMetrics(
         self,
         unit: str | None = None,
         name_prefix: str | None = None,
         name_suffix: str = "_ref_mag{minimum}",
+        attr_suffix: str | None = None,
         unit_select: str = "mag",
     ):
         """Configure metric actions and return units.
@@ -100,7 +238,9 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
         name_prefix : `str`
             The prefix for the action (column) name.
         name_suffix : `str`
-            The sufffix for the action (column) name.
+            The suffix for the action (column) name.
+        attr_suffix : `str`
+            The suffix for the attribute to assign the action to.
         unit_select : `str`
             The (astropy) unit of the selection (x-axis) column. Default "mag".
 
@@ -113,6 +253,8 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
             unit = self.unit if self.unit is not None else ""
         if name_prefix is None:
             name_prefix = self.name_prefix if self.name_prefix is not None else ""
+        if attr_suffix is None:
+            attr_suffix = ""
 
         if unit_select is None:
             unit_select = "mag"
@@ -125,7 +267,7 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
             x_key = f"x{name_capital}"
 
             for minimum in range(self._mag_low_min, self._mag_low_max + 1):
-                action = getattr(self.process.calculateActions, f"{name}{minimum}")
+                action = getattr(self.process.calculateActions, f"{name}{minimum}{attr_suffix}")
                 action.selector_range = RangeSelector(
                     vectorKey=x_key,
                     minimum=minimum,
@@ -151,32 +293,108 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
 
     def setDefaults(self):
         super().setDefaults()
+        self._set_actions()
 
-        self.process.filterActions.yAll = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="allSelector")
-        )
-        self.process.filterActions.yGalaxies = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="galaxySelector")
-        )
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="diff", selector=VectorSelector(vectorKey="starSelector")
-        )
 
-        for name in self._names:
-            key = f"y{name.capitalize()}"
-            for minimum in range(self._mag_low_min, self._mag_low_max + 1):
-                setattr(
-                    self.process.calculateActions,
-                    f"{name}{minimum}",
-                    CalcBinnedStatsAction(
-                        key_vector=key,
-                        selector_range=RangeSelector(
-                            vectorKey=key,
-                            minimum=minimum,
-                            maximum=minimum + self._mag_interval,
-                        ),
-                    ),
+class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+    """Tool for diffs between reference and measured coadd mags.
+
+    Notes
+    =====
+    Since this tool requires at least two bands, it is essentially impossible
+    to call on its own.
+    """
+
+    mag_y1 = Field[str](default="cmodel_err", doc="Flux field for first magnitude")
+    mag_y2 = Field[str](
+        doc="Flux field for second magnitude (to subtract from first); default same as first",
+        default=None,
+        optional=True,
+    )
+    bands = DictField[str, str](
+        doc="Bands for colors",
+        default={"u": "g", "g": "r", "r": "i", "i": "z", "z": "y"},
+    )
+
+    def finalize(self):
+        # Check if it has already been finalized
+        if not hasattr(self.process.buildActions, "diff_0"):
+            if self.mag_y2 is None:
+                self.mag_y2 = self.mag_y1
+            # Ensure mag_y1/2 are set before any plot finalizes
+            for band1, band2 in self.bands.items():
+                mag1 = f"y_{band1}"
+                mag2 = f"y_{band2}"
+                mag_ref1 = f"refcat_flux_{band1}"
+                mag_ref2 = f"refcat_flux_{band2}"
+                self._set_flux_default(mag1, band=band1, name_mag=self.mag_y1)
+                self._set_flux_default(mag2, band=band2, name_mag=self.mag_y2)
+                self._set_flux_default(mag_ref1, band=band1, name_mag="ref_matched")
+                self._set_flux_default(mag_ref2, band=band2, name_mag="ref_matched")
+
+            self.suffixes_y_finalize = [f"_{idx}" for idx in range(len(self.bands))]
+            super().finalize()
+
+            self.unit = "" if self.compute_chi else "mmag"
+            subtype = "chi" if self.compute_chi else "diff"
+
+            metric_base = self.produce.metric
+            plot_base = self.produce.plot
+
+            actions_metric = {}
+            actions_plot = {}
+
+            for idx, (band1, band2) in enumerate(self.bands.items()):
+                name_color = f"{band1}_minus_{band2}"
+                # Keep this index-based to simplify finalize
+                suffix_y = f"_{idx}"
+                self._set_actions(suffix=suffix_y)
+                metric = copy.copy(metric_base)
+                self.name_prefix = f"photom_mag_{{key_flux}}_color_{name_color}_{{name_class}}_{subtype}_"
+                metric.units = self.configureMetrics(attr_suffix=suffix_y)
+                plot = copy.copy(plot_base)
+                plot.suffix_y = suffix_y
+
+                mag1 = f"{self.mag_y1}_{band1}"
+                mag2 = f"{self.mag_y2}_{band2}"
+                mag_ref1 = f"ref_matched_{band1}"
+                mag_ref2 = f"ref_matched_{band2}"
+
+                diff = ColorDiff(
+                    color1_flux1=getattr(self.process.buildActions, f"flux_{mag1}"),
+                    color1_flux2=getattr(self.process.buildActions, f"flux_{mag2}"),
+                    color2_flux1=getattr(self.process.buildActions, f"flux_{mag_ref1}"),
+                    color2_flux2=getattr(self.process.buildActions, f"flux_{mag_ref2}"),
                 )
+
+                if self.compute_chi:
+                    diff = DivideVector(
+                        actionA=diff,
+                        actionB=ColorError(
+                            flux_err1=DivideVector(
+                                actionA=getattr(self.process.buildActions, f"flux_err_{mag1}"),
+                                actionB=getattr(self.process.buildActions, f"flux_{mag1}"),
+                            ),
+                            flux_err2=DivideVector(
+                                actionA=getattr(self.process.buildActions, f"flux_err_{mag2}"),
+                                actionB=getattr(self.process.buildActions, f"flux_{mag2}"),
+                            ),
+                        ),
+                    )
+                setattr(self.process.buildActions, f"diff{plot.suffix_y}", diff)
+
+                label = f"({band1} - {band2}) (meas - ref)"
+                label = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
+                plot.yAxisLabel = label
+                actions_metric[name_color] = metric
+                actions_plot[name_color] = plot
+            self.produce.metric = DictMetricAction(actions=actions_metric)
+            self.produce.plot = DictPlotAction(actions=actions_plot)
+
+    def setDefaults(self):
+        # skip MatchedRefCoaddDiffTool.setDefaults's _setActions call
+        MatchedRefCoaddToolBase.setDefaults(self)
+        MagnitudeScatterPlot.setDefaults(self)
 
 
 class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):

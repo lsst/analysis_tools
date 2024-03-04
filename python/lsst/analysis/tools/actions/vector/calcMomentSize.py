@@ -67,6 +67,12 @@ class CalcMomentSize(VectorAction):
         optional=True,
     )
 
+    is_covariance = Field[bool](
+        doc="Whether the fields are for a covariance matrix. If False, the XX/YY/XY terms are instead"
+        " assumed to map to sigma_x/sigma_y/rho.",
+        default=True,
+    )
+
     sizeType = ChoiceField[str](
         doc="The type of size to calculate",
         default="determinant",
@@ -91,16 +97,21 @@ class CalcMomentSize(VectorAction):
             )  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        xx = data[self.colXx.format(**kwargs)]
+        yy = data[self.colYy.format(**kwargs)]
         if self.sizeType == "trace":
-            size = np.sqrt(
-                0.5 * (data[self.colXx.format(**kwargs)] + data[self.colYy.format(**kwargs)])  # type: ignore
-            )
+            if not self.is_covariance:
+                xx *= xx
+                yy *= yy
+            size = np.sqrt(0.5 * (xx + yy))  # type: ignore
         else:
-            size = np.power(
-                data[self.colXx.format(**kwargs)] * data[self.colYy.format(**kwargs)]  # type: ignore
-                - data[self.colXy.format(**kwargs)] ** 2,  # type: ignore
-                0.25,
-            )
+            xy_sq = data[self.colXy.format(**kwargs)] ** 2
+            if not self.is_covariance:
+                # cov = rho * sigma_x * sigma_y
+                xy_sq *= xx * yy
+                xx *= xx
+                yy *= yy
+            size = np.power(xx * yy - xy_sq, 0.25)  # type: ignore
 
         return size
 

@@ -80,16 +80,15 @@ class ExtendednessTool(AnalysisTool):
 class FluxConfig(Config):
     """Configuration for a flux vector to be loaded and potentially plotted."""
 
-    band_format = Field[str](default="{band}_{key}", doc="Format of band-dependent flux keys.")
-    key_flux = Field[str](default=None, doc="Flux field to convert to magnitude on x-axis.")
-    key_flux_error = Field[str](default="{key_flux}Err", doc="Flux error field.", optional=True)
+    key_flux = Field[str](default=None, doc="Format of the flux field to convert to magnitudes with {band}.")
+    key_flux_error = Field[str](default=None, doc="Format of the flux error field.", optional=True)
     name_flux = Field[str](default=None, doc="Name of the flux/magnitude algorithm/model.")
 
     def key_flux_band(self, band: str):
-        return self.band_format.format(band=band, key=self.key_flux)
+        return self.key_flux.format(band=band)
 
     def key_flux_error_band(self, band: str):
-        return self.band_format.format(band=band, key=self.key_flux_error.format(key_flux=self.key_flux))
+        return self.key_flux_error.format(band=band)
 
 
 class FluxesDefaultConfig(Config):
@@ -109,12 +108,20 @@ class MagnitudeTool(AnalysisTool):
     """
 
     fluxes_default = FluxesDefaultConfig(
-        bulge_err=FluxConfig(key_flux="bdFluxB", name_flux="Bulge"),
-        cmodel_err=FluxConfig(key_flux="cModelFlux", name_flux="CModel"),
-        disk_err=FluxConfig(key_flux="bdFluxD", name_flux="Disk"),
-        psf_err=FluxConfig(key_flux="psfFlux", name_flux="PSF"),
+        bulge_err=FluxConfig(
+            key_flux="{band}_bdFluxB", key_flux_error="{band}_bdFluxBErr", name_flux="CModel Bulge"
+        ),
+        cmodel_err=FluxConfig(
+            key_flux="{band}_cModelFlux", key_flux_error="{band}_cModelFluxErr", name_flux="CModel"
+        ),
+        disk_err=FluxConfig(
+            key_flux="{band}_bdFluxD", key_flux_error="{band}_bdFluxDErr", name_flux="CModel Disk"
+        ),
+        psf_err=FluxConfig(key_flux="{band}_psfFlux", key_flux_error="{band}_psfFluxErr", name_flux="PSF"),
         ref_matched=FluxConfig(
-            key_flux="refcat_flux", name_flux="Reference", key_flux_error=None, band_format="{key}_{band}"
+            key_flux="refcat_flux_{band}",
+            name_flux="Reference",
+            key_flux_error=None,
         ),
     )
 
@@ -308,10 +315,26 @@ class SizeDefaultConfig(Config):
     shape_slot = ConfigField[SizeConfig](doc="Shape slot size config.")
 
 
+class MomentsConfig(Config):
+    """Configuration for moment field suffixes."""
+
+    xx = Field[str](doc="Suffix for the x/xx moments.", default="xx")
+    xy = Field[str](doc="Suffix for the rho value/xy moments.", default="xy")
+    yy = Field[str](doc="Suffix for the y/yy moments.", default="yy")
+
+
 class SizeTool(AnalysisTool):
     """Compute various object size definitions in linear or log space."""
 
     attr_prefix = Field[str](doc="Prefix to prepend to size names as attrs", default="size_", optional=False)
+    config_moments = ConfigField[MomentsConfig](
+        doc="Configuration for moment field names", default=MomentsConfig
+    )
+    is_covariance = Field[bool](
+        doc="Whether this size has multiple fields as for a covariance matrix."
+        " If False, the XX/YY/XY terms are instead assumed to map to sigma_x/sigma_y/rho.",
+        default=True,
+    )
     sizes_default = SizeDefaultConfig(
         bulge=SizeConfig(key_size="{band}_bdReB", name_size="CModel Bulge $R_{eff}$", has_moments=False),
         disk=SizeConfig(key_size="{band}_bdReD", name_size="CModel Disk $R_{eff}$", has_moments=False),
@@ -341,15 +364,18 @@ class SizeTool(AnalysisTool):
 
     def _get_action_determinant(self, config):
         action = CalcMomentSize(
-            colXx=config.key_size.format(suffix="xx"),
-            colYy=config.key_size.format(suffix="yy"),
-            colXy=config.key_size.format(suffix="xy"),
+            colXx=config.key_size.format(suffix=self.config_moments.xx),
+            colYy=config.key_size.format(suffix=self.config_moments.yy),
+            colXy=config.key_size.format(suffix=self.config_moments.xy),
+            is_covariance=self.is_covariance,
         )
         return action
 
     def _get_action_trace(self, config):
         action = CalcMomentSize(
-            colXx=config.key_size.format(suffix="xx"), colYy=config.key_size.format(suffix="yy")
+            colXx=config.key_size.format(suffix=self.config_moments.xx),
+            colYy=config.key_size.format(suffix=self.config_moments.yy),
+            is_covariance=self.is_covariance,
         )
         return action
 

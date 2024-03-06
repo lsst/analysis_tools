@@ -27,17 +27,19 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
       atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
       connections.outputName: assocDiaSrcCore
-      atools.simpleSky: SimpleDiaPlot
+      # TODO DM-43201 fix this
+      # atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
-  analyzeTrailedDiaSrcCore:
-    class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
-    config:
-      # Counts up the number of dia sources in the trailed table.
-      atools.numDiaSourcesAll: NumDiaSourcesAllMetric
-      connections.outputName: trailedDiaSrcCore
-      python: |
-        from lsst.analysis.tools.atools import *
+  # TODO DM-43201 fix this
+  # analyzeTrailedDiaSrcCore:
+  #   class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
+  #   config:
+  #     # Counts up the number of dia sources in the trailed table.
+  #     atools.numDiaSourcesAll: NumDiaSourcesAllMetric
+  #     connections.outputName: trailedDiaSrcCore
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
   diffimTaskCore:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
     config:

@@ -50,6 +50,14 @@ class CalcRelativeDistances(KeyedDataAction):
     threshAF = Field[float](
         doc="Percentile of differences that can vary by more than threshAD.", default=10.0
     )
+    maxPairs = Field[int](
+        doc="Maximum number of pairs to use; downsample otherwise.",
+        default=100_000,
+    )
+    randomSeed = Field[int](
+        doc="Random seed to use when downsampling.",
+        default=12345,
+    )
 
     def getInputSchema(self) -> KeyedDataSchema:
         return (
@@ -91,6 +99,8 @@ class CalcRelativeDistances(KeyedDataAction):
 
         if len(data[self.groupKey]) == 0:
             return distanceParams
+
+        rng = np.random.RandomState(seed=self.randomSeed)
 
         def _compressArray(arrayIn):
             h, rev = esutil.stat.histogram(arrayIn, rev=True)
@@ -140,10 +150,15 @@ class CalcRelativeDistances(KeyedDataAction):
         inAnnulus = d > annulus[0]
         i1 = i1[inAnnulus]
         i2 = i2[inAnnulus]
-        d = d[inAnnulus]
 
         if len(i1) == 0:
             return distanceParams
+
+        if len(i1) > self.maxPairs:
+            # Downsample the pairs.
+            selection = rng.choice(len(i1), size=self.maxPairs, replace=False)
+            i1 = i1[selection]
+            i2 = i2[selection]
 
         # Match groups and get indices.
         h, rev = esutil.stat.histogram(groupId, rev=True)

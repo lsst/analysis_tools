@@ -81,14 +81,15 @@ class CalcRelativeDistances(KeyedDataAction):
             - ``ADx`` : ADx metric (`float`).
             - ``AFx`` : AFx metric (`float`).
         """
+        distanceParams = {
+            "rmsDistances": np.array([]),
+            "separationResiduals": np.array([]),
+            "AMx": np.nan,
+            "ADx": np.nan,
+            "AFx": np.nan,
+        }
+
         if len(data[self.groupKey]) == 0:
-            distanceParams = {
-                "rmsDistances": np.array([]),
-                "separationResiduals": np.array([]),
-                "AMx": np.nan * u.marcsec,
-                "ADx": np.nan * u.marcsec,
-                "AFx": np.nan * u.percent,
-            }
             return distanceParams
 
         def _compressArray(arrayIn):
@@ -141,6 +142,9 @@ class CalcRelativeDistances(KeyedDataAction):
         i2 = i2[inAnnulus]
         d = d[inAnnulus]
 
+        if len(i1) == 0:
+            return distanceParams
+
         # Match groups and get indices.
         h, rev = esutil.stat.histogram(groupId, rev=True)
 
@@ -182,6 +186,9 @@ class CalcRelativeDistances(KeyedDataAction):
         sepMean[good] /= nSep[good]
         sepMean[~good] = np.nan
 
+        if good.sum() == 0:
+            return distanceParams
+
         sepStd = np.zeros_like(sepMean)
         np.add.at(
             sepStd,
@@ -212,13 +219,11 @@ class CalcRelativeDistances(KeyedDataAction):
             ADx = np.percentile(absDiffSeparations, afThreshhold)
             AFx = 100 * np.mean(np.abs(absDiffSeparations) > self.threshAD * u.marcsec) * u.percent
 
-        distanceParams = {
-            "rmsDistances": (rmsDistances * u.radian).to(u.marcsec).value,
-            "separationResiduals": absDiffSeparations.value,
-            "AMx": AMx.value,
-            "ADx": ADx.value,
-            "AFx": AFx.value,
-        }
+        distanceParams["rmsDistances"] = (rmsDistances * u.radian).to(u.marcsec).value,
+        distanceParams["separationResiduals"] = absDiffSeparations.value
+        distanceParams["AMx"] = AMx.value
+        distanceParams["ADx"] = ADx.value
+        distanceParams["AFx"] = AFx.value
 
         return distanceParams
 

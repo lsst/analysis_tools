@@ -219,7 +219,7 @@ class CalcRelativeDistances(KeyedDataAction):
             ADx = np.percentile(absDiffSeparations, afThreshhold)
             AFx = 100 * np.mean(np.abs(absDiffSeparations) > self.threshAD * u.marcsec) * u.percent
 
-        distanceParams["rmsDistances"] = (rmsDistances * u.radian).to(u.marcsec).value,
+        distanceParams["rmsDistances"] = (rmsDistances * u.radian).to(u.marcsec).value
         distanceParams["separationResiduals"] = absDiffSeparations.value
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value

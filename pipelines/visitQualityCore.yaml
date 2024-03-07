@@ -14,8 +14,6 @@ tasks:
         from lsst.analysis.tools.contexts import *
   catalogMatchVisit:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
-    config:
-      connections.refCatalog: gaia_dr3_20230707
   astrometricRefCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
     config:

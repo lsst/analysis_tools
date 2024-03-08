@@ -52,7 +52,7 @@ class CalcRelativeDistances(KeyedDataAction):
     )
     maxPairs = Field[int](
         doc="Maximum number of pairs to use; downsample otherwise.",
-        default=500_000,
+        default=100_000,
     )
     randomSeed = Field[int](
         doc="Random seed to use when downsampling.",

@@ -25,6 +25,7 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 import numpy as np
 from astropy.table import join, vstack
 from lsst.geom import Box2D
+from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -139,6 +140,9 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # TODO: make key used for object index configurable
         inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
+
+        if len(inputs["associatedSources"]) == 0:
+            raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
 
         data = self.callback(inputs, dataId)
 

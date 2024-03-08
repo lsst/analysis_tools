@@ -105,10 +105,10 @@ class CalcRelativeDistances(KeyedDataAction):
         def _compressArray(arrayIn):
             h, rev = esutil.stat.histogram(arrayIn, rev=True)
             arrayOut = np.zeros(len(arrayIn), dtype=np.int32)
-            good, = np.where(h > 0)
+            (good,) = np.where(h > 0)
             counter = 0
             for ind in good:
-                arrayOut[rev[rev[ind]: rev[ind + 1]]] = counter
+                arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
                 counter += 1
             return arrayOut
 
@@ -175,10 +175,9 @@ class CalcRelativeDistances(KeyedDataAction):
         for ind in range(len(i1)):
             objInd1 = i1[ind]
             objInd2 = i2[ind]
-            obsInd1 = rev[rev[objInd1]: rev[objInd1 + 1]]
-            obsInd2 = rev[rev[objInd2]: rev[objInd2 + 1]]
-            a, b = esutil.numpy_util.match(data[self.visitKey][obsInd1],
-                                           data[self.visitKey][obsInd2])
+            obsInd1 = rev[rev[objInd1] : rev[objInd1 + 1]]
+            obsInd2 = rev[rev[objInd2] : rev[objInd2 + 1]]
+            a, b = esutil.numpy_util.match(data[self.visitKey][obsInd1], data[self.visitKey][obsInd2])
             matchedObsInd1.append(obsInd1[a])
             matchedObsInd2.append(obsInd2[b])
             matchedPairInd.append(np.full(len(a), ind))
@@ -187,10 +186,12 @@ class CalcRelativeDistances(KeyedDataAction):
         matchedObsInd2 = np.concatenate(matchedObsInd2)
         matchedPairInd = np.concatenate(matchedPairInd)
 
-        separations = sphDist(np.deg2rad(np.array(data[self.raKey][matchedObsInd1])),
-                              np.deg2rad(np.array(data[self.decKey][matchedObsInd1])),
-                              np.deg2rad(np.array(data[self.raKey][matchedObsInd2])),
-                              np.deg2rad(np.array(data[self.decKey][matchedObsInd2])))
+        separations = sphDist(
+            np.deg2rad(np.array(data[self.raKey][matchedObsInd1])),
+            np.deg2rad(np.array(data[self.decKey][matchedObsInd1])),
+            np.deg2rad(np.array(data[self.raKey][matchedObsInd2])),
+            np.deg2rad(np.array(data[self.decKey][matchedObsInd2])),
+        )
 
         # Compute the mean from the ragged array of pairs by
         # using np.add.at to sum numerator and denominator.
@@ -198,7 +199,7 @@ class CalcRelativeDistances(KeyedDataAction):
         nSep = np.zeros_like(sepMean, dtype=np.int32)
         np.add.at(sepMean, matchedPairInd, separations)
         np.add.at(nSep, matchedPairInd, 1)
-        good = (nSep > 1)
+        good = nSep > 1
         sepMean[good] /= nSep[good]
         sepMean[~good] = np.nan
 
@@ -211,13 +212,13 @@ class CalcRelativeDistances(KeyedDataAction):
         np.add.at(
             sepStd,
             matchedPairInd,
-            (separations - sepMean[matchedPairInd])**2.,
+            (separations - sepMean[matchedPairInd]) ** 2.0,
         )
         sepStd[good] = np.sqrt(sepStd[good] / (nSep[good] - 1))
         rmsDistances = sepStd[good]
 
         # Need sepResiduals, but only when nSep is > 2.
-        bad2 = (nSep <= 2)
+        bad2 = nSep <= 2
         sepMean[bad2] = np.nan
         sepResiduals = separations - sepMean[matchedPairInd]
         sepResiduals = sepResiduals[np.isfinite(sepResiduals)]

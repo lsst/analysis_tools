@@ -21,10 +21,10 @@
 __all__ = ("CalcRelativeDistances",)
 
 import astropy.units as u
+import esutil
 import numpy as np
-import pandas as pd
-from astropy.coordinates import SkyCoord
 from lsst.pex.config import Field
+from smatch import Matcher
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Vector
 
@@ -49,6 +49,14 @@ class CalcRelativeDistances(KeyedDataAction):
     threshAD = Field[float](doc="Threshold in mas for AFx calculation.", default=20.0)
     threshAF = Field[float](
         doc="Percentile of differences that can vary by more than threshAD.", default=10.0
+    )
+    maxPairs = Field[int](
+        doc="Maximum number of pairs to use; downsample otherwise.",
+        default=100_000,
+    )
+    randomSeed = Field[int](
+        doc="Random seed to use when downsampling.",
+        default=12345,
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -81,129 +89,161 @@ class CalcRelativeDistances(KeyedDataAction):
             - ``ADx`` : ADx metric (`float`).
             - ``AFx`` : AFx metric (`float`).
         """
-        D = self.annulus * u.arcmin
-        width = self.width * u.arcmin
-        annulus = (D + (width / 2) * np.array([-1, +1])).to(u.radian)
+        distanceParams = {
+            "rmsDistances": np.array([]),
+            "separationResiduals": np.array([]),
+            "AMx": np.nan,
+            "ADx": np.nan,
+            "AFx": np.nan,
+        }
 
-        df = pd.DataFrame(
-            {
-                "groupKey": data[self.groupKey],
-                "coord_ra": data[self.raKey],
-                "coord_dec": data[self.decKey],
-                "visit": data[self.visitKey],
-            }
+        if len(data[self.groupKey]) == 0:
+            return distanceParams
+
+        rng = np.random.RandomState(seed=self.randomSeed)
+
+        def _compressArray(arrayIn):
+            h, rev = esutil.stat.histogram(arrayIn, rev=True)
+            arrayOut = np.zeros(len(arrayIn), dtype=np.int32)
+            (good,) = np.where(h > 0)
+            for counter, ind in enumerate(good):
+                arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
+            return arrayOut
+
+        groupId = _compressArray(data[self.groupKey])
+
+        nObj = groupId.max() + 1
+
+        # Compute the meanRa/meanDec.
+        meanRa = np.zeros(nObj)
+        meanDec = np.zeros_like(meanRa)
+        nObs = np.zeros_like(meanRa, dtype=np.int64)
+
+        # Check if tract is overlapping ra=0 and rotate if so.
+        # We assume a tract is smaller than 60x60 degrees.
+        rotation = 0.0
+        if np.max(data[self.raKey]) > 330.0 and np.min(data[self.raKey]) < 30.0:
+            rotation = 180.0
+            raRotated = np.array(data[self.raKey]) - rotation
+        else:
+            raRotated = np.array(data[self.raKey])
+
+        np.add.at(meanRa, groupId, raRotated)
+        np.add.at(meanDec, groupId, np.array(data[self.decKey]))
+        np.add.at(nObs, groupId, 1)
+
+        meanRa /= nObs
+        meanDec /= nObs
+        meanRa += rotation
+
+        D = (self.annulus * u.arcmin).to_value(u.degree)
+        width = (self.width * u.arcmin).to_value(u.degree)
+        annulus = D + (width / 2) * np.array([-1, +1])
+
+        # Match this catalog to itself within the radius and then cut
+        # to the annulus inner radius.
+        with Matcher(meanRa, meanDec) as m:
+            idx, i1, i2, d = m.query_self(annulus[1], return_indices=True)
+
+        inAnnulus = d > annulus[0]
+        i1 = i1[inAnnulus]
+        i2 = i2[inAnnulus]
+
+        if len(i1) == 0:
+            return distanceParams
+
+        if len(i1) > self.maxPairs:
+            # Downsample the pairs.
+            selection = rng.choice(len(i1), size=self.maxPairs, replace=False)
+            i1 = i1[selection]
+            i2 = i2[selection]
+
+        # Match groups and get indices.
+        h, rev = esutil.stat.histogram(groupId, rev=True)
+
+        # Match together pairs that have the same visit.
+        # It is unfortunate that this requires a loop, but it is not slow.
+        # After this matching we have a set of matchedObsInd1/matchedObsInd2
+        # that are all individual observations that are in the annulus and
+        # share a visit. The matchedPairInd groups all the paired observations
+        # of a given pair.
+        matchedObsInd1 = []
+        matchedObsInd2 = []
+        matchedPairInd = []
+        for ind in range(len(i1)):
+            objInd1 = i1[ind]
+            objInd2 = i2[ind]
+            obsInd1 = rev[rev[objInd1] : rev[objInd1 + 1]]
+            obsInd2 = rev[rev[objInd2] : rev[objInd2 + 1]]
+            a, b = esutil.numpy_util.match(data[self.visitKey][obsInd1], data[self.visitKey][obsInd2])
+            matchedObsInd1.append(obsInd1[a])
+            matchedObsInd2.append(obsInd2[b])
+            matchedPairInd.append(np.full(len(a), ind))
+
+        matchedObsInd1 = np.concatenate(matchedObsInd1)
+        matchedObsInd2 = np.concatenate(matchedObsInd2)
+        matchedPairInd = np.concatenate(matchedPairInd)
+
+        separations = sphDist(
+            np.deg2rad(np.array(data[self.raKey][matchedObsInd1])),
+            np.deg2rad(np.array(data[self.decKey][matchedObsInd1])),
+            np.deg2rad(np.array(data[self.raKey][matchedObsInd2])),
+            np.deg2rad(np.array(data[self.decKey][matchedObsInd2])),
         )
 
-        meanRa = df.groupby("groupKey")["coord_ra"].aggregate("mean")
-        meanDec = df.groupby("groupKey")["coord_dec"].aggregate("mean")
+        # Compute the mean from the ragged array of pairs by
+        # using np.add.at to sum numerator and denominator.
+        sepMean = np.zeros(len(i1))
+        nSep = np.zeros_like(sepMean, dtype=np.int32)
+        np.add.at(sepMean, matchedPairInd, separations)
+        np.add.at(nSep, matchedPairInd, 1)
+        good = nSep > 1
+        sepMean[good] /= nSep[good]
+        sepMean[~good] = np.nan
 
-        catalog = SkyCoord(meanRa.to_numpy() * u.degree, meanDec.to_numpy() * u.degree)
-        idx, idxCatalog, d2d, d3d = catalog.search_around_sky(catalog, annulus[1])
-        inAnnulus = d2d > annulus[0]
-        idx = idx[inAnnulus]
-        idxCatalog = idxCatalog[inAnnulus]
+        # There are no good pairs, so return the default.
+        if good.sum() == 0:
+            return distanceParams
 
-        rmsDistances = []
-        sepResiduals = []
-        for id in range(len(meanRa)):
-            match_inds = idx == id
-            match_ids = idxCatalog[match_inds & (idxCatalog != id)]
-            if match_ids.sum() == 0:
-                continue
+        # Compute the stdev with sqrt(sum((sep - mean(sep))**2.)/(nsep - 1))
+        sepStd = np.zeros_like(sepMean)
+        np.add.at(
+            sepStd,
+            matchedPairInd,
+            (separations - sepMean[matchedPairInd]) ** 2.0,
+        )
+        sepStd[good] = np.sqrt(sepStd[good] / (nSep[good] - 1))
+        rmsDistances = sepStd[good]
 
-            object_srcs = df.loc[df["groupKey"] == meanRa.index[id]]
+        # Need sepResiduals, but only when nSep is > 2.
+        bad2 = nSep <= 2
+        sepMean[bad2] = np.nan
+        sepResiduals = separations - sepMean[matchedPairInd]
+        sepResiduals = sepResiduals[np.isfinite(sepResiduals)]
 
-            object_visits = object_srcs["visit"].to_numpy()
-            object_ras = (object_srcs["coord_ra"].to_numpy() * u.degree).to(u.radian).value
-            object_decs = (object_srcs["coord_dec"].to_numpy() * u.degree).to(u.radian).value
-            if len(object_srcs) <= 1:
-                continue
-            object_srcs = object_srcs.set_index("visit")
-            object_srcs.sort_index(inplace=True)
+        # This is always going to be valid because we checked the number
+        # of good pairs above.
+        AMx = (np.median(rmsDistances) * u.radian).to(u.marcsec)
 
-            for id2 in match_ids:
-                match_srcs = df.loc[df["groupKey"] == meanRa.index[id2]]
-                match_visits = match_srcs["visit"].to_numpy()
-                match_ras = (match_srcs["coord_ra"].to_numpy() * u.degree).to(u.radian).value
-                match_decs = (match_srcs["coord_dec"].to_numpy() * u.degree).to(u.radian).value
-
-                separations = matchVisitComputeDistance(
-                    object_visits, object_ras, object_decs, match_visits, match_ras, match_decs
-                )
-
-                if len(separations) > 1:
-                    rmsDist = np.std(separations, ddof=1)
-                    rmsDistances.append(rmsDist)
-                if len(separations) > 2:
-                    sepResiduals.append(separations - np.median(separations))
-
-        if len(rmsDistances) == 0:
-            AMx = np.nan * u.marcsec
-        else:
-            AMx = (np.median(rmsDistances) * u.radian).to(u.marcsec)
-
+        # Because there is a more stringent selection for sepResiduals,
+        # we need to check that we have enough to compute the metrics.
         if len(sepResiduals) <= 1:
             AFx = np.nan * u.percent
             ADx = np.nan * u.marcsec
             absDiffSeparations = np.array([]) * u.marcsec
         else:
-            sepResiduals = np.concatenate(sepResiduals)
             absDiffSeparations = (abs(sepResiduals - np.median(sepResiduals)) * u.radian).to(u.marcsec)
             afThreshhold = 100.0 - self.threshAF
             ADx = np.percentile(absDiffSeparations, afThreshhold)
             AFx = 100 * np.mean(np.abs(absDiffSeparations) > self.threshAD * u.marcsec) * u.percent
 
-        distanceParams = {
-            "rmsDistances": (np.array(rmsDistances) * u.radian).to(u.marcsec).value,
-            "separationResiduals": absDiffSeparations.value,
-            "AMx": AMx.value,
-            "ADx": ADx.value,
-            "AFx": AFx.value,
-        }
+        distanceParams["rmsDistances"] = (rmsDistances * u.radian).to(u.marcsec).value
+        distanceParams["separationResiduals"] = absDiffSeparations.value
+        distanceParams["AMx"] = AMx.value
+        distanceParams["ADx"] = ADx.value
+        distanceParams["AFx"] = AFx.value
 
         return distanceParams
-
-
-def matchVisitComputeDistance(visit_obj1, ra_obj1, dec_obj1, visit_obj2, ra_obj2, dec_obj2):
-    """Calculate obj1-obj2 distance for each visit in which both objects are
-    seen.
-
-    For each visit shared between visit_obj1 and visit_obj2, calculate the
-    spherical distance between the obj1 and obj2. visit_obj1 and visit_obj2 are
-    assumed to be unsorted. This function was borrowed from faro.
-
-    Parameters
-    ----------
-    visit_obj1 : scalar, list, or numpy.array of int or str
-        List of visits for object 1.
-    ra_obj1 : scalar, list, or numpy.array of float
-        List of RA in each visit for object 1.  [radians]
-    dec_obj1 : scalar, list or numpy.array of float
-        List of Dec in each visit for object 1. [radians]
-    visit_obj2 : list or numpy.array of int or str
-        List of visits for object 2.
-    ra_obj2 : list or numpy.array of float
-        List of RA in each visit for object 2.  [radians]
-    dec_obj2 : list or numpy.array of float
-        List of Dec in each visit for object 2.  [radians]
-    Results
-    -------
-    list of float
-        spherical distances (in radians) for matching visits.
-    """
-    distances = []
-    visit_obj1_idx = np.argsort(visit_obj1)
-    visit_obj2_idx = np.argsort(visit_obj2)
-    j_raw = 0
-    j = visit_obj2_idx[j_raw]
-    for i in visit_obj1_idx:
-        while (visit_obj2[j] < visit_obj1[i]) and (j_raw < len(visit_obj2_idx) - 1):
-            j_raw += 1
-            j = visit_obj2_idx[j_raw]
-        if visit_obj2[j] == visit_obj1[i]:
-            if np.isfinite([ra_obj1[i], dec_obj1[i], ra_obj2[j], dec_obj2[j]]).all():
-                distances.append(sphDist(ra_obj1[i], dec_obj1[i], ra_obj2[j], dec_obj2[j]))
-    return distances
 
 
 def sphDist(ra_mean, dec_mean, ra, dec):

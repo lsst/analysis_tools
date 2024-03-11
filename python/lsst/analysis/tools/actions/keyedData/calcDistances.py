@@ -106,10 +106,8 @@ class CalcRelativeDistances(KeyedDataAction):
             h, rev = esutil.stat.histogram(arrayIn, rev=True)
             arrayOut = np.zeros(len(arrayIn), dtype=np.int32)
             (good,) = np.where(h > 0)
-            counter = 0
-            for ind in good:
+            for counter, ind in enumerate(good):
                 arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
-                counter += 1
             return arrayOut
 
         groupId = _compressArray(data[self.groupKey])
@@ -223,11 +221,12 @@ class CalcRelativeDistances(KeyedDataAction):
         sepResiduals = separations - sepMean[matchedPairInd]
         sepResiduals = sepResiduals[np.isfinite(sepResiduals)]
 
-        if len(rmsDistances) == 0:
-            AMx = np.nan * u.marcsec
-        else:
-            AMx = (np.median(rmsDistances) * u.radian).to(u.marcsec)
+        # This is always going to be valid because we checked the number
+        # of good pairs above.
+        AMx = (np.median(rmsDistances) * u.radian).to(u.marcsec)
 
+        # Because there is a more stringent selection for sepResiduals,
+        # we need to check that we have enough to compute the metrics.
         if len(sepResiduals) <= 1:
             AFx = np.nan * u.percent
             ADx = np.nan * u.marcsec

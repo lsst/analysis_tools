@@ -1,5 +1,6 @@
 description: |
-  Tier 1 AP plots and metrics to assess CcdVisit quality
+  AP plots and metrics to assess CcdVisit quality in Prompt Processing
+  Additional AP metrics may be written in apDetectorVisitQualityExtended
 tasks:
   analyzeAssocDiaSrcCore:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask

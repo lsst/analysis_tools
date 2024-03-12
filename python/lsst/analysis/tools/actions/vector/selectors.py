@@ -224,7 +224,7 @@ class VisitPlotFlagSelector(FlagSelector):
         ]
 
 
-class RangeSelector(VectorAction):
+class RangeSelector(SelectorBase):
     """Selects rows within a range, inclusive of min/exclusive of max."""
 
     vectorKey = Field[str](doc="Key to select from data")
@@ -487,7 +487,7 @@ class VectorSelector(VectorAction):
         return cast(Vector, data[self.vectorKey.format(**kwargs)])
 
 
-class ThresholdSelector(VectorAction):
+class ThresholdSelector(SelectorBase):
     """Return a mask corresponding to an applied threshold."""
 
     op = Field[str](doc="Operator name.")

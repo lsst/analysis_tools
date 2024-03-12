@@ -304,24 +304,29 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
     infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
 
     # Find S/N and mag keys, if present.
-    snKey = None
+    snKeys = []
+    magKeys = []
+    selectionKeys = []
+    selectionPrefix = "Selection: "
     for key, value in plotInfo.items():
         if "SN" in key or "S/N" in key:
-            snKey = key
-            break
-    magKey = None
-    for key, value in plotInfo.items():
-        if "Mag" in key:
-            magKey = key
-            break
+            snKeys.append(key)
+        elif "Mag" in key:
+            magKeys.append(key)
+        elif key.startswith(selectionPrefix):
+            selectionKeys.append(key)
     # Add S/N and mag values to label, if present.
-    if snKey is not None:
-        if magKey is None:
-            infoText += f", {snKey}{plotInfo.get(snKey)}"
-        else:
-            infoText += f"\n{snKey}{plotInfo.get(snKey)}"
-    if magKey is not None:
-        infoText += f", {magKey}{plotInfo.get(magKey)}"
+    # TODO: Do something if there are multiple sn/mag keys. Log? Warn?
+    newline = "\n"
+    if snKeys:
+        infoText = f"{infoText}{newline if magKeys else ', '}{snKeys[0]}{plotInfo.get(snKeys[0])}"
+    if magKeys:
+        infoText = f"{infoText}, {magKeys[0]}{plotInfo.get(magKeys[0])}"
+    if selectionKeys:
+        nPrefix = len(selectionPrefix)
+        selections = ", ".join(f"{key[nPrefix:]}: {plotInfo[key]}" for key in selectionKeys)
+        infoText = f"{infoText}, Selections: {selections}"
+
     fig.text(0.01, 0.984, infoText, fontsize=6, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
 
     return fig

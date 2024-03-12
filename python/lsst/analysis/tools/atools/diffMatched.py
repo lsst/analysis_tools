@@ -42,7 +42,8 @@ from ..actions.vector import (
     SubtractVector,
 )
 from ..actions.vector.selectors import RangeSelector, ThresholdSelector, VectorSelector
-from .genericBuild import ExtendednessTool, MagnitudeXTool
+from ..interfaces import KeyedData, Vector
+from .genericBuild import MagnitudeXTool
 from .genericProduce import MagnitudeScatterPlot
 
 
@@ -50,10 +51,18 @@ class ReferenceGalaxySelector(ThresholdSelector):
     """A selector that selects galaxies from a catalog with a
     boolean column identifying unresolved sources.
     """
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("true galaxies", **kwargs)
+        return result
+
     def setDefaults(self):
         super().setDefaults()
         self.op = "eq"
         self.threshold = 0
+        self.plotLabelKey = "Selection: Galaxies"
         self.vectorKey = "refcat_is_pointsource"
 
 
@@ -61,6 +70,7 @@ class ReferenceObjectSelector(RangeSelector):
     """A selector that selects all objects from a catalog with a
     boolean column identifying unresolved sources.
     """
+
     def setDefaults(self):
         super().setDefaults()
         self.minimum = 0
@@ -71,9 +81,17 @@ class ReferenceStarSelector(ThresholdSelector):
     """A selector that selects stars from a catalog with a
     boolean column identifying unresolved sources.
     """
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("true stars", **kwargs)
+        return result
+
     def setDefaults(self):
         super().setDefaults()
         self.op = "eq"
+        self.plotLabelKey = "Selection: Stars"
         self.threshold = 1
         self.vectorKey = "refcat_is_pointsource"
 

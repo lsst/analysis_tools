@@ -545,6 +545,32 @@ class ParentObjectSelector(FlagSelector):
         self.selectWhenTrue = ["detect_isPatchInner"]
 
 
+class ChildObjectSelector(RangeSelector):
+    """Select only children from deblended parents"""
+
+    vectorKey = Field[str](doc="Key to select from data", default="parentSourceId")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.vectorKey, Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values within the specified range.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values within the specified range.
+        """
+        values = cast(Vector, data[self.vectorKey])
+        mask = values > 0
+
+        return cast(Vector, mask)
+
+
 class MagSelector(SelectorBase):
     """Selects points that have minMag < mag (AB) < maxMag.
 

@@ -23,7 +23,12 @@ from __future__ import annotations
 __all__ = ("ParentDeblenderMetrics", "SkippedDeblenderMetrics", "BlendMetrics", "IsolatedDeblenderMetrics")
 
 from ..actions.scalar.scalarActions import CountAction, MeanAction, SumAction
-from ..actions.vector.selectors import FlagSelector, ParentObjectSelector, ThresholdSelector
+from ..actions.vector.selectors import (
+    ChildObjectSelector,
+    FlagSelector,
+    ParentObjectSelector,
+    ThresholdSelector,
+)
 from ..interfaces import AnalysisTool
 
 
@@ -139,4 +144,19 @@ class IsolatedDeblenderMetrics(AnalysisTool):
             "numIsolated": "",
             "meanIsolatedIterations": "",
             "meanIsolatedLogL": "",
+        }
+
+
+class ChildDeblenderMetrics(AnalysisTool):
+    """Calculate metrics based on the performance of the deblender for
+    single sources.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.childSelector = ChildObjectSelector()
+        self.process.calculateActions.zeroFlux = SumAction(vectorKey="deblend_zeroFlux")
+
+        self.produce.metric.units = {
+            "zeroFlux": "",
         }

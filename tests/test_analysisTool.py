@@ -86,6 +86,15 @@ class FinalizeTestCase(TestCase):
         self.assertEqual(self.e.name, "BE_final")
 
 
+class TestMetricNameValidation(TestCase):
+    """Test that disallowed characters in measurement names are filtered."""
+
+    def testMinusNameFails(self):
+        tool = AnalysisTool()
+        with self.assertRaises(pexConfig.FieldValidationError):
+            tool.produce.metric.newNames = {"something": "not-allowed"}
+
+
 class LoadFromPipelineTestCase(TestCase):
     """Test that analysis tools can be loaded from a pipeline"""
 

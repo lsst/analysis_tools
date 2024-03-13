@@ -39,15 +39,18 @@ tasks:
       # atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
-  # TODO DM-43201 fix this
-  # analyzeTrailedDiaSrcCore:
-  #   class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
-  #   config:
-  #     # Counts up the number of dia sources in the trailed table.
-  #     atools.numDiaSourcesAll: NumDiaSourcesAllMetric
-  #     connections.outputName: trailedDiaSrcCore
-  #     python: |
-  #       from lsst.analysis.tools.atools import *
+  analyzeTrailedDiaSrcCore:
+    class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
+    config:
+      # Counts up the number of dia sources in the trailed table.
+      connections.outputName: trailedDiaSrcCore
+      atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
+      atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
+      python: |
+        from lsst.analysis.tools.atools import *
   diffimTaskCore:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
     config:
@@ -75,6 +78,7 @@ subsets:
   promptQaMetrics:
     subset:
       - analyzeAssocDiaSrcCore
+      - analyzeTrailedDiaSrcCore
       - diffimTaskCore
     description: >
       QA metrics to run in Prompt Processing.

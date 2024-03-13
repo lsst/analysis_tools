@@ -64,3 +64,10 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+subsets:
+  promptQaMetrics:
+    subset:
+      - analyzeAssocDiaSrcCore
+      - diffimTaskCore
+    description: >
+      QA metrics to run in Prompt Processing.

@@ -1,6 +1,11 @@
 description: |
   AP plots and metrics to assess CcdVisit quality in Prompt Processing
   Additional AP metrics may be written in apDetectorVisitQualityExtended
+parameters:
+  # Note that these parameter names are shared with ApPipe, and are overwritten
+  # by changes in the values there.
+  coaddName: goodSeeing
+  fakesType: ''
 tasks:
   analyzeAssocDiaSrcCore:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
@@ -28,6 +33,8 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
       atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
       connections.outputName: assocDiaSrcCore
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
       # TODO DM-43201 fix this
       # atools.simpleSky: SimpleDiaPlot
       python: |

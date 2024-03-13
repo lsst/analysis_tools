@@ -86,9 +86,9 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 
         self.produce.metric.newNames = {
-            "median": "{band}_ap12-psf_median",
-            "mean": "{band}_ap12-psf_mean",
-            "sigmaMad": "{band}_ap12-psf_sigmaMad",
+            "median": "{band}_ap12_psf_diff_median",
+            "mean": "{band}_ap12_psf_diff_mean",
+            "sigmaMad": "{band}_ap12_psf_diff_sigmaMad",
         }
 
 

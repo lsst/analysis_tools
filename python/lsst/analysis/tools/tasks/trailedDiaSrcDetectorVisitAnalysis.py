@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("TrailedDiaSrcDetectorVisitAnalysisConfig", "TrailedDiaSrcDetectorVisitAnalysisTask")
 
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base import connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -32,7 +32,7 @@ class TrailedDiaSrcDetectorVisitAnalysisConnections(
     dimensions=("visit", "band", "detector"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
 ):
-    data = ct.Input(
+    data = connectionTypes.Input(
         doc="Output temporarily storing long trailed diaSources.",
         name="{fakesType}{coaddName}Diff_longTrailedSrc",
         storageClass="DataFrame",

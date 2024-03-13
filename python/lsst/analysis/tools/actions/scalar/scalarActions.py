@@ -39,6 +39,7 @@ __all__ = (
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
+    "GetScalar",
 )
 
 import operator
@@ -412,3 +413,13 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+class GetScalar(ScalarAction):
+    scalarKey = Field[str]("Key of Scalar")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.scalarKey, Scalar),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        return cast(Scalar, data[self.scalarKey.format(**kwargs)])

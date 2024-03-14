@@ -28,7 +28,7 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.plot import FocalPlanePlot, HistPanel, HistPlot, HistStatsPanel
-from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
+from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction, StdevAction
 from ..actions.vector import (
     BandSelector,
     CalcSn,
@@ -193,5 +193,13 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.buildActions.statMask.threshold = 200
         self.process.buildActions.statMask.fluxType = "psfFlux"
 
+        self.process.calculateActions.photResidFocalPlaneMedian = MedianAction(vectorKey="z")
+        self.process.calculateActions.photResidFocalPlaneStdev = StdevAction(vectorKey="z")
+
         self.produce.plot = FocalPlanePlot()
         self.produce.plot.zAxisLabel = "Mag - Mag$_{mean}$ (mmag)"
+
+        self.produce.metric.units = {  # type: ignore
+            "photResidFocalPlaneStdev": "mmag",
+            "photResidFocalPlaneMedian": "mmag",
+        }

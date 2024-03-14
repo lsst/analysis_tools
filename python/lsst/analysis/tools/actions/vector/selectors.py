@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "SelectorBase",
     "FlagSelector",
     "CoaddPlotFlagSelector",
     "RangeSelector",
@@ -38,6 +39,14 @@ __all__ = (
     "BandSelector",
     "MatchingFlagSelector",
     "MagSelector",
+    "InjectedClassSelector",
+    "InjectedGalaxySelector",
+    "InjectedObjectSelector",
+    "InjectedStarSelector",
+    "MatchedObjectSelector",
+    "ReferenceGalaxySelector",
+    "ReferenceObjectSelector",
+    "ReferenceStarSelector",
 )
 
 import operator
@@ -637,3 +646,127 @@ class MagSelector(SelectorBase):
 
         # It should not be possible for mask to be a None now
         return np.array(cast(Vector, mask))
+
+
+class InjectedObjectSelector(SelectorBase):
+    """A selector for injected objects."""
+
+    vectorKey = Field[str](doc="Key to select from data", default="ref_injection_flag")
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        key = self.vectorKey.format(**kwargs)
+        result = cast(Vector, data[key] == 0)
+        return result
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.vectorKey, Vector
+
+
+class InjectedClassSelector(InjectedObjectSelector):
+    """A selector for injected objects of a given class."""
+
+    key_class = Field[str](
+        doc="Key for the field indicating the class of the object",
+        default="ref_source_type",
+    )
+    name_class = Field[str](
+        doc="Name of the class of objects",
+    )
+    value_compare = Field[str](
+        doc="Value of the type_key field for objects that are stars",
+        default="DeltaFunction",
+    )
+    value_is_equal = Field[bool](
+        doc="Whether the value must equal value_compare to be of this class",
+        default=True,
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data, **kwargs)
+        values = data[self.key_class]
+        result &= (values == self.value_compare) if self.value_is_equal else (values != self.value_compare)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo(f"injected {self.name_class}", **kwargs)
+        return result
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+        yield self.key_class, Vector
+
+
+class InjectedGalaxySelector(InjectedClassSelector):
+    """A selector for injected stars of a given class."""
+
+    def setDefaults(self):
+        self.name_class = "galaxy"
+
+
+class InjectedStarSelector(InjectedClassSelector):
+    """A selector for injected stars of a given class."""
+
+    def setDefaults(self):
+        self.name_class = "star"
+
+
+class MatchedObjectSelector(RangeSelector):
+    """A selector that selects matched objects with finite distances."""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "match_distance"
+
+
+class ReferenceGalaxySelector(ThresholdSelector):
+    """A selector that selects galaxies from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("reference galaxies", **kwargs)
+        return result
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 0
+        self.plotLabelKey = "Selection: Galaxies"
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceObjectSelector(RangeSelector):
+    """A selector that selects all objects from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("reference objects", **kwargs)
+        return result
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceStarSelector(ThresholdSelector):
+    """A selector that selects stars from a catalog with a
+    boolean column identifying unresolved sources.
+    """
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("reference stars", **kwargs)
+        return result
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.plotLabelKey = "Selection: Stars"
+        self.threshold = 1
+        self.vectorKey = "refcat_is_pointsource"

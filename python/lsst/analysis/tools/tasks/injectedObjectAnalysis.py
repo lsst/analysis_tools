@@ -22,42 +22,32 @@ from __future__ import annotations
 
 __all__ = ("InjectedObjectAnalysisConfig", "InjectedObjectAnalysisTask")
 
-from lsst.pipe.base import connectionTypes as ct
-from lsst.skymap import BaseSkyMap
-
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from .objectTableTractAnalysis import (
+    ObjectTableTractAnalysisConfig,
+    ObjectTableTractAnalysisConnections,
+    ObjectTableTractAnalysisTask,
+)
 
 
 class InjectedObjectAnalysisConnections(
-    AnalysisBaseConnections,
+    ObjectTableTractAnalysisConnections,
     dimensions=("skymap", "tract"),
     defaultTemplates={
         "outputName": "matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract",
     },
 ):
-    data = ct.Input(
-        doc="Tract based object table to load from the butler",
-        name="{outputName}",
-        storageClass="ArrowAstropy",
-        deferLoad=True,
-        dimensions=("skymap", "tract"),
-    )
-
-    skymap = ct.Input(
-        doc="The skymap that covers the tract that the data is from.",
-        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
-        storageClass="SkyMap",
-        dimensions=("skymap",),
-    )
-
-
-class InjectedObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=InjectedObjectAnalysisConnections):
     pass
 
 
-class InjectedObjectAnalysisTask(AnalysisPipelineTask):
-    """Make plots and metrics using a table of objects matched to reference
-    catalog sources.
+class InjectedObjectAnalysisConfig(
+    ObjectTableTractAnalysisConfig, pipelineConnections=InjectedObjectAnalysisConnections
+):
+    pass
+
+
+class InjectedObjectAnalysisTask(ObjectTableTractAnalysisTask):
+    """Make plots and metrics using a table of measured objects matched to
+    injected inputs.
     """
 
     ConfigClass = InjectedObjectAnalysisConfig

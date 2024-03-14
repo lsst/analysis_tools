@@ -24,9 +24,12 @@ from unittest import TestCase, main
 
 import lsst.utils.tests
 import numpy as np
+from lsst.analysis.tools.actions.vector import ConstantValue, MultiplyVector
 from lsst.analysis.tools.atools import (
     MagnitudeTool,
+    MatchedRefCoaddCompurityTool,
     MatchedRefCoaddDiffColorTool,
+    MatchedRefCoaddDiffDistanceTool,
     MatchedRefCoaddDiffMagTool,
     MatchedRefCoaddDiffPositionTool,
     MatchedRefCoaddDiffTool,
@@ -39,6 +42,16 @@ class MatchedRefCoaddDiffToolMinimal(MatchedRefCoaddDiffTool):
     def get_key_flux_y(self) -> str:
         return self.mag_x
 
+    def finalize(self):
+        if not hasattr(self.process.buildActions, "diff"):
+            super().finalize()
+            self._set_actions()
+
+            self.process.buildActions.diff = MultiplyVector(
+                actionA=getattr(self.process.buildActions, f"mag_{self.mag_x}"),
+                actionB=ConstantValue(value=0.001),
+            )
+
 
 class TestDiffMatched(TestCase):
     def setUp(self) -> None:
@@ -47,7 +60,7 @@ class TestDiffMatched(TestCase):
 
     def _testMatchedRefCoaddMetricDerived(
         self,
-        type_metric: type[MatchedRefCoaddDiffTool],
+        type_metric: type[MatchedRefCoaddCompurityTool | MatchedRefCoaddDiffColorTool],
         suffixes_configure: list[str] | None = None,
         **kwargs,
     ):
@@ -55,26 +68,34 @@ class TestDiffMatched(TestCase):
             suffixes_configure = [""]
         plotInfo = {key: "" for key in ("plotName", "run", "tableName")}
         plotInfo["bands"] = []
-        for compute_chi in (False, True):
-            tester = type_metric(**kwargs, compute_chi=compute_chi)
+
+        tester = type_metric(**kwargs)
+        has_compute_chi = hasattr(tester, "compute_chi")
+        has_configureMetrics = hasattr(tester, "configureMetrics")
+
+        for compute_chi in (False, True) if has_compute_chi else (None,):
+            if has_compute_chi:
+                tester.compute_chi = compute_chi
             # tester.getInputSchema won't work properly before finalizing
             tester.finalize()
-
-            keys = set(k[0] for k in tester.getInputSchema())
+            keys = list({k[0]: None for k in tester.getInputSchema()})
             self.assertGreater(len(keys), 0)
-            for suffix in suffixes_configure:
-                self.assertGreater(len(list(tester.configureMetrics(attr_suffix=suffix))), 0)
+            if has_configureMetrics:
+                for suffix in suffixes_configure:
+                    self.assertGreater(len(list(tester.configureMetrics(attr_suffix=suffix))), 0)
             data = {}
             n_data = 10
             for key in keys:
-                if key.endswith("xtendedness"):
-                    values = np.linspace(0.0, 1.0, n_data)
+                if key.endswith("is_pointsource"):
+                    values = (np.arange(0, n_data) % 2) == 1
                 else:
                     values = np.linspace(0.1, 15.0, n_data)
                 data[key.format(band=self.band_default)] = values
 
             output = tester(data, skymap=None, plotInfo=plotInfo)
             self.assertGreater(len(output), 0)
+            if has_compute_chi:
+                tester = type_metric(**kwargs)
 
     def testMatchedRefCoaddMetric(self):
         kwargs = {key: "" for key in ("unit", "name_prefix")}
@@ -106,13 +127,9 @@ class TestDiffMatched(TestCase):
         # There's no metric or plot so it just returns an empty dict
         self.assertEqual(len(tester(data)), 0)
 
-    def testMatchedRefCoaddDiffMag(self):
+    def testMatchedRefCoaddCompurity(self):
         self._testMatchedRefCoaddMetricDerived(
-            MatchedRefCoaddDiffMagTool,
-            fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
-            mag_y="cmodel",
-            name_prefix="",
-            unit="",
+            MatchedRefCoaddCompurityTool,
         )
 
     def testMatchedRefCoaddDiffColor(self):
@@ -130,7 +147,21 @@ class TestDiffMatched(TestCase):
             unit="",
         )
 
-    def testMatchedRefCoaddDiffPositionTool(self):
+    def testMatchedRefCoaddDiffDistance(self):
+        self._testMatchedRefCoaddMetricDerived(
+            MatchedRefCoaddDiffDistanceTool,
+        )
+
+    def testMatchedRefCoaddDiffMag(self):
+        self._testMatchedRefCoaddMetricDerived(
+            MatchedRefCoaddDiffMagTool,
+            fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
+            mag_y="cmodel",
+            name_prefix="",
+            unit="",
+        )
+
+    def testMatchedRefCoaddDiffPosition(self):
         for variable in ("x", "y"):
             self._testMatchedRefCoaddMetricDerived(
                 MatchedRefCoaddDiffPositionTool,

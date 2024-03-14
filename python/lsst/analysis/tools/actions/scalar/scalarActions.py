@@ -40,7 +40,6 @@ __all__ = (
     "IqrHistAction",
     "DivideScalar",
     "RmsAction",
-    "MagPercentileAction",
 )
 
 import logging
@@ -49,12 +48,11 @@ from math import nan
 from typing import cast
 
 import numpy as np
-from astropy import units as u
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
-from ...math import fluxToMag, isPercent, nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
+from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
 
 log = logging.getLogger(__name__)
 

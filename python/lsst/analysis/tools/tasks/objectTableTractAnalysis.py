@@ -54,6 +54,7 @@ class ObjectTableTractAnalysisConnections(
     )
 
     def __init__(self, *, config=None):
+        super().__init__(config=config)
         if not config.load_skymap:
             del self.skymap
 

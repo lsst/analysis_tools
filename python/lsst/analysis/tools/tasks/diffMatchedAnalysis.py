@@ -23,21 +23,26 @@ from __future__ import annotations
 __all__ = ("DiffMatchedAnalysisConfig", "DiffMatchedAnalysisTask")
 
 from .objectTableTractAnalysis import (
-    ObjectTableTractAnalysisConnections, ObjectTableTractAnalysisConfig, ObjectTableTractAnalysisTask,
+    ObjectTableTractAnalysisConfig,
+    ObjectTableTractAnalysisConnections,
+    ObjectTableTractAnalysisTask,
 )
 
 
 class DiffMatchedAnalysisConnections(
     ObjectTableTractAnalysisConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "matched_truth_summary_objectTable_tract",
-                      "outputName": "matched_truth_summary_objectTable_tract"},
+    defaultTemplates={
+        "inputName": "matched_truth_summary_objectTable_tract",
+        "outputName": "matched_truth_summary_objectTable_tract",
+    },
 ):
     pass
 
 
-class DiffMatchedAnalysisConfig(ObjectTableTractAnalysisConfig,
-                                pipelineConnections=DiffMatchedAnalysisConnections):
+class DiffMatchedAnalysisConfig(
+    ObjectTableTractAnalysisConfig, pipelineConnections=DiffMatchedAnalysisConnections
+):
     pass
 
 

@@ -24,19 +24,32 @@ __all__ = (
     "ReferenceGalaxySelector",
     "ReferenceObjectSelector",
     "ReferenceStarSelector",
-    "MatchedRefCoaddToolBase",
+    "MatchedClassAction",
+    "MatchedRefCoaddTool",
+    "MatchedRefCoaddCompurityTool",
     "MatchedRefCoaddDiffTool",
     "MatchedRefCoaddDiffColorTool",
+    "MatchedRefCoaddDiffDistanceTool",
     "MatchedRefCoaddDiffMagTool",
     "MatchedRefCoaddDiffPositionTool",
 )
 
 import copy
 from abc import abstractmethod
+from typing import cast
 
 import astropy.units as u
+import lsst.pex.config as pexConfig
 from lsst.pex.config import DictField, Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
 
+from ..actions.config import MagnitudeBinnedMetricsConfig
+from ..actions.keyedData import (
+    CalcBinnedCompletenessAction,
+    CalcCompletenessHistogramAction,
+    MagnitudeCompletenessConfig,
+)
+from ..actions.plot import CompletenessHist
 from ..actions.vector import (
     CalcBinnedStatsAction,
     ColorDiff,
@@ -49,9 +62,9 @@ from ..actions.vector import (
     MultiplyVector,
     SubtractVector,
 )
-from ..actions.vector.selectors import RangeSelector, ThresholdSelector, VectorSelector
-from ..interfaces import KeyedData, Vector
-from .genericBuild import MagnitudeXTool
+from ..actions.vector.selectors import RangeSelector, SelectorBase, ThresholdSelector, VectorSelector
+from ..interfaces import BaseMetricAction, KeyedData, KeyedDataSchema, NoMetric, Vector, VectorAction
+from .genericBuild import MagnitudeTool, MagnitudeXTool, ObjectClassTool
 from .genericMetricAction import StructMetricAction
 from .genericPlotAction import StructPlotAction
 from .genericProduce import MagnitudeScatterPlot
@@ -90,6 +103,12 @@ class ReferenceObjectSelector(RangeSelector):
     boolean column identifying unresolved sources.
     """
 
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("reference objects", **kwargs)
+        return result
+
     def setDefaults(self):
         super().setDefaults()
         self.minimum = 0
@@ -115,78 +134,253 @@ class ReferenceStarSelector(ThresholdSelector):
         self.vectorKey = "refcat_is_pointsource"
 
 
-class MatchedRefCoaddToolBase(MagnitudeXTool):
+class InjectedObjectSelector(SelectorBase):
+    """A selector for injected objects."""
+
+    vectorKey = Field[str](doc="Key to select from data", default="ref_injection_flag")
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        key = self.vectorKey.format(**kwargs)
+        result = cast(Vector, data[key] == 0)
+        return result
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.vectorKey, Vector
+
+
+class InjectedClassSelector(InjectedObjectSelector):
+    """A selector for injected objects of a given class."""
+
+    key_class = Field[str](
+        doc="Key for the field indicating the class of the object",
+        default="ref_source_type",
+    )
+    name_class = Field[str](
+        doc="Name of the class of objects",
+    )
+    value_compare = Field[str](
+        doc="Value of the type_key field for objects that are stars",
+        default="DeltaFunction",
+    )
+    value_is_equal = Field[bool](
+        doc="Whether the value must equal value_compare to be of this class",
+        default=True,
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data, **kwargs)
+        values = data[self.key_class]
+        result &= (values == self.value_compare) if self.value_is_equal else (values != self.value_compare)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo(f"injected {self.name_class}", **kwargs)
+        return result
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from super().getInputSchema()
+        yield self.key_class, Vector
+
+
+class InjectedStarSelector(InjectedClassSelector):
+    """A selector for injected stars of a given class."""
+
+    def setDefaults(self):
+        self.name_class = "star"
+
+
+class InjectedGalaxySelector(InjectedClassSelector):
+    def setDefaults(self):
+        self.name_class = "galaxy"
+        self.value_is_equal = False
+
+
+class MatchedClassAction(VectorAction):
+    """Action to return whether matched coadd objects are the same class."""
+
+    key_is_ref_galaxy = pexConfig.Field[str](
+        doc="The key of the boolean field selecting reference galaxies",
+    )
+    key_is_ref_star = pexConfig.Field[str](
+        doc="The key of the boolean field selecting reference stars",
+    )
+    key_is_target_galaxy = pexConfig.Field[str](
+        doc="The key of the boolean field selecting observed galaxies",
+    )
+    key_is_target_star = pexConfig.Field[str](
+        doc="The key of the boolean field selecting observed starss",
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = kwargs.get("mask")
+        is_ref_galaxy = data[self.key_is_ref_galaxy]
+        is_ref_star = data[self.key_is_ref_star]
+        is_target_galaxy = data[self.key_is_target_galaxy]
+        is_target_star = data[self.key_is_target_star]
+        if mask:
+            is_ref_galaxy = is_ref_galaxy[mask]
+            is_ref_star = is_ref_star[mask]
+            is_target_galaxy = is_target_galaxy[mask]
+            is_target_star = is_target_star[mask]
+        return (is_ref_galaxy & is_target_galaxy) | (is_ref_star & is_target_star)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.key_is_ref_galaxy, Vector
+        yield self.key_is_ref_star, Vector
+        yield self.key_is_target_galaxy, Vector
+        yield self.key_is_target_star, Vector
+
+
+class MatchedRefCoaddTool(ObjectClassTool):
     """Base tool for matched-to-reference metrics/plots on coadds.
 
-    Metrics/plots are expected to use the reference magnitude and
-    require separate star/galaxy/all source selections.
+    This tool is designed to configure plots and metrics as a function of
+    magnitude (object or reference). The metrics are binned by the same
+    magnitude shown on the x-axis in plots. By default, this is the reference
+    magnitude but plots can be configured to bin by object magnitude instead.
 
     Notes
     -----
     The tool does not use a standard coadd flag selector, because
     it is expected that the matcher has been configured to select
     appropriate candidates (and stores a match_candidate column).
+
+    The tool requires specification of reference galaxy and star selectors,
+    as these will be used to determine whether matched objects have the same
+    class as the reference, even if a particular class is not being plotted.
+    It is okay to specify a "dummy" selector that always returns False if
+    there are no reference objects of the given class.
     """
 
-    def setDefaults(self):
-        super().setDefaults()
-        self.mag_x = "ref_matched"
-        self.prep.selectors.matched = MatchedObjectSelector()
-        self.process.buildActions.allSelector = ReferenceObjectSelector()
-        self.process.buildActions.galaxySelector = ReferenceGalaxySelector()
-        self.process.buildActions.starSelector = ReferenceStarSelector()
+    _suffix_ref = "_ref"
+    _suffix_target = "_target"
 
-    def finalize(self):
-        super().finalize()
-        self._set_flux_default("mag_x")
+    context = pexConfig.ChoiceField[str](
+        doc="The context for the selectors",
+        allowed={
+            "custom": "User-configured selectors",
+            "DC2": "DC2 Truth Summary match",
+            "injection": "Source injection match",
+        },
+        default="DC2",
+    )
 
+    select_ref_by_default = pexConfig.Field[bool](
+        doc="Whether reference quantities should be used by default in other tools,"
+        " e.g. for binning metrics and for the x-axis in plots",
+        default=True,
+    )
 
-class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
-    """Base tool for generic diffs between reference and measured values."""
+    selector_ref_all = ConfigurableActionField[SelectorBase](
+        doc="The selector for reference objects of all types",
+        default=ReferenceObjectSelector,
+    )
+    selector_ref_galaxy = ConfigurableActionField[SelectorBase](
+        doc="The selector for reference galaxies",
+        default=ReferenceGalaxySelector,
+    )
+    selector_ref_star = ConfigurableActionField[SelectorBase](
+        doc="The selector for reference stars",
+        default=ReferenceStarSelector,
+    )
 
-    compute_chi = Field[bool](
-        default=False,
-        doc="Whether to compute scaled flux residuals (chi) instead of magnitude differences",
+    mag_bins = pexConfig.ConfigField[MagnitudeBinnedMetricsConfig](
+        doc="Magnitude bin configuration for metrics"
     )
     # These are optional because validate can be called before finalize
     # Validate should not fail in that case if it would otherwise succeed
-    name_prefix = Field[str](doc="Prefix for metric key", default=None, optional=True)
-    unit = Field[str](doc="Astropy unit of y-axis values", default=None, optional=True)
+    name_prefix = pexConfig.Field[str](
+        doc="Default prefix for metric key. Can include {name_type} as a"
+        " template for the type of object (resolved/unresolved)",
+        default=None,
+        optional=True,
+    )
+    name_suffix = pexConfig.Field[str](
+        doc="The suffix for metric names. Can include {name_mag} as a "
+        " template for the magnitude algorithm",
+        default="_mag{name_mag}",
+    )
+    unit = pexConfig.Field[str](doc="Astropy unit of y-axis values", default=None, optional=True)
 
-    _mag_low_min: int = 15
-    _mag_low_max: int = 27
-    _mag_interval: int = 1
+    def finalize(self):
+        # Don't do anything if the value is the one for which the defaults of
+        # selector_ref_all, etc are - this can't easily be inferred and must
+        # be kept in sync manually
+        if self.context != "DC2":
+            match self.context:
+                case "injection":
+                    self.selector_ref_all = InjectedObjectSelector()
+                    self.selector_ref_galaxy = InjectedGalaxySelector()
+                    self.selector_ref_star = InjectedStarSelector()
+                case "custom":
+                    pass
+                case _:
+                    raise NotImplementedError(f"{self.context=} is not implemented in {self.__class__}")
 
-    _names = {"stars": "star", "galaxies": "galaxy", "all": "all"}
-    _types = ("unresolved", "resolved", "all")
+        # Other tools will except selector_all
+        self.selection_suffix = self._suffix_ref if self.select_ref_by_default else self._suffix_target
+
+        super().finalize()
+
+        for object_class in self.get_classes():
+            name_selector = self.get_name_attr_selector(object_class, self._suffix_ref)
+            selector = self.get_selector_ref(object_class)
+            # This is a build action because selectors in prep are applied with
+            # and; we're not using these to filter all points but to make
+            # several parallel selections
+            setattr(self.process.buildActions, name_selector, selector)
+
+    def get_selector_ref(self, object_class: str):
+        match object_class:
+            case "any":
+                return self.selector_ref_all
+            case "galaxy":
+                return self.selector_ref_galaxy
+            case "star":
+                return self.selector_ref_star
+
+    def setDefaults(self):
+        super().setDefaults()
+        # The selection info isn't useful in plots with multiple classes
+        self.selector_ref_galaxy.plotLabelKey = None
+        self.selector_ref_star.plotLabelKey = None
+
+
+class MatchedRefCoaddDiffTool(MagnitudeXTool, MatchedRefCoaddTool):
+    """Base tool for generic diffs between reference and measured values."""
+
+    compute_chi = pexConfig.Field[bool](
+        default=False,
+        doc="Whether to compute scaled flux residuals (chi) instead of magnitude differences",
+    )
 
     def _set_actions(self, suffix=None):
         if suffix is None:
             suffix = ""
 
-        for name_lower, name_singular in self._names.items():
-            name = name_lower.capitalize()
-            key = f"y{name}{suffix}"
-            setattr(
-                self.process.filterActions,
-                key,
-                DownselectVector(
-                    vectorKey=f"diff{suffix}", selector=VectorSelector(vectorKey=f"{name_singular}Selector")
-                ),
-            )
+        selection = self._suffix_ref if self.select_ref_by_default else self._suffix_target
+        for object_class in self.get_classes():
+            name_type_plural = self.get_class_name_plural(object_class)
+            name_attr = f"{self.get_name_attr_values(object_class)}{suffix}"
+            name_selector = self.get_name_attr_selector(object_class, selection)
+            name_x = f"x{name_type_plural.capitalize()}"
 
-            for minimum in range(self._mag_low_min, self._mag_low_max + 1):
+            y_values = DownselectVector(
+                vectorKey=f"diff{suffix}",
+                selector=VectorSelector(vectorKey=name_selector),
+            )
+            setattr(self.process.filterActions, name_attr, y_values)
+
+            bins = self.mag_bins.get_bins()
+            for minimum in bins:
                 setattr(
                     self.process.calculateActions,
-                    f"{name_lower}{minimum}{suffix}",
+                    f"{name_type_plural}_{minimum}{suffix}",
                     CalcBinnedStatsAction(
-                        key_vector=key,
+                        key_vector=name_attr,
                         selector_range=RangeSelector(
-                            vectorKey=key,
+                            vectorKey=name_x,
                             minimum=minimum,
-                            maximum=minimum + self._mag_interval,
+                            maximum=minimum + self.mag_bins.mag_width,
                         ),
-                        return_minmax=False,
                     ),
                 )
 
@@ -194,7 +388,6 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
         self,
         unit: str | None = None,
         name_prefix: str | None = None,
-        name_suffix: str = "_ref_mag{minimum}",
         attr_suffix: str | None = None,
         unit_select: str = "mag",
     ):
@@ -206,8 +399,6 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
             The (astropy) unit of the summary statistic metrics.
         name_prefix : `str`
             The prefix for the action (column) name.
-        name_suffix : `str`
-            The suffix for the action (column) name.
         attr_suffix : `str`
             The suffix for the attribute to assign the action to.
         unit_select : `str`
@@ -231,25 +422,31 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
         key_flux = self.config_mag_x.key_flux
 
         units = {}
-        for name, name_class in zip(self._names, self._types):
-            name_capital = name.capitalize()
+
+        for object_class in self.get_classes():
+            name_type = self.get_class_type(object_class)
+            name_type_plural = self.get_class_name_plural(object_class)
+            name_capital = name_type_plural.capitalize()
             x_key = f"x{name_capital}"
 
-            for minimum in range(self._mag_low_min, self._mag_low_max + 1):
-                action = getattr(self.process.calculateActions, f"{name}{minimum}{attr_suffix}")
+            # Set up metrics for objects of one class within a magnitude range
+            bins = self.mag_bins.get_bins()
+            for minimum in bins:
+                action = getattr(self.process.calculateActions, f"{name_type_plural}_{minimum}{attr_suffix}")
                 action.selector_range = RangeSelector(
                     vectorKey=x_key,
-                    minimum=minimum,
-                    maximum=minimum + self._mag_interval,
+                    minimum=minimum / 1000.0,
+                    maximum=(minimum + self.mag_bins.mag_width) / 1000.0,
                 )
+                name_mag = self.mag_bins.get_name_bin(minimum)
 
                 action.name_prefix = name_prefix.format(
                     key_flux=key_flux,
-                    name_class=name_class,
+                    name_type=name_type,
                 )
                 if self.parameterizedBand:
                     action.name_prefix = f"{{band}}_{action.name_prefix}"
-                action.name_suffix = name_suffix.format(minimum=minimum)
+                action.name_suffix = self.name_suffix.format(name_mag=name_mag)
 
                 units.update(
                     {
@@ -275,17 +472,44 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
         assert mag_y in self.fluxes
         return self.fluxes[mag_y]
 
+    def finalize(self):
+        MagnitudeXTool.finalize(self)
+        MatchedRefCoaddTool.finalize(self)
+
     @abstractmethod
     def get_key_flux_y(self) -> str:
         """Return the key for the y-axis flux measure."""
         raise NotImplementedError("subclasses must implement get_key_flux_y")
 
     def setDefaults(self):
-        super().setDefaults()
-        self._set_actions()
+        MagnitudeXTool.setDefaults(self)
+        MatchedRefCoaddTool.setDefaults(self)
+        self.mag_x = "ref_matched"
+        self.prep.selectors.matched = MatchedObjectSelector()
 
 
-class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+class MatchedRefCoaddDiffPlot(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+    """Base tool for generic diffs between reference and measured values,
+    with a scatter plot."""
+
+    def do_metrics(self):
+        return not isinstance(self.produce.metric, NoMetric)
+
+    def get_key_flux_y(self) -> str:
+        return super().get_key_flux_y()
+
+    def finalize(self):
+        MatchedRefCoaddDiffTool.finalize(self)
+        MagnitudeScatterPlot.finalize(self)
+
+    def setDefaults(self):
+        # This will set no plot
+        MatchedRefCoaddDiffTool.setDefaults(self)
+        # This will set the plot
+        MagnitudeScatterPlot.setDefaults(self)
+
+
+class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):
     """Tool for diffs between reference and measured coadd mags.
 
     Notes
@@ -320,6 +544,7 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             bands = {band1: self._split_bands(band2_list) for band1, band2_list in self.bands.items()}
             n_bands = 0
 
+            # Set up mag actions for every band needed before finalizing plots
             for band1, band2_list in bands.items():
                 for band2 in band2_list:
                     mag_y1 = f"mag_y_{band1}"
@@ -332,6 +557,9 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                     self._set_flux_default(mag_x2, band=band2, name_mag=self.mag_x)
                     n_bands += 1
 
+            # These two lines must appear in this order so that every color
+            # has its plot actions finalized with a suffix (i.e., pointing
+            # summary stats at yStars_0 instead of yStars).
             self.suffixes_y_finalize = [f"_{idx}" for idx in range(n_bands)]
             super().finalize()
 
@@ -339,7 +567,10 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             subtype = "chi" if self.compute_chi else "diff"
 
             metric_base = self.produce.metric
+            metric = metric_base
             plot_base = self.produce.plot
+
+            do_metrics = self.do_metrics()
 
             actions_metric = {}
             actions_plot = {}
@@ -356,12 +587,14 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                     # Keep this index-based to simplify finalize
                     suffix_y = f"_{idx}"
                     self._set_actions(suffix=suffix_y)
-                    metric = copy.copy(metric_base)
                     self.name_prefix = (
                         f"photom_{name_short_y}_vs_{name_short_x}_color_{name_color}"
-                        f"_{subtype}_{{name_class}}_"
+                        f"_{subtype}_{{name_type}}_"
                     )
-                    metric.units = self.configureMetrics(attr_suffix=suffix_y)
+                    if do_metrics:
+                        metric = copy.copy(metric_base)
+                        metric.units = self.configureMetrics(attr_suffix=suffix_y)
+
                     plot = copy.copy(plot_base)
 
                     plot.suffix_y = suffix_y
@@ -401,10 +634,11 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                     actions_metric[name_color] = metric
                     actions_plot[name_color] = plot
                     idx += 1
-            action_metric = StructMetricAction()
-            for name_action, action in actions_metric.items():
-                setattr(action_metric.actions, name_action, action)
-            self.produce.metric = action_metric
+            if do_metrics:
+                action_metric = StructMetricAction()
+                for name_action, action in actions_metric.items():
+                    setattr(action_metric.actions, name_action, action)
+                self.produce.metric = action_metric
             action_plot = StructPlotAction()
             for name_action, action in actions_plot.items():
                 setattr(action_plot.actions, name_action, action)
@@ -412,11 +646,6 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
 
     def get_key_flux_y(self) -> str:
         return self.mag_y1
-
-    def setDefaults(self):
-        # skip MatchedRefCoaddDiffTool.setDefaults's _setActions call
-        MatchedRefCoaddToolBase.setDefaults(self)
-        MagnitudeScatterPlot.setDefaults(self)
 
     def validate(self):
         super().validate()
@@ -429,10 +658,214 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             raise ValueError("\n".join(errors))
 
 
-class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
+    """Plot the fraction of injected sources recovered by input magnitude.
+
+    By contrast with MatchedRefCoaddDiffTool, where one must choose which
+    magnitude appears on the x-axis, this tools creates two plots with
+    different magnitudes. The completeness plot necessarily is a function
+    of reference magnitude while purity is a function of object (target)
+    magnitude.
+    """
+
+    config_metrics = pexConfig.ConfigField[MagnitudeCompletenessConfig](
+        doc="Plot-based (unbinned) metric definition configuration"
+    )
+    key_match_distance = pexConfig.Field[str](
+        default="match_distance",
+        doc="Key for match distance column (>=0 for a successful match)",
+    )
+    mag_bins_plot = pexConfig.ConfigField[MagnitudeBinnedMetricsConfig](
+        doc="Magnitude bin configuration for plots and for unbinned metrics"
+        "(including completeness at magnitude thresholds)"
+    )
+    mag_ref = pexConfig.Field[str](
+        default="ref_matched",
+        doc="Flux (magnitude) config key  (to self.fluxes) for reference (true) magnitudes",
+    )
+    mag_target = pexConfig.Field[str](
+        default="cmodel_err",
+        doc="Flux (magnitude) config key (to self.fluxes) for target (measured) magnitudes",
+    )
+    make_plots = pexConfig.Field[bool](
+        default=True,
+        doc="Whether to generate plots in addition to metrics",
+    )
+
+    @property
+    def config_mag_ref(self):
+        return self._config_mag("mag_ref")
+
+    @property
+    def config_mag_target(self):
+        return self._config_mag("mag_target")
+
+    def finalize(self):
+        if not self.produce.metric.units:
+            MagnitudeTool.finalize(self)
+            MatchedRefCoaddTool.finalize(self)
+            self._set_flux_default("mag_ref")
+            self._set_flux_default("mag_target")
+
+            # This is the default convention for metric names, originally set
+            # for DC2 truth match but expanded to generic reference catalogs
+            # (including injection catalogs)
+            name_prefix = (
+                self.name_prefix
+                if self.name_prefix
+                else (
+                    f"detect_{self.config_mag_target.name_flux_short}_vs_"
+                    f"{self.config_mag_ref.name_flux_short}_{{name_type}}_"
+                )
+            )
+            unit_select = ""
+            kwargs_matched_class_action = {}
+
+            # Set up selectors for all object classes as they may be needed by
+            # the wrong/right matched class selector
+            for object_class in ("any", "galaxy", "star"):
+                for suffix, func_selector in (
+                    (self._suffix_ref, self.get_selector_ref),
+                    (self._suffix_target, self.get_selector),
+                ):
+                    name_selector = self.get_name_attr_selector(object_class, suffix)
+                    if not hasattr(self.process.buildActions, name_selector):
+                        selector = func_selector(object_class)
+                        setattr(self.process.buildActions, name_selector, selector)
+                    if object_class != "any":
+                        kwargs_matched_class_action[f"key_is{suffix}_{object_class}"] = name_selector
+
+            # This isn't exactly a filterAction but by default it needs to go
+            # after build and before calc, so here it is
+            self.process.filterActions.matched_class = MatchedClassAction(**kwargs_matched_class_action)
+
+            key_flux = self.config_mag_ref.key_flux
+            key_mag_ref = f"mag_{self.mag_ref}"
+            key_mag_target = f"mag_{self.mag_target}"
+            object_classes = self.get_classes()
+            self.produce.metric = StructMetricAction()
+            if self.make_plots:
+                self.produce.plot = StructPlotAction()
+
+            for object_class in object_classes:
+                name_type = self.get_class_type(object_class)
+                name_selector_ref = self.get_name_attr_selector(object_class, self._suffix_ref)
+                name_selector_target = self.get_name_attr_selector(object_class, self._suffix_target)
+                name_prefix_class = name_prefix.format(
+                    key_flux=key_flux,
+                    name_type=name_type,
+                )
+                if self.parameterizedBand:
+                    name_prefix_class = f"{{band}}_{name_prefix_class}"
+
+                units = {}
+                completeness_binned_metrics = CalcCompletenessHistogramAction(
+                    action=CalcBinnedCompletenessAction(
+                        name_prefix=name_prefix_class,
+                        selector_range_ref=RangeSelector(vectorKey=key_mag_ref),
+                        selector_range_target=RangeSelector(vectorKey=key_mag_target),
+                        key_mask_ref=name_selector_ref,
+                        key_mask_target=name_selector_target,
+                    ),
+                    bins=self.mag_bins,
+                )
+                # Metric bins should be coarser than plot bins and therefore
+                # are unsuited for computing unbinned metrics (like mag at a
+                # given completeness/purity)
+                completeness_binned_metrics.config_metrics.completeness_percentiles = []
+                setattr(
+                    self.process.calculateActions,
+                    f"completeness_binned_metrics_{object_class}",
+                    completeness_binned_metrics,
+                )
+
+                bins = self.mag_bins.get_bins()
+                for minimum in bins:
+                    name_mag = self.mag_bins.get_name_bin(minimum)
+                    action = CalcBinnedCompletenessAction(
+                        name_prefix=name_prefix_class,
+                        name_suffix=self.name_suffix.format(name_mag=name_mag),
+                        selector_range_ref=RangeSelector(
+                            vectorKey=key_mag_ref,
+                            minimum=minimum / 1000.0,
+                            maximum=(minimum + self.mag_bins.mag_width) / 1000.0,
+                        ),
+                        selector_range_target=RangeSelector(
+                            vectorKey=key_mag_target,
+                            minimum=minimum / 1000.0,
+                            maximum=(minimum + self.mag_bins.mag_width) / 1000.0,
+                        ),
+                        key_mask_ref=name_selector_ref,
+                        key_mask_target=name_selector_target,
+                    )
+                    setattr(
+                        self.process.calculateActions,
+                        f"completeness_{object_class}_{minimum}",
+                        action,
+                    )
+
+                    units.update(
+                        {
+                            action.name_count: "count",
+                            action.name_count_ref: "count",
+                            action.name_count_target: "count",
+                            action.name_completeness: unit_select,
+                            action.name_completeness_bad_match: unit_select,
+                            action.name_completeness_good_match: unit_select,
+                            action.name_purity: unit_select,
+                            action.name_purity_bad_match: unit_select,
+                            action.name_purity_good_match: unit_select,
+                        }
+                    )
+                setattr(
+                    self.produce.metric.actions,
+                    object_class,
+                    BaseMetricAction(units=units),
+                )
+
+                completeness_plot = CalcCompletenessHistogramAction(
+                    action=CalcBinnedCompletenessAction(
+                        name_prefix=f"{name_prefix_class}plot_",
+                        selector_range_ref=RangeSelector(vectorKey=key_mag_ref),
+                        selector_range_target=RangeSelector(vectorKey=key_mag_target),
+                        key_mask_ref=name_selector_ref,
+                        key_mask_target=name_selector_target,
+                    ),
+                    bins=self.mag_bins_plot,
+                    config_metrics=self.config_metrics,
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"completeness_plot_{object_class}",
+                    completeness_plot,
+                )
+                for pct in completeness_plot.config_metrics.completeness_percentiles:
+                    name_pct = completeness_plot.action.name_mag_completeness(
+                        completeness_plot.getPercentileName(pct)
+                    )
+                    units[name_pct] = unit_select
+                if self.make_plots:
+                    setattr(
+                        self.produce.plot.actions,
+                        object_class,
+                        CompletenessHist(action=completeness_plot),
+                    )
+
+    def setDefaults(self):
+        MagnitudeTool.setDefaults(self)
+        MatchedRefCoaddTool.setDefaults(self)
+
+        self.mag_bins_plot.mag_interval = 100
+        self.mag_bins_plot.mag_width = 200
+
+
+class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
     """Tool for diffs between reference and measured coadd mags."""
 
-    mag_y = Field[str](default="cmodel_err", doc="Flux (magnitude) field to difference against ref")
+    mag_y = pexConfig.Field[str](
+        default="cmodel_err",
+        doc="Flux (magnitude) pexConfig.Field to difference against ref",
+    )
 
     def finalize(self):
         # Check if it has already been finalized
@@ -440,6 +873,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
             # Ensure mag_y is set before any plot finalizes
             self._set_flux_default("mag_y")
             super().finalize()
+            self._set_actions()
             name_short_x = self.config_mag_x.name_flux_short
             name_short_y = self.config_mag_y.name_flux_short
 
@@ -472,15 +906,15 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
                 self.unit = "" if self.compute_chi else "mmag"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"photom_{name_short_y}_vs_{name_short_x}_mag_{subtype}_{{name_class}}_"
-            if not self.produce.metric.units:
+                self.name_prefix = f"photom_{name_short_y}_vs_{name_short_x}_mag_{subtype}_{{name_type}}_"
+            if self.do_metrics() and not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
 
     def get_key_flux_y(self) -> str:
         return self.mag_y
 
 
-class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
     """Tool for diffs between reference and measured coadd positions."""
 
     coord_label = Field[str](
@@ -522,6 +956,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
             # Matched ref tables may not have PSF fluxes, or prefer CModel.
             self._set_flux_default("mag_sn")
             super().finalize()
+            self._set_actions()
             name = self.coord_label if self.coord_label else self.coord_meas
             self.process.buildActions.pos_meas = LoadVector(vectorKey=self.coord_meas)
             self.process.buildActions.pos_ref = LoadVector(vectorKey=self.coord_ref)
@@ -563,9 +998,9 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 coord_prefix = "" if "coord" in self.coord_meas else "coord_"
                 self.name_prefix = (
                     f"astrom_{name_short_y}_vs_{name_short_x}_{coord_prefix}{self.coord_meas}_{subtype}"
-                    f"_{{name_class}}_"
+                    f"_{{name_type}}_"
                 )
-            if not self.produce.metric.units:
+            if self.do_metrics() and not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
                 label = f"({name_short_y} - {name_short_x})"
@@ -580,7 +1015,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
         return self.mag_sn
 
 
-class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffPlot):
     """Tool for distances between matched reference and measured coadd
     objects."""
 
@@ -601,6 +1036,7 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
             # Matched ref tables may not have PSF fluxes, or prefer CModel.
             self._set_flux_default("mag_sn")
             super().finalize()
+            self._set_actions()
 
             name_short_x = self.config_mag_x.name_flux_short
             name_short_y = self.config_mag_y.name_flux_short
@@ -620,9 +1056,9 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 self.unit = "" if self.compute_chi else "mas"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"astrom_dist_{{name_class}}_{subtype}_"
-                self.name_prefix = f"astrom_{name_short_y}_vs_{name_short_x}_dist_{subtype}_{{name_class}}_"
-            if not self.produce.metric.units:
+                self.name_prefix = f"astrom_dist_{{name_type}}_{subtype}_"
+                self.name_prefix = f"astrom_{name_short_y}_vs_{name_short_x}_dist_{subtype}_{{name_type}}_"
+            if self.do_metrics() and not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
                 label = f"({name_short_y} - {name_short_x}) distance"

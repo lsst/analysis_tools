@@ -25,31 +25,27 @@ from typing import Mapping
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field
+from lsst.pex.config.configurableActions import ConfigurableActionField
 from matplotlib.figure import Figure
 
-from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
+from ...actions.keyedData import CalcCompletenessHistogramAction
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar
 from .plotUtils import addPlotInfo
 
 __all__ = ("CompletenessHist",)
 
 
 class CompletenessHist(PlotAction):
-    """Makes a scatter plot of the data with a marginal
-    histogram for each axis.
-    """
+    """Makes plots of completeness and purity."""
 
-    magKey = Field[str](doc="Name of the magnitude column.", default="mag")
-    matchDistanceKey = Field[str](doc="Name of the match distance column.", default="matchDistance")
-    xAxisLabel = Field[str](doc="Label for the x axis.", default="Input Magnitude (mag)")
-    inputLabel = Field[str](doc="Label for the input source histogram.", default="Synthetic Inputs")
-    outputLabel = Field[str](doc="Label for the recovered source histogram.", default="Synthetic Recovered")
-    numBins = Field[int](doc="Number of bins to use for the histograms.", default=100)
+    action = ConfigurableActionField[CalcCompletenessHistogramAction](
+        doc="Action to compute completeness/purity",
+    )
+    mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference magnitude")
+    mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured magnitude")
 
     def getInputSchema(self) -> KeyedDataSchema:
-        base: list[tuple[str, type[Vector] | ScalarType]] = []
-        base.append((self.magKey, Vector))
-        base.append((self.matchDistanceKey, Vector))
-        return base
+        yield from self.action.getOutputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         self._validateInput(data, **kwargs)
@@ -115,60 +111,126 @@ class CompletenessHist(PlotAction):
         """
 
         # Make plot showing the fraction recovered in magnitude bins
-        fig, axLeft = plt.subplots(dpi=300)
-        axLeft.tick_params(axis="y", labelcolor="C0")
-        axLeft.set_xlabel(self.xAxisLabel)
-        axLeft.set_ylabel("Fraction Recovered", color="C0")
-        axRight = axLeft.twinx()
-        axRight.set_ylabel("Number of Sources")
-        matched = np.isfinite(data[self.matchDistanceKey])
-        nInput, bins, _ = axRight.hist(
-            data[self.magKey],
-            range=(np.nanmin(data[self.magKey]), np.nanmax(data[self.magKey])),
-            bins=self.numBins,
-            log=True,
-            histtype="step",
-            label=self.inputLabel,
-            color="black",
-        )
-        nOutput, _, _ = axRight.hist(
-            data[self.magKey][matched],
-            range=(np.nanmin(data[self.magKey][matched]), np.nanmax(data[self.magKey][matched])),
-            bins=bins,
-            log=True,
-            histtype="step",
-            label=self.outputLabel,
-            color="grey",
-        )
-        xlims = plt.gca().get_xlim()
-        # TODO: put a box in the bottom corner for all the percentiles
-        # Find bin where the fraction recovered first falls below 0.5
-        lessThanHalf = np.where((nOutput / nInput < 0.5))[0]
-        if len(lessThanHalf) == 0:
-            mag50 = np.nan
-        else:
-            mag50 = np.min(bins[lessThanHalf])
-            axLeft.plot([xlims[0], mag50], [0.5, 0.5], ls=":", color="grey")
-            axLeft.plot([mag50, mag50], [0, 0.5], ls=":", color="grey")
-        plt.xlim(xlims)
-        axLeft.set_ylim(0, 1.05)
-        axRight.legend(loc="lower left", ncol=2)
-        axLeft.axhline(1, color="grey", ls="--")
-        axLeft.bar(
-            bins[:-1],
-            nOutput / nInput,
-            width=np.diff(bins),
-            align="edge",
-            color="C0",
-            alpha=0.5,
-            zorder=10,
-        )
-        bboxDict = dict(boxstyle="round", facecolor="white", alpha=0.75)
+        fig, axes = plt.subplots(dpi=300, nrows=2, figsize=(8, 8))
+        color_counts = "purple"
+        color_wrong = "firebrick"
+        color_right = "teal"
+        max_left = 1.05
 
-        info50 = "Magnitude at 50% recovered: {:0.2f}".format(mag50)
-        axLeft.text(0.3, 0.2, info50, transform=fig.transFigure, bbox=bboxDict, zorder=11)
+        band = kwargs.get("band")
+        action_hist = self.action.action
+        names = {}
+        for name in (
+            "range_minimum",
+            "range_maximum",
+            "count",
+            "count_ref",
+            "count_target",
+            "completeness",
+            "completeness_bad_match",
+            "completeness_good_match",
+            "purity",
+            "purity_bad_match",
+            "purity_good_match",
+        ):
+            key = getattr(action_hist, f"name_{name}")
+            if band is not None:
+                key = key.format(band=band)
+            names[name] = key
+
+        ranges_min = data[names["range_minimum"]]
+        ranges_max = data[names["range_maximum"]]
+        x = (ranges_max + ranges_min) / 2.0
+        interval = self.action.bins.mag_width / 1000.0
+        x_err = interval / 2.0
+
+        counts_all = data[names["count"]]
+
+        plots = {
+            "Completeness": {
+                "count_type": "Reference",
+                "counts": data[names["count_ref"]],
+                "lines": (
+                    (data[names["completeness"]], True, "k", None),
+                    (data[names["completeness_bad_match"]], False, color_wrong, "wrong class"),
+                    (data[names["completeness_good_match"]], False, color_right, "right class"),
+                ),
+                "xlabel": self.mag_ref_label,
+            },
+            "Purity": {
+                "count_type": "Object",
+                "counts": data[names["count_target"]],
+                "lines": (
+                    (data[names["purity"]], True, "k", None),
+                    (data[names["purity_bad_match"]], False, color_wrong, "wrong class"),
+                    (data[names["purity_good_match"]], False, color_right, "right class"),
+                ),
+                "xlabel": self.mag_target_label,
+            },
+        }
+
+        # idx == 0 should be completeness; update this if that assumption
+        # is changed
+        for idx, (ylabel, plot_data) in enumerate(plots.items()):
+            axes_idx = axes[idx]
+            xlim = (ranges_min[0], ranges_max[-1])
+            axes_idx.set(
+                xlabel=plot_data["xlabel"],
+                ylabel=ylabel,
+                xlim=xlim,
+                ylim=(0, max_left),
+                xticks=np.arange(round(xlim[0]), round(xlim[1])),
+                yticks=np.linspace(0, 1, 11),
+            )
+            axes_idx.grid(color="lightgrey", ls="--")
+            ax_right = axes_idx.twinx()
+            ax_right.set_ylabel(f"{plot_data['count_type']} counts/mag")
+            ax_right.set_yscale("log")
+
+            for y, do_err, color, label in plot_data["lines"]:
+                axes_idx.errorbar(
+                    x=x,
+                    y=y,
+                    xerr=x_err if do_err else None,
+                    yerr=1.0 / np.sqrt(counts_all + 1) if do_err else None,
+                    color=color,
+                    label=label,
+                )
+            axes_idx.legend(loc="lower left", ncol=2)
+            y = plot_data["counts"] / interval
+            # It should be unusual for np.max(y) to be zero; nonetheless...
+            ax_right.step(
+                [x[0] - interval] + list(x) + [x[-1] + interval],
+                [0] + list(y) + [0],
+                where="mid",
+                color=color_counts,
+            )
+            ax_right.set_ylim(0.999, 10 ** (max_left * np.log10(max(np.nanmax(y), 2))))
+            ax_right.tick_params(axis="y", labelcolor=color_counts)
+
+            if idx == 0:
+                percentiles = self.action.config_metrics.completeness_percentiles
+                if percentiles:
+                    kwargs_lines = dict(color="darkgrey", ls=":")
+                    xlims = axes_idx.get_xlim()
+                    texts = []
+                    for pct in percentiles:
+                        name_pct = self.action.action.name_mag_completeness(
+                            self.action.getPercentileName(pct),
+                        )
+                        if band is not None:
+                            name_pct = name_pct.format(band=band)
+                        mag_completeness = data.get(name_pct, None)
+                        pct /= 100.0
+                        if mag_completeness:
+                            axes_idx.plot([xlims[0], mag_completeness], [pct, pct], **kwargs_lines)
+                            axes_idx.plot([mag_completeness, mag_completeness], [0, pct], **kwargs_lines)
+                            texts.append(f"{pct:.2f}@{mag_completeness:.2f}")
+                    texts = f"Thresholds: {'; '.join(texts)}"
+                    axes_idx.text(xlims[0], max_left, texts, ha="left", va="bottom")
 
         # Add useful information to the plot
-        fig = plt.gcf()
         addPlotInfo(fig, plotInfo)
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.90)
         return fig

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 __all__ = ("BasePrep", "BaseProcess", "BaseMetricAction", "BaseProduce")
 
+import logging
 from collections import abc
 from typing import Any, cast
 
@@ -43,6 +44,8 @@ from ._actions import (
     VectorAction,
 )
 from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vector
+
+_LOG = logging.getLogger(__name__)
 
 
 class BasePrep(KeyedDataAction):
@@ -182,13 +185,26 @@ class BaseProcess(KeyedDataAction):
         return results
 
 
+def _newNameChecker(value: str) -> bool:
+    if "-" in value:
+        # Yes this should be a log here, as pex config provides no other
+        # useful way to get info into the exception.
+        _LOG.error("Remapped metric names must not have a - character in them.")
+        return False
+    return True
+
+
 class BaseMetricAction(MetricAction):
     """Base class for actions which compute metrics."""
 
     units = DictField[str, str](doc="Mapping of scalar key to astropy unit string", default={})
     newNames = DictField[str, str](
-        doc="Mapping of key to new name if needed prior to creating metric",
+        doc=(
+            "Mapping of key to new name if needed prior to creating metric, "
+            "cannot contain a minus character in the name."
+        ),
         default={},
+        itemCheck=_newNameChecker,
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

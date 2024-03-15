@@ -1,5 +1,11 @@
 description: |
-  Tier 1 AP plots and metrics to assess CcdVisit quality
+  AP plots and metrics to assess CcdVisit quality in Prompt Processing
+  Additional AP metrics may be written in apDetectorVisitQualityExtended
+parameters:
+  # Note that these parameter names are shared with ApPipe, and are overwritten
+  # by changes in the values there.
+  coaddName: goodSeeing
+  fakesType: ''
 tasks:
   analyzeAssocDiaSrcCore:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
@@ -27,15 +33,22 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
       atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
       connections.outputName: assocDiaSrcCore
-      atools.simpleSky: SimpleDiaPlot
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
+      # TODO DM-43201 fix this
+      # atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
   analyzeTrailedDiaSrcCore:
     class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
     config:
       # Counts up the number of dia sources in the trailed table.
-      atools.numDiaSourcesAll: NumDiaSourcesAllMetric
       connections.outputName: trailedDiaSrcCore
+      atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
+      atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
+      atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
       python: |
         from lsst.analysis.tools.atools import *
   diffimTaskCore:
@@ -61,3 +74,11 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+subsets:
+  promptQaMetrics:
+    subset:
+      - analyzeAssocDiaSrcCore
+      - analyzeTrailedDiaSrcCore
+      - diffimTaskCore
+    description: >
+      QA metrics to run in Prompt Processing.

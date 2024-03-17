@@ -25,16 +25,16 @@ __all__ = (
     "CalexpSummaryAnalysisTask",
 )
 
+from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as cT
 
-from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class CalexpSummaryAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
-    defaultTemplates={"inputName": "calexp", "outputName": "calexpSummary"},
+    defaultTemplates={"inputName": "calexp.summaryStats", "outputName": "calexpSummary"},
 ):
     data = cT.Input(
         doc="Calibrated exposure summary statistics to load from the butler",
@@ -63,7 +63,7 @@ class CalexpSummaryAnalysisTask(AnalysisPipelineTask):
 
         inputs = butlerQC.get(inputRefs)
 
-        summary = inputs["data"].getInfo().getSummaryStats().__dict__
+        summary = inputs["data"].__dict__
 
         outputs = self.run(data=summary)
         butlerQC.put(outputs, outputRefs)

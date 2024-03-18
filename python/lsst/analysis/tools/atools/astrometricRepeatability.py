@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "AstrometricRepeatability",
     "AstrometricRelativeRepeatability",
     "StellarAstrometricResidualsRAFocalPlanePlot",
     "StellarAstrometricResidualsDecFocalPlanePlot",
@@ -30,16 +31,18 @@ __all__ = (
     "StellarAstrometricResidualsDecSkyPlot",
 )
 
-from lsst.pex.config import Field
+from lsst.pex.config import ChoiceField, Field
 
 from ..actions.keyedData import CalcRelativeDistances
 from ..actions.plot import FocalPlanePlot, HistPanel, HistPlot, SkyPlot
+from ..actions.scalar import MedianAction
 from ..actions.vector import (
     BandSelector,
     ConvertFluxToMag,
     ConvertUnits,
     DownselectVector,
     LoadVector,
+    PerGroupStatistic,
     RAcosDec,
     RangeSelector,
     ResidualWithPerGroupStatistic,
@@ -264,4 +267,63 @@ class AstrometricRelativeRepeatability(AnalysisTool):
             "AMx": f"{{band}}_AM{self.xValue}",
             "AFx": f"{{band}}_AF{self.xValue}",
             "ADx": f"{{band}}_AD{self.xValue}",
+        }
+
+
+class AstrometricRepeatability(AnalysisTool):
+    """Calculate the median position RMS of point sources."""
+
+    fluxType = Field[str](doc="Flux type to calculate repeatability with", default="psfFlux")
+    level = Field[int](
+        doc="Set metric name for level 1 or 2 data product (1 or 2). Input connections must be set separately"
+        " to correspond with this value.",
+        default=1,
+    )
+    coordinate = ChoiceField[str](
+        doc="RA or Dec",
+        allowed={"RA": "Repeatability in RA direction", "Dec": "Repeatability in Dec direction"},
+    )
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.bandSelector = BandSelector()
+
+        self.process.buildActions.perGroupStd = ConvertUnits()
+        self.process.buildActions.perGroupStd.inUnit = "degree"
+        self.process.buildActions.perGroupStd.outUnit = "marcsec"
+        self.process.buildActions.perGroupStd.buildAction = PerGroupStatistic()
+        self.process.buildActions.perGroupStd.buildAction.func = "std"
+        self.process.buildActions.perGroupStd.buildAction.buildAction.vectorKey = "coord_dec"
+
+        self.process.buildActions.perGroupMag = PerGroupStatistic()
+        self.process.buildActions.perGroupMag.func = "mean"
+        self.process.buildActions.perGroupMag.buildAction = ConvertFluxToMag(vectorKey=self.fluxType)
+
+        # Select only sources with magnitude between 17 and 21.5
+        self.process.filterActions.perGroupStdFiltered = DownselectVector(vectorKey="perGroupStd")
+        self.process.filterActions.perGroupStdFiltered.selector = RangeSelector(
+            vectorKey="perGroupMag", minimum=17, maximum=21.5
+        )
+
+        self.process.calculateActions.astromRepeatStdev = MedianAction(vectorKey="perGroupStdFiltered")
+
+        self.produce.metric.units = {
+            "astromRepeatStdev": "mas",
+        }
+
+        self.produce.plot = HistPlot()
+
+        self.produce.plot.panels["panel_rms"] = HistPanel()
+        self.produce.plot.panels["panel_rms"].hists = dict(perGroupStdFiltered="Per-Object RMS")
+        self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (marcsec)"
+
+    def finalize(self):
+        super().finalize()
+        self.process.buildActions.perGroupMag.buildAction.vectorKey = self.fluxType
+
+        if self.coordinate == "RA":
+            self.process.buildActions.perGroupStd.buildAction.buildAction = RAcosDec()
+
+        self.produce.metric.newNames = {
+            "astromRepeatStdev": f"{{band}}_dmL{self.level}AstroErr_{self.coordinate}"
         }

@@ -78,7 +78,7 @@ class CcdVisitTableAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CcdVis
         doc="Whether to introspect the makeWarp_config dataset to obtain the actual "
         "maxEllipResidual and maxScalesSizeScatter thresholds in this run?  Set to "
         "False if makeWarp has not yet been run on given collection.",
-        default=True,
+        default=False,
     )
 
 

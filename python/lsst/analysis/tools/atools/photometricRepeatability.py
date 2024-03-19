@@ -204,16 +204,16 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.calculateActions.photResidFocalPlaneSigmaMad = SigmaMadAction(vectorKey="z")
 
         self.produce.plot = FocalPlanePlot()
-        self.produce.plot.zAxisLabel = "Mag - Mag$_{mean}$ (mmag)"
+        self.produce.plot.zAxisLabel = "Mag - Mag$_{median}$ (mmag)"
 
         self.produce.metric.units = {  # type: ignore
-            "photResidFocalPlaneSigmaMad": "mmag",
-            "photResidFocalPlaneStdev": "mmag",
-            "photResidFocalPlaneMedian": "mmag",
+            "photResidVsRefcatTractSigmaMad": "mmag",
+            "photResidVsRefcatTractStdev": "mmag",
+            "photResidVsRefcatTractMedian": "mmag",
         }
 
         self.produce.metric.newNames = {
-            "photResidFocalPlaneSigmaMad": "{band}_photResidFocalPlaneSigmaMad",
-            "photResidFocalPlaneStdev": "{band}_photResidFocalPlaneStdev",
-            "photResidFocalPlaneMedian": "{band}_photResidFocalPlaneMedian",
+            "photResidVsRefcatTractSigmaMad": "{band}_photResidVsRefcatTractSigmaMad",
+            "photResidVsRefcatTractStdev": "{band}_photResidVsRefcatTractStdev",
+            "photResidVsRefcatTractMedian": "{band}_photResidVsRefcatTractMedian",
         }

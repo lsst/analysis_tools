@@ -23,6 +23,7 @@ from __future__ import annotations
 
 __all__ = ("AnalysisTool",)
 
+from collections import ChainMap
 from collections.abc import Mapping
 from functools import wraps
 from operator import attrgetter
@@ -149,6 +150,13 @@ class AnalysisTool(AnalysisAction):
     produce a result for multiple bands.
     """
 
+    propagateData: bool | Field[bool] = False
+    """If this value is set to True, the input data `KeyedData` will be passed
+    to each stage in addition to the ``prep`` stage. Any keys created in a
+    stage with the same key that exists in the input ``data`` will shadow that
+    key/value.
+    """
+
     def __call__(self, data: KeyedData, **kwargs) -> KeyedResults:
         bands = kwargs.pop("bands", None)
         if "plotInfo" in kwargs and kwargs.get("plotInfo") is not None:
@@ -179,7 +187,11 @@ class AnalysisTool(AnalysisAction):
         kwargs = dict(**kwargs)
         kwargs["metric_tags"] = list(self.metric_tags or ())
         prepped: KeyedData = self.prep(data, **kwargs)  # type: ignore
+        if self.propagateData:
+            prepped = ChainMap(data, prepped)
         processed: KeyedData = self.process(prepped, **kwargs)  # type: ignore
+        if self.propagateData:
+            processed = ChainMap(data, processed)
         finalized: (
             Mapping[str, PlotTypes] | PlotTypes | Mapping[str, Measurement] | Measurement | JointResults
         ) = self.produce(

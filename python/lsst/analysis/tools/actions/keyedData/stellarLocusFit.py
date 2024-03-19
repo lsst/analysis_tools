@@ -156,10 +156,19 @@ def _stellarLocusFit(xs, ys, mags, paramDict):
             fitParams = _setFitParamsNans(fitParams, fitPoints, paramDict)
             return fitParams
 
-        p1 = np.array([0, bODR0])
-        p2 = np.array([-bODR0 / mODR0, 0])
-        if np.abs(sum(p1 - p2) < 1e12):  # p1 and p2 must be different.
-            p2 = np.array([(1.0 - bODR0 / mODR0), 1.0])
+        # Compute two points along the line (making sure not to extrapolate
+        # way off the plot limits, especially for the near vertical fits).
+        if np.abs(mODR0) > 1:
+            p1 = np.array([1.0, mODR0 + bODR0])
+            p2 = np.array([(1.0 - bODR0) / mODR0, 1.0])
+        else:
+            p1 = np.array([0, bODR0])
+            p2 = np.array([-bODR0 / mODR0, 0])
+        if np.abs(sum(p1 - p2)) < 1e-12:  # p1 and p2 must be different.
+            if np.abs(mODR0) > 1:
+                p2 = np.array([(1.5 - bODR0) / mODR0, 1.5])
+            else:
+                p2 = np.array([(1.0 - bODR0) / mODR0, 1.0])
 
         # Sigma clip points based on perpendicular distance (in mmag) to
         # current fit.

@@ -1,0 +1,25 @@
+description: |
+  Pipeline for unit tests
+tasks:
+  analyzeObjectTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableCore
+      atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
+      atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
+      atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
+      atools.shapeSizeDetRadiusVsCmodelMag.size_y: "shape_slot"
+      atools.shapeSizeDetRadiusVsCmodelMag.applyContext: CoaddContext
+      atools.cModelBulgeSizeVsCmodelBulgeMag: SizeMagnitudePlot
+      atools.cModelBulgeSizeVsCmodelBulgeMag.size_type: "singleColumnSize"
+      atools.cModelBulgeSizeVsCmodelBulgeMag.mag_x: "bulge_err"
+      atools.cModelBulgeSizeVsCmodelBulgeMag.size_y: "bulge"
+      atools.cModelBulgeSizeVsCmodelBulgeMag.applyContext: CoaddContext
+      atools.cModelDiskSizeVsCmodelDiskMag: SizeMagnitudePlot
+      atools.cModelDiskSizeVsCmodelDiskMag.size_type: "singleColumnSize"
+      atools.cModelDiskSizeVsCmodelDiskMag.mag_x: "disk_err"
+      atools.cModelDiskSizeVsCmodelDiskMag.size_y: "disk"
+      atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

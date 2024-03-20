@@ -69,8 +69,6 @@ class CcdVisitTableAnalysisConnections(
 
     def __init__(self, *, config=None):
         super().__init__(config=config)
-        # No metrics are computed for this task, so remove output dataset.
-        self.outputs.remove("metrics")
         if not config.introspectMakeWarpConfig:
             self.inputs.remove("makeWarpConfig")
 

@@ -31,7 +31,8 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.op: eq
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.threshold: !!float nan
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
-      atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
+      # TODO DM-43401 to support a denominator of 0
+      # atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
       connections.outputName: assocDiaSrcCore
       connections.coaddName: parameters.coaddName
       connections.fakesType: parameters.fakesType

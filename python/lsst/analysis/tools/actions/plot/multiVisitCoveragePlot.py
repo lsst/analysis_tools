@@ -310,7 +310,7 @@ class MultiVisitCoveragePlot(PlotAction):
 
         if makeWarpConfig is None:
             maxEllipResidual = 0.007
-            maxScaledSizeScatter = 0.009
+            maxScaledSizeScatter = 0.019
             maxPsfTraceRadiusDelta = 0.7
         else:
             maxEllipResidual = makeWarpConfig.select.value.maxEllipResidual  # type: ignore

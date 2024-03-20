@@ -849,7 +849,9 @@ class MultiVisitCoveragePlot(PlotAction):
         ySelector = RangeSelector(vectorKey=yKey, minimum=yMin, maximum=yMax)
 
         totMask = xSelector(data) & ySelector(data)
-        downSelectedData = data[totMask]
+        downSelectedData = {}
+        for key in data.keys():
+            downSelectedData[key] = data[key][totMask]
 
         return downSelectedData
 

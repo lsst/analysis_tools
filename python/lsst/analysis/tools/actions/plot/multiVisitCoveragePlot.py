@@ -74,6 +74,10 @@ class MultiVisitCoveragePlot(PlotAction):
         "threshold is nPointMinThresh/number of science detectors in the given ``camera``.",
         default=400,
     )
+    showExtremeOutliers = Field[bool](
+        doc="Use overlaid scatter points to show the x-y positions of the 15% most extreme values?",
+        default=True,
+    )
     unitsDict = DictField[str, str](
         doc="A dict mapping a parameter to its appropriate units (for label plotting).",
         default={
@@ -557,6 +561,7 @@ class MultiVisitCoveragePlot(PlotAction):
                                 isSorted=False,
                                 vmin=vMinDict[zKey],
                                 vmax=vMaxDict[zKey],
+                                showExtremeOutliers=self.showExtremeOutliers,
                                 scatPtSize=ptSize,
                             )
                 if self.projection == "raDec":
@@ -579,6 +584,7 @@ class MultiVisitCoveragePlot(PlotAction):
                         isSorted=False,
                         vmin=vMinDict[zKey],
                         vmax=vMaxDict[zKey],
+                        showExtremeOutliers=self.showExtremeOutliers,
                         scatPtSize=ptSize,
                     )
 

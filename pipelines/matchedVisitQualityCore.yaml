@@ -21,6 +21,12 @@ tasks:
       atools.stellarAstrometricRepeatability3.xValue: 3
       atools.stellarAstrometricRepeatability3.process.calculateActions.rms.annulus: 200
       atools.stellarAstrometricRepeatability3.process.calculateActions.rms.threshAD: 30
+      atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
+      atools.stellarAstrometricSelfRepeatabilityRA.level: 2
+      atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
+      atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability
+      atools.stellarAstrometricSelfRepeatabilityDec.level: 2
+      atools.stellarAstrometricSelfRepeatabilityDec.coordinate: 'Dec'
       python: |
         from lsst.analysis.tools.atools import *
   analyzeMatchedVisitExtended:
@@ -73,3 +79,14 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.interfaces import *
+  analyzeMatchedPreVisitCore:
+    class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
+    config:
+      connections.sourceCatalogs: preSourceTable_visit
+      connections.outputName: matchedPreVisitCore
+      atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
+      atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
+      atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability
+      atools.stellarAstrometricSelfRepeatabilityDec.coordinate: 'Dec'
+      python: |
+        from lsst.analysis.tools.atools import *

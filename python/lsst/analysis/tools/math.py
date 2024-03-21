@@ -43,6 +43,7 @@ from .interfaces import Scalar, Vector
 from .warning_control import (
     filterwarnings_action,
     numpy_all_nan,
+    numpy_all_nan_slice,
     numpy_divide_zero_divide,
     numpy_divide_zero_log,
     numpy_divide_zero_log10,
@@ -130,6 +131,7 @@ def nanMax(vector: Vector) -> Scalar:
 def nanMean(vector: Vector) -> Scalar:
     """Return the mean of a vector."""
     with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
         warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
         result = float(np.nanmean(vector))
     return cast(Scalar, result)
@@ -138,6 +140,7 @@ def nanMean(vector: Vector) -> Scalar:
 def nanMedian(vector: Vector) -> Scalar:
     """Return the median of a vector."""
     with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
         warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
         result = float(np.nanmedian(vector))
     return cast(Scalar, result)

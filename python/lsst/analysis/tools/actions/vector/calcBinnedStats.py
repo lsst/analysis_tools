@@ -39,20 +39,25 @@ class CalcBinnedStatsAction(KeyedDataAction):
     name_prefix = Field[str](default="", doc="Field name to append stat names to")
     name_suffix = Field[str](default="", doc="Field name to append to stat names")
     selector_range = ConfigurableActionField[RangeSelector](doc="Range selector")
+    return_minmax = Field[bool](default=True, doc="Whether to return the bin minimum and maximum")
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         yield (self.key_vector, Vector)
         yield from self.selector_range.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
-        return (
+        yield from (
             (self.name_mask, Vector),
             (self.name_median, Scalar),
             (self.name_sigmaMad, Scalar),
             (self.name_count, Scalar),
-            (self.name_select_maximum, Scalar),
-            (self.name_select_median, Scalar),
-            (self.name_select_minimum, Scalar),
+        )
+        if self.return_minmax:
+            yield (self.name_select_maximum, Scalar)
+        yield (self.name_select_median, Scalar),
+        if self.return_minmax:
+            yield (self.name_select_minimum, Scalar),
+        yield from (
             ("range_maximum", Scalar),
             ("range_minimum", Scalar),
         )
@@ -108,15 +113,17 @@ class CalcBinnedStatsAction(KeyedDataAction):
         values = cast(Vector, data[self.selector_range.vectorKey][mask])  # type: ignore
         valid = np.sum(np.isfinite(values)) > 0
 
-        results[self.name_select_maximum.format(**kwargs_format)] = cast(
-            Scalar, float(np.nanmax(values)) if valid else np.nan
-        )
+        if self.return_minmax:
+            results[self.name_select_maximum.format(**kwargs_format)] = cast(
+                Scalar, float(np.nanmax(values)) if valid else np.nan
+            )
         results[self.name_select_median.format(**kwargs_format)] = cast(
             Scalar, float(np.nanmedian(values)) if valid else np.nan
         )
-        results[self.name_select_minimum.format(**kwargs_format)] = cast(
-            Scalar, float(np.nanmin(values)) if valid else np.nan
-        )
+        if self.return_minmax:
+            results[self.name_select_minimum.format(**kwargs_format)] = cast(
+                Scalar, float(np.nanmin(values)) if valid else np.nan
+            )
         results[f"{prefix_band}range_maximum"] = self.selector_range.maximum
         results[f"{prefix_band}range_minimum"] = self.selector_range.minimum
 

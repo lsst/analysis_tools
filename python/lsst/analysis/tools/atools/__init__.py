@@ -14,6 +14,7 @@ from .diffimMetadataMetrics import *
 from .diffMatched import *
 from .fluxMetrics import *
 from .genericBuild import *
+from .genericMetricAction import *
 from .genericPrep import *
 from .genericProduce import *
 from .limitingMagnitudeMetric import *

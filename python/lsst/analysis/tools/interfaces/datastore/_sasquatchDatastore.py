@@ -25,6 +25,7 @@ __all__ = ("SasquatchDatastore",)
 
 """Sasquatch datastore"""
 import logging
+import os
 from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -80,6 +81,11 @@ class SasquatchDatastore(GenericBaseDatastore):
     namespace: str
     """The namespace in Sasquatch where the uploaded metrics will be
     dispatched.
+
+    The namespace can be read from the environment using the
+    ``$DAF_BUTLER_SASQUATCH_NAMESPACE`` environment variable. If that is not
+    set the datastore config ``"namespace"`` field will be checked. A default
+    value of "lsst.dm" is used if no other value can be obtained.
     """
 
     def __init__(
@@ -101,7 +107,13 @@ class SasquatchDatastore(GenericBaseDatastore):
 
         self.accessToken = self.config.get("accessToken", "na")
 
-        self.namespace = self.config.get("namespace", "lsst.dm")
+        self.namespace = os.environ.get(
+            "DAF_BUTLER_SASQUATCH_NAMESPACE",  # Prioritize the environment
+            self.config.get(
+                "namespace",  # Fallback to datastore config
+                "lsst.dm",
+            ),
+        )
 
         self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
 

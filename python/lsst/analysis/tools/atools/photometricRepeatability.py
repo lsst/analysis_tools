@@ -207,13 +207,13 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.produce.plot.zAxisLabel = "Mag - Mag$_{median}$ (mmag)"
 
         self.produce.metric.units = {  # type: ignore
-            "photResidVsRefcatTractSigmaMad": "mmag",
-            "photResidVsRefcatTractStdev": "mmag",
-            "photResidVsRefcatTractMedian": "mmag",
+            "photResidTractSigmaMad": "mmag",
+            "photResidTractStdev": "mmag",
+            "photResidTractMedian": "mmag",
         }
 
         self.produce.metric.newNames = {
-            "photResidVsRefcatTractSigmaMad": "{band}_photResidVsRefcatTractSigmaMad",
-            "photResidVsRefcatTractStdev": "{band}_photResidVsRefcatTractStdev",
-            "photResidVsRefcatTractMedian": "{band}_photResidVsRefcatTractMedian",
+            "photResidTractSigmaMad": "{band}_photResidTractSigmaMad",
+            "photResidTractStdev": "{band}_photResidTractStdev",
+            "photResidTractMedian": "{band}_photResidTractMedian",
         }

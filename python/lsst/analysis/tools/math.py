@@ -22,6 +22,7 @@
 __all__ = (
     "cos",
     "divide",
+    "isPercent",
     "fluxToMag",
     "nanMax",
     "nanMean",
@@ -108,6 +109,12 @@ def fluxToMag(
         if return_millimags:
             mag *= 1000
     return mag
+
+
+def isPercent(value: Scalar) -> bool:
+    """Return true if the value is between 0-100"""
+    result = 0.0 <= value <= 100.0
+    return result
 
 
 def log(values: Scalar | Vector) -> Scalar | Vector:

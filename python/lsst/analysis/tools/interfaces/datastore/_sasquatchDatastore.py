@@ -88,6 +88,17 @@ class SasquatchDatastore(GenericBaseDatastore):
     value of "lsst.dm" is used if no other value can be obtained.
     """
 
+    extra_fields: dict[str, str | int | float] | None
+    """Extra key/value pairs that should be passed along with the metric
+    when storing in Sasquatch.
+
+    Extra fields can be obtained both from the ``$SASQUATCH_EXTRAS``
+    environment variable and the `"extra_fields"` entry in the datastore
+    config. The two sources of information are merged with the environment
+    variable taking priority. The environment variable must have the form of
+    "k1=v1;k2=v2".
+    """
+
     def __init__(
         self,
         config: DatastoreConfig,
@@ -115,6 +126,13 @@ class SasquatchDatastore(GenericBaseDatastore):
             ),
         )
 
+        extra_fields: dict[str, str | int | float] | None = self.config.get("extra_fields", {})
+        if extras_str := os.environ.get("SASQUATCH_EXTRAS"):
+            for item in extras_str.split(";"):
+                k, v = item.split("=")
+                extra_fields[k] = v
+        self.extra_fields = extra_fields if extra_fields else None
+
         self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
 
     @classmethod
@@ -135,7 +153,7 @@ class SasquatchDatastore(GenericBaseDatastore):
 
     def put(self, inMemoryDataset: Any, ref: DatasetRef) -> None:
         if self.constraints.isAcceptable(ref):
-            self._dispatcher.dispatchRef(inMemoryDataset, ref)
+            self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
         else:
             log.debug("Could not put dataset type %s with Sasquatch datastore", ref.datasetType)
             raise DatasetTypeNotSupportedError(

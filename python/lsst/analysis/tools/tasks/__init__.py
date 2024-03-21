@@ -2,6 +2,7 @@ from .ampToAmpCorrelationAnalysis import *
 from .assocDiaSrcDetectorVisitAnalysis import *
 from .associatedSourcesTractAnalysis import *
 from .astrometricCatalogMatch import *
+from .calexpSummaryAnalysis import *
 from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *

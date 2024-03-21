@@ -60,6 +60,8 @@ IDENTIFIER_KEYS = [
     "instrument",
     "band",
     "exposure",
+    "group",
+    "day_obs",
 ]
 
 

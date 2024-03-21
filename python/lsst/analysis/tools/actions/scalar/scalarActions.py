@@ -40,6 +40,7 @@ __all__ = (
     "IqrHistAction",
     "DivideScalar",
     "RmsAction",
+    "MagPercentileAction",
 )
 
 import operator
@@ -47,11 +48,12 @@ from math import nan
 from typing import cast
 
 import numpy as np
+from astropy import units as u
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
-from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
+from ...math import fluxToMag, isPercent, nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
 
 
 class ScalarFromVectorAction(ScalarAction):
@@ -434,3 +436,39 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+class MagPercentileAction(ScalarFromVectorAction):
+    """Calculates the magnitude at the given percentile for completeness"""
+
+    matchDistanceKey = Field[str]("Match distance Vector")
+    fluxUnits = Field[str](doc="Units for the column.", default="nanojansky")
+    percentile = Field[float](doc="The percentile to find the magnitude at.", default=50.0, check=isPercent)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.matchDistanceKey, Vector),
+            (self.vectorKey, Vector),
+        )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        matched = np.isfinite(data[self.matchDistanceKey])
+        fluxValues = data[self.vectorKey.format(**kwargs)]
+        values = fluxToMag(fluxValues, flux_unit=u.Unit(self.fluxUnits))
+        nInput, bins = np.histogram(
+            values,
+            range=(np.nanmin(values), np.nanmax(values)),
+            bins=100,
+        )
+        nOutput, _ = np.histogram(
+            values[matched],
+            range=(np.nanmin(values[matched]), np.nanmax(values[matched])),
+            bins=bins,
+        )
+        # Find bin where the fraction recovered first falls below 0.5
+        belowPercentile = np.where((nOutput / nInput < self.percentile / 100))[0]
+        if len(belowPercentile) == 0:
+            mag = np.nan
+        else:
+            mag = np.min(bins[belowPercentile])
+        return mag

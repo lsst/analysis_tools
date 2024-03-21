@@ -1,0 +1,16 @@
+description: |
+  Tier1 plots and metrics to assess injected coadd quality
+tasks:
+  injectedObjectAnalysis:
+    class: lsst.analysis.tools.tasks.injectedObjectAnalysis.InjectedObjectAnalysisTask
+    config:
+      atools.completenessHist: CompletenessPurityTool
+      atools.astromDiffRAScatterPlot: TargetInjectedCatDeltaRAScatterPlot
+      atools.astromDiffDecScatterPlot: TargetInjectedCatDeltaDecScatterPlot
+      atools.astromDiffMetrics: TargetInjectedCatDeltaMetrics
+      atools.astromDiffMetrics.applyContext: CoaddContext
+      atools.targetInjectedCatDeltaPsfScatterPlot: TargetInjectedCatDeltaPsfScatterPlot
+      bands: ["g", "r", "i", "z", "y"]
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

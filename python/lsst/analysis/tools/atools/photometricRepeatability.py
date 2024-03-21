@@ -199,9 +199,9 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.buildActions.statMask.threshold = 200
         self.process.buildActions.statMask.fluxType = "psfFlux"
 
-        self.process.calculateActions.photResidFocalPlaneMedian = MedianAction(vectorKey="z")
-        self.process.calculateActions.photResidFocalPlaneStdev = StdevAction(vectorKey="z")
-        self.process.calculateActions.photResidFocalPlaneSigmaMad = SigmaMadAction(vectorKey="z")
+        self.process.calculateActions.photResidTractMedian = MedianAction(vectorKey="z")
+        self.process.calculateActions.photResidTractStdev = StdevAction(vectorKey="z")
+        self.process.calculateActions.photResidTractSigmaMad = SigmaMadAction(vectorKey="z")
 
         self.produce.plot = FocalPlanePlot()
         self.produce.plot.zAxisLabel = "Mag - Mag$_{median}$ (mmag)"

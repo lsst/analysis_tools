@@ -20,6 +20,7 @@ from .refCatObjectAnalysis import *
 from .refCatObjectPhotometricAnalysis import *
 from .refCatSourceAnalysis import *
 from .refCatSourcePhotometricAnalysis import *
+from .sourceObjectTableAnalysis import *
 from .sourceTableVisitAnalysis import *
 from .trailedDiaSrcDetectorVisitAnalysis import *
 from .verifyBiasResultsAnalysis import *

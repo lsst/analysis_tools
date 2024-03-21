@@ -38,3 +38,8 @@ tasks:
       atools.photoDiffPsfScatterVisitPlot: TargetRefCatDeltaPsfScatterVisitPlot
       atools.photoDiffCModelScatterVisitPlot: TargetRefCatDeltaAp09ScatterVisitPlot
       python: from lsst.analysis.tools.atools import *
+  sourceObjectMatch:
+    class: lsst.analysis.tools.tasks.SourceObjectTableAnalysisTask
+    config:
+      atools.astromColorDiffMetrics: TargetRefCatDeltaColorMetrics
+      python: from lsst.analysis.tools.atools import *

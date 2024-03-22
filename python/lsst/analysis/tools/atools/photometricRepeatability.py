@@ -28,7 +28,13 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.plot import FocalPlanePlot, HistPanel, HistPlot, HistStatsPanel
-from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction
+from ..actions.scalar.scalarActions import (
+    CountAction,
+    FracThreshold,
+    MedianAction,
+    SigmaMadAction,
+    StdevAction,
+)
 from ..actions.vector import (
     BandSelector,
     CalcSn,
@@ -193,5 +199,21 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.buildActions.statMask.threshold = 200
         self.process.buildActions.statMask.fluxType = "psfFlux"
 
+        self.process.calculateActions.photResidTractMedian = MedianAction(vectorKey="z")
+        self.process.calculateActions.photResidTractStdev = StdevAction(vectorKey="z")
+        self.process.calculateActions.photResidTractSigmaMad = SigmaMadAction(vectorKey="z")
+
         self.produce.plot = FocalPlanePlot()
-        self.produce.plot.zAxisLabel = "Mag - Mag$_{mean}$ (mmag)"
+        self.produce.plot.zAxisLabel = "Mag - Mag$_{median}$ (mmag)"
+
+        self.produce.metric.units = {  # type: ignore
+            "photResidTractSigmaMad": "mmag",
+            "photResidTractStdev": "mmag",
+            "photResidTractMedian": "mmag",
+        }
+
+        self.produce.metric.newNames = {
+            "photResidTractSigmaMad": "{band}_photResidTractSigmaMad",
+            "photResidTractStdev": "{band}_photResidTractStdev",
+            "photResidTractMedian": "{band}_photResidTractMedian",
+        }

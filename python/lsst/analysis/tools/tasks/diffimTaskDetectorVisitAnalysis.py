@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ("DiffimDetectorVisitAnalysisConfig", "DiffimDetectorVisitAnalysisTask")
 
 import pandas as pd
-from lsst.pipe.base import connectionTypes
+from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -58,9 +58,15 @@ class DiffimDetectorVisitAnalysisTask(AnalysisPipelineTask):
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
-        metadata = inputs["metadataDetect"].metadata["detectAndMeasure"].to_dict()
+        detectTaskName = inputRefs.metadataDetect.datasetType.name
+        detectTaskName = detectTaskName[: detectTaskName.find("_")]
+        metadata = inputs["metadataDetect"].metadata[detectTaskName].to_dict()
+        if not metadata:
+            raise NoWorkFound("No metadata entries for detectAndMeasure.")
         inputs.pop("metadataDetect")
-        metadata |= inputs["metadataSubtract"].metadata["subtractImages"].to_dict()
+        subtractTaskName = inputRefs.metadataSubtract.datasetType.name
+        subtractTaskName = subtractTaskName[: subtractTaskName.find("_")]
+        metadata |= inputs["metadataSubtract"].metadata[subtractTaskName].to_dict()
         inputs.pop("metadataSubtract")
         df = pd.DataFrame(metadata)
 

@@ -1,0 +1,8 @@
+description: |
+  Metrics created from the analysis of calibrated exposures.
+tasks:
+  calexpSummary:
+    class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
+    config:
+      atools.calexpSummaryMetrics: CalexpSummaryMetrics
+      python: from lsst.analysis.tools.atools import *

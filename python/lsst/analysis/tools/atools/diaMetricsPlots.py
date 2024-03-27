@@ -30,6 +30,8 @@ from ..interfaces import AnalysisTool
 
 
 class DiffimMetricsHistPlot(AnalysisTool):
+    """Create histograms of the fraction of pixels with certain mask planes set.
+    """
 
     parameterizedBand: bool = False
 
@@ -77,6 +79,9 @@ class DiffimMetricsHistPlot(AnalysisTool):
 
 
 class DiffimMetricsInterpolatePlot(AnalysisTool):
+    """Interpolate metric values evaluated at locations in a supplied catalog
+    and create low-resolution images of the result.
+    """
 
     metricName = Field[str](doc="Metric name to interpolate", optional=False)
     parameterizedBand: bool = False

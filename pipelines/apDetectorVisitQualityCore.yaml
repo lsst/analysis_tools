@@ -80,13 +80,28 @@ tasks:
     config:
       connections.outputName: diffimPlots
       atools.diaMetricsPlots: DiffimMetricsHistPlot
+      atools.interpolatedDipoleDensity: DiffimMetricsInterpolatePlot
+      atools.interpolatedDipoleDensity.metricName: dipole_density
+      atools.interpolatedSourceDensity: DiffimMetricsInterpolatePlot
+      atools.interpolatedSourceDensity.metricName: source_density
+      atools.interpolatedTemplateMedian: DiffimMetricsInterpolatePlot
+      atools.interpolatedTemplateMedian.metricName: template_value
+      atools.interpolatedScienceMedian: DiffimMetricsInterpolatePlot
+      atools.interpolatedScienceMedian.metricName: science_value
+      atools.interpolatedDiffimMedian: DiffimMetricsInterpolatePlot
+      atools.interpolatedDiffimMedian.metricName: diffim_value
+      atools.interpolatedSciencePsfSize: DiffimMetricsInterpolatePlot
+      atools.interpolatedSciencePsfSize.metricName: science_psfSize
+      atools.interpolatedTemplatePsfSize: DiffimMetricsInterpolatePlot
+      atools.interpolatedTemplatePsfSize.metricName: template_psfSize
       python: |
-        from lsst.analysis.tools.atools import DiffimMetricsHistPlot
+        from lsst.analysis.tools.atools import DiffimMetricsHistPlot, DiffimMetricsInterpolatePlot
 subsets:
   promptQaMetrics:
     subset:
       - analyzeAssocDiaSrcCore
       - analyzeTrailedDiaSrcCore
       - diffimTaskCore
+      - diffimTaskPlots
     description: >
       QA metrics to run in Prompt Processing.

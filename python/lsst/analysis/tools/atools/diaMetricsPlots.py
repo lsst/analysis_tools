@@ -19,9 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ("DiffimMetricsHistPlot",)
+__all__ = ("DiffimMetricsHistPlot", "DiffimMetricsInterpolatePlot")
+
+from lsst.pex.config import Field
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
+from ..actions.plot.interpolateDetectorPlot import InterpolateDetectorMetricPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
@@ -71,3 +74,19 @@ class DiffimMetricsHistPlot(AnalysisTool):
             sat_template_mask_fraction="Saturated template",
             streak_mask_fraction="Streak",
         )
+
+
+class DiffimMetricsInterpolatePlot(AnalysisTool):
+    metricName = Field[str](doc="Metric name to interpolate", default="foo")
+
+    def finalize(self):
+
+        self.process.buildActions.x = LoadVector()
+        self.process.buildActions.x.vectorKey = "x"
+        self.process.buildActions.y = LoadVector()
+        self.process.buildActions.y.vectorKey = "y"
+
+        self.process.buildActions.metricValues = LoadVector()
+        self.process.buildActions.metricValues.vectorKey = self.metricName
+
+        self.produce.plot = InterpolateDetectorMetricPlot()

@@ -80,11 +80,13 @@ class InterpolateDetectorMetricPlot(PlotAction):
 
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
         pc = ax.pcolormesh(X, Y, Z, shading='auto')
-        ax.scatter(data['x'], data['y'], s=5, c="black", label=self.zAxisLabel)
-        fig.colorbar(pc)
+        ax.scatter(data['x'], data['y'], s=5, c="black")
+        cbar = fig.colorbar(pc)
+        cbar.set_label(self.zAxisLabel, rotation=270)
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
-        plt.axis("equal")
+        ax.set_aspect('equal', 'box')
+        
         # add general plot info
         if plotInfo is not None:
             fig = addPlotInfo(fig, plotInfo)

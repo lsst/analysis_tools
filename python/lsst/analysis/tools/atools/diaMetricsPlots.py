@@ -77,17 +77,19 @@ class DiffimMetricsHistPlot(AnalysisTool):
 
 
 class DiffimMetricsInterpolatePlot(AnalysisTool):
-    metricName = Field[str](doc="Metric name to interpolate", default="foo")
+
+    metricName = Field[str](doc="Metric name to interpolate", optional=False)
     parameterizedBand: bool = False
 
-    def finalize(self):
+    def setDefaults(self):
+        super().setDefaults()
 
+        self.produce.plot = InterpolateDetectorMetricPlot()
         self.process.buildActions.x = LoadVector()
         self.process.buildActions.x.vectorKey = "x"
         self.process.buildActions.y = LoadVector()
         self.process.buildActions.y.vectorKey = "y"
 
+    def finalize(self):
         self.process.buildActions.metricValues = LoadVector()
         self.process.buildActions.metricValues.vectorKey = self.metricName
-
-        self.produce.plot = InterpolateDetectorMetricPlot()

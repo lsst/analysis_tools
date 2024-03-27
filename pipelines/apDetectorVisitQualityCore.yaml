@@ -82,18 +82,25 @@ tasks:
       atools.diaMetricsPlots: DiffimMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimMetricsInterpolatePlot
       atools.interpolatedDipoleDensity.metricName: dipole_density
+      atools.interpolatedDipoleDensity.produce.plot.zAxisLabel: Number/degree^2
       atools.interpolatedSourceDensity: DiffimMetricsInterpolatePlot
       atools.interpolatedSourceDensity.metricName: source_density
+      atools.interpolatedSourceDensity.produce.plot.zAxisLabel: Number/degree^2
       atools.interpolatedTemplateMedian: DiffimMetricsInterpolatePlot
       atools.interpolatedTemplateMedian.metricName: template_value
+      atools.interpolatedTemplateMedian.produce.plot.zAxisLabel: nJy
       atools.interpolatedScienceMedian: DiffimMetricsInterpolatePlot
       atools.interpolatedScienceMedian.metricName: science_value
+      atools.interpolatedScienceMedian.produce.plot.zAxisLabel: nJy
       atools.interpolatedDiffimMedian: DiffimMetricsInterpolatePlot
       atools.interpolatedDiffimMedian.metricName: diffim_value
+      atools.interpolatedDiffimMedian.produce.plot.zAxisLabel: nJy
       atools.interpolatedSciencePsfSize: DiffimMetricsInterpolatePlot
       atools.interpolatedSciencePsfSize.metricName: science_psfSize
+      atools.interpolatedSciencePsfSize.produce.plot.zAxisLabel: pixels
       atools.interpolatedTemplatePsfSize: DiffimMetricsInterpolatePlot
       atools.interpolatedTemplatePsfSize.metricName: template_psfSize
+      atools.interpolatedTemplatePsfSize.produce.plot.zAxisLabel: pixels
       python: |
         from lsst.analysis.tools.atools import DiffimMetricsHistPlot, DiffimMetricsInterpolatePlot
 subsets:

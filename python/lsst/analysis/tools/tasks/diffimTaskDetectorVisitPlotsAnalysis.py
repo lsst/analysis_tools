@@ -57,10 +57,12 @@ class DiffimDetectorVisitPlotsAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId)
+        plotInfo['tableName'] += f", detector: {plotInfo['detector']}"
         data = self.loadData(inputs["data"])
 
         outputs = self.run(
             data=data,
             plotInfo=plotInfo,
+            bands=plotInfo['band'],
         )
         butlerQC.put(outputs, outputRefs)

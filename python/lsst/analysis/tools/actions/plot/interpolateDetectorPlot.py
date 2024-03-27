@@ -85,5 +85,8 @@ class InterpolateDetectorMetricPlot(PlotAction):
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
         plt.axis("equal")
+        # add general plot info
+        if plotInfo is not None:
+            fig = addPlotInfo(fig, plotInfo)
 
         return fig

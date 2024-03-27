@@ -75,6 +75,13 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+  diffimTaskPlots:
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitPlotsAnalysisTask
+    config:
+      connections.outputName: diffimPlots
+      atools.diaMetricsPlots: DiffimMetricsHistPlot
+      python: |
+        from lsst.analysis.tools.atools import DiffimMetricsHistPlot
 subsets:
   promptQaMetrics:
     subset:

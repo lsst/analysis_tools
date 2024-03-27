@@ -31,7 +31,7 @@ from ..interfaces import AnalysisTool
 
 class DiffimMetricsHistPlot(AnalysisTool):
 
-    parameterizedBand: bool = True
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
@@ -78,6 +78,7 @@ class DiffimMetricsHistPlot(AnalysisTool):
 
 class DiffimMetricsInterpolatePlot(AnalysisTool):
     metricName = Field[str](doc="Metric name to interpolate", default="foo")
+    parameterizedBand: bool = False
 
     def finalize(self):
 

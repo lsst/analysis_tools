@@ -38,8 +38,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class InterpolateDetectorMetricPlot(PlotAction):
-    """Returns a fixed array size with interpolation of metric in the detector
-    """
+    """Interpolate metrics evaluated at locations across a detector."""
 
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="x (pixel)", optional=True)
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="y (pixel)", optional=True)
@@ -60,32 +59,26 @@ class InterpolateDetectorMetricPlot(PlotAction):
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
-        # self._validateInput(data, **kwargs)
         return self.makePlot(data, **kwargs)
 
-    def makePlot(
-            self,
-            data: KeyedData,
-            plotInfo: Optional[Mapping[str, str]] = None,
-            **kwargs
-    ) -> Figure:
+    def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None, **kwargs) -> Figure:
 
-        X = np.linspace(-self.gridMargin, self.xCoordSize+self.gridMargin, self.nGridPoints)
-        Y = np.linspace(-self.gridMargin, self.yCoordSize+self.gridMargin, self.nGridPoints)
+        X = np.linspace(-self.gridMargin, self.xCoordSize + self.gridMargin, self.nGridPoints)
+        Y = np.linspace(-self.gridMargin, self.yCoordSize + self.gridMargin, self.nGridPoints)
         meshgridX, meshgridY = np.meshgrid(X, Y)  # 2D grid for interpolation
 
         interp = CloughTocher2DInterpolator(list(zip(data["x"], data["y"])), data["metricValues"])
         Z = interp(meshgridX, meshgridY)
 
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-        pc = ax.pcolormesh(X, Y, Z, shading='auto')
-        ax.scatter(data['x'], data['y'], s=5, c="black")
+        pc = ax.pcolormesh(X, Y, Z, shading="auto")
+        ax.scatter(data["x"], data["y"], s=5, c="black")
         cbar = fig.colorbar(pc)
         cbar.set_label(self.zAxisLabel, rotation=270)
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
-        ax.set_aspect('equal', 'box')
-        
+        ax.set_aspect("equal", "box")
+
         # add general plot info
         if plotInfo is not None:
             fig = addPlotInfo(fig, plotInfo)

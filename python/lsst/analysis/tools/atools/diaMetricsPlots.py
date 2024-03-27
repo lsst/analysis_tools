@@ -1,4 +1,4 @@
-# This file is part of analysis_ap.
+# This file is part of analysis_tools.
 #
 # Developed for the LSST Data Management System.
 # This product includes software developed by the LSST Project
@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 __all__ = ("DiffimMetricsHistPlot", "DiffimMetricsInterpolatePlot")
 
 from lsst.pex.config import Field
@@ -30,7 +29,8 @@ from ..interfaces import AnalysisTool
 
 
 class DiffimMetricsHistPlot(AnalysisTool):
-    """Create histograms of the fraction of pixels with certain mask planes set.
+    """Create histograms of the fraction of pixels with certain mask planes
+    set.
     """
 
     parameterizedBand: bool = False
@@ -38,24 +38,19 @@ class DiffimMetricsHistPlot(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.bad_mask_fraction = LoadVector(
-            vectorKey="bad_mask_fraction")
-        self.process.buildActions.cr_mask_fraction = LoadVector(
-            vectorKey="cr_mask_fraction")
-        self.process.buildActions.detected_mask_fraction = LoadVector(
-            vectorKey="detected_mask_fraction")
+        self.process.buildActions.bad_mask_fraction = LoadVector(vectorKey="bad_mask_fraction")
+        self.process.buildActions.cr_mask_fraction = LoadVector(vectorKey="cr_mask_fraction")
+        self.process.buildActions.detected_mask_fraction = LoadVector(vectorKey="detected_mask_fraction")
         self.process.buildActions.detected_negative_mask_fraction = LoadVector(
-            vectorKey="detected_negative_mask_fraction")
-        self.process.buildActions.intrp_mask_fraction = LoadVector(
-            vectorKey="intrp_mask_fraction")
-        self.process.buildActions.no_data_mask_fraction = LoadVector(
-            vectorKey="no_data_mask_fraction")
-        self.process.buildActions.sat_mask_fraction = LoadVector(
-            vectorKey="sat_mask_fraction")
+            vectorKey="detected_negative_mask_fraction"
+        )
+        self.process.buildActions.intrp_mask_fraction = LoadVector(vectorKey="intrp_mask_fraction")
+        self.process.buildActions.no_data_mask_fraction = LoadVector(vectorKey="no_data_mask_fraction")
+        self.process.buildActions.sat_mask_fraction = LoadVector(vectorKey="sat_mask_fraction")
         self.process.buildActions.sat_template_mask_fraction = LoadVector(
-            vectorKey="sat_template_mask_fraction")
-        self.process.buildActions.streak_mask_fraction = LoadVector(
-            vectorKey="streak_mask_fraction")
+            vectorKey="sat_template_mask_fraction"
+        )
+        self.process.buildActions.streak_mask_fraction = LoadVector(vectorKey="streak_mask_fraction")
 
         self.produce.plot = HistPlot()
 
@@ -64,7 +59,7 @@ class DiffimMetricsHistPlot(AnalysisTool):
         self.produce.plot.panels["panel_flags"].bins = 20
         self.produce.plot.panels["panel_flags"].rangeType = "fixed"
         self.produce.plot.panels["panel_flags"].lowerRange = 0
-        self.produce.plot.panels["panel_flags"].upperRange = 1.
+        self.produce.plot.panels["panel_flags"].upperRange = 1.0
         self.produce.plot.panels["panel_flags"].hists = dict(
             no_data_mask_fraction="No data",
             sat_mask_fraction="Saturated",

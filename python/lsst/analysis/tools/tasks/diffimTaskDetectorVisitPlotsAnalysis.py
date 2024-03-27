@@ -30,8 +30,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class DiffimDetectorVisitAnalysisPlotsConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
-    defaultTemplates={"coaddName": "goodSeeing",
-                      "fakesType": ""}
+    defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
 ):
     data = connectionTypes.Input(
         doc="QA metrics evaluated in locations throughout the difference image.",
@@ -57,12 +56,12 @@ class DiffimDetectorVisitPlotsAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId)
-        plotInfo['tableName'] += f", detector: {plotInfo['detector']}"
+        plotInfo["tableName"] += f", detector: {plotInfo['detector']}"
         data = self.loadData(inputs["data"])
 
         outputs = self.run(
             data=data,
             plotInfo=plotInfo,
-            bands=plotInfo['band'],
+            bands=plotInfo["band"],
         )
         butlerQC.put(outputs, outputRefs)

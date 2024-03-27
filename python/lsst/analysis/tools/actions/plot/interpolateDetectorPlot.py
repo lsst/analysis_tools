@@ -25,12 +25,11 @@ __all__ = ("InterpolateDetectorMetricPlot",)
 import logging
 from typing import Mapping, Optional
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from lsst.pex.config import Field
 from matplotlib.figure import Figure
 from scipy.interpolate import CloughTocher2DInterpolator
-
-from lsst.pex.config import Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo

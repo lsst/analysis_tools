@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("DiffimDetectorVisitAnalysisConfig", "DiffimDetectorVisitAnalysisTask")
+__all__ = ("DiffimDetectorVisitMetricsAnalysisConfig", "DiffimDetectorVisitMetricsAnalysisTask")
 
 import pandas as pd
 from lsst.pipe.base import NoWorkFound, connectionTypes
@@ -28,7 +28,7 @@ from lsst.pipe.base import NoWorkFound, connectionTypes
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class DiffimDetectorVisitAnalysisConnections(
+class DiffimDetectorVisitMetricsAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
 ):
@@ -46,15 +46,15 @@ class DiffimDetectorVisitAnalysisConnections(
     )
 
 
-class DiffimDetectorVisitAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitAnalysisConnections
+class DiffimDetectorVisitMetricsAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitMetricsAnalysisConnections
 ):
     pass
 
 
-class DiffimDetectorVisitAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = DiffimDetectorVisitAnalysisConfig
-    _DefaultName = "DiffimDetectorVisitAnalysis"
+class DiffimDetectorVisitMetricsAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = DiffimDetectorVisitMetricsAnalysisConfig
+    _DefaultName = "DiffimDetectorVisitMetricsAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)

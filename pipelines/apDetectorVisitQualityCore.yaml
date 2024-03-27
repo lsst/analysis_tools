@@ -53,7 +53,7 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
   diffimTaskCore:
-    class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitMetricsAnalysisTask
     config:
       connections.outputName: diffimMetadata
 

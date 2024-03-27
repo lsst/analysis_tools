@@ -100,7 +100,7 @@ class LoadFromPipelineTestCase(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.pipeline = "$ANALYSIS_TOOLS_DIR/pipelines/coaddQualityExtended.yaml"
+        self.pipeline = "$ANALYSIS_TOOLS_DIR/tests/data/test_pipeline.yaml"
 
     def testLoadRelative(self) -> None:
         # test that relative names can be loaded

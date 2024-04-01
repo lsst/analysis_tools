@@ -202,11 +202,11 @@ class AnalysisTool(AnalysisAction):
     def _getPlotType(self) -> str:
         match self.produce:
             case PlotAction():
-                return type(self.produce).__name__
+                return self.produce.getPlotType()
             case JointAction(plot=NoPlot()):
                 pass
             case JointAction(plot=plotter):
-                return type(plotter).__name__
+                return plotter.getPlotType()
 
         return ""
 

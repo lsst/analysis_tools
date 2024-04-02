@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-__all__ = ("DiffimMetricsHistPlot", "DiffimMetricsInterpolatePlot")
+__all__ = ("DiffimSpatialMetricsHistPlot", "DiffimSpatialMetricsInterpolatePlot")
 
 from lsst.pex.config import Field
 
@@ -28,7 +28,7 @@ from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
 
-class DiffimMetricsHistPlot(AnalysisTool):
+class DiffimSpatialMetricsHistPlot(AnalysisTool):
     """Create histograms of the fraction of pixels with certain mask planes
     set.
     """
@@ -73,9 +73,9 @@ class DiffimMetricsHistPlot(AnalysisTool):
         )
 
 
-class DiffimMetricsInterpolatePlot(AnalysisTool):
-    """Interpolate metric values evaluated at locations in a supplied catalog
-    and create low-resolution images of the result.
+class DiffimSpatialMetricsInterpolatePlot(AnalysisTool):
+    """Interpolate spatially-sampled metric values and create low-resolution
+    images of the result.
     """
 
     metricName = Field[str](doc="Metric name to interpolate", optional=False)

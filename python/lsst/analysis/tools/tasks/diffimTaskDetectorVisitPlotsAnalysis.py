@@ -34,7 +34,7 @@ class DiffimDetectorVisitAnalysisPlotsConnections(
 ):
     data = connectionTypes.Input(
         doc="QA metrics evaluated in locations throughout the difference image.",
-        name="{fakesType}{coaddName}Diff_summaryMetrics",
+        name="{fakesType}{coaddName}Diff_spatiallySampledMetrics",
         storageClass="ArrowAstropy",
         dimensions=("instrument", "visit", "detector"),
         deferLoad=True,

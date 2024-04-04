@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("DiffimDetectorVisitAnalysisPlotsConfig", "DiffimDetectorVisitPlotsAnalysisTask")
+__all__ = ("DiffimDetectorVisitSpatiallySampledPlotsConfig", "DiffimDetectorVisitSpatiallySampledPlotsTask")
 
 from lsst.pipe.base import connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class DiffimDetectorVisitAnalysisPlotsConnections(
+class DiffimDetectorVisitSpatiallySampledPlotsConnections(
     AnalysisBaseConnections,
     dimensions=("visit", "band", "detector"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": ""},
@@ -41,15 +41,15 @@ class DiffimDetectorVisitAnalysisPlotsConnections(
     )
 
 
-class DiffimDetectorVisitAnalysisPlotsConfig(
-    AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitAnalysisPlotsConnections
+class DiffimDetectorVisitSpatiallySampledPlotsConfig(
+    AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitSpatiallySampledPlotsConnections
 ):
     pass
 
 
-class DiffimDetectorVisitPlotsAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = DiffimDetectorVisitAnalysisPlotsConfig
-    _DefaultName = "DiffimDetectorVisitPlotsAnalysis"
+class DiffimDetectorVisitSpatiallySampledPlotsTask(AnalysisPipelineTask):
+    ConfigClass = DiffimDetectorVisitSpatiallySampledPlotsConfig
+    _DefaultName = "DiffimDetectorVisitSpatiallySampledPlots"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         # Docs inherited from base class.

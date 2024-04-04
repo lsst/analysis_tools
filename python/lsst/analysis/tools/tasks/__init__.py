@@ -9,7 +9,7 @@ from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *
 from .diffimTaskDetectorVisitMetricsAnalysis import *
-from .diffimTaskDetectorVisitPlotsAnalysis import *
+from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .objectTableSurveyAnalysis import *

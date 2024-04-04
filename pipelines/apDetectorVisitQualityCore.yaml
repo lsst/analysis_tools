@@ -76,7 +76,7 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
   diffimTaskPlots:
-    class: lsst.analysis.tools.tasks.DiffimDetectorVisitPlotsAnalysisTask
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
       connections.outputName: diffimPlots
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot

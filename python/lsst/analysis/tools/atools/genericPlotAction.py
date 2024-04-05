@@ -39,18 +39,19 @@ class StructPlotAction(PlotAction):
         for action in self.actions:
             yield from action.getInputSchema()
 
+    def getPlotType(self) -> str:
+        return ""
+
     def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
-        names = []
         for key, action in self.actions.items():
             names_action = action.getOutputNames(config=config)
             if not names_action:
                 names_action = [key]
-            names.extend(names_action)
-        return tuple(names)
+            for name in names_action:
+                yield f"{name}_{action.getPlotType()}"
 
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         results = {}
         for key, action in self.actions.items():
-            result = action(data=data, **kwargs)
-            results[key] = result
+            results[f"{key}_{action.getPlotType()}"] = action(data=data, **kwargs)
         return results

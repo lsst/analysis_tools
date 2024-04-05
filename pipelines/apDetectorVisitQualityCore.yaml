@@ -79,6 +79,8 @@ tasks:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
       connections.outputName: diffimPlots
+      connections.fakesType: parameters.fakesType
+      connections.coaddName: parameters.coaddName
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
       atools.interpolatedDipoleDensity.metricName: dipole_density

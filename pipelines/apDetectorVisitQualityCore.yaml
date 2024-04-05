@@ -53,7 +53,7 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
   diffimTaskCore:
-    class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitMetricsAnalysisTask
     config:
       connections.outputName: diffimMetadata
 
@@ -75,11 +75,40 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+  diffimTaskPlots:
+    class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
+    config:
+      connections.outputName: diffimPlots
+      atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
+      atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedDipoleDensity.metricName: dipole_density
+      atools.interpolatedDipoleDensity.produce.plot.zAxisLabel: Number/degree^2
+      atools.interpolatedSourceDensity: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedSourceDensity.metricName: source_density
+      atools.interpolatedSourceDensity.produce.plot.zAxisLabel: Number/degree^2
+      atools.interpolatedTemplateMedian: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedTemplateMedian.metricName: template_value
+      atools.interpolatedTemplateMedian.produce.plot.zAxisLabel: nJy
+      atools.interpolatedScienceMedian: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedScienceMedian.metricName: science_value
+      atools.interpolatedScienceMedian.produce.plot.zAxisLabel: nJy
+      atools.interpolatedDiffimMedian: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedDiffimMedian.metricName: diffim_value
+      atools.interpolatedDiffimMedian.produce.plot.zAxisLabel: nJy
+      atools.interpolatedSciencePsfSize: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedSciencePsfSize.metricName: science_psfSize
+      atools.interpolatedSciencePsfSize.produce.plot.zAxisLabel: pixels
+      atools.interpolatedTemplatePsfSize: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedTemplatePsfSize.metricName: template_psfSize
+      atools.interpolatedTemplatePsfSize.produce.plot.zAxisLabel: pixels
+      python: |
+        from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
 subsets:
   promptQaMetrics:
     subset:
       - analyzeAssocDiaSrcCore
       - analyzeTrailedDiaSrcCore
       - diffimTaskCore
+      - diffimTaskPlots
     description: >
       QA metrics to run in Prompt Processing.

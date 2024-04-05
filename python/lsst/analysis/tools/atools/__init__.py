@@ -9,6 +9,7 @@ from .deltaSkyCorr import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
 from .diaSourceTableTractMetrics import *
+from .diaSpatialMetricsPlots import *
 from .diffimMetadataMetrics import *
 from .diffMatched import *
 from .fluxMetrics import *

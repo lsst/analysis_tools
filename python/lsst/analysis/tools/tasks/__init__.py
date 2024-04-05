@@ -8,7 +8,8 @@ from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *
-from .diffimTaskDetectorVisitAnalysis import *
+from .diffimTaskDetectorVisitMetricsAnalysis import *
+from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .objectTableSurveyAnalysis import *

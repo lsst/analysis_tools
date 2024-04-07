@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 __all__ = ("DiffimSpatialMetricsHistPlot", "DiffimSpatialMetricsInterpolatePlot")
 
-from lsst.pex.config import Field
+from lsst.pex.config import ListField
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.interpolateDetectorPlot import InterpolateDetectorMetricPlot
@@ -78,7 +78,7 @@ class DiffimSpatialMetricsInterpolatePlot(AnalysisTool):
     images of the result.
     """
 
-    metricName = Field[str](doc="Metric name to interpolate", optional=False)
+    metricNames = ListField[str](doc="List of metric names to interpolate on", optional=False)
     parameterizedBand: bool = False
 
     def setDefaults(self):
@@ -91,5 +91,5 @@ class DiffimSpatialMetricsInterpolatePlot(AnalysisTool):
         self.process.buildActions.y.vectorKey = "y"
 
     def finalize(self):
-        self.process.buildActions.metricValues = LoadVector()
-        self.process.buildActions.metricValues.vectorKey = self.metricName
+        for name in self.metricNames:
+            setattr(self.process.buildActions, name, LoadVector(vectorKey=name))

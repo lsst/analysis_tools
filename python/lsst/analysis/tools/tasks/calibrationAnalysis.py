@@ -23,8 +23,12 @@ from __future__ import annotations
 __all__ = (
     "VerifyCalibAnalysisConfig",
     "VerifyCalibAnalysisTask",
-    "VerifyPtcAnalysisConfig",
-    "VerifyPtcAnalysisTask",
+    "VerifyCalibAnalysisConfigByFilter",
+    "VerifyCalibAnalysisTaskByFilter",
+    "VerifyCalibDetectorConfig",
+    "VerifyCalibDetectorTask",
+    "VerifyCalibDetectorConfigByFilter",
+    "VerifyCalibDetectorTaskByFilter",
 )
 
 from lsst.pipe.base import connectionTypes as cT
@@ -54,7 +58,8 @@ class VerifyCalibAnalysisConnections(
     )
 
 
-class VerifyCalibAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyCalibAnalysisConnections):
+class VerifyCalibAnalysisConfig(AnalysisBaseConfig,
+                                pipelineConnections=VerifyCalibAnalysisConnections):
     pass
 
 
@@ -63,17 +68,16 @@ class VerifyCalibAnalysisTask(AnalysisPipelineTask):
     _DefaultName = "verifyCalibAnalysis"
 
 
-# Photon Transfer Curve: PTC
-class VerifyPtcAnalysisConnections(
+class VerifyCalibAnalysisConnectionsByFilter(
     AnalysisBaseConnections,
-    dimensions=("instrument",),
-    defaultTemplates={"inputName": "verifyPtcResults"},
+    dimensions=("instrument", "physical_filter"),
+    defaultTemplates={"inputName": "verifyFlatResults"},
 ):
     data = cT.Input(
-        doc="Table containing PTC verification data to load from the butler",
-        name="verifyPtcResults",
+        doc="Table containing bias verification data to load from the butler",
+        name="verifyBiasResults",
         storageClass="ArrowAstropy",
-        dimensions=("instrument",),
+        dimensions=("instrument", "physical_filter"),
         deferLoad=True,
     )
 
@@ -86,10 +90,82 @@ class VerifyPtcAnalysisConnections(
     )
 
 
-class VerifyPtcAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyPtcAnalysisConnections):
+class VerifyCalibAnalysisConfigByFilter(AnalysisBaseConfig,
+                                        pipelineConnections=VerifyCalibAnalysisConnectionsByFilter):
     pass
 
 
-class VerifyPtcAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = VerifyPtcAnalysisConfig
-    _DefaultName = "verifyPtcAnalysis"
+class VerifyCalibAnalysisTaskByFilter(VerifyCalibAnalysisTask):
+    ConfigClass = VerifyCalibAnalysisConfigByFilter
+    _DefaultName = "verifyCalibAnalysisByFilter"
+
+    pass
+
+
+class VerifyCalibDetectorConnections(
+    AnalysisBaseConnections,
+    dimensions=("instrument", "detector"),
+    defaultTemplates={"inputName": "verifyFlatResults"},
+):
+    data = cT.Input(
+        doc="Table containing bias verification data to load from the butler",
+        name="verifyBiasDetResults",
+        storageClass="ArrowAstropy",
+        dimensions=("instrument", "detector"),
+        deferLoad=True,
+    )
+
+    camera = cT.PrerequisiteInput(
+        doc="Input camera to use for focal plane geometry.",
+        name="camera",
+        storageClass="Camera",
+        dimensions=("instrument",),
+        isCalibration=True,
+    )
+
+
+class VerifyCalibDetectorConfig(AnalysisBaseConfig,
+                                pipelineConnections=VerifyCalibDetectorConnections):
+    pass
+
+
+class VerifyCalibDetectorTask(VerifyCalibAnalysisTask):
+    ConfigClass = VerifyCalibDetectorConfig
+    _DefaultName = "verifyCalibDetector"
+
+    pass
+
+
+class VerifyCalibDetectorConnectionsByFilter(
+    AnalysisBaseConnections,
+    dimensions=("instrument", "detector", "physical_filter"),
+    defaultTemplates={"inputName": "verifyFlatDetResults"},
+):
+    data = cT.Input(
+        doc="Table containing bias verification data to load from the butler",
+        name="verifyBiasDetResults",
+        storageClass="ArrowAstropy",
+        dimensions=("instrument", "detector", "physical_filter"),
+        deferLoad=True,
+    )
+
+    camera = cT.PrerequisiteInput(
+        doc="Input camera to use for focal plane geometry.",
+        name="camera",
+        storageClass="Camera",
+        dimensions=("instrument",),
+        isCalibration=True,
+    )
+
+
+class VerifyCalibDetectorConfigByFilter(AnalysisBaseConfig,
+                                        pipelineConnections=VerifyCalibDetectorConnectionsByFilter):
+    pass
+
+
+class VerifyCalibDetectorTaskByFilter(VerifyCalibDetectorTask):
+    ConfigClass = VerifyCalibDetectorConfigByFilter
+    _DefaultName = "verifyCalibDetectorByFilter"
+
+    pass
+

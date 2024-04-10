@@ -6,7 +6,7 @@ FAQs
 What Order are Configs Applied In?
 ----------------------------------
 
-In analysis tools there are a number of ways to set config options which are applied in a certain order. If 
+In analysis tools there are a number of ways to set config options which are applied in a certain order. If
 you get this order wrong you might be suprised by what your action is doing. In order from first applied to
 last applied:
 
@@ -16,8 +16,8 @@ last applied:
 4. The pipeline file configs
 5. The command line --config and --config-file options
 
-Due to this configs that are obs package specific should not be specified in the pipeline file because they 
-overwrite the obs specific configs. For example the bands option, if that is set in the pipeline file it will 
+Due to this configs that are obs package specific should not be specified in the pipeline file because they
+overwrite the obs specific configs. For example the bands option, if that is set in the pipeline file it will
 overwrite the obs package which means that if you try to apply the same pipeline to HSC and DC2 data (for
 example) it will not work for both as each survey has different band coverage.
 
@@ -30,12 +30,12 @@ to be applied in the bands that the plot is being made in then the flag config o
 Where is the line between python and YAML?
 ------------------------------------------
 
-This can be a bit of a blurry line and in the end is up to the individual developer. A rough guideline is that 
+This can be a bit of a blurry line and in the end is up to the individual developer. A rough guideline is that
 if the code is reusable either for variants of the original action or useful for other actions then it belongs
 in its own python class. If it is single use or a specific instance of a class then it should be done through
 the YAML config. An example of this is the photometric repeatability metrics. Here there is a base action
 called PhotometricRepeatability, defined in python, which is then configured for each individual application
-in the pipeline YAML. 
+in the pipeline YAML.
 
 .. code-block:: yaml
 
@@ -46,7 +46,7 @@ in the pipeline YAML.
    atools.modelPhotRepGalSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
 
 The first line calls the action defined in python, after that the specific configuration is set in the
-pipeline YAML. This is a good balance between defining the entire action in YAML and having duplicate actions 
+pipeline YAML. This is a good balance between defining the entire action in YAML and having duplicate actions
 defined in the python with only very mild differences.
 
 Can analysis tools put things in the butler?
@@ -54,10 +54,10 @@ Can analysis tools put things in the butler?
 
 Short answer, yes! Long answer, while the tools themselves do not put things in the butler the tasks in the
 pipelines contained in analysis tools can. As an example lets look at the plots and metrics calculated from
-matching to the reference catalogues. First there is a task that matches the input data to the reference 
+matching to the reference catalogues. First there is a task that matches the input data to the reference
 catalogue. This then saves in the butler the matched output so that it can be read in later by multiple
-atools and also used in a notebook or script if further QA is required. After the matched catalogue is made 
-the plotting/metric/calculation atools read it in, then act on it. The atools themselves do not butler put 
+atools and also used in a notebook or script if further QA is required. After the matched catalogue is made
+the plotting/metric/calculation atools read it in, then act on it. The atools themselves do not butler put
 the metric/plot/calculated data but return them to the task that ran them which then puts them in the right
 place. Most of this is hidden from the user and the interfaces handle putting plots and metrics themselves.
 

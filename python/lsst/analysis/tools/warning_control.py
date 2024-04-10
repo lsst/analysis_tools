@@ -22,6 +22,7 @@
 __all__ = (
     "filterwarnings_action",
     "numpy_all_nan",
+    "numpy_all_nan_slice",
     "numpy_divide_zero_divide",
     "numpy_divide_zero_log",
     "numpy_divide_zero_log10",
@@ -38,6 +39,7 @@ __all__ = (
 filterwarnings_action = "ignore"
 
 numpy_all_nan = r"All-NaN axis encountered"
+numpy_all_nan_slice = r"All-NaN slice encountered"
 numpy_divide_zero_divide = r"divide by zero encountered in divide"
 numpy_divide_zero_log = r"divide by zero encountered in log"
 numpy_divide_zero_log10 = r"divide by zero encountered in log10"

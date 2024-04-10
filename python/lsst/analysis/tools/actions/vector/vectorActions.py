@@ -27,6 +27,8 @@ __all__ = (
     "ConvertFluxToMag",
     "ConvertUnits",
     "CalcSn",
+    "ColorDiff",
+    "ColorError",
     "MagDiff",
     "ExtinctionCorrectedMagDiff",
     "PerGroupStatistic",
@@ -46,7 +48,7 @@ from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
-from ...math import divide, fluxToMag
+from ...math import divide, fluxToMag, log10
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
@@ -134,6 +136,57 @@ class CalcSn(VectorAction):
         return divide(signal, noise)
 
 
+class ColorDiff(VectorAction):
+    """Calculate the difference between two colors from flux actions."""
+
+    color1_flux1 = ConfigurableActionField[VectorAction](doc="Action providing first color's first flux")
+    color1_flux2 = ConfigurableActionField[VectorAction](doc="Action providing first color's second flux")
+    color2_flux1 = ConfigurableActionField[VectorAction](doc="Action providing second color's first flux")
+    color2_flux2 = ConfigurableActionField[VectorAction](doc="Action providing second color's second flux")
+    returnMillimags = Field[bool](doc="Whether to return color_diff in millimags (mags if not)", default=True)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.color1_flux1.getInputSchema()
+        yield from self.color1_flux2.getInputSchema()
+        yield from self.color2_flux1.getInputSchema()
+        yield from self.color2_flux2.getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        color_diff = -2.5 * log10(
+            divide(
+                self.color1_flux1(data, **kwargs) * self.color2_flux2(data, **kwargs),
+                self.color1_flux2(data, **kwargs) * self.color2_flux1(data, **kwargs),
+            )
+        )
+
+        if self.returnMillimags:
+            color_diff *= 1000
+
+        return color_diff
+
+
+class ColorError(VectorAction):
+    """Calculate the error in a color from two different flux error columns."""
+
+    flux_err1 = ConfigurableActionField[VectorAction](doc="Action providing error for first flux")
+    flux_err2 = ConfigurableActionField[VectorAction](doc="Action providing error for second flux")
+    returnMillimags = Field[bool](doc="Whether to return color_err in millimags (mags if not)", default=True)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.flux_err1.getInputSchema()
+        yield from self.flux_err2.getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        flux_err1 = self.flux_err1(data, **kwargs)
+        flux_err2 = self.flux_err2(data, **kwargs)
+        color_err = (2.5 / np.log(10)) * np.hypot(flux_err1, flux_err2)
+
+        if self.returnMillimags:
+            color_err *= 1000
+
+        return color_err
+
+
 class ConvertFluxToMag(VectorAction):
     """Turn nano janskies into magnitudes."""
 
@@ -170,12 +223,7 @@ class ConvertUnits(VectorAction):
 class MagDiff(VectorAction):
     """Calculate the difference between two magnitudes;
     each magnitude is derived from a flux column.
-    Parameters
-    ----------
-    TO DO:
-    Returns
-    -------
-    The magnitude difference in milli mags.
+
     Notes
     -----
     The flux columns need to be in units (specifiable in

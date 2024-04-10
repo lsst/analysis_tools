@@ -22,6 +22,8 @@ from __future__ import annotations
 
 __all__ = ("MagnitudeScatterPlot",)
 
+from lsst.pex.config import ListField
+
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.vector.vectorActions import DownselectVector, VectorSelector
 from .genericBuild import MagnitudeXTool
@@ -29,6 +31,11 @@ from .genericBuild import MagnitudeXTool
 
 class MagnitudeScatterPlot(MagnitudeXTool):
     """A scatter plot with a magnitude on the x-axis."""
+
+    suffixes_y_finalize = ListField[str](
+        doc="Suffixes for y-axis keys that require finalization of summary stats",
+        default=[""],
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -79,11 +86,16 @@ class MagnitudeScatterPlot(MagnitudeXTool):
                     ),
                 )
 
-            statAction = ScatterPlotStatsAction(vectorKey=f"y{plural.capitalize()}")
-            fluxType = f"{prefix}_{key_err}_flux"
-            statAction.highSNSelector.fluxType = fluxType
-            statAction.highSNSelector.threshold = 200
-            statAction.lowSNSelector.fluxType = fluxType
-            statAction.lowSNSelector.threshold = 10
-            statAction.fluxType = fluxType
-            setattr(self.process.calculateActions, plural, statAction)
+            for suffix_y in self.suffixes_y_finalize:
+                statAction = ScatterPlotStatsAction(
+                    vectorKey=f"y{plural.capitalize()}{suffix_y}",
+                    prefix=plural,
+                    suffix=suffix_y,
+                )
+                fluxType = f"{prefix}_{key_err}_flux"
+                statAction.highSNSelector.fluxType = fluxType
+                statAction.highSNSelector.threshold = 200
+                statAction.lowSNSelector.fluxType = fluxType
+                statAction.lowSNSelector.threshold = 10
+                statAction.fluxType = fluxType
+                setattr(self.process.calculateActions, f"stats_{plural}{suffix_y}", statAction)

@@ -202,11 +202,11 @@ class AnalysisTool(AnalysisAction):
     def _getPlotType(self) -> str:
         match self.produce:
             case PlotAction():
-                return type(self.produce).__name__
+                return self.produce.getPlotType()
             case JointAction(plot=NoPlot()):
                 pass
             case JointAction(plot=plotter):
-                return type(plotter).__name__
+                return plotter.getPlotType()
 
         return ""
 
@@ -215,19 +215,22 @@ class AnalysisTool(AnalysisAction):
         results: Mapping[str, PlotTypes] | PlotTypes | Mapping[str, Measurement] | Measurement | JointResults,
     ) -> KeyedResults:
         accumulation = {}
-        suffix = self._getPlotType()
         predicate = f"{self.identity}" if self.identity else ""
         match results:
             case Mapping():
+                suffix = self._getPlotType()
                 for key, value in results.items():
                     match value:
-                        case PlotTypes():
-                            iterable = (predicate, key, suffix)
                         case Measurement():
                             iterable = (predicate, key)
+                        case PlotTypes():
+                            iterable = (predicate, key, suffix)
+                        case _:
+                            raise RuntimeError(f"Unexpected {key=}, {value=} from:\n{self=}")
                     refKey = "_".join(x for x in iterable if x)
                     accumulation[refKey] = value
             case PlotTypes():
+                suffix = self._getPlotType()
                 refKey = "_".join(x for x in (predicate, suffix) if x)
                 accumulation[refKey] = results
             case Measurement():

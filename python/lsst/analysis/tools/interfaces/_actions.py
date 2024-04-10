@@ -243,6 +243,9 @@ class PlotAction(AnalysisAction):
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         raise NotImplementedError("This is not implemented on the base class")
 
+    def getPlotType(self) -> str:
+        return type(self).__name__
+
 
 class PlotElement(AnalysisAction):
     """PlotElements are the most basic components of a plot. They can be

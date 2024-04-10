@@ -63,7 +63,17 @@ class ScatterPlotStatsAction(KeyedDataAction):
     lowSNSelector = ConfigurableActionField[SnSelector](
         doc="Selector used to determine low SN Objects", default=SnSelector(threshold=500)
     )
+    prefix = Field[str](
+        doc="Prefix for all output fields; will use self.identity if None",
+        optional=True,
+        default=None,
+    )
     fluxType = Field[str](doc="Vector key to use to compute signal to noise ratio", default="{band}_psfFlux")
+    suffix = Field[str](doc="Suffix for all output fields", default="")
+
+    def _get_key_prefix(self):
+        prefix = self.prefix if self.prefix else (self.identity if self.identity else "")
+        return prefix
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         yield (self.vectorKey, Vector)
@@ -72,30 +82,38 @@ class ScatterPlotStatsAction(KeyedDataAction):
         yield from self.lowSNSelector.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
+        prefix = self._get_key_prefix()
+        prefix_lower = prefix.lower() if prefix else ""
+        prefix_upper = prefix.capitalize() if prefix else ""
+        suffix = self.suffix
         return (
-            (f'{self.identity or ""}HighSNMask', Vector),
-            (f'{self.identity or ""}LowSNMask', Vector),
-            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_median", Scalar),
-            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_sigmaMad", Scalar),
-            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_count", Scalar),
-            (f"{{band}}_lowSN{self.identity.capitalize() if self.identity else ''}_approxMag", Scalar),
-            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_median", Scalar),
-            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_sigmaMad", Scalar),
-            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_count", Scalar),
-            (f"{{band}}_highSN{self.identity.capitalize() if self.identity else ''}_approxMag", Scalar),
-            ("highThreshold", Scalar),
-            ("lowThreshold", Scalar),
+            (f"{prefix_lower}HighSNMask{suffix}", Vector),
+            (f"{prefix_lower}LowSNMask{suffix}", Vector),
+            (f"{{band}}_lowSN{prefix_upper}_median{suffix}", Scalar),
+            (f"{{band}}_lowSN{prefix_upper}_sigmaMad{suffix}", Scalar),
+            (f"{{band}}_lowSN{prefix_upper}_count{suffix}", Scalar),
+            (f"{{band}}_lowSN{prefix_upper}_approxMag{suffix}", Scalar),
+            (f"{{band}}_highSN{prefix_upper}_median{suffix}", Scalar),
+            (f"{{band}}_highSN{prefix_upper}_sigmaMad{suffix}", Scalar),
+            (f"{{band}}_highSN{prefix_upper}_count{suffix}", Scalar),
+            (f"{{band}}_highSN{prefix_upper}_approxMag{suffix}", Scalar),
+            (f"{prefix_lower}HighSNThreshold{suffix}", Scalar),
+            (f"{prefix_lower}LowSNThreshold{suffix}", Scalar),
         )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         results = {}
-        highMaskKey = f'{(self.identity or "").lower()}HighSNMask'
+        prefix = self._get_key_prefix()
+        prefix_lower = prefix.lower() if prefix else ""
+        prefix_upper = prefix.capitalize() if prefix else ""
+        suffix = self.suffix
+        highMaskKey = f"{prefix_lower}HighSNMask{suffix}"
         results[highMaskKey] = self.highSNSelector(data, **kwargs)
 
-        lowMaskKey = f'{(self.identity or "").lower()}LowSNMask'
+        lowMaskKey = f"{prefix_lower}LowSNMask{suffix}"
         results[lowMaskKey] = self.lowSNSelector(data, **kwargs)
 
-        prefix = f"{band}_" if (band := kwargs.get("band")) else ""
+        prefix_band = f"{band}_" if (band := kwargs.get("band")) else ""
         fluxes = data[self.fluxType.format(band=band)] if band is not None else None
 
         statAction = SummaryStatisticAction(vectorKey=self.vectorKey)
@@ -108,19 +126,19 @@ class ScatterPlotStatsAction(KeyedDataAction):
         magAction = ConvertFluxToMag(vectorKey="flux")
 
         for maskKey, binName in ((lowMaskKey, "low"), (highMaskKey, "high")):
-            name = f"{prefix}{binName}SN{self.identity.capitalize() if self.identity else ''}"
+            name = f"{prefix_band}{binName}SN{prefix_upper}"
             # set the approxMag to the median mag in the SN selection
-            results[f"{name}_approxMag".format(**kwargs)] = (
+            results[f"{name}_approxMag{suffix}".format(**kwargs)] = (
                 medianAction({"mag": magAction({"flux": fluxes[results[maskKey]]})})  # type: ignore
                 if band is not None
                 else np.nan
             )
             stats = statAction(data, **(kwargs | {"mask": results[maskKey]})).items()
-            for suffix, value in stats:
-                tmpKey = f"{name}_{suffix}".format(**kwargs)
+            for name_stat, value in stats:
+                tmpKey = f"{name}_{name_stat}{suffix}".format(**kwargs)
                 results[tmpKey] = value
-        results["highSnThreshold"] = self.highSNSelector.threshold  # type: ignore
-        results["lowSnThreshold"] = self.lowSNSelector.threshold  # type: ignore
+        results[f"{prefix_lower}HighSNThreshold{suffix}"] = self.highSNSelector.threshold  # type: ignore
+        results[f"{prefix_lower}LowSNThreshold{suffix}"] = self.lowSNSelector.threshold  # type: ignore
 
         return results
 
@@ -180,6 +198,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         doc="Add a summary plot to the figure?",
         default=True,
     )
+    suffix_x = Field[str](doc="Suffix for all x-axis action inputs", optional=True, default="")
+    suffix_y = Field[str](doc="Suffix for all y-axis action inputs", optional=True, default="")
+    suffix_stat = Field[str](doc="Suffix for all binned statistic action inputs", optional=True, default="")
 
     _stats = ("median", "sigmaMad", "count", "approxMag")
     _datatypes = {
@@ -213,16 +234,18 @@ class ScatterPlotWithTwoHists(PlotAction):
         base: list[tuple[str, type[Vector] | ScalarType]] = []
         for name_datatype in self.plotTypes:
             config_datatype = self._datatypes[name_datatype]
-            base.append((f"x{config_datatype.suffix_xy}", Vector))
-            base.append((f"y{config_datatype.suffix_xy}", Vector))
-            base.append((f"{name_datatype}HighSNMask", Vector))
-            base.append((f"{name_datatype}LowSNMask", Vector))
+            base.append((f"x{config_datatype.suffix_xy}{self.suffix_x}", Vector))
+            base.append((f"y{config_datatype.suffix_xy}{self.suffix_y}", Vector))
+            base.append((f"{name_datatype}HighSNMask{self.suffix_stat}", Vector))
+            base.append((f"{name_datatype}LowSNMask{self.suffix_stat}", Vector))
             # statistics
             for name in self._stats:
-                base.append((f"{{band}}_highSN{config_datatype.suffix_stat}_{name}", Scalar))
-                base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}", Scalar))
-        base.append(("lowSnThreshold", Scalar))
-        base.append(("highSnThreshold", Scalar))
+                base.append(
+                    (f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar)
+                )
+                base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar))
+            base.append((f"{name_datatype}LowSNThreshold{self.suffix_stat}", Scalar))
+            base.append((f"{name_datatype}HighSNThreshold{self.suffix_stat}", Scalar))
 
         if self.addSummaryPlot:
             base.append(("patch", Vector))
@@ -241,7 +264,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         if remainder := {key.format(**kwargs) for key, _ in needed} - {
             key.format(**kwargs) for key in data.keys()
         }:
-            raise ValueError(f"Task needs keys {remainder} but they were not found in input")
+            raise ValueError(
+                f"Task needs keys {remainder} but they were not found in input keys" f" {list(data.keys())}"
+            )
         for name, typ in needed:
             isScalar = issubclass((colType := type(data[name.format(**kwargs)])), Scalar)
             if isScalar and typ != Scalar:
@@ -358,6 +383,9 @@ class ScatterPlotWithTwoHists(PlotAction):
     def _scatterPlot(
         self, data: KeyedData, fig: Figure, gs: gridspec.GridSpec, **kwargs
     ) -> tuple[Axes, Optional[PolyCollection]]:
+        suf_x = self.suffix_x
+        suf_y = self.suffix_y
+        suf_stat = self.suffix_stat
         # Main scatter plot
         ax = fig.add_subplot(gs[1:, :-1])
 
@@ -377,20 +405,24 @@ class ScatterPlotWithTwoHists(PlotAction):
             lowArgs = {}
             for name in self._stats:
                 highArgs[name] = cast(
-                    Scalar, data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
+                    Scalar,
+                    data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
                 )
                 lowArgs[name] = cast(
-                    Scalar, data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}".format(**kwargs)]
+                    Scalar,
+                    data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
                 )
             highStats = _StatsContainer(**highArgs)
             lowStats = _StatsContainer(**lowArgs)
 
             toPlotList.append(
                 (
-                    data[f"x{config_datatype.suffix_xy}"],
-                    data[f"y{config_datatype.suffix_xy}"],
-                    data[f"{name_datatype}HighSNMask"],
-                    data[f"{name_datatype}LowSNMask"],
+                    data[f"x{config_datatype.suffix_xy}{suf_x}"],
+                    data[f"y{config_datatype.suffix_xy}{suf_y}"],
+                    data[f"{name_datatype}HighSNMask{suf_stat}"],
+                    data[f"{name_datatype}LowSNMask{suf_stat}"],
+                    data[f"{name_datatype}HighSNThreshold{suf_stat}"],
+                    data[f"{name_datatype}LowSNThreshold{suf_stat}"],
                     config_datatype.color,
                     config_datatype.colormap,
                     highStats,
@@ -399,7 +431,18 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
 
         xLims = self.xLims if self.xLims is not None else [np.Inf, -np.Inf]
-        for j, (xs, ys, highSn, lowSn, color, cmap, highStats, lowStats) in enumerate(toPlotList):
+        for j, (
+            xs,
+            ys,
+            highSn,
+            lowSn,
+            highThresh,
+            lowThresh,
+            color,
+            cmap,
+            highStats,
+            lowStats,
+        ) in enumerate(toPlotList):
             highSn = cast(Vector, highSn)
             lowSn = cast(Vector, lowSn)
             # ensure the columns are actually array
@@ -518,7 +561,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 # Add some stats text
                 xPos = 0.65 - 0.4 * j
                 bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
-                highThresh = data["highSnThreshold"]
                 statText = f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
                 highStatsStr = (
                     f"Median: {highStats.median:0.4g}    "
@@ -531,7 +573,6 @@ class ScatterPlotWithTwoHists(PlotAction):
                 fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
-                lowThresh = data["lowSnThreshold"]
                 statText = f"S/N > {lowThresh:0.4g} Stats ({self.magLabel} < {lowStats.approxMag:0.4g})\n"
                 lowStatsStr = (
                     f"Median: {lowStats.median:0.4g}    "
@@ -619,11 +660,12 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         # Set the scatter plot limits
+        suf_x = self.suffix_y
         # TODO: Make this not work by accident
-        if "yStars" in data and (len(cast(Vector, data["yStars"])) > 0):
-            plotMed = nanMedian(cast(Vector, data["yStars"]))
-        elif "yGalaxies" in data and (len(cast(Vector, data["yGalaxies"])) > 0):
-            plotMed = nanMedian(cast(Vector, data["yGalaxies"]))
+        if f"yStars{suf_x}" in data and (len(cast(Vector, data[f"yStars{suf_x}"])) > 0):
+            plotMed = nanMedian(cast(Vector, data[f"yStars{suf_x}"]))
+        elif f"yGalaxies{suf_x}" in data and (len(cast(Vector, data[f"yGalaxies{suf_x}"])) > 0):
+            plotMed = nanMedian(cast(Vector, data[f"yGalaxies{suf_x}"]))
         else:
             plotMed = np.nan
 
@@ -670,22 +712,28 @@ class ScatterPlotWithTwoHists(PlotAction):
     def _makeTopHistogram(
         self, data: KeyedData, figure: Figure, gs: gridspec.GridSpec, ax: Axes, **kwargs
     ) -> None:
+        suf_x = self.suffix_x
         # Top histogram
         topHist = figure.add_subplot(gs[0, :-1], sharex=ax)
         x_min, x_max = ax.get_xlim()
         bins = np.linspace(x_min, x_max, 100)
 
         if "any" in self.plotTypes:
-            x_any = f"x{self._datatypes['any'].suffix_xy}"
+            x_any = f"x{self._datatypes['any'].suffix_xy}{suf_x}"
             keys_notany = [x for x in self.plotTypes if x != "any"]
-            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
         else:
-            x_any = np.concatenate([data[f"x{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            x_any = (
+                np.concatenate([data[f"x{self._datatypes[key].suffix_xy}{suf_x}"] for key in self.plotTypes])
+                if (len(self.plotTypes) > 1)
+                else None
+            )
             keys_notany = self.plotTypes
+        if x_any is not None:
+            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
 
         for key in keys_notany:
             config_datatype = self._datatypes[key]
-            vector = data[f"x{config_datatype.suffix_xy}"]
+            vector = data[f"x{config_datatype.suffix_xy}{suf_x}"]
             topHist.hist(
                 vector,
                 bins=bins,
@@ -709,19 +757,31 @@ class ScatterPlotWithTwoHists(PlotAction):
         histIm: Optional[PolyCollection],
         **kwargs,
     ) -> None:
+        suf_y = self.suffix_y
         # Side histogram
         sideHist = figure.add_subplot(gs[1:, -1], sharey=ax)
         y_min, y_max = ax.get_ylim()
         bins = np.linspace(y_min, y_max, 100)
 
         if "any" in self.plotTypes:
-            y_any = f"y{self._datatypes['any'].suffix_xy}"
+            y_any = f"y{self._datatypes['any'].suffix_xy}{suf_y}"
             keys_notany = [x for x in self.plotTypes if x != "any"]
-            sideHist.hist(y_any, bins=bins, color="grey", alpha=0.3, orientation="horizontal", log=True)
         else:
-            y_any = np.concatenate([data[f"y{self._datatypes[key].suffix_xy}"] for key in self.plotTypes])
+            y_any = (
+                np.concatenate([data[f"y{self._datatypes[key].suffix_xy}{suf_y}"] for key in self.plotTypes])
+                if (len(self.plotTypes) > 1)
+                else None
+            )
             keys_notany = self.plotTypes
-
+        if y_any is not None:
+            sideHist.hist(
+                np.array(y_any),
+                bins=bins,
+                color="grey",
+                alpha=0.3,
+                orientation="horizontal",
+                log=True,
+            )
         kwargs_hist = dict(
             bins=bins,
             histtype="step",
@@ -730,20 +790,20 @@ class ScatterPlotWithTwoHists(PlotAction):
         )
         for key in keys_notany:
             config_datatype = self._datatypes[key]
-            vector = data[f"y{config_datatype.suffix_xy}"]
+            vector = data[f"y{config_datatype.suffix_xy}{suf_y}"]
             sideHist.hist(
                 vector,
                 color=config_datatype.color,
                 **kwargs_hist,
             )
             sideHist.hist(
-                vector[cast(Vector, data[f"{key}HighSNMask"])],
+                vector[cast(Vector, data[f"{key}HighSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
                 ls="--",
                 **kwargs_hist,
             )
             sideHist.hist(
-                vector[cast(Vector, data[f"{key}LowSNMask"])],
+                vector[cast(Vector, data[f"{key}LowSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
                 **kwargs_hist,
                 ls=":",

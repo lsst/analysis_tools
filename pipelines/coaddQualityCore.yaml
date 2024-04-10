@@ -27,6 +27,8 @@ tasks:
       atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
       atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
       atools.shapeSizeDetRadiusVsCmodelMag.size_y: "shape_slot"
+      atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.xLims: (17, 29)
+      atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.yLims: (-4, 3)
       atools.shapeSizeDetRadiusVsCmodelMag.applyContext: CoaddContext
       atools.shapeSizeDetRadiusVsPsfMag: SizeMagnitudePlot
       atools.shapeSizeDetRadiusVsPsfMag.size_type: "determinantRadius"
@@ -37,11 +39,15 @@ tasks:
       atools.cModelBulgeSizeVsCmodelBulgeMag.size_type: "singleColumnSize"
       atools.cModelBulgeSizeVsCmodelBulgeMag.mag_x: "bulge_err"
       atools.cModelBulgeSizeVsCmodelBulgeMag.size_y: "bulge"
+      atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.xLims: (17, 29)
+      atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.yLims: (-4, 3)
       atools.cModelBulgeSizeVsCmodelBulgeMag.applyContext: CoaddContext
       atools.cModelDiskSizeVsCmodelDiskMag: SizeMagnitudePlot
       atools.cModelDiskSizeVsCmodelDiskMag.size_type: "singleColumnSize"
       atools.cModelDiskSizeVsCmodelDiskMag.mag_x: "disk_err"
       atools.cModelDiskSizeVsCmodelDiskMag.size_y: "disk"
+      atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
+      atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.atools import *

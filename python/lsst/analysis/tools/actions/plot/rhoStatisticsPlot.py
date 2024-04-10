@@ -21,21 +21,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Mapping
-
 __all__ = ("RhoStatisticsPlot",)
+
+from typing import Any, Iterable, Mapping
 
 import numpy as np
 from lsst.pex.config import ConfigDictField
+from matplotlib.figure import Figure
 
-from ...interfaces import PlotAction, Vector
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo
 from .xyPlot import XYPlot
-
-if TYPE_CHECKING:
-    from matplotlib.figure import Figure
-
-    from ...interfaces import KeyedData, KeyedDataSchema
 
 
 class RhoStatisticsPlot(PlotAction):
@@ -46,10 +42,8 @@ class RhoStatisticsPlot(PlotAction):
     :ref:`here <rho_definitions>`.
     """
 
-    rhoPlots = ConfigDictField(
+    rhoPlots = ConfigDictField[str, XYPlot](
         doc="A configurable dict describing the rho statistics to plot.",
-        keytype=str,
-        itemtype=XYPlot,
         default={},
     )
 
@@ -91,15 +85,17 @@ class RhoStatisticsPlot(PlotAction):
 
     def getOutputNames(self) -> Iterable[str]:
         # Docstring inherited
-        return ("rho3alt", "rho1", "rho2", "rho3", "rho4", "rho5")
+        for key in self.rhoPlots.keys():
+            yield key
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure]:
         self._validateInput(data)
         return self.makePlot(data, **kwargs)
 
     def _validateInput(self, data: KeyedData) -> None:
-        if not set(("rho3alt", "rho1", "rho2", "rho3", "rho4", "rho5")).issubset(data.keys()):
-            raise ValueError("Input data must contain rho3alt, rho1, rho2, rho3, rho4, and rho5.")
+        required = set(self.rhoPlots.keys())
+        if not required.issubset(data.keys()):
+            raise ValueError(f"Input data must contain {', '.join(self.rhoPlots.keys())}")
 
     def makePlot(
         self, data: KeyedData, plotInfo: Mapping[str, str] | None = None, **kwargs: Any
@@ -141,28 +137,20 @@ class RhoStatisticsPlot(PlotAction):
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
         fig_dict: dict[str, Figure] = {}
-        for rho_name in ("rho1", "rho2", "rho3", "rho4", "rho5"):
+        for rho_name in self.rhoPlots.keys():
             rho: XYPlot = self.rhoPlots[rho_name]
-
             subdata = {
                 "x": data[rho_name].meanr,  # type: ignore
-                "y": data[rho_name].xip,  # type: ignore
-                "yerr": np.sqrt(data[rho_name].varxip),  # type: ignore
                 "xerr": None,
             }
+            if rho_name == "rho3alt":
+                subdata["y"] = data[rho_name].xi  # type: ignore
+                subdata["yerr"] = np.sqrt(data[rho_name].varxi)
+            else:
+                subdata["y"] = data[rho_name].xip  # type: ignore
+                subdata["yerr"] = np.sqrt(data[rho_name].varxip)  # type: ignore
             fig = rho(subdata, **kwargs)
             if plotInfo is not None:
                 fig_dict[rho_name] = addPlotInfo(fig, plotInfo)
-
-        # rho3alt is handled differently because its attributes differ.
-        subdata = {
-            "x": data["rho3alt"].meanr,  # type: ignore
-            "y": data["rho3alt"].xi,  # type: ignore
-            "yerr": np.sqrt(data["rho3alt"].varxi),  # type: ignore
-            "xerr": None,
-        }
-        fig = self.rhoPlots["rho3alt"](subdata, **kwargs)  # type: ignore[misc]
-        if plotInfo is not None:
-            fig_dict["rho3alt"] = addPlotInfo(fig, plotInfo)
 
         return fig_dict

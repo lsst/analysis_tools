@@ -26,6 +26,7 @@ import lsst.utils.tests
 import numpy as np
 from lsst.analysis.tools.atools import (
     MagnitudeTool,
+    MatchedRefCoaddDiffColorTool,
     MatchedRefCoaddDiffMagTool,
     MatchedRefCoaddDiffPositionTool,
     MatchedRefCoaddDiffTool,
@@ -37,7 +38,14 @@ class TestDiffMatched(TestCase):
         super().setUp()
         self.band_default = "analysisTools"
 
-    def _testMatchedRefCoaddMetricDerived(self, type_metric: type[MatchedRefCoaddDiffTool], **kwargs):
+    def _testMatchedRefCoaddMetricDerived(
+        self,
+        type_metric: type[MatchedRefCoaddDiffTool],
+        suffixes_configure: list[str] | None = None,
+        **kwargs,
+    ):
+        if suffixes_configure is None:
+            suffixes_configure = [""]
         plotInfo = {key: "" for key in ("plotName", "run", "tableName")}
         plotInfo["bands"] = []
         for compute_chi in (False, True):
@@ -47,7 +55,8 @@ class TestDiffMatched(TestCase):
 
             keys = set(k[0] for k in tester.getInputSchema())
             self.assertGreater(len(keys), 0)
-            self.assertGreater(len(list(tester.configureMetrics())), 0)
+            for suffix in suffixes_configure:
+                self.assertGreater(len(list(tester.configureMetrics(attr_suffix=suffix))), 0)
             data = {}
             n_data = 10
             for key in keys:
@@ -90,11 +99,26 @@ class TestDiffMatched(TestCase):
         # There's no metric or plot so it just returns an empty dict
         self.assertEqual(len(tester(data)), 0)
 
-    def testMatchedRefCoaddDiffMagMetric(self):
+    def testMatchedRefCoaddDiffMag(self):
         self._testMatchedRefCoaddMetricDerived(
             MatchedRefCoaddDiffMagTool,
             fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
             mag_y="cmodel",
+            name_prefix="",
+            unit="",
+        )
+
+    def testMatchedRefCoaddDiffColor(self):
+        self._testMatchedRefCoaddMetricDerived(
+            MatchedRefCoaddDiffColorTool,
+            suffixes_configure=["_0", "_1"],
+            fluxes={"cmodel": MagnitudeTool.fluxes_default.cmodel_err},
+            mag_y1="cmodel_err",
+            mag_y2="cmodel_err",
+            bands={
+                "g": "i",
+                "u": "z",
+            },
             name_prefix="",
             unit="",
         )

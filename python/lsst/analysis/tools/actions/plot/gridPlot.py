@@ -86,12 +86,25 @@ class GridPlot(PlotAction):
         doc="String arguments passed into fig.suptitle() defining the figure title.",
         optional=True,
     )
+    xlabel = Field[str](
+        doc="String argument passed into fig.supxlabel() defining the figure x label.",
+        optional=True,
+    )
+    ylabel = Field[str](
+        doc="String argument passed into fig.supylabel() defining the figure y label.",
+        optional=True,
+    )
 
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         """Plot data."""
         fig = plt.figure(figsize=self.figsize, dpi=self.dpi)
         if self.suptitle is not None:
             fig.suptitle(**self.suptitle)
+        if self.xlabel is not None:
+            fig.supxlabel(self.xlabel)
+        if self.ylabel is not None:
+            fig.supylabel(self.ylabel)
+
         gs = GridSpec(self.numRows, self.numCols, figure=fig)
 
         for row in range(self.numRows):
@@ -109,11 +122,16 @@ class GridPlot(PlotAction):
                         newData = {}
                         if val not in key:
                             continue
-                        namedKey = self.panels[index].plotElement.valsKey
-                        newData[namedKey] = data[key]
                         if xList is not None:
                             namedKey = self.panels[index].plotElement.xKey
                             newData[namedKey] = data[xList[i]]
+                            if key in xList:
+                                # if this key is in the xList, we need
+                                # to not plot it.
+                                continue
+
+                        namedKey = self.panels[index].plotElement.valsKey
+                        newData[namedKey] = data[key]
 
                         _ = self.panels[index].plotElement(data=newData, ax=ax, **kwargs)
 
@@ -121,7 +139,6 @@ class GridPlot(PlotAction):
                     ax.set_title(**self.panels[index].title, y=self.panels[index].titleY)
 
         plt.tight_layout()
-        fig.show()
         return fig
 
     def validate(self):

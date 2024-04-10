@@ -9,6 +9,7 @@ tasks:
       atools.skyFluxVisitStatisticMetric.applyContext: VisitContext
       atools.skySourceSky: SkySourceSkyPlot
       atools.skySourceFlux: SkySourceHistPlot
+      atools.relativeSizeResidualPlot: RelativeSizeResidualPlot
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

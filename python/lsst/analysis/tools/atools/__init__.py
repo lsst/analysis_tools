@@ -1,9 +1,10 @@
 from .amplifierCorrelation import *
 from .astrometricRepeatability import *
+
 from .calexpMetrics import *
+from .calibQuantityProfile import *
 from .calibration import *
 from .coveragePlots import *
-from .cpVerifyQuantityProfile import *
 from .deblenderMetric import *
 from .deltaSkyCorr import *
 from .diaSolarSystemObjectMetrics import *

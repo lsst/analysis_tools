@@ -1,0 +1,284 @@
+description: |
+  Standard plots to assess validity of calibration products.
+tasks:
+  analyzeBiasCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpBiasCore
+      connections.data: verifyBiasResults
+
+      atools.biasReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasReadNoisePerAmp.produce.plot.addHistogram: true
+      atools.biasReadNoisePerAmp.quantityKey: BIAS_READ_NOISE
+      atools.biasReadNoisePerAmp.unit: ADU
+
+      atools.biasMeanPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasMeanPerAmp.produce.plot.addHistogram: true
+      atools.biasMeanPerAmp.quantityKey: BIAS_MEAN
+      atools.biasMeanPerAmp.unit: ADU
+
+      atools.biasNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasNoisePerAmp.produce.plot.addHistogram: true
+      atools.biasNoisePerAmp.quantityKey: BIAS_NOISE
+      atools.biasNoisePerAmp.unit: ADU
+
+      atools.biasCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.biasCrNoisePerAmp.produce.plot.addHistogram: true
+      atools.biasCrNoisePerAmp.quantityKey: BIAS_CR_NOISE
+      atools.biasCrNoisePerAmp.unit: ADU
+
+      atools.biasCornerMeanPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasCornerMeanPerAmp.produce.plot.addHistogram: true
+      atools.biasCornerMeanPerAmp.quantityKey: BIAS_AMP_CORNER
+      atools.biasCornerMeanPerAmp.unit: ADU
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeBiasDetCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibDetectorTask
+    config:
+      connections.outputName: cpBiasDetCore
+      connections.data: verifyBiasDetResults
+
+      atools.biasMeanByDate: CalibAmpScatterTool
+      atools.biasMeanByDate.prep.panelKey: amplifier
+      atools.biasMeanByDate.prep.dataKey: mjd
+      atools.biasMeanByDate.prep.quantityKey: BIAS_MEAN
+      atools.biasMeanByDate.produce.plot.xlabel: "MJD"
+      atools.biasMeanByDate.produce.plot.ylabel: "Residual bias mean (ADU)"
+
+      atools.biasStdByDate: CalibAmpScatterTool
+      atools.biasStdByDate.prep.panelKey: amplifier
+      atools.biasStdByDate.prep.dataKey: mjd
+      atools.biasStdByDate.prep.quantityKey: BIAS_NOISE
+      atools.biasStdByDate.produce.plot.xlabel: "MJD"
+      atools.biasStdByDate.produce.plot.ylabel: "Residual bias stdev (ADU)"
+
+      atools.biasROCornerByDate: CalibAmpScatterTool
+      atools.biasROCornerByDate.prep.panelKey: amplifier
+      atools.biasROCornerByDate.prep.dataKey: mjd
+      atools.biasROCornerByDate.prep.quantityKey: BIAS_AMP_CORNER
+      atools.biasROCornerByDate.produce.plot.xlabel: "MJD"
+      atools.biasROCornerByDate.produce.plot.ylabel: "Residual bias mean at RO corner (ADU)"
+
+      atools.biasTestsByDate: CalibAmpScatterTool
+      atools.biasTestsByDate.prep.panelKey: amplifier
+      atools.biasTestsByDate.prep.dataKey: mjd
+      atools.biasTestsByDate.prep.quantityKey: BIAS_VERIFY_MEAN,BIAS_VERIFY_NOISE,BIAS_VERIFY_CR_NOISE,BIAS_VERIFY_READ_NOISE_CONSISTENT
+      atools.biasTestsByDate.produce.plot.xlabel: "MJD"
+      atools.biasTestsByDate.produce.plot.ylabel: "Bias Test Passing"
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeBiasCorrelations:
+    class: lsst.analysis.tools.tasks.ampToAmpCorrelationAnalysis.AmpToAmpCorrelationAnalysisTask
+    config:
+      connections.inputDataType: verifyBiasMatrix
+      connections.outputName: cpBiasCorrelations
+
+      atools.imageCorrelationPlot: ImageCorrelationPlot
+      atools.overscanCorrelationPlot: OverscanCorrelationPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.actions.plot.elements import *
+
+  analyzeDarkCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpDarkCore
+      connections.data: verifyDarkResults
+      atools.darkReadNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkReadNoisePerAmp.quantityKey: DARK_READ_NOISE
+      atools.darkReadNoisePerAmp.unit: ADU
+
+      atools.darkMeanPerAmp: CalibStatisticFocalPlanePlot
+      atools.darkMeanPerAmp.quantityKey: DARK_MEAN
+      atools.darkMeanPerAmp.unit: ADU
+
+      atools.darkNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkNoisePerAmp.quantityKey: DARK_NOISE
+      atools.darkNoisePerAmp.unit: ADU
+
+      atools.darkCrNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.darkCrNoisePerAmp.quantityKey: DARK_CR_NOISE
+      atools.darkCrNoisePerAmp.unit: ADU
+
+      atools.darkMedianPerAmp: CalibStatisticFocalPlanePlot
+      atools.darkMedianPerAmp.quantityKey: DARK_DARK_DIST_50.0_PCT
+      atools.darkMedianPerAmp.unit: ADU
+
+      atools.dark95pPerAmp: CalibStatisticFocalPlanePlot
+      atools.dark95pPerAmp.quantityKey: DARK_DARK_DIST_95.0_PCT
+      atools.dark95pPerAmp.unit: ADU
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeDarkDetCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibDetectorTask
+    config:
+      connections.outputName: cpDarkDetCore
+      connections.data: verifyDarkDetResults
+
+      atools.darkMeanByDate: CalibAmpScatterTool
+      atools.darkMeanByDate.prep.panelKey: amplifier
+      atools.darkMeanByDate.prep.dataKey: mjd
+      atools.darkMeanByDate.prep.quantityKey: DARK_MEAN
+      atools.darkMeanByDate.produce.plot.xlabel: "MJD"
+      atools.darkMeanByDate.produce.plot.ylabel: "Residual dark mean (ADU)"
+
+      atools.darkStdByDate: CalibAmpScatterTool
+      atools.darkStdByDate.prep.panelKey: amplifier
+      atools.darkStdByDate.prep.dataKey: mjd
+      atools.darkStdByDate.prep.quantityKey: DARK_NOISE
+      atools.darkStdByDate.produce.plot.xlabel: "MJD"
+      atools.darkStdByDate.produce.plot.ylabel: "Residual dark std (ADU)"
+
+      atools.darkTestsByDate: CalibAmpScatterTool
+      atools.darkTestsByDate.prep.panelKey: amplifier
+      atools.biasROCornderByDate.prep.dataKey: mjd
+      atools.darkTestsByDate.prep.quantityKey: DARK_VERIFY_MEAN,DARK_VERIFY_NOISE,DARK_VERIFY_CR_NOISE,DARK_VERIFY_READ_NOISE_CONSISTENT
+      atools.darkTestsByDate.produce.plot.xlabel: "MJD"
+      atools.darkTestsByDate.produce.plot.ylabel: "Dark Test Passing"
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeFlatDetCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibDetectorTaskByFilter
+    config:
+      connections.outputName: cpFlatDetCore
+      connections.data: verifyFlatDetResults
+
+      atools.flatTestsByDate: CalibAmpScatterTool
+      atools.flatTestsByDate.prep.panelKey: amplifier
+      atools.biasROCornderByDate.prep.dataKey: mjd
+      atools.flatTestsByDate.prep.quantityKey: FLAT_VERIFY_NOISE,FLAT_DET_VERIFY_SCATTER
+      atools.flatTestsByDate.produce.plot.xlabel: "MJD"
+      atools.flatTestsByDate.produce.plot.ylabel: "Test Pass Results"
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzePtcCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpPtcCore
+
+      atools.ptcGainPerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcGainPerAmp.produce.plot.addHistogram: true
+      atools.ptcGainPerAmp.produce.plot.zAxisLabel: "PTC Gain (e-/ADU)"
+      atools.ptcGainPerAmp.quantityKey: PTC_PTC_GAIN
+      atools.ptcGainPerAmp.unit: electron
+
+      atools.ptcNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcNoisePerAmp.produce.plot.addHistogram: true
+      atools.ptcNoisePerAmp.produce.plot.zAxisLabel: "PTC Read Noise (ADU^2)"
+      atools.ptcNoisePerAmp.quantityKey: PTC_PTC_NOISE
+      atools.ptcNoisePerAmp.unit: ADU
+
+      atools.ptcA00PerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcA00PerAmp.produce.plot.addHistogram: true
+      atools.ptcA00PerAmp.produce.plot.zAxisLabel: "PTC BFE A00 (1/e-)"
+      atools.ptcA00PerAmp.quantityKey: PTC_PTC_BFE_A00
+      atools.ptcA00PerAmp.unit: "---"
+
+      atools.ptcTurnoffPerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcTurnoffPerAmp.produce.plot.addHistogram: true
+      atools.ptcTurnoffPerAmp.produce.plot.zAxisLabel: "PTC Turnoff (ADU)"
+      atools.ptcTurnoffPerAmp.quantityKey: PTC_PTC_TURNOFF
+      atools.ptcTurnoffPerAmp.unit: ADU
+
+      atools.ptcMaxPerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcMaxPerAmp.produce.plot.addHistogram: true
+      atools.ptcMaxPerAmp.produce.plot.zAxisLabel: "PTC Max Raw Mean Flux (ADU)"
+      atools.ptcMaxPerAmp.quantityKey: PTC_PTC_MAX_RAW_MEANS
+      atools.ptcMaxPerAmp.unit: ADU
+
+      atools.ptcRowMeanVarianceSlopePerAmp: CalibStatisticFocalPlanePlot
+      atools.ptcRowMeanVarianceSlopePerAmp.produce.plot.addHistogram: true
+      atools.ptcRowMeanVarianceSlopePerAmp.produce.plot.zAxisLabel: "PTC Row-Mean-Variance Slope (e-)"
+      atools.ptcRowMeanVarianceSlopePerAmp.quantityKey: PTC_PTC_ROW_MEAN_VARIANCE_SLOPE
+      atools.ptcRowMeanVarianceSlopePerAmp.unit: electron
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzePtcDetCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibDetectorTask
+    config:
+      connections.outputName: cpPtcDetCore
+      connections.data: verifyPtcDetResults
+
+      atools.ptcPlot: CalibAmpScatterTool
+      atools.ptcPlot.prep.panelKey: amplifier
+      atools.ptcPlot.prep.dataKey: PTC_PTC_RAW_MEANS
+      atools.ptcPlot.prep.quantityKey: PTC_PTC_RAW_VARIANCE
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeDefectCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpDefectCore
+      connections.data: verifyDefectResults
+
+      # TODO: DM-xyz Sort out defects
+      atools.defectsHotPixels: CalibStatisticFocalPlanePlot
+      atools.defectsHotPixels.produce.plot.addHistogram: true
+      atools.defectsHotPixels.produce.plot.zAxisLabel: "Number of Hot Pixels"
+      atools.defectsHotPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_HOT
+      atools.defectsHotPixels.unit: "---"
+
+      # atools.defectsColdPixels: CalibStatisticFocalPlanePlot
+      # atools.defectsColdPixels.produce.plot.addHistogram: true
+      # atools.defectsColdPixels.produce.plot.zAxisLabel: "Number of Cold Pixels"
+      # atools.defectsColdPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_COLD
+      # atools.defectsColdPixels.unit: "---"
+
+      # atools.defectsBadColumns: CalibStatisticFocalPlanePlot
+      # atools.defectsBadColumns.produce.plot.addHistogram: true
+      # atools.defectsBadColumns.produce.plot.zAxisLabel: "Number of Hot Pixels"
+      # atools.defectsBadColumns.quantityKey: DEFECTS_DEFECTS_DIST_N_BAD_COLUMNS
+      # atools.defectsBadColumns.unit: "---"
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  # # analyzeLinearityCore:
+  # #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+  # #   # TODO: DM-xyz Sort out linearity
+  # #   # * linearity curve per amp
+  # #   # * linearity residual per amp
+
+  # # analyzeCrosstalkCore:
+  # #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+  # #   # TODO: DM-xyz Sort out crosstalk
+
+subsets:
+  biasMetrics:
+    subset:
+      - analyzeBiasCore
+      - analyzeBiasDetCore
+      - analyzeBiasCorrelations
+  darkMetrics:
+    subset:
+      - analyzeDarkCore
+      - analyzeDarkDetCore
+  flatMetrics:
+    subset:
+      - analyzeFlatDetCore
+  defectMetrics:
+    subset:
+      - analyzeDefectCore
+  ptcMetrics:
+    subset:
+      - analyzePtcCore
+      - analyzePtcDetCore
+#   linearityMetrics:
+#     subset:
+#       - analyzeLinearityCore
+#   crosstalkMetrics:
+#     subset:
+#       - analyzeCrosstalkCore
+# #      - analyzeCrosstalkCoeffs

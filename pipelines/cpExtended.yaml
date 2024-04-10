@@ -1,0 +1,163 @@
+description: |
+  Extended plots to assess validity of calibration products.
+tasks:
+  analyzeBiasExtended:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpBiasExtended
+      connections.data: verifyBiasResults
+
+      atools.biasMinimumPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasMinimumPerAmp.produce.plot.addHistogram: true
+      atools.biasMinimumPerAmp.quantityKey: BIAS_BIAS_DIST_0.0_PCT
+      atools.biasMinimumPerAmp.unit: ADU
+
+      atools.biasMaximumPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasMaximumPerAmp.produce.plot.addHistogram: true
+      atools.biasMaximumPerAmp.quantityKey: BIAS_BIAS_DIST_100.0_PCT
+      atools.biasMaximumPerAmp.unit: ADU
+
+      atools.biasShiftCountPerAmp: CalibStatisticFocalPlanePlot
+      atools.biasShiftCountPerAmp.produce.plot.addHistogram: true
+      atools.biasShiftCountPerAmp.quantityKey: BIAS_BIAS_SHIFT_COUNT
+      atools.biasShiftCountPerAmp.unit: count
+
+      atools.ampBiasSerialProfileScatter: CalibQuantityAmpProfileScatterTool
+      atools.ampBiasSerialProfileScatter.prep.quantityKey: BIAS_SERIAL_PROF
+      atools.ampBiasSerialProfileScatter.produce.plot.suptitle:
+        t: "Bias Serial Profile"
+      atools.ampBiasSerialProfileHist: CalibQuantityAmpProfileHistTool
+      atools.ampBiasSerialProfileHist.prep.quantityKey: BIAS_SERIAL_PROF
+      atools.ampBiasSerialProfileHist.produce.plot.suptitle:
+        t: "Bias Serial Distribution"
+
+      atools.ampBiasParallelProfileScatter: CalibQuantityAmpProfileScatterTool
+      atools.ampBiasParallelProfileScatter.prep.quantityKey: BIAS_PARALLEL_PROF
+      atools.ampBiasParallelProfileScatter.produce.plot.suptitle:
+        t: "Bias Parallel Profile"
+      atools.ampBiasParallelProfileHist: CalibQuantityAmpProfileHistTool
+      atools.ampBiasParallelProfileHist.prep.quantityKey: BIAS_PARALLEL_PROF
+      atools.ampBiasParallelProfileHist.produce.plot.suptitle:
+        t: "Bias Parallel Distribution"
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeBiasCorrExtended:
+    config:
+      connections.inputDataType: verifyBiasMatrix
+      connections.outputName: cpBiasCorrelations
+      atools.imageCorrelationPlot: ImageCorrelationPlot
+      atools.overscanCorrelationPlot: OverscanCorrelationPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.actions.plot.elements import *
+
+  analyzeDarkExtended:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+    config:
+      connections.outputName: cpDarkExtended
+      connections.data: verifyDarkResults
+
+      atools.darkMinimumPerAmp: CalibStatisticFocalPlanePlot
+      atools.darkMinimumPerAmp.produce.plot.addHistogram: true
+      atools.darkMinimumPerAmp.quantityKey: DARK_DARK_DIST_0.0_PCT
+      atools.darkMinimumPerAmp.unit: ADU
+
+      atools.darkMaximumPerAmp: CalibStatisticFocalPlanePlot
+      atools.darkMaximumPerAmp.produce.plot.addHistogram: true
+      atools.darkMaximumPerAmp.quantityKey: DARK_DARK_DIST_100.0_PCT
+      atools.darkMaximumPerAmp.unit: ADU
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  analyzeFlatExtended:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTaskByFilter
+    config:
+      connections.outputName: cpFlatExtended
+      connections.data: verifyFlatResults
+
+      atools.flatMinimumPerAmp: CalibStatisticFocalPlanePlot
+      atools.flatMinimumPerAmp.produce.plot.addHistogram: true
+      atools.flatMinimumPerAmp.quantityKey: FLAT_FLAT_DIST_0.0_PCT
+      atools.flatMinimumPerAmp.unit: ADU
+
+      atools.flatMaximumPerAmp: CalibStatisticFocalPlanePlot
+      atools.flatMaximumPerAmp.produce.plot.addHistogram: true
+      atools.flatMaximumPerAmp.quantityKey: FLAT_FLAT_DIST_100.0_PCT
+      atools.flatMaximumPerAmp.unit: ADU
+
+      # TODO: DM-xyz Sort out divisadero tearing
+      #      atools.flatDivisaderoTearingMax: CalibStatisticFocalPlanePlot
+      #      atools.flatDivisaderoTearingMax.produce.plot.addHistogram: true
+      #      atools.flatDivisaderoTearingMax.quantityKey: FLAT_DIVISADERO_TEARING_MAX
+
+      # atools.flatDivisaderoProfile: CalibDivisderoScatterTool
+      # atools.flatDivisaderoProfile.prep.panelKey: FLAT_DIVISADERO_BANK
+      # atools.flatDivisaderoProfile.prep.dataKey: FLAT_DIVISADERO_COLUMN
+      # atools.flatDivisaderoProfile.prep.quantityKey: FLAT_DIVISADERO_TEARING
+      # atools.flatDivisaderoProfile.produce.plot.xlabel: "Detector Column"
+      # atools.flatDivisaderoProfile.produce.plot.ylabel: "Divisadero Tearing"
+      python: |
+        from lsst.analysis.tools.atools import *
+
+  # analyzeDefectExtended:
+  #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+
+  # analyzePtcExtended:
+  #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+  #   config:
+  #     connections.output: cpPtcExtended
+  #     connections.data: verifyPtcResults
+
+  #     # TODO: DM-xyz Sort out PTC
+  #     #      atools.ptcCovariances: CalibPtcCovarScatterTool
+  #     # * row means vs variance set by detector
+
+  # analyzeLinearityExtended:
+  #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+  #   # TODO: DM-xyz Sort out linearity
+  #   # * linearity turnoff
+  #   # * linearity max frac deviation
+
+  # analyzeCrosstalkDetExtended:
+  #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+
+  # analyzeCtiDetExtended:
+  #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
+  #   # TODO: DM-xyz Sort out CTI
+  #   # * Serial CTI profile per amp
+  #   # * Parallel CTI profile per amp
+
+subsets:
+  biasMetricsExtended:
+    subset:
+      - analyzeBiasExtended
+      - analyzeBiasDetExtended
+  darkMetricsExtended:
+    subset:
+      - analyzeDarkExtended
+      - analyzeDarkDetExtended
+  flatMetricsExtended:
+    subset:
+      - analyzeFlatExtended
+      - analyzeFlatDetExtended
+#   defectMetricsExtended:
+#     subset:
+# #      - analyzeDefectExtended
+#       - analyzeDefectDetExtended
+#   ptcMetricsExtended:
+#     subset:
+#       - analyzePtcExtended
+#       - analyzePtcDetExtended
+#   linearityMetricsExtended:
+#     subset:
+#       - analyzeLinearityExtended
+#       - analyzeLinearityDetExtended
+#   ctiMetricsExtended:
+#     subset:
+#       - analyzeCtiExtended
+#       - analyzeCtiDetExtended
+#   crosstalkMetricsExtended:
+#     subset:
+#       - analyzeCrosstalkExtended
+#       - analyzeCrosstalkDetExtended

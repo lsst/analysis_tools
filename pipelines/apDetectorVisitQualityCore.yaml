@@ -108,7 +108,7 @@ tasks:
   initialPviCore:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
-      atools.calexpSummaryMetrics: CalexpSummaryMetrics
+      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       connections.data: initial_pvi.summaryStats
       connections.outputName: initialPviSummary
       python: from lsst.analysis.tools.atools import *

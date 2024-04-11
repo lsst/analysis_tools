@@ -105,6 +105,13 @@ tasks:
       atools.interpolatedTemplatePsfSize.produce.plot.zAxisLabel: pixels
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
+  initialPviCore:
+    class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
+    config:
+      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
+      connections.data: initial_pvi.summaryStats
+      connections.outputName: initialPviSummary
+      python: from lsst.analysis.tools.atools import *
 subsets:
   promptQaMetrics:
     subset:
@@ -112,5 +119,6 @@ subsets:
       - analyzeTrailedDiaSrcCore
       - diffimTaskCore
       - diffimTaskPlots
+      - initialPviCore
     description: >
       QA metrics to run in Prompt Processing.

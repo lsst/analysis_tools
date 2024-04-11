@@ -28,12 +28,14 @@ __all__ = (
     "E1Diff",
     "E2Diff",
     "RhoStatistics",
+    "RelativeSizeResidualPlot",
 )
 
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ..actions.keyedData import KeyedScalars
+from ..actions.plot import FocalPlanePlot
 from ..actions.plot.rhoStatisticsPlot import RhoStatisticsPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
@@ -50,6 +52,7 @@ from ..actions.vector import (
     SnSelector,
     StarSelector,
     VectorSelector,
+    VisitPlotFlagSelector,
 )
 from ..interfaces import AnalysisTool, KeyedData, VectorAction
 
@@ -197,3 +200,25 @@ class RhoStatistics(AnalysisTool):
         self.process.calculateActions.rho.treecorr.metric = "Arc"
 
         self.produce.plot = RhoStatisticsPlot()
+
+
+class RelativeSizeResidualPlot(AnalysisTool):
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "extendedness"
+        self.process.buildActions.x = LoadVector()
+        self.process.buildActions.x.vectorKey = "x"
+        self.process.buildActions.y = LoadVector()
+        self.process.buildActions.y.vectorKey = "y"
+        self.process.buildActions.z = FractionalDifference(
+            actionA=CalcMomentSize(colXx="ixx", colYy="iyy", colXy="ixy", sizeType="trace"),
+            actionB=CalcMomentSize(colXx="ixxPSF", colYy="iyyPSF", colXy="ixyPSF", sizeType="trace"),
+        )
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+        self.produce.plot = FocalPlanePlot()
+        self.produce.plot.zAxisLabel = "Residuals"
+        self.process.buildActions.statMask = SnSelector()
+        self.process.buildActions.statMask.threshold = 20
+        self.process.buildActions.statMask.fluxType = "psfFlux"

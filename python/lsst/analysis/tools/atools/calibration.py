@@ -20,9 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "CalibStatisticFocalPlanePlot",
-)
+__all__ = ("CalibStatisticFocalPlanePlot",)
 
 from lsst.pex.config import Field
 
@@ -75,6 +73,6 @@ class CalibStatisticFocalPlanePlot(CalibrationTool):
     def finalize(self):
         self.process.buildActions.z.vectorKey = self.quantityKey
         self.process.calculateActions.median.vectorKey = self.quantityKey
-        self.produce.metric.units = {'median': 'adu'}
+        self.produce.metric.units = {"median": "adu"}
         zAxislabel = f"{self.produce.plot.statistic} of {self.quantityKey} ({self.unit})"
         self.produce.plot.zAxisLabel = zAxislabel.capitalize()

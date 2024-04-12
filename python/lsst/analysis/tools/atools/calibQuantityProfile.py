@@ -89,7 +89,6 @@ class SingleValueRepacker(KeyedDataAction):
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-
         repackedData = {}
         uniquePanelKeys = list(set(data[self.panelKey]))
 
@@ -216,18 +215,42 @@ class CalibAmpScatterTool(CalibQuantityBaseTool):
 
         # Values to use for x-axis data
         self.produce.plot.xDataKeys = {
-            0: "C00_x", 1: "C01_x", 2: "C02_x", 3: "C03_x",
-            4: "C04_x", 5: "C05_x", 6: "C06_x", 7: "C07_x",
-            8: "C10_x", 9: "C11_x", 10: "C12_x", 11: "C13_x",
-            12: "C14_x", 13: "C15_x", 14: "C16_x", 15: "C17_x",
+            0: "C00_x",
+            1: "C01_x",
+            2: "C02_x",
+            3: "C03_x",
+            4: "C04_x",
+            5: "C05_x",
+            6: "C06_x",
+            7: "C07_x",
+            8: "C10_x",
+            9: "C11_x",
+            10: "C12_x",
+            11: "C13_x",
+            12: "C14_x",
+            13: "C15_x",
+            14: "C16_x",
+            15: "C17_x",
         }
 
         # Values to group by to distinguish between data in differing panels
         self.produce.plot.valsGroupBy = {
-            0: "C00", 1: "C01", 2: "C02", 3: "C03",
-            4: "C04", 5: "C05", 6: "C06", 7: "C07",
-            8: "C10", 9: "C11", 10: "C12", 11: "C13",
-            12: "C14", 13: "C15", 14: "C16", 15: "C17",
+            0: "C00",
+            1: "C01",
+            2: "C02",
+            3: "C03",
+            4: "C04",
+            5: "C05",
+            6: "C06",
+            7: "C07",
+            8: "C10",
+            9: "C11",
+            10: "C12",
+            11: "C13",
+            12: "C14",
+            13: "C15",
+            14: "C16",
+            15: "C17",
         }
 
         self.prep.panelKey = "amplifier"
@@ -262,10 +285,7 @@ class CalibDivisaderoScatterTool(CalibQuantityBaseTool):
         self.produce.plot.numCols = 1
 
         # Values to group by to distinguish between data in differing panels
-        self.produce.plot.valsGroupBy = {
-            0: "bank1",
-            1: "bank0"
-        }
+        self.produce.plot.valsGroupBy = {0: "bank1", 1: "bank0"}
 
         self.produce.plot.xDataKeys = {
             0: "bank1_x",
@@ -309,7 +329,7 @@ class CalibPtcCovarScatterTool(CalibQuantityBaseTool):
             2: "PTC_COV_01",
             3: "PTC_COV_02",
             4: "PTC_COV_11",
-            5: None
+            5: None,
         }
 
         self.produce.plot.xDataKeys = {
@@ -318,7 +338,7 @@ class CalibPtcCovarScatterTool(CalibQuantityBaseTool):
             2: "PTC_PTC_RAW_MEANS",
             3: "PTC_PTC_RAW_MEANS",
             4: "PTC_PTC_RAW_MEANS",
-            5: None
+            5: None,
         }
         self.prep.panelKey = "amplifier"
         self.prep.dataKey = "mjd"

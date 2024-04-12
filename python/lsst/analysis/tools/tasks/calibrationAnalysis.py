@@ -58,8 +58,7 @@ class VerifyCalibAnalysisConnections(
     )
 
 
-class VerifyCalibAnalysisConfig(AnalysisBaseConfig,
-                                pipelineConnections=VerifyCalibAnalysisConnections):
+class VerifyCalibAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyCalibAnalysisConnections):
     pass
 
 
@@ -90,8 +89,9 @@ class VerifyCalibAnalysisConnectionsByFilter(
     )
 
 
-class VerifyCalibAnalysisConfigByFilter(AnalysisBaseConfig,
-                                        pipelineConnections=VerifyCalibAnalysisConnectionsByFilter):
+class VerifyCalibAnalysisConfigByFilter(
+    AnalysisBaseConfig, pipelineConnections=VerifyCalibAnalysisConnectionsByFilter
+):
     pass
 
 
@@ -124,8 +124,7 @@ class VerifyCalibDetectorConnections(
     )
 
 
-class VerifyCalibDetectorConfig(AnalysisBaseConfig,
-                                pipelineConnections=VerifyCalibDetectorConnections):
+class VerifyCalibDetectorConfig(AnalysisBaseConfig, pipelineConnections=VerifyCalibDetectorConnections):
     pass
 
 
@@ -158,8 +157,9 @@ class VerifyCalibDetectorConnectionsByFilter(
     )
 
 
-class VerifyCalibDetectorConfigByFilter(AnalysisBaseConfig,
-                                        pipelineConnections=VerifyCalibDetectorConnectionsByFilter):
+class VerifyCalibDetectorConfigByFilter(
+    AnalysisBaseConfig, pipelineConnections=VerifyCalibDetectorConnectionsByFilter
+):
     pass
 
 

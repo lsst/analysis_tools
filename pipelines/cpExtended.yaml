@@ -22,6 +22,7 @@ tasks:
       atools.biasShiftCountPerAmp.quantityKey: BIAS_BIAS_SHIFT_COUNT
       atools.biasShiftCountPerAmp.unit: count
 
+      # TODO: DM-43890  These work, but need improvements.
       atools.ampBiasSerialProfileScatter: CalibQuantityAmpProfileScatterTool
       atools.ampBiasSerialProfileScatter.prep.quantityKey: BIAS_SERIAL_PROF
       atools.ampBiasSerialProfileScatter.produce.plot.suptitle:
@@ -42,15 +43,17 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
 
-  analyzeBiasCorrExtended:
-    config:
-      connections.inputDataType: verifyBiasMatrix
-      connections.outputName: cpBiasCorrelations
-      atools.imageCorrelationPlot: ImageCorrelationPlot
-      atools.overscanCorrelationPlot: OverscanCorrelationPlot
-      python: |
-        from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.actions.plot.elements import *
+  # TODO: DM-43877
+  # analyzeBiasCorrExtended:
+  #   class: lsst.analysis.tools.tasks.ampToAmpCorrelationAnalysis.AmpToAmpCorrelationAnalysisTask
+  #   config:
+  #     connections.inputDataType: verifyBiasMatrix
+  #     connections.outputName: cpBiasCorrelations
+  #     atools.imageCorrelationPlot: ImageCorrelationPlot
+  #     atools.overscanCorrelationPlot: OverscanCorrelationPlot
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  #       from lsst.analysis.tools.actions.plot.elements import *
 
   analyzeDarkExtended:
     class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
@@ -86,11 +89,10 @@ tasks:
       atools.flatMaximumPerAmp.quantityKey: FLAT_FLAT_DIST_100.0_PCT
       atools.flatMaximumPerAmp.unit: ADU
 
-      # TODO: DM-xyz Sort out divisadero tearing
+      # TODO: DM-43886 Sort out divisadero tearing
       #      atools.flatDivisaderoTearingMax: CalibStatisticFocalPlanePlot
       #      atools.flatDivisaderoTearingMax.produce.plot.addHistogram: true
       #      atools.flatDivisaderoTearingMax.quantityKey: FLAT_DIVISADERO_TEARING_MAX
-
       # atools.flatDivisaderoProfile: CalibDivisderoScatterTool
       # atools.flatDivisaderoProfile.prep.panelKey: FLAT_DIVISADERO_BANK
       # atools.flatDivisaderoProfile.prep.dataKey: FLAT_DIVISADERO_COLUMN
@@ -100,31 +102,32 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
 
+  # TODO: DM-43880
   # analyzeDefectExtended:
   #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
 
+  # TODO: DM-43887
   # analyzePtcExtended:
   #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
   #   config:
   #     connections.output: cpPtcExtended
   #     connections.data: verifyPtcResults
-
-  #     # TODO: DM-xyz Sort out PTC
   #     #      atools.ptcCovariances: CalibPtcCovarScatterTool
   #     # * row means vs variance set by detector
 
+  # TODO: DM-43881
   # analyzeLinearityExtended:
   #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
-  #   # TODO: DM-xyz Sort out linearity
   #   # * linearity turnoff
   #   # * linearity max frac deviation
 
+  # TODO: DM-43882
   # analyzeCrosstalkDetExtended:
   #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
 
+  # TODO: DM-43883
   # analyzeCtiDetExtended:
   #   class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
-  #   # TODO: DM-xyz Sort out CTI
   #   # * Serial CTI profile per amp
   #   # * Parallel CTI profile per amp
 
@@ -132,18 +135,16 @@ subsets:
   biasMetricsExtended:
     subset:
       - analyzeBiasExtended
-      - analyzeBiasDetExtended
+      - analyzeBiasCorrExtended
   darkMetricsExtended:
     subset:
       - analyzeDarkExtended
-      - analyzeDarkDetExtended
   flatMetricsExtended:
     subset:
       - analyzeFlatExtended
-      - analyzeFlatDetExtended
 #   defectMetricsExtended:
 #     subset:
-# #      - analyzeDefectExtended
+#       - analyzeDefectExtended
 #       - analyzeDefectDetExtended
 #   ptcMetricsExtended:
 #     subset:

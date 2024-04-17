@@ -66,13 +66,17 @@ class InterpolateDetectorMetricPlot(PlotAction):
         X = np.linspace(-self.gridMargin, self.xCoordSize + self.gridMargin, self.nGridPoints)
         Y = np.linspace(-self.gridMargin, self.yCoordSize + self.gridMargin, self.nGridPoints)
         meshgridX, meshgridY = np.meshgrid(X, Y)  # 2D grid for interpolation
+        dataSelector = np.isfinite(data["metricValues"])
+        dataX = data["x"][dataSelector]
+        dataY = data["y"][dataSelector]
+        dataZ = data["metricValues"][dataSelector]
 
-        interp = CloughTocher2DInterpolator(list(zip(data["x"], data["y"])), data["metricValues"])
+        interp = CloughTocher2DInterpolator(list(zip(dataX, dataY)), dataZ)
         Z = interp(meshgridX, meshgridY)
 
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
         pc = ax.pcolormesh(X, Y, Z, shading="auto")
-        ax.scatter(data["x"], data["y"], s=5, c="black")
+        ax.scatter(dataX, dataY, s=5, c="black")
         cbar = fig.colorbar(pc)
         cbar.set_label(self.zAxisLabel, rotation=270)
         ax.set_xlabel(self.xAxisLabel)

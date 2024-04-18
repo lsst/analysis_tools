@@ -454,11 +454,19 @@ class CalcRhoStatistics(KeyedDataAction):
         for rhoIndex in range(1, 6):
             _LOG.info("Calculating rho-%d", rhoIndex)
             rhoStats[f"rho{rhoIndex}"] = self._corrSpin2(  # type: ignore[index]
-                ra, dec, *(args[rhoIndex]), **treecorrKwargs
+                ra,
+                dec,
+                *(args[rhoIndex]),
+                treecorrKwargs=treecorrKwargs,
             )
 
         _LOG.info("Calculating rho3alt")
-        rhoStats["rho3alt"] = self._corrSpin0(ra, dec, *(args[0]), **treecorrKwargs)  # type: ignore[index]
+        rhoStats["rho3alt"] = self._corrSpin0(  # type: ignore[index]
+            ra,
+            dec,
+            *(args[0]),
+            treecorrKwargs=treecorrKwargs,
+        )
         return cast(KeyedData, rhoStats)
 
     @classmethod
@@ -470,7 +478,7 @@ class CalcRhoStatistics(KeyedDataAction):
         k2: Vector | None = None,
         raUnits: str = "degrees",
         decUnits: str = "degrees",
-        **treecorrKwargs: Any,
+        treecorrKwargs: Mapping[str, Any] | None = None,
     ) -> KKCorrelation:
         """Function to compute correlations between at most two scalar fields.
 
@@ -494,9 +502,9 @@ class CalcRhoStatistics(KeyedDataAction):
         decUnits : `str`, optional
             Unit of the declination values. Valid options are
             "degrees", "arcmin", "arcsec", "hours" or "radians".
-        **treecorrKwargs
-            Keyword arguments to be passed to `treecorr`
-            ()`treecorr.KKCorrelation` or `treecorr.Catalog`).
+        treecorrKwargs: `dict`, optional
+            Config dictionary to be passed to `treecorr`
+            (`treecorr.KKCorrelation` or `treecorr.Catalog`).
 
         Returns
         -------
@@ -509,33 +517,29 @@ class CalcRhoStatistics(KeyedDataAction):
             len(ra),
             len(ra) * (len(ra) - 1) / 2,
         )
-        xy = treecorr.KKCorrelation(**treecorrKwargs)
+        xy = treecorr.KKCorrelation(config=treecorrKwargs)
         catA = treecorr.Catalog(
+            config=treecorrKwargs,
             ra=ra,
             dec=dec,
             k=k1,
             ra_units=raUnits,
             dec_units=decUnits,
             logger=_LOG,
-            **treecorrKwargs
         )
         if k2 is None:
             # Calculate the auto-correlation
             xy.process(catA)
         else:
-            # Pop the npatch and pass the patch centers from catA.
-            # This forces all subsequent covariance calculation to use the same
-            # patches.
-            treecorrKwargs.pop("npatch", None)
-            treecorrKwargs["patch_centers"] = catA.patch_centers
             catB = treecorr.Catalog(
+                config=treecorrKwargs,
                 ra=ra,
                 dec=dec,
                 k=k2,
                 ra_units=raUnits,
                 dec_units=decUnits,
                 logger=_LOG,
-                **treecorrKwargs
+                patch_centers=catA.patch_centers,
             )
             # Calculate the cross-correlation
             xy.process(catA, catB)
@@ -554,7 +558,7 @@ class CalcRhoStatistics(KeyedDataAction):
         g2b: Vector | None = None,
         raUnits: str = "degrees",
         decUnits: str = "degrees",
-        **treecorrKwargs: Any,
+        treecorrKwargs: Mapping[str, Any] | None = None,
     ) -> GGCorrelation:
         """Function to compute correlations between shear-like fields.
 
@@ -583,8 +587,8 @@ class CalcRhoStatistics(KeyedDataAction):
         decUnits : `str`, optional
             Unit of the declination values. Valid options are
             "degrees", "arcmin", "arcsec", "hours" or "radians".
-        **treecorrKwargs
-            Keyword arguments to be passed to `treecorr`
+        treecorrKwargs : `dict`, optional
+            Config dictionary to be passed to `treecorr`
             (`treecorr.GGCorrelation` or `treecorr.Catalog`).
 
         Returns
@@ -598,8 +602,9 @@ class CalcRhoStatistics(KeyedDataAction):
             len(ra),
             len(ra) * (len(ra) - 1) / 2,
         )
-        xy = treecorr.GGCorrelation(**treecorrKwargs)
+        xy = treecorr.GGCorrelation(config=treecorrKwargs)
         catA = treecorr.Catalog(
+            config=treecorrKwargs,
             ra=ra,
             dec=dec,
             g1=g1a,
@@ -607,18 +612,13 @@ class CalcRhoStatistics(KeyedDataAction):
             ra_units=raUnits,
             dec_units=decUnits,
             logger=_LOG,
-            **treecorrKwargs,
         )
         if g1b is None or g2b is None:
             # Calculate the auto-correlation
             xy.process(catA)
         else:
-            # Pop the npatch and pass the patch centers from catA.
-            # This forces all subsequent covariance calculation to use the same
-            # patches.
-            treecorrKwargs.pop("npatch", None)
-            treecorrKwargs["patch_centers"] = catA.patch_centers
             catB = treecorr.Catalog(
+                config=treecorrKwargs,
                 ra=ra,
                 dec=dec,
                 g1=g1b,
@@ -626,7 +626,7 @@ class CalcRhoStatistics(KeyedDataAction):
                 ra_units=raUnits,
                 dec_units=decUnits,
                 logger=_LOG,
-                **treecorrKwargs,
+                patch_centers=catA.patch_centers,
             )
             # Calculate the cross-correlation
             xy.process(catA, catB)

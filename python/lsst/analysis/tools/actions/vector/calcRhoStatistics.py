@@ -209,6 +209,14 @@ class BinnedCorr2Config(Config):
         },
     )
 
+    npatch = Field[int](
+        doc="How many patches to split the catalog into for the purpose of "
+        "jackknife variance or other options that involve running via "
+        "patches (boostrap, marked_boostrap etc.)",
+        default=1,
+        optional=True,
+    )
+
     num_bootstrap = Field[int](
         doc=("How many bootstrap samples to use for the 'bootstrap' and 'marked_bootstrap' var methods."),
         default=500,

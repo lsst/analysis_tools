@@ -22,8 +22,8 @@
 from __future__ import annotations
 
 __all__ = (
-    "BinnedCorr2Config",
     "CalcRhoStatistics",
+    "TreecorrConfig",
 )
 
 import logging
@@ -46,17 +46,13 @@ if TYPE_CHECKING:
 _LOG = logging.getLogger(__name__)
 
 
-class BinnedCorr2Config(Config):
+class TreecorrConfig(Config):
     """A Config class that holds some of the parameters supported by treecorr.
 
     The fields in this class correspond to the parameters that can be passed to
-    BinnedCorr2 in `treecorr`, which is the base class for all two-point
+    any calls to `treecorr` methods, including catalog creation and two-point
     correlation function calculations. The default values set for the fields
-    are identical to the default values set in v4.2 of `treecorr`. The
-    parameters that are excluded in this class are
-    'verbose', 'log_file', 'output_dots', 'rng' and 'pairwise' (deprecated).
-    For details about these options, see the documentation for `treecorr`:
-    https://rmjarvis.github.io/TreeCorr/_build/html/correlation2.html
+    are identical to the default values set in v4.2 of `treecorr`.
 
     A separate config class is used instead
     of constructing a `~lsst.pex.config.DictField` so that mixed types can be
@@ -209,10 +205,23 @@ class BinnedCorr2Config(Config):
         },
     )
 
+    npatch = Field[int](
+        doc="How many patches to split the catalog into for the purpose of "
+        "jackknife variance or other options that involve running via "
+        "patches (boostrap, marked_boostrap etc.)",
+        default=1,
+        optional=True,
+    )
+
     num_bootstrap = Field[int](
         doc=("How many bootstrap samples to use for the 'bootstrap' and 'marked_bootstrap' var methods."),
         default=500,
         optional=True,
+    )
+
+    rng_seed = Field[int](
+        doc="Value to seed the treecorr random number generator with. Used to generate patches.",
+        default=13579,
     )
 
     def validate(self):
@@ -346,13 +355,13 @@ class CalcRhoStatistics(KeyedDataAction):
         },
     )
 
-    treecorr = ConfigField[BinnedCorr2Config](
+    treecorr = ConfigField[TreecorrConfig](
         doc="TreeCorr configuration",
     )
 
     def setDefaults(self):
         super().setDefaults()
-        self.treecorr = BinnedCorr2Config()
+        self.treecorr = TreecorrConfig()
         self.treecorr.sep_units = "arcmin"
         self.treecorr.max_sep = 100.0
 
@@ -439,18 +448,30 @@ class CalcRhoStatistics(KeyedDataAction):
         ra: Vector = data[self.colRa]  # type: ignore
         dec: Vector = data[self.colDec]  # type: ignore
 
-        treecorrKwargs = self.treecorr.toDict()
+        treecorr_config_dict = self.treecorr.toDict()
+
+        # Swap rng_seed with an rng instance in treecorr config.
+        rng = np.random.RandomState(treecorr_config_dict.pop("rng_seed"))
+        treecorr_config_dict["rng"] = rng
 
         # Pass the appropriate arguments to the correlator and build a dict
         rhoStats: Mapping[str, treecorr.BinnedCorr2] = {}
         for rhoIndex in range(1, 6):
             _LOG.info("Calculating rho-%d", rhoIndex)
             rhoStats[f"rho{rhoIndex}"] = self._corrSpin2(  # type: ignore[index]
-                ra, dec, *(args[rhoIndex]), **treecorrKwargs
+                ra,
+                dec,
+                *(args[rhoIndex]),
+                treecorr_config_dict=treecorr_config_dict,
             )
 
         _LOG.info("Calculating rho3alt")
-        rhoStats["rho3alt"] = self._corrSpin0(ra, dec, *(args[0]), **treecorrKwargs)  # type: ignore[index]
+        rhoStats["rho3alt"] = self._corrSpin0(  # type: ignore[index]
+            ra,
+            dec,
+            *(args[0]),
+            treecorr_config_dict=treecorr_config_dict,
+        )
         return cast(KeyedData, rhoStats)
 
     @classmethod
@@ -462,7 +483,7 @@ class CalcRhoStatistics(KeyedDataAction):
         k2: Vector | None = None,
         raUnits: str = "degrees",
         decUnits: str = "degrees",
-        **treecorrKwargs: Any,
+        treecorr_config_dict: Mapping[str, Any] | None = None,
     ) -> KKCorrelation:
         """Function to compute correlations between at most two scalar fields.
 
@@ -486,8 +507,9 @@ class CalcRhoStatistics(KeyedDataAction):
         decUnits : `str`, optional
             Unit of the declination values. Valid options are
             "degrees", "arcmin", "arcsec", "hours" or "radians".
-        **treecorrKwargs
-            Keyword arguments to be passed to `treecorr.KKCorrelation`.
+        treecorr_config_dict: `dict`, optional
+            Config dictionary to be passed to `treecorr`
+            (`treecorr.KKCorrelation` or `treecorr.Catalog`).
 
         Returns
         -------
@@ -500,13 +522,30 @@ class CalcRhoStatistics(KeyedDataAction):
             len(ra),
             len(ra) * (len(ra) - 1) / 2,
         )
-        xy = treecorr.KKCorrelation(**treecorrKwargs)
-        catA = treecorr.Catalog(ra=ra, dec=dec, k=k1, ra_units=raUnits, dec_units=decUnits, logger=_LOG)
+        xy = treecorr.KKCorrelation(config=treecorr_config_dict)
+        catA = treecorr.Catalog(
+            config=treecorr_config_dict,
+            ra=ra,
+            dec=dec,
+            k=k1,
+            ra_units=raUnits,
+            dec_units=decUnits,
+            logger=_LOG,
+        )
         if k2 is None:
             # Calculate the auto-correlation
             xy.process(catA)
         else:
-            catB = treecorr.Catalog(ra=ra, dec=dec, k=k2, ra_units=raUnits, dec_units=decUnits, logger=_LOG)
+            catB = treecorr.Catalog(
+                config=treecorr_config_dict,
+                ra=ra,
+                dec=dec,
+                k=k2,
+                ra_units=raUnits,
+                dec_units=decUnits,
+                logger=_LOG,
+                patch_centers=catA.patch_centers,
+            )
             # Calculate the cross-correlation
             xy.process(catA, catB)
 
@@ -524,7 +563,7 @@ class CalcRhoStatistics(KeyedDataAction):
         g2b: Vector | None = None,
         raUnits: str = "degrees",
         decUnits: str = "degrees",
-        **treecorrKwargs: Any,
+        treecorr_config_dict: Mapping[str, Any] | None = None,
     ) -> GGCorrelation:
         """Function to compute correlations between shear-like fields.
 
@@ -553,8 +592,9 @@ class CalcRhoStatistics(KeyedDataAction):
         decUnits : `str`, optional
             Unit of the declination values. Valid options are
             "degrees", "arcmin", "arcsec", "hours" or "radians".
-        **treecorrKwargs
-            Keyword arguments to be passed to `treecorr.GGCorrelation`.
+        treecorr_config_dict : `dict`, optional
+            Config dictionary to be passed to `treecorr`
+            (`treecorr.GGCorrelation` or `treecorr.Catalog`).
 
         Returns
         -------
@@ -567,16 +607,31 @@ class CalcRhoStatistics(KeyedDataAction):
             len(ra),
             len(ra) * (len(ra) - 1) / 2,
         )
-        xy = treecorr.GGCorrelation(**treecorrKwargs)
+        xy = treecorr.GGCorrelation(config=treecorr_config_dict)
         catA = treecorr.Catalog(
-            ra=ra, dec=dec, g1=g1a, g2=g2a, ra_units=raUnits, dec_units=decUnits, logger=_LOG
+            config=treecorr_config_dict,
+            ra=ra,
+            dec=dec,
+            g1=g1a,
+            g2=g2a,
+            ra_units=raUnits,
+            dec_units=decUnits,
+            logger=_LOG,
         )
         if g1b is None or g2b is None:
             # Calculate the auto-correlation
             xy.process(catA)
         else:
             catB = treecorr.Catalog(
-                ra=ra, dec=dec, g1=g1b, g2=g2b, ra_units=raUnits, dec_units=decUnits, logger=_LOG
+                config=treecorr_config_dict,
+                ra=ra,
+                dec=dec,
+                g1=g1b,
+                g2=g2b,
+                ra_units=raUnits,
+                dec_units=decUnits,
+                logger=_LOG,
+                patch_centers=catA.patch_centers,
             )
             # Calculate the cross-correlation
             xy.process(catA, catB)

@@ -450,6 +450,10 @@ class CalcRhoStatistics(KeyedDataAction):
 
         treecorr_config_dict = self.treecorr.toDict()
 
+        # Swap rng_seed with an rng instance in treecorr config.
+        rng = np.random.RandomState(treecorr_config_dict.pop("rng_seed"))
+        treecorr_config_dict["rng"] = rng
+
         # Pass the appropriate arguments to the correlator and build a dict
         rhoStats: Mapping[str, treecorr.BinnedCorr2] = {}
         for rhoIndex in range(1, 6):

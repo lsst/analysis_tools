@@ -41,13 +41,15 @@ __all__ = (
     "TargetRefCatDeltaRAScatterVisitPlot",
     "TargetRefCatDeltaDecScatterVisitPlot",
     "TargetRefCatDeltaMetrics",
+    "TargetRefCatDeltaColorMetrics",
 )
 
 from lsst.pex.config import Field
 
+from ..actions.plot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import MedianAction, SigmaMadAction
+from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction, RmsAction, SigmaMadAction
 from ..actions.vector import (
     AngularSeparation,
     CoaddPlotFlagSelector,
@@ -642,3 +644,121 @@ class TargetRefCatDeltaMetrics(AnalysisTool):
             "AA1_tot": "mas",
             "AA1_sigmaMad_tot": "mas",
         }
+
+
+class TargetRefCatDeltaColorMetrics(AnalysisTool):
+    """Calculate the AB1 and ABF1 metrics from the difference between the
+    target and reference catalog coordinates.
+    """
+
+    AB2 = Field[float](
+        doc=(
+            "Separation in milliarcseconds used to calculate the ABF1 metric. ABF1 is the percentage of"
+            " sources whose distance from the reference is greater than AB2 mas from the mean."
+        ),
+        default=20,
+    )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "extendedness"
+
+        # Calculate difference in RA
+        self.process.buildActions.astromDiffRA = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
+        )
+        self.process.buildActions.astromDiffRA.buildAction.actionA = RAcosDec(
+            raKey="coord_ra", decKey="coord_dec"
+        )
+        self.process.buildActions.astromDiffRA.buildAction.actionB = RAcosDec(raKey="r_ra", decKey="r_dec")
+        # Calculate difference in Dec
+        self.process.buildActions.astromDiffDec = ConvertUnits(
+            buildAction=SubtractVector, inUnit="degree", outUnit="milliarcsecond"
+        )
+        self.process.buildActions.astromDiffDec.buildAction.actionA = LoadVector(vectorKey="dec")
+        self.process.buildActions.astromDiffDec.buildAction.actionB = LoadVector(vectorKey="r_dec")
+
+        # Calculate total difference (using astropy)
+        self.process.buildActions.astromDiffTot = AngularSeparation(
+            raKey_A="coord_ra",
+            decKey_A="coord_dec",
+            raKey_B="r_ra",
+            decKey_B="r_dec",
+        )
+
+        self.process.buildActions.mags = ConvertFluxToMag()
+        self.process.buildActions.mags.vectorKey = "psfFlux"
+
+        # Filter down to only objects with mag 17-21.5
+        self.process.filterActions.brightStarsRA = DownselectVector(vectorKey="astromDiffRA")
+        self.process.filterActions.brightStarsRA.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        self.process.filterActions.brightStarsDec = DownselectVector(vectorKey="astromDiffDec")
+        self.process.filterActions.brightStarsDec.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        self.process.filterActions.brightStarsTot = DownselectVector(vectorKey="astromDiffTot")
+        self.process.filterActions.brightStarsTot.selector = RangeSelector(
+            vectorKey="mags", minimum=17, maximum=21.5
+        )
+
+        # Calculate RMS annd number of sources
+        self.process.calculateActions.AB1_RA = RmsAction(vectorKey="brightStarsRA")
+        self.process.calculateActions.AB1_Dec = RmsAction(vectorKey="brightStarsDec")
+        self.process.calculateActions.AB1_tot = RmsAction(vectorKey="brightStarsTot")
+        self.process.calculateActions.nSources = CountAction(vectorKey="brightStarsTot")
+
+        self.produce.metric.units = {
+            "AB1_RA": "mas",
+            "ABF1_RA": "percent",
+            "AB1_Dec": "mas",
+            "ABF1_Dec": "percent",
+            "AB1_tot": "mas",
+            "ABF1_tot": "percent",
+        }
+
+        self.produce.plot = HistPlot()
+
+        self.produce.plot.panels["panel_sep"] = HistPanel()
+        self.produce.plot.panels["panel_sep"].hists = dict(
+            brightStarsRA="Separations in RA",
+            brightStarsDec="Separations in Dec",
+            brightStarsTot="Total separations",
+        )
+        self.produce.plot.panels["panel_sep"].label = "Separation Distances (marcsec)"
+
+        self.produce.plot.panels["panel_sep"].statsPanel = HistStatsPanel()
+        self.produce.plot.panels["panel_sep"].statsPanel.statsLabels = ["N", "AB1", "ABF1 %"]
+        self.produce.plot.panels["panel_sep"].statsPanel.stat1 = ["nSources", "nSources", "nSources"]
+        self.produce.plot.panels["panel_sep"].statsPanel.stat2 = ["AB1_RA", "AB1_Dec", "AB1_tot"]
+        self.produce.plot.panels["panel_sep"].statsPanel.stat3 = ["ABF1_RA", "ABF1_Dec", "ABF1_tot"]
+
+    def finalize(self):
+        super().finalize()
+
+        # Calculate the percentage of outliers above the AB2 threshold
+        self.process.calculateActions.ABF1_RA = FracThreshold(
+            vectorKey="brightStarsRA",
+            op="gt",
+            threshold=self.AB2,
+            relative_to_median=True,
+            percent=True,
+            use_absolute_value=True,
+        )
+        self.process.calculateActions.ABF1_Dec = FracThreshold(
+            vectorKey="brightStarsDec",
+            threshold=self.AB2,
+            op="gt",
+            relative_to_median=True,
+            percent=True,
+            use_absolute_value=True,
+        )
+        self.process.calculateActions.ABF1_tot = FracThreshold(
+            vectorKey="brightStarsTot", threshold=self.AB2, op="gt", percent=True
+        )

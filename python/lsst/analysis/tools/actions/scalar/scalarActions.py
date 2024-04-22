@@ -39,6 +39,7 @@ __all__ = (
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
+    "RmsAction",
 )
 
 import operator
@@ -90,6 +91,18 @@ class StdevAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         return nanStd(data[self.vectorKey.format(**kwargs)][mask])
+
+
+class RmsAction(ScalarFromVectorAction):
+    """Calculates the root mean square of the given data (without subtracting
+    the mean as in StdevAction)."""
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        vector = data[self.vectorKey.format(**kwargs)][mask]
+        vector = vector[~np.isnan(vector)]
+
+        return np.sqrt(np.mean(vector**2))
 
 
 class ValueAction(ScalarFromVectorAction):
@@ -202,7 +215,14 @@ class FracThreshold(ScalarFromVectorAction):
     )
     threshold = Field[float](doc="Threshold to apply.")
     percent = Field[bool](doc="Express result as percentage", default=False)
-    relative_to_median = Field[bool](doc="Calculate threshold relative to " "the median?", default=False)
+    relative_to_median = Field[bool](doc="Calculate threshold relative to the median?", default=False)
+    use_absolute_value = Field[bool](
+        doc=(
+            "Calculate threshold after taking absolute value. If relative_to_median"
+            " is true the absolute value will be applied after the median is subtracted"
+        ),
+        default=False,
+    )
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
@@ -217,7 +237,9 @@ class FracThreshold(ScalarFromVectorAction):
         if self.relative_to_median and len(values) > 0:
             offset = nanMedian(values)
             if np.isfinite(offset):
-                threshold += offset
+                values -= offset
+        if self.use_absolute_value:
+            values = np.abs(values)
         result = cast(
             Scalar,
             float(np.sum(getattr(operator, self.op)(values, threshold)) / n_values),  # type: ignore

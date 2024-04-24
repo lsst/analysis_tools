@@ -97,8 +97,8 @@ tasks:
       # atools.flatDivisaderoProfile.prep.panelKey: FLAT_DIVISADERO_BANK
       # atools.flatDivisaderoProfile.prep.dataKey: FLAT_DIVISADERO_COLUMN
       # atools.flatDivisaderoProfile.prep.quantityKey: FLAT_DIVISADERO_TEARING
-      # atools.flatDivisaderoProfile.produce.plot.xlabel: "Detector Column"
-      # atools.flatDivisaderoProfile.produce.plot.ylabel: "Divisadero Tearing"
+      # atools.flatDivisaderoProfile.produce.plot.xAxisLabel: "Detector Column"
+      # atools.flatDivisaderoProfile.produce.plot.yAxisLabel: "Divisadero Tearing"
       python: |
         from lsst.analysis.tools.atools import *
 

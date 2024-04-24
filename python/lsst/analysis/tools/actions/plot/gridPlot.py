@@ -86,11 +86,11 @@ class GridPlot(PlotAction):
         doc="String arguments passed into fig.suptitle() defining the figure title.",
         optional=True,
     )
-    xlabel = Field[str](
+    xAxisLabel = Field[str](
         doc="String argument passed into fig.supxlabel() defining the figure x label.",
         optional=True,
     )
-    ylabel = Field[str](
+    yAxisLabel = Field[str](
         doc="String argument passed into fig.supylabel() defining the figure y label.",
         optional=True,
     )
@@ -100,10 +100,10 @@ class GridPlot(PlotAction):
         fig = plt.figure(figsize=self.figsize, dpi=self.dpi)
         if self.suptitle is not None:
             fig.suptitle(**self.suptitle)
-        if self.xlabel is not None:
-            fig.supxlabel(self.xlabel)
-        if self.ylabel is not None:
-            fig.supylabel(self.ylabel)
+        if self.xAxisLabel is not None:
+            fig.supxlabel(self.xAxisLabel)
+        if self.yAxisLabel is not None:
+            fig.supylabel(self.yAxisLabel)
 
         gs = GridSpec(self.numRows, self.numCols, figure=fig)
 

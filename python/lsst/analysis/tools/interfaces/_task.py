@@ -442,12 +442,17 @@ class AnalysisPipelineTask(PipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId)
-        data = self.loadData(inputs["data"])
-        if "skymap" in inputs.keys():
-            skymap = inputs["skymap"]
-        else:
-            skymap = None
-        outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
+        # We implicitly assume that 'data' has been defined, but do not have a
+        # corresponding input connection in the base class. Thus, we capture
+        # and re-raise the error with a more helpful message.
+        try:
+            # data has to be popped out to avoid duplication in the call to the
+            # `run` method.
+            inputData = inputs.pop("data")
+        except KeyError:
+            raise RuntimeError("'data' is a required input connection, but is not defined.")
+        data = self.loadData(inputData)
+        outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
         butlerQC.put(outputs, outputRefs)
 
     def _populatePlotInfoWithDataId(

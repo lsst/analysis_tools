@@ -20,11 +20,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, Mapping
+
 __all__ = ("DiffimDetectorVisitSpatiallySampledPlotsConfig", "DiffimDetectorVisitSpatiallySampledPlotsTask")
 
 from lsst.pipe.base import connectionTypes
+from lsst.utils import inheritDoc
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+
+if TYPE_CHECKING:
+    from lsst.daf.butler import DataCoordinate
 
 
 class DiffimDetectorVisitSpatiallySampledPlotsConnections(
@@ -51,17 +57,16 @@ class DiffimDetectorVisitSpatiallySampledPlotsTask(AnalysisPipelineTask):
     ConfigClass = DiffimDetectorVisitSpatiallySampledPlotsConfig
     _DefaultName = "DiffimDetectorVisitSpatiallySampledPlots"
 
-    def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        # Docs inherited from base class.
-        inputs = butlerQC.get(inputRefs)
-        dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo(inputs, dataId)
+    @inheritDoc(AnalysisPipelineTask)
+    def parsePlotInfo(
+        self, inputs: Mapping[str, Any] | None, dataId: DataCoordinate | None, connectionName: str = "data"
+    ) -> Mapping[str, str]:
+        """
+        Notes
+        -----
+        This adds a 'bands' entry to `inputs`.
+        """
+        plotInfo = super().parsePlotInfo(inputs, dataId, connectionName=connectionName)
         plotInfo["tableName"] += f", detector: {plotInfo['detector']}"
-        data = self.loadData(inputs["data"])
-
-        outputs = self.run(
-            data=data,
-            plotInfo=plotInfo,
-            bands=plotInfo["band"],
-        )
-        butlerQC.put(outputs, outputRefs)
+        inputs["bands"] = plotInfo["band"]
+        return plotInfo

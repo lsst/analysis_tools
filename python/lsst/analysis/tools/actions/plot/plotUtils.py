@@ -42,47 +42,6 @@ if TYPE_CHECKING:
 null_formatter = matplotlib.ticker.NullFormatter()
 
 
-def parsePlotInfo(dataId, runName, tableName, bands, plotName, SN):
-    """Parse plot info from the dataId.
-
-    Parameters
-    ----------
-    dataId : `dict`
-        The dataId of the data to be plotted.
-    runName : `str`
-        The name of the run.
-    tableName : `str`
-        The name of the table.
-    bands : `list` [`str`]
-        The bands to be plotted.
-    plotName : `str`
-        The name of the plot.
-    SN : `str`
-        The signal to noise of the data.
-
-    Returns
-    -------
-    plotInfo : `dict`
-        A dictionary of the plot information.
-    """
-    plotInfo = {"run": runName, "tableName": tableName, "plotName": plotName, "SN": SN}
-
-    for dataInfo in dataId:
-        plotInfo[dataInfo.name] = dataId[dataInfo.name]
-
-    bandStr = ""
-    for band in bands:
-        bandStr += ", " + band
-    plotInfo["bands"] = bandStr[2:]
-
-    if "tract" not in plotInfo.keys():
-        plotInfo["tract"] = "N/A"
-    if "visit" not in plotInfo.keys():
-        plotInfo["visit"] = "N/A"
-
-    return plotInfo
-
-
 def generateSummaryStats(data, skymap, plotInfo):
     """Generate a summary statistic in each patch or detector.
 

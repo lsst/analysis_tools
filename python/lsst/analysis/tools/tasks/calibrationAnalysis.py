@@ -102,8 +102,7 @@ class VerifyPtcAnalysisConnections(
 
 
 class VerifyPtcAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyPtcAnalysisConnections):
-    def setDefaults(self):
-        super().setDefaults()
+    pass
 
 
 class VerifyPtcAnalysisTask(AnalysisPipelineTask):

@@ -46,8 +46,7 @@ class RefCatSourceAnalysisConnections(
 
 
 class RefCatSourceAnalysisConfig(AnalysisBaseConfig, pipelineConnections=RefCatSourceAnalysisConnections):
-    def setDefaults(self):
-        super().setDefaults()
+    pass
 
 
 class RefCatSourceAnalysisTask(AnalysisPipelineTask):

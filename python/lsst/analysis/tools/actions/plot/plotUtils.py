@@ -49,7 +49,7 @@ def generateSummaryStats(data, skymap, plotInfo):
     ----------
     data : `dict`
         A dictionary of the data to be plotted.
-    skymap : `lsst.skymap.ringsSkyMap.RingsSkyMap`
+    skymap : `lsst.skymap.BaseSkyMap`
         The skymap associated with the data.
     plotInfo : `dict`
         A dictionary of the plot information.
@@ -59,7 +59,6 @@ def generateSummaryStats(data, skymap, plotInfo):
     patchInfoDict : `dict`
         A dictionary of the patch information.
     """
-    # TODO: what is the more generic type of skymap?
     tractInfo = skymap.generateTract(plotInfo["tract"])
     tractWcs = tractInfo.getWcs()
 

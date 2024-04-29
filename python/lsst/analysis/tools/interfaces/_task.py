@@ -60,6 +60,11 @@ from ._analysisTools import AnalysisTool
 from ._interfaces import KeyedData, PlotTypes
 from ._metricMeasurementBundle import MetricMeasurementBundle
 
+# TODO: This rcParams modification is a temporary solution, hiding
+# a matplotlib warning indicating too many figures have been opened.
+# When DM-39114 is implemented, this should be removed.
+plt.rcParams.update({"figure.max_open_warning": 0})
+
 
 # TODO: This _plotCloser function assists in closing all open plots at the
 # conclusion of a PipelineTask. When DM-39114 is implemented, this function and
@@ -435,19 +440,20 @@ class AnalysisPipelineTask(PipelineTask):
             `lsst.daf.butler.DatasetRef` objects associated with the defined
             output connections.
         """
-        # TODO: This rcParams modification is a temporary solution, hiding
-        # a matplotlib warning indicating too many figures have been opened.
-        # When DM-39114 is implemented, this should be removed.
-        plt.rcParams.update({"figure.max_open_warning": 0})
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId)
-        data = self.loadData(inputs["data"])
-        if "skymap" in inputs.keys():
-            skymap = inputs["skymap"]
-        else:
-            skymap = None
-        outputs = self.run(data=data, plotInfo=plotInfo, skymap=skymap)
+        # We implicitly assume that 'data' has been defined, but do not have a
+        # corresponding input connection in the base class. Thus, we capture
+        # and re-raise the error with a more helpful message.
+        try:
+            # data has to be popped out to avoid duplication in the call to the
+            # `run` method.
+            inputData = inputs.pop("data")
+        except KeyError:
+            raise RuntimeError("'data' is a required input connection, but is not defined.")
+        data = self.loadData(inputData)
+        outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
         butlerQC.put(outputs, outputRefs)
 
     def _populatePlotInfoWithDataId(

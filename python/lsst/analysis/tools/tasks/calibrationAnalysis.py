@@ -62,21 +62,6 @@ class VerifyCalibAnalysisTask(AnalysisPipelineTask):
     ConfigClass = VerifyCalibAnalysisConfig
     _DefaultName = "verifyCalibAnalysis"
 
-    def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        # Docs inherited from base class.
-        inputs = butlerQC.get(inputRefs)
-        dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo(inputs, dataId)
-        data = self.loadData(inputs["data"])
-        camera = inputs["camera"]
-
-        outputs = self.run(
-            data=data,
-            plotInfo=plotInfo,
-            camera=camera,
-        )
-        butlerQC.put(outputs, outputRefs)
-
 
 # Photon Transfer Curve: PTC
 class VerifyPtcAnalysisConnections(
@@ -102,25 +87,9 @@ class VerifyPtcAnalysisConnections(
 
 
 class VerifyPtcAnalysisConfig(AnalysisBaseConfig, pipelineConnections=VerifyPtcAnalysisConnections):
-    def setDefaults(self):
-        super().setDefaults()
+    pass
 
 
 class VerifyPtcAnalysisTask(AnalysisPipelineTask):
     ConfigClass = VerifyPtcAnalysisConfig
     _DefaultName = "verifyPtcAnalysis"
-
-    def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        # Docs inherited from base class.
-        inputs = butlerQC.get(inputRefs)
-        dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo(inputs, dataId)
-        data = self.loadData(inputs["data"])
-        camera = inputs["camera"]
-
-        outputs = self.run(
-            data=data,
-            plotInfo=plotInfo,
-            camera=camera,
-        )
-        butlerQC.put(outputs, outputRefs)

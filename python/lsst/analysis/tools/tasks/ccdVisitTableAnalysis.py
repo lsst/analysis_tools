@@ -87,24 +87,3 @@ class CcdVisitTableAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CcdVis
 class CcdVisitTableAnalysisTask(AnalysisPipelineTask):
     ConfigClass = CcdVisitTableAnalysisConfig
     _DefaultName = "ccdVisitTableAnalysisTask"
-
-    def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        # Docs inherited from base class.
-        inputs = butlerQC.get(inputRefs)
-        dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo(inputs, dataId)
-        data = self.loadData(inputs["data"])
-        skymap = None if "skymap" not in inputs.keys() else inputs["skymap"]
-        camera = None if "camera" not in inputs.keys() else inputs["camera"]
-        calibrateConfig = inputs["calibrateConfig"]
-        makeWarpConfig = None if "makeWarpConfig" not in inputs.keys() else inputs["makeWarpConfig"]
-
-        outputs = self.run(
-            data=data,
-            plotInfo=plotInfo,
-            camera=camera,
-            skymap=skymap,
-            calibrateConfig=calibrateConfig,
-            makeWarpConfig=makeWarpConfig,
-        )
-        butlerQC.put(outputs, outputRefs)

@@ -26,6 +26,7 @@ __all__ = ("GridPlot", "GridPanelConfig")
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
+import numpy as np
 from lsst.pex.config import Config, ConfigDictField, DictField, Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from matplotlib.gridspec import GridSpec
@@ -42,10 +43,11 @@ class GridPanelConfig(Config):
     )
     title = DictField[str, str](
         doc="String arguments passed into ax.set_title() defining the plot element title.",
+        optional=True,
     )
     titleY = Field[float](
         doc="Y position of plot element title.",
-        default=None,
+        optional=True,
     )
 
 
@@ -64,6 +66,14 @@ class GridPlot(PlotAction):
     numCols = Field[int](
         doc="Number of columns.",
         default=1,
+    )
+    width_ratios = ListField[float](
+        doc="Width ratios",
+        optional=True,
+    )
+    height_ratios = ListField[float](
+        doc="Height ratios",
+        optional=True,
     )
     xDataKeys = DictField[int, str](
         doc="Dependent data definitions. The key of this dict is the panel ID. The values are keys of data "
@@ -98,6 +108,18 @@ class GridPlot(PlotAction):
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         """Plot data."""
         fig = plt.figure(figsize=self.figsize, dpi=self.dpi)
+        figureInfo = {"figsize": fig.get_size_inches(), "dpi": fig.get_dpi()}
+
+        if self.height_ratios is None:
+            height_ratios = np.ones(self.numRows) / self.numRows
+        else:
+            height_ratios = self.height_ratios / np.sum(self.height_ratios)
+
+        if self.width_ratios is None:
+            width_ratios = np.ones(self.numCols) / self.numCols
+        else:
+            width_ratios = self.width_ratios / np.sum(self.width_ratios)
+
         if self.suptitle is not None:
             fig.suptitle(**self.suptitle)
         if self.xAxisLabel is not None:
@@ -105,7 +127,14 @@ class GridPlot(PlotAction):
         if self.yAxisLabel is not None:
             fig.supylabel(self.yAxisLabel)
 
-        gs = GridSpec(self.numRows, self.numCols, figure=fig)
+        # TODO: See DM-44283:Add subplot_mosaic functionality to plotElements
+        gs = GridSpec(
+            self.numRows,
+            self.numCols,
+            figure=fig,
+            height_ratios=height_ratios,
+            width_ratios=width_ratios,
+        )
 
         # Iterate over all of the plots we'll make:
         for row in range(self.numRows):
@@ -147,14 +176,18 @@ class GridPlot(PlotAction):
                                 # to not plot it.
                                 continue
 
-                        # Store the y-coordinate data to be plotted in
-                        # the temporary column name indicated by the
-                        # `valsGroupBy` dict above.
-                        namedKey = self.panels[index].plotElement.valsKey
-                        newData[namedKey] = data[key]
+                        # If provided, store the y-coordinate data to be
+                        # plotted in the temporary column name indicated
+                        # by the `valsGroupBy` dict above. Not all elements
+                        # need y-coordinate data, such as plotInfoElement.
+                        if hasattr(self.panels[index].plotElement, "valsKey"):
+                            namedKey = self.panels[index].plotElement.valsKey
+                            newData[namedKey] = data[key]
 
                         # Actually make the plot.
-                        _ = self.panels[index].plotElement(data=newData, ax=ax, **kwargs)
+                        _ = self.panels[index].plotElement(
+                            data=newData, ax=ax, figureInfo=figureInfo, **kwargs
+                        )
 
                 if self.panels[index].title is not None:
                     ax.set_title(**self.panels[index].title, y=self.panels[index].titleY)
@@ -169,3 +202,7 @@ class GridPlot(PlotAction):
             raise RuntimeError("Number of xDataKeys keys must match number of rows * columns.")
         if len(self.valsGroupBy) != self.numRows * self.numCols:
             raise RuntimeError("Number of valsGroupBy keys must match number of rows * columns.")
+        if self.width_ratios and len(self.width_ratios) != self.numCols:
+            raise RuntimeError("Number of supplied width ratios must match number of columns.")
+        if self.height_ratios and len(self.height_ratios) != self.numRows:
+            raise RuntimeError("Number of supplied height ratios must match number of rows.")

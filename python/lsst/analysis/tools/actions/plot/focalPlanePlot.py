@@ -289,7 +289,8 @@ class FocalPlanePlot(PlotAction):
         # Add useful information to the plot
         plt.subplots_adjust(left=0.05, right=0.95)
         fig = plt.gcf()
-        fig = addPlotInfo(fig, plotInfo)
+        if plotInfo:
+            fig = addPlotInfo(fig, plotInfo)
 
         return fig
 
@@ -585,6 +586,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         # Add useful information to the plot
         fig.subplots_adjust(left=0.05, right=0.95)
         fig = plt.gcf()
-        fig = addPlotInfo(fig, plotInfo)
+        if plotInfo:
+            fig = addPlotInfo(fig, plotInfo)
 
         return fig

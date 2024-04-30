@@ -31,7 +31,6 @@ import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
-from lsst.skymap import BaseSkyMap
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
@@ -275,7 +274,6 @@ class ScatterPlotWithTwoHists(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        skymap: BaseSkyMap,
         plotInfo: Mapping[str, str],
         **kwargs,
     ) -> Figure:
@@ -286,8 +284,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         ----------
         data : `KeyedData`
             The catalog to plot the points from.
-        skymap : `lsst.skymap.BaseSkyMap`
-            The skymap that gives the patch locations
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
 
@@ -370,7 +366,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
         # Needs info from run quantum
-        if self.addSummaryPlot:
+        skymap = kwargs.get("skymap", None)
+        if self.addSummaryPlot and skymap is not None:
             sumStats = generateSummaryStats(data, skymap, plotInfo)
             label = self.yAxisLabel
             fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)

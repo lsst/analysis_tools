@@ -168,4 +168,3 @@ class VerifyCalibDetectorTaskByFilter(VerifyCalibDetectorTask):
     _DefaultName = "verifyCalibDetectorByFilter"
 
     pass
-

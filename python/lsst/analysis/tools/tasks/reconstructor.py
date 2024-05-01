@@ -88,7 +88,7 @@ def reconstructAnalysisTools(
                     dsName, dataId=dataId, findFirst=True, collections=(collection,)
                 )
             ):
-                container.append(butler.get(ref, collections=(collection,)))
+                container.append(butler.get(ref))
             inputs[name] = container
         else:
             inputs[name] = butler.get(dsName, dataId=dataId, collections=(collection,))

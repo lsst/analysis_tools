@@ -20,19 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "CalibStatisticFocalPlanePlot",
-    "PtcGainFP",
-    "PtcNoiseFP",
-    "PtcA00FP",
-    "PtcTurnoffFP",
-    "PtcMaxRawMeansFP",
-    "PtcRowMeanVarianceSlopeFP",
-)
+__all__ = ("CalibStatisticFocalPlanePlot",)
 
 from lsst.pex.config import Field
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
+from ..actions.scalar.scalarActions import MedianAction
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
@@ -71,58 +64,15 @@ class CalibStatisticFocalPlanePlot(CalibrationTool):
 
         self.process.buildActions.z.vectorKey = "biasMean"
 
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "biasMean"
+
         self.produce.plot.statistic = "median"
         self.produce.plot.zAxisLabel = "Median of biasMean"
 
     def finalize(self):
         self.process.buildActions.z.vectorKey = self.quantityKey
+        self.process.calculateActions.median.vectorKey = self.quantityKey
+        self.produce.metric.units = {"median": "adu"}
         zAxislabel = f"{self.produce.plot.statistic} of {self.quantityKey} ({self.unit})"
         self.produce.plot.zAxisLabel = zAxislabel.capitalize()
-
-
-class PtcGainFP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcGain"
-        self.produce.plot.zAxisLabel = "PTC Gain (e-/ADU)"
-        self.produce.metric.newNames = {"z": "PTC_GAIN"}
-
-
-class PtcNoiseFP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcNoise"
-        self.produce.plot.zAxisLabel = "PTC Readout Noise (ADU^2)"
-        self.produce.metric.newNames = {"z": "PTC_NOISE"}
-
-
-class PtcA00FP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcBfeA00"
-        self.produce.plot.zAxisLabel = "PTC BFE A00 (1/e-)"
-        self.produce.metric.newNames = {"z": "PTC_BFE_A00"}
-
-
-class PtcTurnoffFP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcTurnoff"
-        self.produce.plot.zAxisLabel = "PTC turnoff (ADU)"
-        self.produce.metric.newNames = {"z": "PTC_TURNOFF"}
-
-
-class PtcMaxRawMeansFP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcMaxRawMeans"
-        self.produce.plot.zAxisLabel = "PTC Maximum of Raw Mean Flux (ADU)"
-        self.produce.metric.newNames = {"z": "PTC_MAX_RAW_MEANS"}
-
-
-class PtcRowMeanVarianceSlopeFP(CalibrationTool):
-    def setDefaults(self):
-        super().setDefaults()
-        self.process.buildActions.z.vectorKey = "ptcRowMeanVarianceSlope"
-        self.produce.plot.zAxisLabel = "PTC slope of row means vs variance (e-)"
-        self.produce.metric.newNames = {"z": "PTC_ROW_MEAN_VARIANCE_SLOPE"}

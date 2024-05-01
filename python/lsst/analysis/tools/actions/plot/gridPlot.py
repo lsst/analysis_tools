@@ -86,42 +86,80 @@ class GridPlot(PlotAction):
         doc="String arguments passed into fig.suptitle() defining the figure title.",
         optional=True,
     )
+    xAxisLabel = Field[str](
+        doc="String argument passed into fig.supxlabel() defining the figure x label.",
+        optional=True,
+    )
+    yAxisLabel = Field[str](
+        doc="String argument passed into fig.supylabel() defining the figure y label.",
+        optional=True,
+    )
 
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         """Plot data."""
         fig = plt.figure(figsize=self.figsize, dpi=self.dpi)
         if self.suptitle is not None:
             fig.suptitle(**self.suptitle)
+        if self.xAxisLabel is not None:
+            fig.supxlabel(self.xAxisLabel)
+        if self.yAxisLabel is not None:
+            fig.supylabel(self.yAxisLabel)
+
         gs = GridSpec(self.numRows, self.numCols, figure=fig)
 
+        # Iterate over all of the plots we'll make:
         for row in range(self.numRows):
             for col in range(self.numCols):
+                # This sequential index is used to identify what data
+                # to plot.  The `valsGroupBy` dict should have this
+                # index as a key, with the values matching the subset
+                # of rows that have that value in the column specified
+                # by the `panelKey`.
                 index = row * self.numCols + col
                 if index not in self.valsGroupBy.keys():
                     continue
                 ax = fig.add_subplot(gs[row, col])
 
+                # These lists hold the columns that will be plotted,
+                # comma separated to allow multiple series to be
+                # plotted on the same panel.  If `xDataKeys` does not
+                # contain this panel's index, then the vector index
+                # will be used for the x-coordinate.
                 xList = x.split(",") if (x := self.xDataKeys.get(index)) else None
                 valList = self.valsGroupBy[index].split(",")
 
+                # Iterate over the series to plot in this panel:
                 for i, val in enumerate(valList):
                     for key in data:
                         newData = {}
                         if val not in key:
+                            # Skip columns in data that do not match
+                            # our series identifier.
                             continue
-                        namedKey = self.panels[index].plotElement.valsKey
-                        newData[namedKey] = data[key]
                         if xList is not None:
+                            # Store the x-coordinate data to be
+                            # plotted in the temporary column name
+                            # indicated by the `xDataKeys` dict above.
                             namedKey = self.panels[index].plotElement.xKey
                             newData[namedKey] = data[xList[i]]
+                            if key in xList:
+                                # if this key is in the xList, we need
+                                # to not plot it.
+                                continue
 
+                        # Store the y-coordinate data to be plotted in
+                        # the temporary column name indicated by the
+                        # `valsGroupBy` dict above.
+                        namedKey = self.panels[index].plotElement.valsKey
+                        newData[namedKey] = data[key]
+
+                        # Actually make the plot.
                         _ = self.panels[index].plotElement(data=newData, ax=ax, **kwargs)
 
                 if self.panels[index].title is not None:
                     ax.set_title(**self.panels[index].title, y=self.panels[index].titleY)
 
         plt.tight_layout()
-        fig.show()
         return fig
 
     def validate(self):

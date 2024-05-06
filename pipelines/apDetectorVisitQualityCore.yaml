@@ -47,7 +47,7 @@ tasks:
       connections.outputName: trailedDiaSrcCore
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
-      atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: id
+      atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId
       connections.coaddName: parameters.coaddName
       connections.fakesType: parameters.fakesType
       python: |

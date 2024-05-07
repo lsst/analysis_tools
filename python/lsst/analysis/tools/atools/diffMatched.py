@@ -469,7 +469,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
 
 
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
-    """Tool for diffs between reference and measured coadd astrometry."""
+    """Tool for diffs between reference and measured coadd positions."""
 
     mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
     scale_factor = Field[float](
@@ -535,6 +535,60 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                     f"chi = ({label} {name} coord)/error"
                     if self.compute_chi
                     else f"{label} {name} coord ({self.unit})"
+                )
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_sn
+
+
+class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
+    """Tool for distances between matched reference and measured coadd
+    objects."""
+
+    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
+    key_dist = Field[str](default="match_distance", doc="Distance field key")
+    key_dist_err = Field[str](default="match_distanceErr", doc="Distance error field key")
+    scale_factor = Field[float](
+        doc="The factor to multiply distances by (e.g. the pixel scale if coordinates have pixel units or "
+        "the desired spherical coordinate unit conversion otherwise)",
+        default=1000,
+    )
+
+    def finalize(self):
+        # Check if it has already been finalized
+        if not hasattr(self.process.buildActions, "diff"):
+            # Set before MagnitudeScatterPlot.finalize to undo PSF default.
+            # Matched ref tables may not have PSF fluxes, or prefer CModel.
+            self._set_flux_default("mag_sn")
+            super().finalize()
+
+            name_short_x = self.config_mag_x.name_flux_short
+            name_short_y = self.config_mag_y.name_flux_short
+
+            self.process.buildActions.dist = LoadVector(vectorKey=self.key_dist)
+            self.process.buildActions.dist_err = LoadVector(vectorKey=self.key_dist_err)
+            if self.compute_chi:
+                self.process.buildActions.diff = DivideVector(
+                    actionA=LoadVector(vectorKey=self.process.buildActions.dist.vectorKey),
+                    actionB=LoadVector(vectorKey=self.process.buildActions.dist_err.vectorKey),
+                )
+            else:
+                self.process.buildActions.diff = MultiplyVector(
+                    actionA=ConstantValue(value=self.scale_factor),
+                    actionB=LoadVector(vectorKey=self.process.buildActions.dist.vectorKey),
+                )
+            if self.unit is None:
+                self.unit = "" if self.compute_chi else "mas"
+            if self.name_prefix is None:
+                subtype = "chi" if self.compute_chi else "diff"
+                self.name_prefix = f"astrom_dist_{{name_class}}_{subtype}_"
+                self.name_prefix = f"astrom_{name_short_y}_vs_{name_short_x}_dist_{subtype}_{{name_class}}_"
+            if not self.produce.metric.units:
+                self.produce.metric.units = self.configureMetrics()
+            if not self.produce.plot.yAxisLabel:
+                label = f"({name_short_y} - {name_short_x}) distance"
+                self.produce.plot.yAxisLabel = (
+                    f"chi = {label}/error" if self.compute_chi else f"{label} ({self.unit})"
                 )
 
     def get_key_flux_y(self) -> str:

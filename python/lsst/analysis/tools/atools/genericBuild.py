@@ -82,7 +82,14 @@ class FluxConfig(Config):
 
     key_flux = Field[str](default=None, doc="Format of the flux field to convert to magnitudes with {band}.")
     key_flux_error = Field[str](default=None, doc="Format of the flux error field.", optional=True)
-    name_flux = Field[str](default=None, doc="Name of the flux/magnitude algorithm/model.")
+    name_flux_short = Field[str](
+        default=None,
+        doc="Short name of the flux/magnitude algorithm/model to use in metric keys",
+    )
+    name_flux = Field[str](
+        default=None,
+        doc="Name of the flux/magnitude algorithm/model to use in plot labels.",
+    )
 
     def key_flux_band(self, band: str):
         return self.key_flux.format(band=band)
@@ -109,19 +116,34 @@ class MagnitudeTool(AnalysisTool):
 
     fluxes_default = FluxesDefaultConfig(
         bulge_err=FluxConfig(
-            key_flux="{band}_bdFluxB", key_flux_error="{band}_bdFluxBErr", name_flux="CModel Bulge"
+            key_flux="{band}_bdFluxB",
+            key_flux_error="{band}_bdFluxBErr",
+            name_flux="CModel Bulge",
+            name_flux_short="bulge_cModel",
         ),
         cmodel_err=FluxConfig(
-            key_flux="{band}_cModelFlux", key_flux_error="{band}_cModelFluxErr", name_flux="CModel"
+            key_flux="{band}_cModelFlux",
+            key_flux_error="{band}_cModelFluxErr",
+            name_flux="CModel",
+            name_flux_short="bulge_cModel",
         ),
         disk_err=FluxConfig(
-            key_flux="{band}_bdFluxD", key_flux_error="{band}_bdFluxDErr", name_flux="CModel Disk"
+            key_flux="{band}_bdFluxD",
+            key_flux_error="{band}_bdFluxDErr",
+            name_flux="CModel Disk",
+            name_flux_short="disk_cModel",
         ),
-        psf_err=FluxConfig(key_flux="{band}_psfFlux", key_flux_error="{band}_psfFluxErr", name_flux="PSF"),
+        psf_err=FluxConfig(
+            key_flux="{band}_psfFlux",
+            key_flux_error="{band}_psfFluxErr",
+            name_flux="PSF",
+            name_flux_short="psf",
+        ),
         ref_matched=FluxConfig(
             key_flux="refcat_flux_{band}",
-            name_flux="Reference",
             key_flux_error=None,
+            name_flux="Reference",
+            name_flux_short="ref",
         ),
     )
 

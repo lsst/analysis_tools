@@ -62,12 +62,19 @@ tasks:
       atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionYChi.compute_chi: true
+
       python: |
+        from lsst.analysis.tools.atools.genericBuild import MagnitudeTool
         from lsst.analysis.tools.atools.diffMatched import (
           MatchedRefCoaddDiffColorTool,
           MatchedRefCoaddDiffMagTool,
           MatchedRefCoaddDiffPositionTool,
         )
+        # A convenient shortcut to change labels and names without having
+        # to change every single tool
+        MagnitudeTool.fluxes_default.ref_matched.name_flux = "Truth"
+        MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
+
         lims_color_diff = (parameters.color_diff_min, parameters.color_diff_max)
         lims_mag_x = (parameters.mag_x_min, parameters.mag_x_max)
         lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)

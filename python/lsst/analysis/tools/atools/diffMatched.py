@@ -32,6 +32,7 @@ __all__ = (
 )
 
 import copy
+from abc import abstractmethod
 
 from lsst.pex.config import DictField, Field
 
@@ -216,6 +217,8 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
             unit_select = "mag"
 
         key_flux = self.config_mag_x.key_flux
+        name_flux_x = self.config_mag_x.name_flux_short
+        name_flux_y = self.config_mag_y.name_flux_short
 
         units = {}
         for name, name_class in zip(self._names, self._types):
@@ -230,7 +233,12 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
                     maximum=minimum + self._mag_interval,
                 )
 
-                action.name_prefix = name_prefix.format(key_flux=key_flux, name_class=name_class)
+                action.name_prefix = name_prefix.format(
+                    key_flux=key_flux,
+                    name_class=name_class,
+                    name_short_x=name_flux_x,
+                    name_short_y=name_flux_y,
+                )
                 if self.parameterizedBand:
                     action.name_prefix = f"{{band}}_{action.name_prefix}"
                 action.name_suffix = name_suffix.format(minimum=minimum)
@@ -244,6 +252,25 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
                     }
                 )
         return units
+
+    @property
+    def config_mag_y(self):
+        """Return the y-axis magnitude config.
+
+        Although tools may not end up using any flux measures in metrics or
+        plots, this should still be set to the flux measure that was matched
+        or selected against in the catalog not used for the x-axis."""
+        mag_y = self.get_key_flux_y()
+        if mag_y not in self.fluxes:
+            raise KeyError(f"{mag_y=} not in {self.fluxes}; was finalize called?")
+        # This is a logic error: it shouldn't be called before finalize
+        assert mag_y in self.fluxes
+        return self.fluxes[mag_y]
+
+    @abstractmethod
+    def get_key_flux_y(self) -> str:
+        """Return the key for the y-axis flux measure."""
+        raise NotImplementedError("subclasses must implement get_key_flux_y")
 
     def setDefaults(self):
         super().setDefaults()
@@ -314,7 +341,10 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                     suffix_y = f"_{idx}"
                     self._set_actions(suffix=suffix_y)
                     metric = copy.copy(metric_base)
-                    self.name_prefix = f"photom_mag_{{key_flux}}_color_{name_color}_{{name_class}}_{subtype}_"
+                    self.name_prefix = (
+                        f"photom_{{name_short_y}}_vs_{{name_short_x}}_color_{name_color}"
+                        f"_{subtype}_{{name_class}}_"
+                    )
                     metric.units = self.configureMetrics(attr_suffix=suffix_y)
                     plot = copy.copy(plot_base)
 
@@ -363,6 +393,9 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             for name_action, action in actions_plot.items():
                 setattr(action_plot.actions, name_action, action)
             self.produce.plot = action_plot
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_y1
 
     def setDefaults(self):
         # skip MatchedRefCoaddDiffTool.setDefaults's _setActions call
@@ -417,9 +450,14 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
                 self.unit = "" if self.compute_chi else "mmag"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"photom_mag_{{key_flux}}_{{name_class}}_{subtype}_"
+                self.name_prefix = (
+                    f"photom_{{name_short_y}}_vs_{{name_short_x}}_mag_{subtype}_{{name_class}}_"
+                )
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_y
 
 
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
@@ -474,7 +512,9 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 self.unit = "" if self.compute_chi else "mas"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"astrom_{self.coord_meas}_{{name_class}}_{subtype}_"
+                self.name_prefix = (
+                    f"astrom_{{name_short_y}}_vs_{{name_short_x}}_{self.coord_meas}_{subtype}_{{name_class}}_"
+                )
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
@@ -483,3 +523,6 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                     if self.compute_chi
                     else f"slot - reference {name} position ({self.unit})"
                 )
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_sn

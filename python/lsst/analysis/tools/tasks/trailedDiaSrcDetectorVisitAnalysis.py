@@ -35,7 +35,7 @@ class TrailedDiaSrcDetectorVisitAnalysisConnections(
     data = connectionTypes.Input(
         doc="Output temporarily storing long trailed diaSources.",
         name="{fakesType}{coaddName}Diff_longTrailedSrc",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit", "band", "detector"),
     )

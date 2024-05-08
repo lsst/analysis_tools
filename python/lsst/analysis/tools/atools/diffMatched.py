@@ -474,7 +474,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
     mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
     scale_factor = Field[float](
         doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
-        default=200,
+        default=1000,
     )
     coord_label = Field[str](
         doc="The plot label for the astrometric variable (default coord_meas)",

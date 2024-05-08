@@ -1,0 +1,33 @@
+description: |
+  Tier2 atools and metrics to assess coadd quality
+tasks:
+  debugCoaddPSF:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: debugCoaddPsf
+      #  set plots to run
+      atools.ap12PsfSky: Ap12PsfSkyPlot  #  photometry.py
+      atools.psfCModelSky: PsfCModelSkyPlot  #  photometry.py
+      #  These are in shapes.py
+      atools.e1DiffSky: E1DiffSky  #  shapes.py
+      atools.e2DiffSky: E2DiffSky  #  shapes.py
+      atools.shapeSizeFractionalDiffSky: ShapeSizeFractionalDiffSky  #  shapes.py
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
+  debugVisitPSF:
+    class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
+    config:
+      connections.outputName: debugVisitPsf
+      atools.e1DiffScatter: E1DiffScatterVisit  #  shapes.py
+      atools.e2DiffScatter: E2DiffScatterVisit  #  shapes.py
+      atools.shapeSizeFractionalDiffScatter: ShapeSizeFractionalDiffScatterVisit  #  shapes.py
+      atools.e1DiffSky: E1DiffSkyVisit  #  shapes.py
+      atools.e2DiffSky: E2DiffSkyVisit  #  shapes.py
+      atools.shapeSizeFractionalDiffSky: ShapeSizeFractionalDiffSkyVisit  #  shapes.py
+      atools.e1FocalPlane: E1FocalPlane  #  shapes.py
+      atools.e2FocalPlane: E2FocalPlane  #  shapes.py
+      atools.shapeSizeFractionalDiffFocalPlane: ShapeSizeFractionalDiffFocalPlane  #  shapes.py
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

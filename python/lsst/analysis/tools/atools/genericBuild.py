@@ -125,7 +125,7 @@ class MagnitudeTool(AnalysisTool):
             key_flux="{band}_cModelFlux",
             key_flux_error="{band}_cModelFluxErr",
             name_flux="CModel",
-            name_flux_short="bulge_cModel",
+            name_flux_short="cModel",
         ),
         disk_err=FluxConfig(
             key_flux="{band}_bdFluxD",

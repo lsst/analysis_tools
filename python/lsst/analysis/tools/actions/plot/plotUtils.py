@@ -224,26 +224,24 @@ def get_and_remove_figure_text(figure: Figure):
     return texts, lines
 
 
-def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
-    """Add useful information to the plot.
+def parsePlotInfo(plotInfo: Mapping[str, str]) -> str:
+    """Extract information from the plotInfo dictionary and parses it into
+    a meaningful string that can be added to a figure.
 
     Parameters
     ----------
-    fig : `matplotlib.figure.Figure`
-        The figure to add the information to.
-    plotInfo : `dict`
-        A dictionary of the plot information.
+    plotInfo : `dict`[`str`, `str`]
+        A plotInfo dictionary containing useful information to
+        be included on a figure.
 
     Returns
     -------
-    fig : `matplotlib.figure.Figure`
-        The figure with the information added.
+    infoText : `str`
+        A string containing the plotInfo information, parsed in such a
+        way that it can be included on a figure.
     """
-    # TO DO: figure out how to get this information
     photocalibDataset = "None"
     astroDataset = "None"
-
-    fig.text(0.01, 0.99, plotInfo["plotName"], fontsize=7, transform=fig.transFigure, ha="left", va="top")
 
     run = plotInfo["run"]
     datasetsUsed = f"\nPhotoCalib: {photocalibDataset}, Astrometry: {astroDataset}"
@@ -285,6 +283,26 @@ def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
         selections = ", ".join(f"{key[nPrefix:]}: {plotInfo[key]}" for key in selectionKeys)
         infoText = f"{infoText}, Selections: {selections}"
 
+    return infoText
+
+
+def addPlotInfo(fig: Figure, plotInfo: Mapping[str, str]) -> Figure:
+    """Add useful information to the plot.
+
+    Parameters
+    ----------
+    fig : `matplotlib.figure.Figure`
+        The figure to add the information to.
+    plotInfo : `dict`
+        A dictionary of the plot information.
+
+    Returns
+    -------
+    fig : `matplotlib.figure.Figure`
+        The figure with the information added.
+    """
+    fig.text(0.01, 0.99, plotInfo["plotName"], fontsize=7, transform=fig.transFigure, ha="left", va="top")
+    infoText = parsePlotInfo(plotInfo)
     fig.text(0.01, 0.984, infoText, fontsize=6, transform=fig.transFigure, alpha=0.6, ha="left", va="top")
 
     return fig

@@ -34,6 +34,7 @@ __all__ = (
 import copy
 from abc import abstractmethod
 
+import astropy.units as u
 from lsst.pex.config import DictField, Field
 
 from ..actions.vector import (
@@ -41,6 +42,7 @@ from ..actions.vector import (
     ColorDiff,
     ColorError,
     ConstantValue,
+    CosVector,
     DivideVector,
     DownselectVector,
     LoadVector,
@@ -471,11 +473,6 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
     """Tool for diffs between reference and measured coadd positions."""
 
-    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
-    scale_factor = Field[float](
-        doc="The factor to multiply positions by (i.e. the pixel scale if coordinates have pixel units)",
-        default=1000,
-    )
     coord_label = Field[str](
         doc="The plot label for the astrometric variable (default coord_meas)",
         optional=True,
@@ -486,8 +483,26 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
         optional=False,
     )
     coord_ref = Field[str](
-        doc="The key for reference values of the astrometric variabler",
+        doc="The key for reference values of the astrometric variable",
         optional=False,
+    )
+    coord_ref_cos = Field[str](
+        doc="The key for reference values of the cosine correction astrometric variable"
+        " (i.e. dec if coord_meas is RA)",
+        default=None,
+        optional=True,
+    )
+    coord_ref_cos_unit = Field[str](
+        doc="astropy unit of coord_ref_cos",
+        default="deg",
+        optional=True,
+    )
+    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
+    # Default coords are in degrees and we want mas
+    scale_factor = Field[float](
+        doc="The factor to multiply distances by (e.g. the pixel scale if coordinates have pixel units or "
+        "the desired spherical coordinate unit conversion otherwise)",
+        default=3600000,
     )
 
     def finalize(self):
@@ -512,8 +527,20 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                     actionB=LoadVector(vectorKey=f"{self.process.buildActions.pos_meas.vectorKey}Err"),
                 )
             else:
+                factor = ConstantValue(value=self.scale_factor)
+                if self.coord_ref_cos:
+                    factor_cos = u.Unit(self.coord_ref_cos_unit).to(u.rad)
+                    factor = MultiplyVector(
+                        actionA=factor,
+                        actionB=CosVector(
+                            actionA=MultiplyVector(
+                                actionA=ConstantValue(value=factor_cos),
+                                actionB=LoadVector(vectorKey=self.coord_meas),
+                            )
+                        ),
+                    )
                 self.process.buildActions.diff = MultiplyVector(
-                    actionA=ConstantValue(value=self.scale_factor),
+                    actionA=factor,
                     actionB=SubtractVector(
                         actionA=self.process.buildActions.pos_meas,
                         actionB=self.process.buildActions.pos_ref,
@@ -523,18 +550,20 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 self.unit = "" if self.compute_chi else "mas"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
+                coord_prefix = "" if "coord" in self.coord_meas else "coord_"
                 self.name_prefix = (
-                    f"astrom_{name_short_y}_vs_{name_short_x}_{self.coord_meas}_coord_{subtype}"
+                    f"astrom_{name_short_y}_vs_{name_short_x}_{coord_prefix}{self.coord_meas}_{subtype}"
                     f"_{{name_class}}_"
                 )
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
                 label = f"({name_short_y} - {name_short_x})"
+                coord_suffix = "" if "coord" in name else " coord"
                 self.produce.plot.yAxisLabel = (
-                    f"chi = ({label} {name} coord)/error"
+                    f"chi = ({label} {name}{coord_suffix})/error"
                     if self.compute_chi
-                    else f"{label} {name} coord ({self.unit})"
+                    else f"{label} {name}{coord_suffix} ({self.unit})"
                 )
 
     def get_key_flux_y(self) -> str:
@@ -545,13 +574,14 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
     """Tool for distances between matched reference and measured coadd
     objects."""
 
-    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
     key_dist = Field[str](default="match_distance", doc="Distance field key")
     key_dist_err = Field[str](default="match_distanceErr", doc="Distance error field key")
+    mag_sn = Field[str](default="cmodel_err", doc="Flux (magnitude) field to use for S/N binning on plot")
+    # Default coords are in degrees and we want mas
     scale_factor = Field[float](
         doc="The factor to multiply distances by (e.g. the pixel scale if coordinates have pixel units or "
         "the desired spherical coordinate unit conversion otherwise)",
-        default=1000,
+        default=3600000,
     )
 
     def finalize(self):
@@ -566,16 +596,15 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
             name_short_y = self.config_mag_y.name_flux_short
 
             self.process.buildActions.dist = LoadVector(vectorKey=self.key_dist)
-            self.process.buildActions.dist_err = LoadVector(vectorKey=self.key_dist_err)
             if self.compute_chi:
                 self.process.buildActions.diff = DivideVector(
-                    actionA=LoadVector(vectorKey=self.process.buildActions.dist.vectorKey),
-                    actionB=LoadVector(vectorKey=self.process.buildActions.dist_err.vectorKey),
+                    actionA=self.process.buildActions.dist,
+                    actionB=LoadVector(vectorKey=self.key_dist_err),
                 )
             else:
                 self.process.buildActions.diff = MultiplyVector(
                     actionA=ConstantValue(value=self.scale_factor),
-                    actionB=LoadVector(vectorKey=self.process.buildActions.dist.vectorKey),
+                    actionB=self.process.buildActions.dist,
                 )
             if self.unit is None:
                 self.unit = "" if self.compute_chi else "mas"

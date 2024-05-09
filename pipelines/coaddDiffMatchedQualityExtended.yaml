@@ -22,6 +22,15 @@ tasks:
     config:
       connections.outputName: diff_matched_truth_summary_objectTable_tract
 
+      atools.matchedRefAngularSeparationDiff: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefAngularSeparationDiff.produce.plot.yLims: lims_dist_diff
+
+      atools.matchedRefAngularSeparationChi: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefAngularSeparationChi.produce.plot.yLims: lims_dist_chi
+      atools.matchedRefAngularSeparationChi.compute_chi: true
+
       atools.matchedRefCModelColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefCModelColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelColorDiff.produce.plot.yLims: lims_color_diff
@@ -94,15 +103,6 @@ tasks:
       atools.matchedRefPositionDecChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefPositionDecChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionDecChi.compute_chi: true
-
-      atools.matchedRefPositionDistDiff: MatchedRefCoaddDiffDistanceTool
-      atools.matchedRefPositionDistDiff.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionDistDiff.produce.plot.yLims: lims_dist_diff
-
-      atools.matchedRefPositionDistChi: MatchedRefCoaddDiffDistanceTool
-      atools.matchedRefPositionDistChi.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionDistChi.produce.plot.yLims: lims_dist_chi
-      atools.matchedRefPositionDistChi.compute_chi: true
 
       python: |
         from lsst.analysis.tools.atools.genericBuild import MagnitudeTool

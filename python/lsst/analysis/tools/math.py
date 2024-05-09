@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = (
+    "cos",
     "divide",
     "fluxToMag",
     "nanMax",
@@ -29,6 +30,7 @@ __all__ = (
     "nanSigmaMad",
     "nanStd",
     "sigmaMad",
+    "sin",
     "sqrt",
 )
 
@@ -48,12 +50,22 @@ from .warning_control import (
     numpy_divide_zero_log,
     numpy_divide_zero_log10,
     numpy_dof_zero,
+    numpy_invalid_value_cos,
     numpy_invalid_value_divide,
     numpy_invalid_value_log,
     numpy_invalid_value_log10,
+    numpy_invalid_value_sin,
     numpy_invalid_value_sqrt,
     numpy_mean_empty,
 )
+
+
+def cos(values: Scalar | Vector) -> Scalar | Vector:
+    """Return the sqrt of values."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_cos)
+        result = np.cos(values)
+    return result
 
 
 def divide(dividend: Scalar | Vector, divisor: Scalar | Vector) -> Scalar | Vector:
@@ -163,6 +175,14 @@ def nanStd(vector: Vector) -> Scalar:
 
 def sigmaMad(vector: Vector) -> Scalar:
     return cast(Scalar, sps.median_abs_deviation(vector, scale="normal", nan_policy="propagate"))
+
+
+def sin(values: Scalar | Vector) -> Scalar | Vector:
+    """Return the sin of values."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_sin)
+        result = np.sin(values)
+    return result
 
 
 def sqrt(values: Scalar | Vector) -> Scalar | Vector:

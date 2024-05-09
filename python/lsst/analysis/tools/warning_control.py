@@ -27,9 +27,11 @@ __all__ = (
     "numpy_divide_zero_log",
     "numpy_divide_zero_log10",
     "numpy_dof_zero",
+    "numpy_invalid_value_cos",
     "numpy_invalid_value_divide",
     "numpy_invalid_value_log",
     "numpy_invalid_value_log10",
+    "numpy_invalid_value_sin",
     "numpy_invalid_value_sqrt",
     "numpy_mean_empty",
 )
@@ -44,8 +46,10 @@ numpy_divide_zero_divide = r"divide by zero encountered in divide"
 numpy_divide_zero_log = r"divide by zero encountered in log"
 numpy_divide_zero_log10 = r"divide by zero encountered in log10"
 numpy_dof_zero = r"Degrees of freedom <= 0 for slice."
+numpy_invalid_value_cos = r"invalid value encountered in cos"
 numpy_invalid_value_divide = r"invalid value encountered in divide"
 numpy_invalid_value_log = r"invalid value encountered in log"
 numpy_invalid_value_log10 = r"invalid value encountered in log10"
+numpy_invalid_value_sin = r"invalid value encountered in sin"
 numpy_invalid_value_sqrt = r"invalid value encountered in sqrt"
 numpy_mean_empty = r"Mean of empty slice"

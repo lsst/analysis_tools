@@ -32,6 +32,7 @@ __all__ = (
 )
 
 import copy
+from abc import abstractmethod
 
 from lsst.pex.config import DictField, Field
 
@@ -230,7 +231,10 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
                     maximum=minimum + self._mag_interval,
                 )
 
-                action.name_prefix = name_prefix.format(key_flux=key_flux, name_class=name_class)
+                action.name_prefix = name_prefix.format(
+                    key_flux=key_flux,
+                    name_class=name_class,
+                )
                 if self.parameterizedBand:
                     action.name_prefix = f"{{band}}_{action.name_prefix}"
                 action.name_suffix = name_suffix.format(minimum=minimum)
@@ -244,6 +248,25 @@ class MatchedRefCoaddDiffTool(MatchedRefCoaddToolBase):
                     }
                 )
         return units
+
+    @property
+    def config_mag_y(self):
+        """Return the y-axis magnitude config.
+
+        Although tools may not end up using any flux measures in metrics or
+        plots, this should still be set to the flux measure that was matched
+        or selected against in the catalog not used for the x-axis."""
+        mag_y = self.get_key_flux_y()
+        if mag_y not in self.fluxes:
+            raise KeyError(f"{mag_y=} not in {self.fluxes}; was finalize called?")
+        # This is a logic error: it shouldn't be called before finalize
+        assert mag_y in self.fluxes
+        return self.fluxes[mag_y]
+
+    @abstractmethod
+    def get_key_flux_y(self) -> str:
+        """Return the key for the y-axis flux measure."""
+        raise NotImplementedError("subclasses must implement get_key_flux_y")
 
     def setDefaults(self):
         super().setDefaults()
@@ -280,18 +303,21 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             if self.mag_y2 is None:
                 self.mag_y2 = self.mag_y1
             # Ensure mag_y1/2 are set before any plot finalizes
+            # This may result in duplicate actions but these are just plain
+            # column selectors so that's not a serious problem
             bands = {band1: self._split_bands(band2_list) for band1, band2_list in self.bands.items()}
             n_bands = 0
+
             for band1, band2_list in bands.items():
                 for band2 in band2_list:
-                    mag1 = f"y_{band1}"
-                    mag2 = f"y_{band2}"
-                    mag_ref1 = f"refcat_flux_{band1}"
-                    mag_ref2 = f"refcat_flux_{band2}"
-                    self._set_flux_default(mag1, band=band1, name_mag=self.mag_y1)
-                    self._set_flux_default(mag2, band=band2, name_mag=self.mag_y2)
-                    self._set_flux_default(mag_ref1, band=band1, name_mag="ref_matched")
-                    self._set_flux_default(mag_ref2, band=band2, name_mag="ref_matched")
+                    mag_y1 = f"mag_y_{band1}"
+                    mag_y2 = f"mag_y_{band2}"
+                    mag_x1 = f"mag_x_{band1}"
+                    mag_x2 = f"mag_x_{band2}"
+                    self._set_flux_default(mag_y1, band=band1, name_mag=self.mag_y1)
+                    self._set_flux_default(mag_y2, band=band2, name_mag=self.mag_y2)
+                    self._set_flux_default(mag_x1, band=band1, name_mag=self.mag_x)
+                    self._set_flux_default(mag_x2, band=band2, name_mag=self.mag_x)
                     n_bands += 1
 
             self.suffixes_y_finalize = [f"_{idx}" for idx in range(n_bands)]
@@ -306,6 +332,11 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             actions_metric = {}
             actions_plot = {}
 
+            config_mag_x = self.config_mag_x
+            config_mag_y = self.config_mag_y
+            name_short_x = config_mag_x.name_flux_short
+            name_short_y = config_mag_y.name_flux_short
+
             idx = 0
             for band1, band2_list in bands.items():
                 for band2 in band2_list:
@@ -314,23 +345,26 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                     suffix_y = f"_{idx}"
                     self._set_actions(suffix=suffix_y)
                     metric = copy.copy(metric_base)
-                    self.name_prefix = f"photom_mag_{{key_flux}}_color_{name_color}_{{name_class}}_{subtype}_"
+                    self.name_prefix = (
+                        f"photom_{name_short_y}_vs_{name_short_x}_color_{name_color}"
+                        f"_{subtype}_{{name_class}}_"
+                    )
                     metric.units = self.configureMetrics(attr_suffix=suffix_y)
                     plot = copy.copy(plot_base)
 
                     plot.suffix_y = suffix_y
                     plot.suffix_stat = suffix_y
 
-                    mag1 = f"{self.mag_y1}_{band1}"
-                    mag2 = f"{self.mag_y2}_{band2}"
-                    mag_ref1 = f"ref_matched_{band1}"
-                    mag_ref2 = f"ref_matched_{band2}"
+                    mag_y1 = f"{self.mag_y1}_{band1}"
+                    mag_y2 = f"{self.mag_y2}_{band2}"
+                    mag_x1 = f"{self.mag_x}_{band1}"
+                    mag_x2 = f"{self.mag_x}_{band2}"
 
                     diff = ColorDiff(
-                        color1_flux1=getattr(self.process.buildActions, f"flux_{mag1}"),
-                        color1_flux2=getattr(self.process.buildActions, f"flux_{mag2}"),
-                        color2_flux1=getattr(self.process.buildActions, f"flux_{mag_ref1}"),
-                        color2_flux2=getattr(self.process.buildActions, f"flux_{mag_ref2}"),
+                        color1_flux1=getattr(self.process.buildActions, f"flux_{mag_y1}"),
+                        color1_flux2=getattr(self.process.buildActions, f"flux_{mag_y2}"),
+                        color2_flux1=getattr(self.process.buildActions, f"flux_{mag_x1}"),
+                        color2_flux2=getattr(self.process.buildActions, f"flux_{mag_x2}"),
                     )
 
                     if self.compute_chi:
@@ -338,18 +372,18 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
                             actionA=diff,
                             actionB=ColorError(
                                 flux_err1=DivideVector(
-                                    actionA=getattr(self.process.buildActions, f"flux_err_{mag1}"),
-                                    actionB=getattr(self.process.buildActions, f"flux_{mag1}"),
+                                    actionA=getattr(self.process.buildActions, f"flux_err_{mag_y1}"),
+                                    actionB=getattr(self.process.buildActions, f"flux_{mag_y1}"),
                                 ),
                                 flux_err2=DivideVector(
-                                    actionA=getattr(self.process.buildActions, f"flux_err_{mag2}"),
-                                    actionB=getattr(self.process.buildActions, f"flux_{mag2}"),
+                                    actionA=getattr(self.process.buildActions, f"flux_err_{mag_y2}"),
+                                    actionB=getattr(self.process.buildActions, f"flux_{mag_y2}"),
                                 ),
                             ),
                         )
                     setattr(self.process.buildActions, f"diff{plot.suffix_y}", diff)
 
-                    label = f"({band1} - {band2}) (meas - ref)"
+                    label = f"({band1} - {band2}) ({config_mag_y.name_flux} - {config_mag_x.name_flux})"
                     label = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
                     plot.yAxisLabel = label
                     actions_metric[name_color] = metric
@@ -363,6 +397,9 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot
             for name_action, action in actions_plot.items():
                 setattr(action_plot.actions, name_action, action)
             self.produce.plot = action_plot
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_y1
 
     def setDefaults(self):
         # skip MatchedRefCoaddDiffTool.setDefaults's _setActions call
@@ -391,25 +428,31 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
             # Ensure mag_y is set before any plot finalizes
             self._set_flux_default("mag_y")
             super().finalize()
+            name_short_x = self.config_mag_x.name_flux_short
+            name_short_y = self.config_mag_y.name_flux_short
+
+            prefix_action = "flux" if self.compute_chi else "mag"
+            action_diff = SubtractVector(
+                actionA=getattr(self.process.buildActions, f"{prefix_action}_{self.mag_x}"),
+                actionB=getattr(self.process.buildActions, f"{prefix_action}_{self.mag_y}"),
+            )
+
             if self.compute_chi:
-                self.process.buildActions.diff = DivideVector(
-                    actionA=SubtractVector(
-                        actionA=getattr(self.process.buildActions, f"flux_{self.mag_y}"),
-                        actionB=self.process.buildActions.flux_ref_matched,
-                    ),
-                    actionB=getattr(self.process.buildActions, f"flux_err_{self.mag_y}"),
+                key_err = f"flux_err_{self.mag_y}"
+                action_err = (
+                    getattr(self.process.buildActions, key_err)
+                    if hasattr(self.process.buildActions, key_err)
+                    else getattr(self.process.buildActions, f"flux_err_{self.mag_x}")
                 )
+                self.process.buildActions.diff = DivideVector(actionA=action_diff, actionB=action_err)
             else:
-                self.process.buildActions.diff = DivideVector(
-                    actionA=SubtractVector(
-                        actionA=getattr(self.process.buildActions, f"mag_{self.mag_y}"),
-                        actionB=self.process.buildActions.mag_ref_matched,
-                    ),
-                    actionB=ConstantValue(value=1e-3),
+                # set to mmag
+                self.process.buildActions.diff = MultiplyVector(
+                    actionA=action_diff,
+                    actionB=ConstantValue(value=1000.0),
                 )
             if not self.produce.plot.yAxisLabel:
-                config = self.fluxes[self.mag_y]
-                label = f"{config.name_flux} - {self.fluxes['ref_matched'].name_flux}"
+                label = f"{self.config_mag_y.name_flux} - {self.config_mag_x.name_flux}"
                 self.produce.plot.yAxisLabel = (
                     f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
                 )
@@ -417,9 +460,12 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
                 self.unit = "" if self.compute_chi else "mmag"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"photom_mag_{{key_flux}}_{{name_class}}_{subtype}_"
+                self.name_prefix = f"photom_{name_short_y}_vs_{name_short_x}_mag_{subtype}_{{name_class}}_"
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_y
 
 
 class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
@@ -454,6 +500,9 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
             name = self.coord_label if self.coord_label else self.coord_meas
             self.process.buildActions.pos_meas = LoadVector(vectorKey=self.coord_meas)
             self.process.buildActions.pos_ref = LoadVector(vectorKey=self.coord_ref)
+            name_short_x = self.config_mag_x.name_flux_short
+            name_short_y = self.config_mag_y.name_flux_short
+
             if self.compute_chi:
                 self.process.buildActions.diff = DivideVector(
                     actionA=SubtractVector(
@@ -474,12 +523,19 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffTool, MagnitudeScatterP
                 self.unit = "" if self.compute_chi else "mas"
             if self.name_prefix is None:
                 subtype = "chi" if self.compute_chi else "diff"
-                self.name_prefix = f"astrom_{self.coord_meas}_{{name_class}}_{subtype}_"
+                self.name_prefix = (
+                    f"astrom_{name_short_y}_vs_{name_short_x}_{self.coord_meas}_coord_{subtype}"
+                    f"_{{name_class}}_"
+                )
             if not self.produce.metric.units:
                 self.produce.metric.units = self.configureMetrics()
             if not self.produce.plot.yAxisLabel:
+                label = f"({name_short_y} - {name_short_x})"
                 self.produce.plot.yAxisLabel = (
-                    f"chi = (slot - reference {name} position)/error"
+                    f"chi = ({label} {name} coord)/error"
                     if self.compute_chi
-                    else f"slot - reference {name} position ({self.unit})"
+                    else f"{label} {name} coord ({self.unit})"
                 )
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_sn

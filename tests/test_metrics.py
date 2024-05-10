@@ -33,6 +33,13 @@ from lsst.analysis.tools.atools import (
 )
 
 
+class MatchedRefCoaddDiffToolMinimal(MatchedRefCoaddDiffTool):
+    """A bare-minimum implementation of a diff tool."""
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_x
+
+
 class TestDiffMatched(TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -75,7 +82,7 @@ class TestDiffMatched(TestCase):
         # Pass one at a time to test
         for kwarg in kwargs:
             kwargs_init = {kwarg: ""}
-            tester = MatchedRefCoaddDiffTool(**kwargs_init)
+            tester = MatchedRefCoaddDiffToolMinimal(**kwargs_init)
             tester.validate()
             with self.assertRaises(KeyError):
                 tester.configureMetrics()
@@ -84,7 +91,7 @@ class TestDiffMatched(TestCase):
             # Failing to find any of the required keys
             with self.assertRaises(KeyError):
                 tester({})
-        tester = MatchedRefCoaddDiffTool(**kwargs)
+        tester = MatchedRefCoaddDiffToolMinimal(**kwargs)
         tester.validate()
         with self.assertRaises(KeyError):
             tester.configureMetrics()

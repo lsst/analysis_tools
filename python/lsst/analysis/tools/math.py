@@ -56,6 +56,7 @@ from .warning_control import (
     numpy_invalid_value_log10,
     numpy_invalid_value_sin,
     numpy_invalid_value_sqrt,
+    numpy_invalid_value_subtract,
     numpy_mean_empty,
 )
 
@@ -129,7 +130,11 @@ def log10(values: Scalar | Vector) -> Scalar | Vector:
 
 def nanSigmaMad(vector: Vector) -> Scalar:
     """Return the sigma_MAD of a vector."""
-    return cast(Scalar, sps.median_abs_deviation(vector, scale="normal", nan_policy="omit"))
+    with warnings.catch_warnings():
+        # This is needed to catch inf median in sigma_mad
+        warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_subtract)
+        result = cast(Scalar, sps.median_abs_deviation(vector, scale="normal", nan_policy="omit"))
+    return result
 
 
 def nanMax(vector: Vector) -> Scalar:

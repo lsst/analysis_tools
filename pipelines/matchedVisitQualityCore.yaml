@@ -7,6 +7,10 @@ tasks:
       connections.outputName: matchedVisitCore
       atools.stellarPhotometricRepeatability: StellarPhotometricRepeatability
       atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
+      atools.stellarPhotometricRepeatabilityCalib: StellarPhotometricRepeatability
+      atools.stellarPhotometricRepeatabilityCalib.fluxType: 'calibFlux'
+      atools.stellarPhotometricResidualsCalib: StellarPhotometricResidualsFocalPlane
+      atools.stellarPhotometricResidualsCalib.fluxType: 'calibFlux'
       atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
       atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
       atools.stellarAstrometricResidualStdDevRA: StellarAstrometricResidualStdDevRAFocalPlanePlot

@@ -135,7 +135,8 @@ subsets:
   biasMetricsExtended:
     subset:
       - analyzeBiasExtended
-      - analyzeBiasCorrExtended
+      # TODO: DM-43877
+      # - analyzeBiasCorrExtended
   darkMetricsExtended:
     subset:
       - analyzeDarkExtended

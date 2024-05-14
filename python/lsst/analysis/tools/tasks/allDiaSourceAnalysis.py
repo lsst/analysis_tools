@@ -91,7 +91,13 @@ class AllDiaSourceHistTask(PipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
         flux_hist = self.run(inputs["sourceTables"])
+        breakpoint()
         butlerQC.put(flux_hist, outputRefs.flux_hist)
+
+        # inputs = butlerQC.get(inputRefs)
+        # inputs["num_initial_bgs"] = len(inputs["calexpBackgrounds"][0].get())
+        # delta_skyCorr_hist = self.run(**{k: v for k, v in inputs.items() if k != "calexpBackgrounds"})
+        # butlerQC.put(delta_skyCorr_hist, outputRefs.delta_skyCorr_hist)
 
     def run(self, sourceTables):
         """Generate a histogram of counts in the ...

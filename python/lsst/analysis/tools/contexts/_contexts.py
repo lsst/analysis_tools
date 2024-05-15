@@ -30,8 +30,6 @@ __all__ = (
     "MatchedRefDiffContext",
     "MatchedRefChiContext",
     "RefMatchContext",
-    "DrpContext",
-    "ApContext",
 )
 
 from ._baseContext import Context
@@ -68,16 +66,4 @@ class MatchedRefChiContext(Context):
 class RefMatchContext(Context):
     """A context which indicates that `AnalysisActions` are being computed
     on HSC data matched to the Gaia or PS reference catalogues.
-    """
-
-
-class DrpContext(Context):
-    """A context which indicates the analysis tool is built for DRP style
-    data products/catalogs and will use the appropriate column names.
-    """
-
-
-class ApContext(Context):
-    """A context which indicates the analysis tool is built for AP style
-    data products/catalogs and will use appropriate column names.
     """

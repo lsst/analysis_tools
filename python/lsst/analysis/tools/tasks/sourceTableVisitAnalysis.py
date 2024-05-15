@@ -40,6 +40,14 @@ class SourceTableVisitAnalysisConnections(
         deferLoad=True,
     )
 
+    camera = ct.PrerequisiteInput(
+        doc="Input camera to use for focal plane geometry.",
+        name="camera",
+        storageClass="Camera",
+        dimensions=("instrument",),
+        isCalibration=True,
+    )
+
 
 class SourceTableVisitAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=SourceTableVisitAnalysisConnections

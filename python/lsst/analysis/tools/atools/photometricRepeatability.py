@@ -180,8 +180,8 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         # Apply per-source selection criteria
         self.prep.selectors.bandSelector = BandSelector()
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = f"{self.fluxType}"
-        self.prep.selectors.snSelector.threshold = 50
+        self.prep.selectors.snSelector.fluxType = "psfFlux"
+        self.prep.selectors.snSelector.threshold = 200
 
         self.process.buildActions.z = ResidualWithPerGroupStatistic()
         self.process.buildActions.z.buildAction = ConvertFluxToMag(
@@ -204,6 +204,7 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
         self.process.calculateActions.photResidTractSigmaMad = SigmaMadAction(vectorKey="z")
 
         self.produce.plot = FocalPlanePlot()
+        self.produce.plot.nBins = 100
         self.produce.plot.zAxisLabel = "Mag - Mag$_{median}$ (mmag)"
 
         self.produce.metric.units = {  # type: ignore
@@ -214,7 +215,6 @@ class StellarPhotometricResidualsFocalPlane(AnalysisTool):
 
     def finalize(self):
         super().finalize()
-        self.prep.selectors.snSelector.fluxType = f"{self.fluxType}"
         self.process.buildActions.z.buildAction = ConvertFluxToMag(
             vectorKey=f"{self.fluxType}",
             returnMillimags=True,

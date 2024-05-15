@@ -9,3 +9,11 @@ tasks:
       atools.sourceTool: SourcesTool
       python: |
         from lsst.analysis.tools.atools import *
+  analyzeDiaSourceTable:
+    class: lsst.analysis.tools.tasks.DiaSourceDetectorVisitAnalysisTask
+    config:
+      connections.outputName: diaSourcesOutputX
+      connections.fakesType: ''
+      atools.diaSourceTool: NumDiaSourcesMetric
+      python: |
+        from lsst.analysis.tools.atools import *

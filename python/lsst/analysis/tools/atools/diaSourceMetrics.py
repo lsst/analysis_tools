@@ -30,8 +30,9 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector
+from ..actions.vector import DownselectVector, FlagSelector, GoodDiaSourceSelector
 from ..interfaces import AnalysisTool
+from ..contexts import DrpContext
 
 
 class NumDiaSourcesMetric(AnalysisTool):
@@ -43,13 +44,25 @@ class NumDiaSourcesMetric(AnalysisTool):
         super().setDefaults()
 
         # select dia sources that do not have bad flags
-        self.prep.selectors.goodDiaSourceSelector = GoodDiaSourceSelector()
+        #self.prep.selectors.goodDiaSourceSelector = GoodDiaSourceSelector()
 
         # Count the number of dia sources left after filtering
+        self.process.filterActions.goodDiaSources = DownselectVector(
+            vectorKey="diaSourceId",
+            selector=GoodDiaSourceSelector()
+        )
+        self.process.calculateActions.numGoodDiaSources = CountAction(vectorKey="goodDiaSources")
         self.process.calculateActions.numDiaSources = CountAction(vectorKey="diaSourceId")
-
+        self.process.calculateActions.diaSourcesGoodVsAllRatio = DivideScalar(
+            actionA=self.process.calculateActions.numGoodDiaSources,
+            actionB=self.process.calculateActions.numDiaSources,
+        )
         # the units for the quantity (count, an astropy quantity)
-        self.produce.metric.units = {"numDiaSources": "ct"}
+        #self.produce.metric.units = {"numDiaSources": "ct",
+        #                             "diaSourcesGoodVsAllRatio": "ct"
+        #                             }
+        self.produce.metric.units = {"diaSourcesGoodVsAllRatio": "ct"}
+        self.applyContext(DrpContext)
 
 
 class NumDipolesMetric(AnalysisTool):

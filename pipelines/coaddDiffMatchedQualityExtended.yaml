@@ -3,6 +3,8 @@ description: |
 parameters:
   color_diff_min: -250
   color_diff_max: 250
+  dist_diff_max: 200
+  dist_chi_max: 5
   mag_x_min: 17
   mag_x_max: 29
   mag_diff_min: -1000
@@ -13,11 +15,21 @@ parameters:
   pos_diff_max: 100
   pos_chi_min: -5
   pos_chi_max: 5
+  scale_pixel: 200.0
 tasks:
   diff_matched_analysis:
     class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
     config:
       connections.outputName: diff_matched_truth_summary_objectTable_tract
+
+      atools.matchedRefAngularSeparationDiff: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefAngularSeparationDiff.produce.plot.yLims: lims_dist_diff
+
+      atools.matchedRefAngularSeparationChi: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefAngularSeparationChi.produce.plot.yLims: lims_dist_chi
+      atools.matchedRefAngularSeparationChi.compute_chi: true
 
       atools.matchedRefCModelColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefCModelColorDiff.produce.plot.xLims: lims_mag_x
@@ -42,6 +54,7 @@ tasks:
       atools.matchedRefPositionXDiff.coord_ref: refcat_x
       atools.matchedRefPositionXDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefPositionXDiff.produce.plot.yLims: lims_pos_diff
+      atools.matchedRefPositionXDiff.scale_factor: parameters.scale_pixel
 
       atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionXChi.coord_meas: x
@@ -55,6 +68,7 @@ tasks:
       atools.matchedRefPositionYDiff.coord_ref: refcat_y
       atools.matchedRefPositionYDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefPositionYDiff.produce.plot.yLims: lims_pos_diff
+      atools.matchedRefPositionYDiff.scale_factor: parameters.scale_pixel
 
       atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionYChi.coord_meas: y
@@ -63,10 +77,38 @@ tasks:
       atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionYChi.compute_chi: true
 
+      atools.matchedRefPositionRaDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionRaDiff.coord_meas: coord_ra
+      atools.matchedRefPositionRaDiff.coord_ref: refcat_ra
+      atools.matchedRefPositionRaDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionRaDiff.produce.plot.yLims: lims_pos_diff
+
+      atools.matchedRefPositionRaChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionRaChi.coord_meas: coord_ra
+      atools.matchedRefPositionRaChi.coord_ref: refcat_ra
+      atools.matchedRefPositionRaChi.coord_ref_cos: refcat_dec
+      atools.matchedRefPositionRaChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionRaChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionRaChi.compute_chi: true
+
+      atools.matchedRefPositionDecDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionDecDiff.coord_meas: coord_dec
+      atools.matchedRefPositionDecDiff.coord_ref: refcat_dec
+      atools.matchedRefPositionDecDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionDecDiff.produce.plot.yLims: lims_pos_diff
+
+      atools.matchedRefPositionDecChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionDecChi.coord_meas: coord_dec
+      atools.matchedRefPositionDecChi.coord_ref: refcat_dec
+      atools.matchedRefPositionDecChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionDecChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionDecChi.compute_chi: true
+
       python: |
         from lsst.analysis.tools.atools.genericBuild import MagnitudeTool
         from lsst.analysis.tools.atools.diffMatched import (
           MatchedRefCoaddDiffColorTool,
+          MatchedRefCoaddDiffDistanceTool,
           MatchedRefCoaddDiffMagTool,
           MatchedRefCoaddDiffPositionTool,
         )
@@ -76,6 +118,8 @@ tasks:
         MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
 
         lims_color_diff = (parameters.color_diff_min, parameters.color_diff_max)
+        lims_dist_diff = (0., parameters.dist_diff_max)
+        lims_dist_chi = (0., parameters.dist_chi_max)
         lims_mag_x = (parameters.mag_x_min, parameters.mag_x_max)
         lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)
         lims_mag_diff = (parameters.mag_diff_min, parameters.mag_diff_max)

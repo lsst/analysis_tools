@@ -32,6 +32,8 @@ __all__ = (
     "RaiseToPowerVector",
     "Log10Vector",
     "FractionalDifference",
+    "CosVector",
+    "SinVector",
 )
 
 import logging
@@ -41,7 +43,7 @@ from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
-from ...math import divide, log10, sqrt
+from ...math import cos, divide, log10, sin, sqrt
 
 _LOG = logging.getLogger(__name__)
 
@@ -203,3 +205,29 @@ class FractionalDifference(VectorAction):
         vecA = self.actionA(data, **kwargs)  # type: ignore
         vecB = self.actionB(data, **kwargs)  # type: ignore
         return divide(vecA - vecB, vecB)
+
+
+class CosVector(VectorAction):
+    """Calculate cos(A)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return cos(vecA)
+
+
+class SinVector(VectorAction):
+    """Calculate sin(A)"""
+
+    actionA = ConfigurableActionField(doc="Action which supplies vector A", dtype=VectorAction)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from self.actionA.getInputSchema()  # type: ignore
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        vecA = self.actionA(data, **kwargs)  # type: ignore
+        return sin(vecA)

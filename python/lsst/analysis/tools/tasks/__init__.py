@@ -7,6 +7,7 @@ from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
+from .diaSourceDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *
 from .diffimTaskDetectorVisitMetricsAnalysis import *
 from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *

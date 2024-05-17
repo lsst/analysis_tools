@@ -70,6 +70,8 @@ class DivideContext(Context):
 
 
 class TestAction1(KeyedDataAction):
+    __test__ = False  # Tell pytest that this is *not* a test suite
+
     multiple = ConfigurableActionStructField[ScalarAction](doc="Multiple Actions")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -90,6 +92,8 @@ class TestAction1(KeyedDataAction):
 
 
 class TestAction2(KeyedDataAction):
+    __test__ = False  # Tell pytest that this is *not* a test suite
+
     single = ConfigurableActionField[ScalarAction](doc="Single Action")
     multiplier = ConfigurableActionField[AnalysisAction](doc="Multiplier")
 
@@ -118,6 +122,8 @@ class TestAction2(KeyedDataAction):
 
 
 class TestAction3(KeyedDataAction):
+    __test__ = False  # Tell pytest that this is *not* a test suite
+
     multiplier = Field[float](doc="Number to multiply result by")
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -135,6 +141,8 @@ class TestAction3(KeyedDataAction):
 
 
 class TestAnalysisTool(AnalysisTool):
+    __test__ = False  # Tell pytest that this is *not* a test suite
+
     def setDefaults(self) -> None:
         self.prep = TestAction1()
         self.process = TestAction2()

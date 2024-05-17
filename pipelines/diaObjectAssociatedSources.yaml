@@ -2,7 +2,7 @@ description: |
   Pipeline to create metrics for associated and unassociated sources from diaObject tables
 tasks:
   analyzeDiaObjectTableSources:
-    class: lsst.analysis.tools.tasks.DiaObjectTableAssociatedSourcesTask
+    class: lsst.analysis.tools.tasks.DiaObjectDetectorVisitAnalysisTask
     config:
       connections.outputName: sourcesOutput
       bands: ['g']

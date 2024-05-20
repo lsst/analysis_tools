@@ -104,7 +104,7 @@ def fluxToMag(
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_divide_zero_log10)
         warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_log10)
-        mag = (np.array(flux) * flux_unit).to(u.ABmag).value  # type: ignore
+        mag = (np.asarray(flux) * flux_unit).to(u.ABmag).value  # type: ignore
         if return_millimags:
             mag *= 1000
     return mag
@@ -133,7 +133,7 @@ def nanSigmaMad(vector: Vector) -> Scalar:
     with warnings.catch_warnings():
         # This is needed to catch inf median in sigma_mad
         warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_subtract)
-        result = cast(Scalar, sps.median_abs_deviation(vector, scale="normal", nan_policy="omit"))
+        result = cast(Scalar, sps.median_abs_deviation(np.asarray(vector), scale="normal", nan_policy="omit"))
     return result
 
 
@@ -141,7 +141,7 @@ def nanMax(vector: Vector) -> Scalar:
     """Return the max of a vector."""
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_all_nan)
-        result = float(np.nanmax(vector))
+        result = float(np.nanmax(np.asarray(vector)))
     return cast(Scalar, result)
 
 
@@ -150,7 +150,7 @@ def nanMean(vector: Vector) -> Scalar:
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
         warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
-        result = float(np.nanmean(vector))
+        result = float(np.nanmean(np.asarray(vector)))
     return cast(Scalar, result)
 
 
@@ -159,7 +159,7 @@ def nanMedian(vector: Vector) -> Scalar:
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
         warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
-        result = float(np.nanmedian(vector))
+        result = float(np.nanmedian(np.asarray(vector)))
     return cast(Scalar, result)
 
 
@@ -167,19 +167,19 @@ def nanMin(vector: Vector) -> Scalar:
     """Return the max of a vector."""
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_all_nan)
-        result = float(np.nanmin(vector))
+        result = float(np.nanmin(np.asarray(vector)))
     return cast(Scalar, result)
 
 
 def nanStd(vector: Vector) -> Scalar:
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_dof_zero)
-        result = float(np.nanstd(vector))
+        result = float(np.nanstd(np.asarray(vector)))
     return cast(Scalar, result)
 
 
 def sigmaMad(vector: Vector) -> Scalar:
-    return cast(Scalar, sps.median_abs_deviation(vector, scale="normal", nan_policy="propagate"))
+    return cast(Scalar, sps.median_abs_deviation(np.asarray(vector), scale="normal", nan_policy="propagate"))
 
 
 def sin(values: Scalar | Vector) -> Scalar | Vector:

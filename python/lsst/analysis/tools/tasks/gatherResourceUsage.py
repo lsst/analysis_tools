@@ -589,9 +589,10 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
             input_metadata_dataset_type = results.parentDatasetType
             refs_for_type = set(results)
             if refs_for_type:
-                gather_task_label, gather_dataset_type_name = self._add_gather_task(
-                    pipeline_graph, input_metadata_dataset_type
-                )
+                gathered = self._add_gather_task(pipeline_graph, input_metadata_dataset_type)
+                if gathered is None:
+                    continue
+                gather_task_label, gather_dataset_type_name = gathered
                 metadata_refs[gather_task_label] = refs_for_type
                 consolidate_config.input_names.append(gather_dataset_type_name)
         pipeline_graph.add_task(
@@ -645,10 +646,12 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         """
         if (m := re.fullmatch(r"^(\w+)_metadata$", input_metadata_dataset_type.name)) is None:
             return
-        elif "gatherResourceUsage" in input_metadata_dataset_type.name:
+        elif "ResourceUsage" in input_metadata_dataset_type.name:
             return
         else:
             input_task_label = m.group(1)
+        if "usage" in input_task_label.lower():
+            print(input_metadata_dataset_type, input_task_label)
         gather_task_label = f"{input_task_label}_gatherResourceUsage"
         gather_dataset_type_name = f"{input_task_label}_resource_usage"
         gather_config = GatherResourceUsageConfig()

@@ -58,6 +58,7 @@ class SourceObjectTableAnalysisConnections(
         multiple=True,
         deferLoad=True,
         dimensions=("instrument", "skymap", "tract"),
+        deferGraphConstraint=True,
     )
 
     refCat = ct.Input(
@@ -67,6 +68,7 @@ class SourceObjectTableAnalysisConnections(
         dimensions=["skymap", "tract", "patch"],
         multiple=True,
         deferLoad=True,
+        deferGraphConstraint=True,
     )
 
 

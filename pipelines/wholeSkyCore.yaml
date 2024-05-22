@@ -1,0 +1,9 @@
+description: |
+  Tier1 plots and metrics to assess the data quality across the whole sky
+tasks:
+  makeMetricTableObjectTableCore:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.outputName: wholeSkyMetricTableObjectTableCore
+      python: |
+        from lsst.analysis.tools.atools import *

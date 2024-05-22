@@ -30,7 +30,6 @@ from ..actions.keyedData import KeyedDataSelectorAction
 from ..actions.plot.diaSkyPlot import DiaSkyPanel, DiaSkyPlot
 from ..actions.scalar import CountAction
 from ..actions.vector import FlagSelector, GoodDiaSourceSelector, LoadVector
-from ..contexts import DrpContext
 from ..interfaces import AnalysisTool
 
 
@@ -48,8 +47,6 @@ class NumDiaSourcesMetric(AnalysisTool):
         self.process.calculateActions.numDiaSources = CountAction(vectorKey="parentDiaSourceId")
         # Set the units for the resulting astropy quantity (ct is count)
         self.produce.metric.units = {"numDiaSources": "ct"}
-        # Use, e.g., `pixelFlags_thing`, not `base_PixelFlags_flag_thing`
-        self.applyContext(DrpContext)
 
 
 class NumStreakDiaSourcesMetric(AnalysisTool):
@@ -68,8 +65,6 @@ class NumStreakDiaSourcesMetric(AnalysisTool):
         self.process.calculateActions.numStreakDiaSources = CountAction(vectorKey="parentDiaSourceId")
         # Set the units for the resulting astropy quantity (ct is count)
         self.produce.metric.units = {"numStreakDiaSources": "ct"}
-        # Use, e.g., `pixelFlags_thing`, not `base_PixelFlags_flag_thing`
-        self.applyContext(DrpContext)
 
 
 class NumStreakCenterDiaSourcesMetric(AnalysisTool):
@@ -89,8 +84,6 @@ class NumStreakCenterDiaSourcesMetric(AnalysisTool):
         self.process.calculateActions.numStreakCenterDiaSources = CountAction(vectorKey="parentDiaSourceId")
         # Set the units for the resulting astropy quantity (ct is count)
         self.produce.metric.units = {"numStreakCenterDiaSources": "ct"}
-        # Use, e.g., `pixelFlags_thing`, not `base_PixelFlags_flag_thing`
-        self.applyContext(DrpContext)
 
 
 class PlotStreakDiaSources(AnalysisTool):
@@ -123,7 +116,6 @@ class PlotStreakDiaSources(AnalysisTool):
         )
 
         # Use the DRP column names for all of the above, and generate the plot
-        self.applyContext(DrpContext)
         self.produce.plot = DiaSkyPlot()
 
         self.produce.plot.panels["panel_main"] = DiaSkyPanel()

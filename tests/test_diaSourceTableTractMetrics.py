@@ -24,7 +24,6 @@ import lsst.utils.tests
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from lsst.analysis.tools.atools import diaSourceTableTractMetrics as diaAtool
-from lsst.analysis.tools.contexts import DrpContext
 
 
 class DiaSourceTableTractTest(lsst.utils.tests.TestCase):
@@ -38,19 +37,16 @@ class DiaSourceTableTractTest(lsst.utils.tests.TestCase):
     def test_metrics(self):
         """Test that metrics have the expected values from the test data."""
         NumDiaSources = diaAtool.NumDiaSourcesMetric()
-        NumDiaSources.applyContext(DrpContext)
         NumDiaSources.finalize()
         goodDiaSourceCount = NumDiaSources(self.data)
-        self.assertEqual(goodDiaSourceCount["numDiaSources"].quantity.value, 341)
+        self.assertEqual(goodDiaSourceCount["numDiaSources"].quantity.value, 344)
 
         NumStreakDiaSources = diaAtool.NumStreakDiaSourcesMetric()
-        NumStreakDiaSources.applyContext(DrpContext)
         NumStreakDiaSources.finalize()
         streakDiaSourceCount = NumStreakDiaSources(self.data)
         self.assertEqual(streakDiaSourceCount["numStreakDiaSources"].quantity.value, 3)
 
         NumStreakCenterDiaSources = diaAtool.NumStreakCenterDiaSourcesMetric()
-        NumStreakCenterDiaSources.applyContext(DrpContext)
         NumStreakCenterDiaSources.finalize()
         streakCenterDiaSourceCount = NumStreakCenterDiaSources(self.data)
         self.assertEqual(streakCenterDiaSourceCount["numStreakCenterDiaSources"].quantity.value, 1)
@@ -58,7 +54,6 @@ class DiaSourceTableTractTest(lsst.utils.tests.TestCase):
     def test_plot(self):
         """Test that a plot is created from the test data."""
         plot = diaAtool.PlotStreakDiaSources()
-        plot.applyContext(DrpContext)
         plot.finalize()
         result = plot(self.data)
         self.assertTrue(isinstance(result["DiaSkyPlot"], plt.Figure))

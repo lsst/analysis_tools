@@ -10,7 +10,7 @@ tasks:
   analyzeAssocDiaSrcCore:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
     config:
-      # atools.numDiaSources: NumDiaSourcesMetric
+      atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
       atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId

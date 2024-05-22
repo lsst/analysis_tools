@@ -404,20 +404,11 @@ class GoodDiaSourceSelector(FlagSelector):
     def setDefaults(self):
         # These default flag names are correct for AP data products
         self.selectWhenFalse = [
-            "base_PixelFlags_flag_bad",
-            "base_PixelFlags_flag_suspect",
-            "base_PixelFlags_flag_saturatedCenter",
-            "base_PixelFlags_flag_interpolated",
-            "base_PixelFlags_flag_interpolatedCenter",
-            "base_PixelFlags_flag_edge",
+            "pixelFlags_bad",
+            "pixelFlags_saturatedCenter",
+            "pixelFlags_interpolatedCenter",
+            "pixelFlags_edge",
         ]
-
-    def drpContext(self):
-        # These flag names are correct for DRP data products
-        newSelectWhenFalse = [
-            flag.replace("base_PixelFlags_flag", "pixelFlags") for flag in self.selectWhenFalse
-        ]
-        self.selectWhenFalse = newSelectWhenFalse
 
 
 class ExtendednessSelector(VectorAction):

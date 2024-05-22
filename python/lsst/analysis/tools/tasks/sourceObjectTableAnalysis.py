@@ -26,6 +26,7 @@ import lsst.pex.config as pexConfig
 import numpy as np
 import pandas as pd
 from astropy.table import vstack
+from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from smatch import Matcher
 
@@ -108,6 +109,9 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
             isolatedSources.append(data[visit_sources["source_row"]])
         isolatedSources = vstack(isolatedSources)
 
+        if len(isolatedSources) == 0:
+            raise NoWorkFound(f"No isolated sources found for visit {visit}")
+
         # Get objects:
         allRefCats = []
         for refCatRef in inputs["refCat"]:
@@ -122,6 +126,9 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
             allRefCats.append(refCat[goodInds])
 
         refCat = pd.concat(allRefCats)
+
+        if len(refCat) == 0:
+            raise NoWorkFound(f"No reference catalog objects found to associate with visit {visit}")
 
         with Matcher(isolatedSources["coord_ra"], isolatedSources["coord_dec"]) as m:
             idx, isolatedMatchIndices, refMatchIndices, dists = m.query_radius(

@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "NumDiaSourcesMetric",
+    "NumGoodDiaSourcesMetrics",
     "NumDipolesMetric",
     "NumDiaSourcesSelectionMetric",
     "DiaSourcesGoodVsBadRatioMetric",
@@ -30,26 +30,42 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import FlagSelector, GoodDiaSourceSelector
+from ..actions.vector import DownselectVector, FlagSelector, GoodDiaSourceSelector
 from ..interfaces import AnalysisTool
 
 
-class NumDiaSourcesMetric(AnalysisTool):
+class NumGoodDiaSourcesMetrics(AnalysisTool):
     """Calculate the number of DIA Sources that do not have known
-    bad/quality flags set to true.
+    bad/quality flags set to true, and also calculate the ratio of
+    counts of non-flagged sources to all sources.
     """
+
+    parameterizedBand: bool = False
 
     def setDefaults(self):
         super().setDefaults()
 
-        # select dia sources that do not have bad flags
-        self.prep.selectors.goodDiaSourceSelector = GoodDiaSourceSelector()
+        # filter for and count the number of dia sources that don't have flags
+        self.process.filterActions.goodDiaSources = DownselectVector(
+            vectorKey="parentDiaSourceId", selector=GoodDiaSourceSelector()
+        )
+        self.process.calculateActions.numGoodDiaSources = CountAction(vectorKey="goodDiaSources")
 
-        # Count the number of dia sources left after filtering
-        self.process.calculateActions.numDiaSources = CountAction(vectorKey="diaSourceId")
+        # Count the total number of dia sources:
+        self.process.calculateActions.numAllDiaSources = CountAction(vectorKey="parentDiaSourceId")
+
+        # And calculate the ratio of good-to-all counts
+        self.process.calculateActions.ratioGoodToAllDiaSources = DivideScalar(
+            actionA=self.process.calculateActions.numGoodDiaSources,
+            actionB=self.process.calculateActions.numAllDiaSources,
+        )
 
         # the units for the quantity (count, an astropy quantity)
-        self.produce.metric.units = {"numDiaSources": "ct"}
+        self.produce.metric.units = {
+            "numAllDiaSources": "ct",
+            "numGoodDiaSources": "ct",
+            "ratioGoodToAllDiaSources": "",
+        }
 
 
 class NumDipolesMetric(AnalysisTool):

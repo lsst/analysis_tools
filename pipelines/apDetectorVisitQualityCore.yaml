@@ -14,6 +14,7 @@ tasks:
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
       atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: diaSourceId
+      atools.numDiaSourcesGood: NumGoodDiaSourcesMetrics
       atools.numDipoles: NumDipolesMetric
       atools.numSsObjects: NumSsObjectsMetric
       atools.numDiaSourcesHighReliability: NumDiaSourcesSelectionMetric

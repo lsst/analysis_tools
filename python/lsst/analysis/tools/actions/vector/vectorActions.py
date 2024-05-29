@@ -84,7 +84,9 @@ class DownselectVector(VectorAction):
         yield from cast(VectorAction, self.selector).getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        mask = cast(VectorAction, self.selector)(data, **kwargs)
+        # Explicitly comparing to True makes this work even if the selector
+        # returns an int or other non-boolean typed array
+        mask = np.array(cast(VectorAction, self.selector)(data, **kwargs) == True, dtype=bool)  # noqa: E712
         return cast(Vector, data[self.vectorKey.format(**kwargs)])[mask]
 
 

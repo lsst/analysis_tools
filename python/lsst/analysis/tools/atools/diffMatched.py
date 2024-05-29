@@ -57,6 +57,15 @@ from .genericPlotAction import StructPlotAction
 from .genericProduce import MagnitudeScatterPlot
 
 
+class MatchedObjectSelector(RangeSelector):
+    """A selector that selects matched objects with finite distances."""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "match_distance"
+
+
 class ReferenceGalaxySelector(ThresholdSelector):
     """A selector that selects galaxies from a catalog with a
     boolean column identifying unresolved sources.
@@ -122,6 +131,7 @@ class MatchedRefCoaddToolBase(MagnitudeXTool):
     def setDefaults(self):
         super().setDefaults()
         self.mag_x = "ref_matched"
+        self.prep.selectors.matched = MatchedObjectSelector()
         self.process.buildActions.allSelector = ReferenceObjectSelector()
         self.process.buildActions.galaxySelector = ReferenceGalaxySelector()
         self.process.buildActions.starSelector = ReferenceStarSelector()

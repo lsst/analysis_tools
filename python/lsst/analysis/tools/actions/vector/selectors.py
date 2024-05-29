@@ -228,8 +228,8 @@ class RangeSelector(SelectorBase):
     """Selects rows within a range, inclusive of min/exclusive of max."""
 
     vectorKey = Field[str](doc="Key to select from data")
-    maximum = Field[float](doc="The maximum value", default=np.Inf)
-    minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.Inf, 0.0))
+    maximum = Field[float](doc="The maximum value (exclusive)", default=np.Inf)
+    minimum = Field[float](doc="The minimum value (inclusive)", default=np.nextafter(-np.Inf, 0.0))
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield self.vectorKey, Vector

@@ -65,7 +65,7 @@ class ReferenceGalaxySelector(ThresholdSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data=data, **kwargs)
         if self.plotLabelKey:
-            self._addValueToPlotInfo("true galaxies", **kwargs)
+            self._addValueToPlotInfo("reference galaxies", **kwargs)
         return result
 
     def setDefaults(self):
@@ -95,7 +95,7 @@ class ReferenceStarSelector(ThresholdSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data=data, **kwargs)
         if self.plotLabelKey:
-            self._addValueToPlotInfo("true stars", **kwargs)
+            self._addValueToPlotInfo("reference stars", **kwargs)
         return result
 
     def setDefaults(self):

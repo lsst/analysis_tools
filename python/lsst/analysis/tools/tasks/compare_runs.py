@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+__all__ = ("CompareMetrics",)
+
 import argparse
 import re
 from collections import defaultdict
 
-import lsst.geom
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.daf.butler import Butler
@@ -31,7 +32,6 @@ from lsst.daf.butler import Butler
 
 class CompareMetrics:
 
-    # def __init__(self, plotAstrometryMetrics=True):
     def __init__(self, butler, collections):
 
         self.butler = butler
@@ -39,7 +39,6 @@ class CompareMetrics:
         self.bands = ["g", "r", "i", "z", "y"]
         self.linestyles = ["solid", "dashed", "dotted", "dashdot"]
         self.colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-        # self.plotAstrometryMetrics = plotAstrometryMetrics
 
     def plotMatchedVisitMetrics(self, savePath, tracts=None):
 
@@ -92,8 +91,6 @@ class CompareMetrics:
 
     def plotAstromDiffMetrics(self, savePath, percentiles=np.array([16, 50, 84])):
 
-        visitTable = self.butler.get("visitTable", instrument="HSC", collections=self.collections[0])
-        skyMap = self.butler.get("skyMap", skymap="hsc_rings_v1", collections=self.collections[0])
         allMetrics = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         metricUnits = {}
         for collection in self.collections:
@@ -110,7 +107,6 @@ class CompareMetrics:
                 )
             )
             astromDiffMetricRefs.update(astromColorDiffMetricRefs)
-            print(len(astromDiffMetricRefs))
 
             for ref in astromDiffMetricRefs:
                 band = ref.dataId["band"]
@@ -119,13 +115,6 @@ class CompareMetrics:
                     for metric in value:
                         metricName = metric.metric_name.metric
                         allMetrics[metricName][collection][band].append(metric.quantity.value)
-                        if (metricName == "AB1_Dec") & (band == "r"):
-                            visMatch = visitTable.loc[ref.dataId["visit"]]
-                            center = lsst.geom.SpherePoint(
-                                visMatch["ra"] * lsst.geom.degrees, visMatch["dec"] * lsst.geom.degrees
-                            )
-                            tract = skyMap.findTract(center)
-                            print(ref.dataId["visit"], tract.tract_id, metric.quantity.value)
                         if metricName not in metricUnits:
                             metricUnits[metricName] = metric.quantity.unit.name
 
@@ -135,8 +124,6 @@ class CompareMetrics:
                 metricPercentileArray = np.zeros((len(self.bands), 3))
                 for band, bandValues in collectionValues.items():
                     metricPercentileArray[self.bands.index(band)] = np.percentile(bandValues, percentiles)
-                if metricName == "AB1_Dec":
-                    print(metricPercentileArray)
                 ax.plot(
                     metricPercentileArray[:, 0],
                     linestyle="--",
@@ -179,7 +166,7 @@ class CompareMetrics:
             "collections",
             type=str,
             nargs="+",
-            help="Collection(s)s to search for input metadata.",
+            help="Collection(s) to search for input metadata.",
         )
         parser.add_argument(
             "savePath",
@@ -187,13 +174,11 @@ class CompareMetrics:
         )
         parser.add_argument(
             "--plotMatchedVisitMetrics",
-            type=bool,
-            default=False,
+            action="store_true",
         )
         parser.add_argument(
             "--plotAstromDiffMetrics",
-            type=bool,
-            default=True,
+            action="store_true",
         )
         parser.add_argument(
             "--tracts",
@@ -217,9 +202,11 @@ class CompareMetrics:
 
         comp = cls(butler, args.collections)
         if args.plotMatchedVisitMetrics:
+            print("Making matchedVisitMetric plots")
             comp.plotMatchedVisitMetrics(args.savePath, tracts=args.tracts)
 
         if args.plotAstromDiffMetrics:
+            print("Making astromDiffMetric plots")
             comp.plotAstromDiffMetrics(args.savePath)
 
 

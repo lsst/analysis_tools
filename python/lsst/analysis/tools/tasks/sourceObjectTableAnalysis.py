@@ -85,11 +85,24 @@ class SourceObjectTableAnalysisConfig(
         dtype=str,
         default="r_dec",
     )
+    refCat_bands = pexConfig.ListField(
+        doc=("Bands in refCat to be combined with `refCat_selectors` to build refCat column names."),
+        dtype=str,
+        default=["u", "g", "r", "i", "z", "y"],
+    )
+    refCat_selectors = pexConfig.ListField(
+        doc=(
+            "Remove objects for which these flags are true. These strings are combined with `refCat_bands`"
+            " to build the full refCat column names"
+        ),
+        dtype=str,
+        default=["pixelFlags_saturated", "pixelFlags_saturatedCenter"],
+    )
 
 
 class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
     ConfigClass = SourceObjectTableAnalysisConfig
-    _DefaultName = "sourceTableVisitAnalysis"
+    _DefaultName = "sourceObjectTableAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
@@ -116,15 +129,25 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
 
         # Get objects:
         allRefCats = []
+        refCatSelectors = [
+            f"{refCatBand}_{selector}"
+            for refCatBand in self.config.refCat_bands
+            for selector in self.config.refCat_selectors
+        ]
+
         for refCatRef in inputs["refCat"]:
             refCat = refCatRef.get(
-                parameters={"columns": ["detect_isPrimary", self.config.ra_column, self.config.dec_column]}
+                parameters={
+                    "columns": ["detect_isPrimary", self.config.ra_column, self.config.dec_column]
+                    + refCatSelectors
+                }
             )
             goodInds = (
                 refCat["detect_isPrimary"]
                 & np.isfinite(refCat[self.config.ra_column])
                 & np.isfinite(refCat[self.config.dec_column])
             )
+            goodInds &= ~refCat[refCatSelectors].any(axis=1)
             allRefCats.append(refCat[goodInds])
 
         refCat = pd.concat(allRefCats)

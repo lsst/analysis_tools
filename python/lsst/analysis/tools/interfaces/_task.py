@@ -179,8 +179,7 @@ class AnalysisBaseConnections(
                 doc="Dynamic connection for plotting",
                 dimensions=self.dimensions,
             )
-            object.__setattr__(self, name, outConnection)
-            self.outputs.add(name)
+            setattr(self, name, outConnection)
 
 
 def _timestampValidator(value: str) -> bool:

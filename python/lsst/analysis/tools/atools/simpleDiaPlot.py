@@ -29,7 +29,7 @@ from ..interfaces import AnalysisTool
 class SimpleDiaPlot(AnalysisTool):
     """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky.
 
-    Column names sfollowing Science Data Model (SDM).
+    Column names following Science Data Model (SDM).
     """
 
     parameterizedBand: bool = False
@@ -50,7 +50,6 @@ class SimpleDiaPlot(AnalysisTool):
         self.produce.plot.panels["panel_main"].ra = "ra"
         self.produce.plot.panels["panel_main"].dec = "dec"
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False
-
 
 class SimpleDiaSrcPlot(SimpleDiaPlot):
     """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky.

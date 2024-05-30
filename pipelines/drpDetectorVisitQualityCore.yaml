@@ -1,37 +1,19 @@
 description: |
   DRP plots and metrics to assess diaSrc CcdVisit quality.  No association.
 tasks:
-  diaSrcCcdVisitAnalysis
+  diaSrcCcdVisitAnalysis:
     class: lsst.analysis.tools.tasks.DiaSrcCcdVisitAnalysisTask
-      connections.outputName: diaSrcCcdVisit
-  analyzeTrailedDiaSrcCore:
-    class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
     config:
-      # Counts up the number of dia sources in the trailed table.
-      atools.numDiaSourcesAll: NumDiaSourcesAllMetric
-      connections.outputName: trailedDiaSrcCore
+      connections.outputName: diaSrcCcdVisit
+      # Each attribute we give to atools is a Metric that gets run
+      atools.DiaSkySourceHistPlot: SkySourceHistPlot
+      atools.DiaSkySourceSkyPlot: SkySourceHistPlot
+#       atools.DiaSourcesGoodVsBadRatioMetric: DiaSourcesGoodVsBadRatioMetric
+#       atools.NumDiaSourcesMetric: NumDiaSourcesMetric
+#       atools.NumDipolesMetric: NumDipolesMetric
+#       atools.NumDiaSourcesSelectionMetric: NumDiaSourcesSelectionMetric
+#       atools.NumStreakDiaSources: NumStreakDiaSourcesMetric
+#       atools.NumStreakCenterDiaSources: NumStreakCenterDiaSourcesMetric
+#       atools.streakDiaSourcePlot: PlotStreakDiaSources
       python: |
         from lsst.analysis.tools.atools import *
-  diffimTaskCore:
-    class: lsst.analysis.tools.tasks.DiffimDetectorVisitAnalysisTask
-    config:
-      connections.outputName: diffimMetadata
-
-      atools.diffimMetadataMetric: DiffimMetadataMetricTool
-      atools.diffimMetadataMetric.metrics:
-        # Format is "metric name in the metadata": units
-        nUnmergedDiaSources: ct
-        nMergedDiaSources: ct
-        nGoodPixels: ct
-        nBadPixels: ct
-        nPixelsDetectedPositive: ct
-        nPixelsDetectedNegative: ct
-        nBadPixelsDetectedPositive: ct
-        nBadPixelsDetectedNegative: ct
-        sciencePsfSize: pixel
-        templatePsfSize: pixel
-        scaleScienceVarianceFactor: ct
-        scaleTemplateVarianceFactor: ct
-        templateCoveragePercent: percent
-      python: |
-        from lsst.analysis.tools.atools import DiffimMetadataMetricTool

@@ -14,8 +14,8 @@ class DiaSrcCcdVisitAnalysisConnections(
 ):
     data = ct.Input(
         doc="CcdVisit-based DiaSource table to load from the butler",
-        name="{coaddName}Diff_diaSrc",
-        storageClass="SourceCatalog",
+        name="{coaddName}Diff_diaSrcTable",
+        storageClass="ArrowAstropy",
         dimensions=("visit", "band", "detector"),
         deferLoad=True,
     )

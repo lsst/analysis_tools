@@ -7,3 +7,9 @@ tasks:
       connections.outputName: wholeSkyMetricTableObjectTableCore
       python: |
         from lsst.analysis.tools.atools import *
+  objectTableMetricWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      atools.wholeSkyMetric: WholeSkyPlotTool
+      python: |
+        from lsst.analysis.tools.atools import *

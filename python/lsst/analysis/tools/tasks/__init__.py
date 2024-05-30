@@ -27,3 +27,4 @@ from .sourceObjectTableAnalysis import *
 from .sourceTableVisitAnalysis import *
 from .trailedDiaSrcDetectorVisitAnalysis import *
 from .verifyBiasResultsAnalysis import *
+from .wholeSkyAnalysis import *

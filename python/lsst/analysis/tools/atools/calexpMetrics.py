@@ -59,6 +59,8 @@ class CalexpSummaryMetrics(AnalysisTool):
         "psfStarDeltaSizeScatter": "pixel",
         "psfStarScaledDeltaSizeScatter": "pixel",
         "psfTraceRadiusDelta": "pixel",
+        "psfApFluxDelta": "",  # This is a normalized-to-one value.
+        "psfApCorrSigmaScaledDelta": "",  # This is a multiplicative factor.
         "maxDistToNearestPsf": "deg",
         "effTime": "s",
         "effTimePsfSigmaScale": "s",

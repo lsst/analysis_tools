@@ -174,7 +174,8 @@ class PropertyMapPlot(PlotAction):
 
         dataIdText = f"Tract: {plotInfo['tract']}, Band: {plotInfo['band']}"
         mapText = (
-            f", Property: {plotInfo['property']}, "
+            f", Property: {plotInfo['description'] if 'description' in plotInfo else plotInfo['property']}, "
+            f"Unit: {plotInfo['unit']}, "
             f"Operation: {plotInfo['operation']}, "
             f"Coadd: {plotInfo['coaddName']}"
         )
@@ -273,10 +274,23 @@ class PropertyMapPlot(PlotAction):
                 values = values[goodValues]  # As a precaution.
 
                 # Make a concise human-readable label for the plot.
+                plotInfo["unit"] = "N/A"  # Unless overridden.
+                if hasattr(mapData, "metadata") and all(
+                    key in mapData.metadata for key in ["DESCRIPTION", "OPERATION", "UNIT"]
+                ):
+                    metadata = mapData.metadata
+                    plotInfo["description"] = metadata["DESCRIPTION"]
+                    plotInfo["operation"] = metadata["OPERATION"]
+                    if metadata["UNIT"]:
+                        plotInfo["unit"] = metadata["UNIT"]
+                else:
+                    plotInfo["operation"] = self.getLongestSuffixMatch(
+                        mapName, ["min", "max", "mean", "weighted_mean", "sum"]
+                    ).replace("_", " ")
                 plotInfo["coaddName"] = mapName.split("Coadd_")[0]
-                plotInfo["operation"] = self.getLongestSuffixMatch(
-                    mapName, ["min", "max", "mean", "weighted_mean", "sum"]
-                ).replace("_", " ")
+                plotInfo["operation"] = (
+                    plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
+                )
                 propertyName = mapName[
                     len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])
                 ].strip("_")
@@ -402,7 +416,10 @@ class PropertyMapPlot(PlotAction):
                     )
 
                 # Set labels and legend.
-                ax2.set_xlabel(plotInfo["property"].title().replace("Psf", "PSF"))
+                xlabel = plotInfo["property"].title().replace("Psf", "PSF")
+                if plotInfo["unit"] != "N/A":
+                    xlabel += f" [{plotInfo['unit']}]"
+                ax2.set_xlabel(xlabel)
                 ax2.set_ylabel("Normalized Count")
 
                 # Get handles and labels from the axis.

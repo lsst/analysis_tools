@@ -289,6 +289,8 @@ class PropertyMapPlot(PlotAction):
                     plotInfo["operation"] = metadata["OPERATION"]
                     if metadata["UNIT"]:
                         plotInfo["unit"] = metadata["UNIT"]
+                    elif metadata["UNIT"] == "":
+                        plotInfo["unit"] = "dimensionless"
                 else:
                     hasMetadata = False
                     plotInfo["operation"] = self.getLongestSuffixMatch(
@@ -443,7 +445,7 @@ class PropertyMapPlot(PlotAction):
 
                 # Set labels and legend.
                 xlabel = plotInfo["property"]
-                if plotInfo["unit"] != "N/A":
+                if plotInfo["unit"] not in ["dimensionless", "N/A"]:
                     xlabel += f" [{plotInfo['unit']}]"
                 ax2.set_xlabel(xlabel)
                 ax2.set_ylabel("Normalized Count")

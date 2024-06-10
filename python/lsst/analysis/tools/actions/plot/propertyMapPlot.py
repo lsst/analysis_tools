@@ -173,8 +173,14 @@ class PropertyMapPlot(PlotAction):
         tableType = f"\nTable: {plotInfo['tableNames'][mapName]}"
 
         dataIdText = f"Tract: {plotInfo['tract']}, Band: {plotInfo['band']}"
+        propertyDescription = plotInfo["description"]
+        # Lowercase the first letter unless the string starts with more than
+        # one uppercase letter in which case we keep it as is, e.g. PSF, DCR.
+        if propertyDescription[0].isupper() and propertyDescription[1].islower():
+            propertyDescription = propertyDescription[0].lower() + propertyDescription[1:]
         mapText = (
-            f", Property: {plotInfo['property']}, "
+            f", Property: {propertyDescription}, "
+            f"Unit: {plotInfo['unit']}, "
             f"Operation: {plotInfo['operation']}, "
             f"Coadd: {plotInfo['coaddName']}"
         )
@@ -184,7 +190,7 @@ class PropertyMapPlot(PlotAction):
         fig.text(
             0.04,
             0.965,
-            f'{plotInfo["plotName"]}: {plotInfo["property"].title().replace("Psf", "PSF")}',
+            f'{plotInfo["plotName"]}: {plotInfo["property"]}',
             fontsize=19,
             transform=fig.transFigure,
             ha="left",
@@ -273,14 +279,50 @@ class PropertyMapPlot(PlotAction):
                 values = values[goodValues]  # As a precaution.
 
                 # Make a concise human-readable label for the plot.
+                plotInfo["unit"] = "N/A"  # Unless overridden.
+                if hasattr(mapData, "metadata") and all(
+                    key in mapData.metadata for key in ["DESCRIPTION", "OPERATION", "UNIT"]
+                ):
+                    hasMetadata = True
+                    metadata = mapData.metadata
+                    plotInfo["description"] = metadata["DESCRIPTION"]
+                    plotInfo["operation"] = metadata["OPERATION"]
+                    if metadata["UNIT"]:
+                        plotInfo["unit"] = metadata["UNIT"]
+                    elif metadata["UNIT"] == "":
+                        plotInfo["unit"] = "dimensionless"
+                else:
+                    hasMetadata = False
+                    plotInfo["operation"] = self.getLongestSuffixMatch(
+                        mapName, ["min", "max", "mean", "weighted_mean", "sum"]
+                    ).replace("_", " ")
                 plotInfo["coaddName"] = mapName.split("Coadd_")[0]
-                plotInfo["operation"] = self.getLongestSuffixMatch(
-                    mapName, ["min", "max", "mean", "weighted_mean", "sum"]
-                ).replace("_", " ")
+                plotInfo["operation"] = (
+                    plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
+                )
                 propertyName = mapName[
                     len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])
                 ].strip("_")
-                plotInfo["property"] = propertyName.replace("_", " ")
+                if not hasMetadata:
+                    # Infer the property description from the map name (all
+                    # lower case), and properly handle formatting.
+                    plotInfo["description"] = (
+                        propertyName.replace("_", " ")
+                        .replace("psf", "PSF")
+                        .replace("dcr", "DCR")
+                        .replace("dra", "delta-RA")
+                        .replace("ddec", "delta-Dec")
+                    )
+                plotInfo["property"] = (
+                    propertyName.replace("_", " ")
+                    .title()  # Capitalize and handle edge cases below.
+                    .replace("Psf", "PSF")
+                    .replace("Dcr", "DCR")
+                    .replace("Dra", "delta-RA")
+                    .replace("Ddec", "delta-Dec")
+                    .replace("E1", "e1")
+                    .replace("E2", "e2")
+                )
 
                 nBinsHist = plotConfig.properties[propertyName].nBinsHist
                 fullExtent = None
@@ -402,7 +444,10 @@ class PropertyMapPlot(PlotAction):
                     )
 
                 # Set labels and legend.
-                ax2.set_xlabel(plotInfo["property"].title().replace("Psf", "PSF"))
+                xlabel = plotInfo["property"]
+                if plotInfo["unit"] not in ["dimensionless", "N/A"]:
+                    xlabel += f" [{plotInfo['unit']}]"
+                ax2.set_xlabel(xlabel)
                 ax2.set_ylabel("Normalized Count")
 
                 # Get handles and labels from the axis.

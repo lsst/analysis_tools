@@ -24,7 +24,6 @@ __all__ = (
     "NumGoodDiaSourcesMetrics",
     "DiaSkySourceHistPlot",
     "DiaSkySourceSkyPlot",
-    "NumDiaSourcesMetric",
     "NumDipolesMetric",
     "NumDiaSourcesSelectionMetric",
     "DiaSourcesGoodVsBadRatioMetric",

@@ -76,16 +76,6 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
-  diffimSourcePlots:
-    class: lsst.analysis.tools.tasks.DiaSourceDetectorVisitAnalysisTask
-    config:
-      connections.outputName: diffimSourcePlots
-      connections.fakesType: parameters.fakesType
-      connections.coaddName: parameters.coaddName
-      atools.diaSkySourceHistPlot: DiaSkySourceHistPlot
-      atools.diaSkySourceSkyPlot: DiaSkySourceSkyPlot
-    python: |
-      from lsst.analysis.tools.atools import DiaSkySourceHistPlot, DiaSkySourceSkyPlot
   diffimTaskPlots:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
@@ -116,6 +106,16 @@ tasks:
       atools.interpolatedTemplatePsfSize.produce.plot.zAxisLabel: pixels
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
+  diffimTaskSkySourcePlots:
+    class: lsst.analysis.tools.tasks.DiaSourceDetectorVisitAnalysisTask
+    config:
+      connections.outputName: diffimSkySourcePlots
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
+      atools.diaSkySourceHistPlot: DiaSkySourceHistPlot
+      atools.diaSkySourceSkyPlot: DiaSkySourceSkyPlot
+      python: |
+        from lsst.analysis.tools.atools import DiaSkySourceHistPlot, DiaSkySourceSkyPlot
   initialPviCore:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
@@ -128,8 +128,10 @@ subsets:
     subset:
       - analyzeAssocDiaSrcCore
       - analyzeTrailedDiaSrcCore
+      - diffimSourcePlots
       - diffimTaskCore
       - diffimTaskPlots
+      - diffimTaskSkySourcePlots
       - initialPviCore
     description: >
       QA metrics to run in Prompt Processing.

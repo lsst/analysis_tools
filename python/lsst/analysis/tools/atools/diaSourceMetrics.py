@@ -61,10 +61,10 @@ class DiaSkySourceHistPlot(SkySourceHistPlot):
 
         self.process.buildActions.hist_psf_flux = LoadVector(vectorKey="slot_PsfFlux_instFlux")
         self.process.buildActions.hist_ap09_flux = LoadVector(
-            vectorKey="base_CircularApertureFlux_9_0_instFlux"
+            vectorKey="base_CircularApertureFlux_12_0_instFlux"
         )
         self.process.buildActions.hist_psf_sn = CalcSn(fluxType="slot_PsfFlux_instFlux")
-        self.process.buildActions.hist_ap09_sn = CalcSn(fluxType="base_CircularApertureFlux_9_0_instFlux")
+        self.process.buildActions.hist_ap09_sn = CalcSn(fluxType="base_CircularApertureFlux_12_0_instFlux")
 
 
 class DiaSkySourceSkyPlot(SkySourceSkyPlot):

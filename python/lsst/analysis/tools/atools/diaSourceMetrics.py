@@ -32,7 +32,14 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import CalcSn, ConvertUnits, DownselectVector, FlagSelector, GoodDiaSourceSelector, LoadVector
+from ..actions.vector import (
+    CalcSn,
+    ConvertUnits,
+    DownselectVector,
+    FlagSelector,
+    GoodDiaSourceSelector,
+    LoadVector,
+)
 from ..interfaces import AnalysisTool
 from .skySource import SkySourceHistPlot, SkySourceSkyPlot
 

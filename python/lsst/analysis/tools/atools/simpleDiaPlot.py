@@ -51,6 +51,7 @@ class SimpleDiaPlot(AnalysisTool):
         self.produce.plot.panels["panel_main"].dec = "dec"
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False
 
+
 class SimpleDiaSrcPlot(SimpleDiaPlot):
     """Single panel DiaSkyPlot for plotting RA/Dec of DiaSources on the sky.
 

@@ -223,8 +223,11 @@ class BaseMetricAction(MetricAction):
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)
             notes = {"metric_tags": kwargs.get("metric_tags", [])}
-            # The dtype=None is to preserve integers which will otherwise be converted to float64
-            results[formattedKey] = Measurement(formattedKey, apu.Quantity(value, apu.Unit(unit), dtype=None), notes=notes)
+            # The dtype=None is to preserve integers
+            # which will otherwise be converted to float64
+            results[formattedKey] = Measurement(
+                formattedKey, apu.Quantity(value, apu.Unit(unit), dtype=None), notes=notes
+            )
         return results
 
 

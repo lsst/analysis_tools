@@ -30,11 +30,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class DiffMatchedAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "diff_matched_truth_summary_objectTable_tract"},
+    defaultTemplates={"inputName": "matched_truth_summary_objectTable_tract"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="matched_truth_summary_objectTable_tract",
+        name="{inputName}",
         storageClass="DataFrame",
         deferLoad=True,
         dimensions=("skymap", "tract"),

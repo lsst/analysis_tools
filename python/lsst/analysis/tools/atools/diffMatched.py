@@ -57,6 +57,15 @@ from .genericPlotAction import StructPlotAction
 from .genericProduce import MagnitudeScatterPlot
 
 
+class MatchedObjectSelector(RangeSelector):
+    """A selector that selects matched objects with finite distances."""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.minimum = 0
+        self.vectorKey = "match_distance"
+
+
 class ReferenceGalaxySelector(ThresholdSelector):
     """A selector that selects galaxies from a catalog with a
     boolean column identifying unresolved sources.
@@ -65,7 +74,7 @@ class ReferenceGalaxySelector(ThresholdSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data=data, **kwargs)
         if self.plotLabelKey:
-            self._addValueToPlotInfo("true galaxies", **kwargs)
+            self._addValueToPlotInfo("reference galaxies", **kwargs)
         return result
 
     def setDefaults(self):
@@ -95,7 +104,7 @@ class ReferenceStarSelector(ThresholdSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data=data, **kwargs)
         if self.plotLabelKey:
-            self._addValueToPlotInfo("true stars", **kwargs)
+            self._addValueToPlotInfo("reference stars", **kwargs)
         return result
 
     def setDefaults(self):
@@ -122,6 +131,7 @@ class MatchedRefCoaddToolBase(MagnitudeXTool):
     def setDefaults(self):
         super().setDefaults()
         self.mag_x = "ref_matched"
+        self.prep.selectors.matched = MatchedObjectSelector()
         self.process.buildActions.allSelector = ReferenceObjectSelector()
         self.process.buildActions.galaxySelector = ReferenceGalaxySelector()
         self.process.buildActions.starSelector = ReferenceStarSelector()

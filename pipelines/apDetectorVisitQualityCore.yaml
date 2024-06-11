@@ -76,6 +76,16 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+  diffimSourcePlots:
+    class: lsst.analysis.tools.tasks.DiaSourceDetectorvisitAnalysisTask
+    config:
+      connections.outputName: diffimSourcePlots
+      connections.fakesType: parameters.fakesType
+      connections.coaddName: parameters.coaddName
+      atools.diaSkySourceHistPlot: DiaSkySourceHistPlot
+      atools.diaSkySourceSkyPlot: DiaSkySourceSkyPlot
+    python: |
+      from lsst.analysis.tools.atools import DiaSkySourceHistPlot, DiaSkySourceSkyPlot
   diffimTaskPlots:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:

@@ -77,7 +77,7 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
   diffimSourcePlots:
-    class: lsst.analysis.tools.tasks.DiaSourceDetectorvisitAnalysisTask
+    class: lsst.analysis.tools.tasks.DiaSourceDetectorVisitAnalysisTask
     config:
       connections.outputName: diffimSourcePlots
       connections.fakesType: parameters.fakesType

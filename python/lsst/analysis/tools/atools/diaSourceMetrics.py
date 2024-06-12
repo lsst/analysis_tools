@@ -126,3 +126,52 @@ class DiaSourcesGoodVsBadRatioMetric(AnalysisTool):
 
         # The units for the quantity (dimensionless, an astropy quantity)
         self.produce.metric.units = {"DiaSourcesGoodVsBadRatio": ""}
+
+
+class DiaSourcesDipoleOrientationVsParallacticAngleMetric(Analysistool):
+    """Calculate the dipole orientation w.r.t. parallactic angle.
+    
+    Calculates the von Mises mu, kappa
+
+    Defines the reported quantities as
+    mean = mu
+    sigma = sqrt(1 / kappa)
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.ParallacticAngle = CalculateParallacticAngle(
+                )
+        self.process.buildActions.dipoleOrientationVsParallacticAngle = 
+        self.process.calculateActions.DiaSourcesDipoleOrientationVsParallacticAngle = fitVonMises(
+                dipole_orientation_vs_parallactic_angle,
+                )
+        self.produce.metric.units = {
+                "DiaSourcesDipoleOrientationVsParallacticAngleMean": "",
+                "DiaSourcesDipoleOrientationVsParallacticAngleSigma": "",
+                }
+
+
+
+        # filter for and count the number of dia sources that don't have flags
+        self.process.filterActions.goodDiaSources = DownselectVector(
+            vectorKey="parentDiaSourceId", selector=GoodDiaSourceSelector()
+        )
+        self.process.calculateActions.numGoodDiaSources = CountAction(vectorKey="goodDiaSources")
+
+        # Count the total number of dia sources:
+        self.process.calculateActions.numAllDiaSources = CountAction(vectorKey="parentDiaSourceId")
+
+        # And calculate the ratio of good-to-all counts
+        self.process.calculateActions.ratioGoodToAllDiaSources = DivideScalar(
+            actionA=self.process.calculateActions.numGoodDiaSources,
+            actionB=self.process.calculateActions.numAllDiaSources,
+        )
+
+        # the units for the quantity (count, an astropy quantity)
+        self.produce.metric.units = {
+            "numAllDiaSources": "ct",
+            "numGoodDiaSources": "ct",
+            "ratioGoodToAllDiaSources": "",
+        }

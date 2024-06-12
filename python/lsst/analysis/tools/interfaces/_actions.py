@@ -40,7 +40,7 @@ __all__ = (
 import warnings
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Any, Generator, GenericAlias, Iterable, Sequence
 
 import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
@@ -108,7 +108,7 @@ class AnalysisAction(ConfigurableAction):
         """
         return None
 
-    def getFormattedInputSchema(self, **kwargs) -> KeyedDataSchema:
+    def getFormattedInputSchema(self, **kwargs) -> Generator[tuple[Any, GenericAlias], None, None]:
         """Return input schema, with keys formatted with any arguments supplied
         by kwargs passed to this method.
 
@@ -119,7 +119,11 @@ class AnalysisAction(ConfigurableAction):
             action, formatted with any input arguments (e.g. band='i')
         """
         for key, typ in self.getInputSchema():
-            yield key.format_map(kwargs), typ
+            if isinstance(key, Sequence) and not isinstance(key, str):
+                for subkey in key:
+                    yield subkey.format_map(kwargs), typ
+            else:
+                yield key.format_map(kwargs), typ
 
     def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
         """Add the supplied inputSchema argument to the class such that it will

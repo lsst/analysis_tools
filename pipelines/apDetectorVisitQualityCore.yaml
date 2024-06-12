@@ -6,6 +6,7 @@ parameters:
   # by changes in the values there.
   coaddName: goodSeeing
   fakesType: ''
+
 tasks:
   analyzeAssocDiaSrcCore:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
@@ -84,26 +85,73 @@ tasks:
       connections.coaddName: parameters.coaddName
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedDipoleDensity.metricName: dipole_density
-      atools.interpolatedDipoleDensity.produce.plot.zAxisLabel: Number/degree^2
-      atools.interpolatedSourceDensity: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedSourceDensity.metricName: source_density
-      atools.interpolatedSourceDensity.produce.plot.zAxisLabel: Number/degree^2
-      atools.interpolatedTemplateMedian: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedTemplateMedian.metricName: template_value
-      atools.interpolatedTemplateMedian.produce.plot.zAxisLabel: nJy
-      atools.interpolatedScienceMedian: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedScienceMedian.metricName: science_value
-      atools.interpolatedScienceMedian.produce.plot.zAxisLabel: nJy
-      atools.interpolatedDiffimMedian: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedDiffimMedian.metricName: diffim_value
-      atools.interpolatedDiffimMedian.produce.plot.zAxisLabel: nJy
-      atools.interpolatedSciencePsfSize: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedSciencePsfSize.metricName: science_psfSize
-      atools.interpolatedSciencePsfSize.produce.plot.zAxisLabel: pixels
-      atools.interpolatedTemplatePsfSize: DiffimSpatialMetricsInterpolatePlot
-      atools.interpolatedTemplatePsfSize.metricName: template_psfSize
-      atools.interpolatedTemplatePsfSize.produce.plot.zAxisLabel: pixels
+      atools.interpolatedDipoleDensity.metricNames:
+        - dipole_density
+        - dipole_direction
+        - dipole_separation
+      atools.interpolatedDipoleDensity.produce.plot.metricNames:
+        - dipole_density
+        - dipole_direction
+        - dipole_separation
+      atools.interpolatedDipoleDensity.produce.plot.zAxisLabels:
+        - Number/degree^2
+        - rad
+        - pixels
+      atools.interpolatedBasicMetrics: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedBasicMetrics.metricNames:
+        - template_value
+        - science_value
+        - diffim_value
+        - source_density
+        - science_psfSize
+        - template_psfSize
+        - detected_mask_fraction
+        - detected_negative_mask_fraction
+      atools.interpolatedBasicMetrics.produce.plot.metricNames:
+        - template_value
+        - science_value
+        - diffim_value
+        - source_density
+        - science_psfSize
+        - template_psfSize
+        - detected_mask_fraction
+        - detected_negative_mask_fraction
+      atools.interpolatedBasicMetrics.produce.plot.zAxisLabels:
+        - nJy
+        - nJy
+        - nJy
+        - Number/degree^2
+        - pixels
+        - pixels
+        - px_frac
+        - px_frac
+      atools.interpolatedMaskFractionMetrics: DiffimSpatialMetricsInterpolatePlot
+      atools.interpolatedMaskFractionMetrics.metricNames:
+        - bad_mask_fraction
+        - inexact_psf_mask_fraction
+        - intrp_mask_fraction
+        - sat_mask_fraction
+        - sat_template_mask_fraction
+        - streak_mask_fraction
+        - suspect_mask_fraction
+        - unmaskednan_mask_fraction
+        - not_deblended_mask_fraction
+        - no_data_mask_fraction
+        - rejected_mask_fraction
+        - sensor_edge_mask_fraction
+      atools.interpolatedMaskFractionMetrics.produce.plot.metricNames:
+        - bad_mask_fraction
+        - inexact_psf_mask_fraction
+        - intrp_mask_fraction
+        - sat_mask_fraction
+        - sat_template_mask_fraction
+        - streak_mask_fraction
+        - suspect_mask_fraction
+        - unmaskednan_mask_fraction
+        - not_deblended_mask_fraction
+        - no_data_mask_fraction
+        - rejected_mask_fraction
+        - sensor_edge_mask_fraction
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
   initialPviCore:

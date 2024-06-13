@@ -31,7 +31,7 @@ __all__ = (
     "CalibPtcCovarScatterTool",
 )
 
-from typing import cast, TypeVar, Callable, Any
+from typing import cast, TypeVar, Callable, Any, TypeAlias
 
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
@@ -59,22 +59,23 @@ _CALIB_AMP_NAME_DICT: dict[int, str] = {
     15: "C17",
 }
 
+#Dummy class just so we can get the type annotations correct
+RepackerLoopFun: TypeAlias = Callable[None, [KeyedData, Any, Any, Any, Any]]
 
-RepackerT = TypeVar("RepackerT", bound=[PrepRepacker, SingleValueRepacker])
-RepackerLoopFun = Callable[None, [KeyedData, Any, Any, Any, Any]]
-def _repack_loop_helper(obj: RepackerT, repackfun: RepackerLoopFun, data: KeyedData) -> KeyedData:
-    repackedData: dict[str, Vector] = {}
-    quantitiesData = [data[_] for _ in obj.quantityKey]
+class BaseRepacker(KeyedDataAction):
+    """Base class for Data Repacking actions. Essentially Just adds some helper functions"""
+    def _repack_loop_helper(self, repackfun: RepackerLoopFun, data: KeyedData) -> KeyedData:
+        repackedData: dict[str, Vector] = {}
+        quantitiesData = [data[_] for _ in obj.quantityKey]
 
-    for p, d in zip(data[obj.panelKey], data[obj.dataKey]):
-        for qName, qD in zip(obj.quantityKey, quantitiesData):
-            RepackerLoopFun(repackedData, p, d, qName, qD)
-    return repackedData
-
-
+        for p, d in zip(data[obj.panelKey], data[obj.dataKey]):
+            for qName, qD in zip(obj.quantityKey, quantitiesData):
+                RepackerLoopFun(repackedData, p, d, qName, qD)
+        return repackedData
 
 
-class PrepRepacker(KeyedDataAction):
+
+class PrepRepacker(BaseRepacker):
     """Prep action to repack data."""
 
     panelKey = Field[str](
@@ -91,7 +92,7 @@ class PrepRepacker(KeyedDataAction):
         def rp_loop(rpData: KeyedData, panel, data, quantityName, quantityData):
             qName = f"{panel}_{data}_{quantityName}"
             rpData[qName] = quantityData
-        repackedData = _repack_loop_helper(self, rp_loop, data) 
+        repackedData = self._repack_loop_helper(self, rp_loop, data) 
         return repackedData
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -105,7 +106,7 @@ class PrepRepacker(KeyedDataAction):
         pass
 
 
-class SingleValueRepacker(KeyedDataAction):
+class SingleValueRepacker(BaseRepacker):
     """Prep action to repack data."""
 
     panelKey = Field[str](
@@ -119,22 +120,20 @@ class SingleValueRepacker(KeyedDataAction):
         minLength=1, optional=False)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        uniquePanelKeys: list = list(set(data[self.panelKey]))
-
         repackedData: dict[str, Vector] = {}
-        uniquePanelKeys: list = list(set(data[self.panelKey]))
-
-        # Loop over data vector to repack information as it is expected.
-        for uk in uniquePanelKeys:
-            repackedData[f"{uk}_x"] = []
-            for q in self.quantityKey:
-                repackedData[f"{uk}_{q}"] = []
 
         def rp_loop(rpData: KeyedData, panel, data, quantityName, quantityData):
-            rpData[f"{panel}_x"].append(data)
-            rpData[f"{panel}_{quantityName}"] = quantityData
+            if (xlab := f"{panel}_x") not in rpData:
+                rpData[xlab] = [data]
+            else:
+                rpData[xlab].append(data)
 
-        repackedData: KeyedData = _repack_loop_helper(self, rp_loop, data)
+            if (lab := f"{panel}_{quantityName}") not in rpData:
+                rpData[lab] = [quantityData]
+            else:
+                rpData[lab].append(quantityData)
+
+        repackedData = self._repack_loop_helper(self, rp_loop, data)
         return repackedData
 
     def getInputSchema(self) -> KeyedDataSchema:

@@ -151,6 +151,11 @@ class InterpolateDetectorMetricPlot(PlotAction):
 
         for ax, metricName, zlabel in zip(axes.flatten(), self.metricNames, zAxisLabels):
             dataSelector = np.isfinite(data[metricName])
+            if np.count_nonzero(dataSelector) < 4:
+                # Need at least four valid points for the interpolation.
+                ax.set_aspect("equal", "box")
+                ax.set_title(metricName + "[%s]" % zlabel)
+                continue
 
             dataX = data["x"][dataSelector]
             dataY = data["y"][dataSelector]

@@ -43,6 +43,13 @@ class DiaSourceDetectorVisitAnalysisConnections(
         deferLoad=True,
         dimensions=("visit", "band", "detector"),
     )
+    diaKernel = ct.Input(
+        doc="DIA Kernel match to load from the butler",
+        name="{fakesType}{coaddName}Diff_psfMatchKernel",
+        storageClass="LinearCombinationKernel",
+        deferLoad=True,
+        dimensions=("visit", "band", "detector"),
+    )
 
 
 class DiaSourceDetectorVisitAnalysisConfig(

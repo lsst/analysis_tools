@@ -50,6 +50,13 @@ class DiaSourceDetectorVisitAnalysisConnections(
         deferLoad=True,
         dimensions=("visit", "band", "detector"),
     )
+    diff = ct.Input(
+        doc="Diff image to load from the butler to get parallactic angle",
+        name="{fakesType}{coaddName}Diff_differenceExp",
+        storageClass="Exposure",
+        deferLoad=True,
+        dimensions=("visit", "band", "detector"),
+    )
 
 
 class DiaSourceDetectorVisitAnalysisConfig(

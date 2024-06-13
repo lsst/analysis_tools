@@ -32,7 +32,7 @@ __all__ = (
 from lsst.pex.config import Field
 
 from ..actions.scalar import CountAction, DivideScalar
-from ..actions.vector import DownselectVector, FlagSelector, GoodDiaSourceSelector
+from ..actions.vector import DownselectVector, FlagSelector, GoodDiaSourceSelector, LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -143,18 +143,26 @@ class DiaSourcesDipoleOrientationVsParallacticAngleMetric(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.ParallacticAngle = CalculateParallacticAngle(
+        # What sets capitalization convention here?
+        self.process.buildActions.parallacticAngle = CalculateParallacticAngle(
             diff
         )
+        # this is the orientation in detector, y from x coordinates.
+        self.process.buildActions.dipoleOrientation = LoadVector(vectorKey="ip_diffim_DipoleFit_orientation")
+        # Are we allowed to do arithmetic operations directly?
         self.process.buildActions.dipoleOrientationVsParallacticAngle = 
+            self.process.buildActions.dipoleOrientation - \
+            self.process.buildActions.parallacticAngle
         self.process.calculateActions.DiaSourcesDipoleOrientationVsParallacticAngle = fitVonMises(
-            dipole_orientation_vs_parallactic_angle,
+            dipole_orientation_vs_parallactic_angle
         )
 
+        # DIA Kernel
         self.process.buildActions.diaKernelShift = CalculateDiaKernelShift(
             diaKernel
         )
-        self.process.buildActions.dipoleOrientationVsDiaShiftAngle = fitVonMises(
+        self.process.buildActions.dipoleOrientationVsDiaShiftAngle = self.process.buildActions.dipoleOrientaiton - self.process.buildActions.diaKernelShift
+        self.process.buildActions.dipoleOrientationVsDiaShift = fitVonMises(
             dipole_orientation_vs_dia_shift_angle
         )
         self.process.calculateActions.DiaSourcesDipoleOrientationVsParallacticAngle = fitVonMises(

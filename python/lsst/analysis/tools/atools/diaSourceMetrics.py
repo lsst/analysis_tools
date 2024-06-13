@@ -21,10 +21,12 @@
 from __future__ import annotations
 
 __all__ = (
-    "NumGoodDiaSourcesMetrics",
-    "NumDipolesMetric",
-    "NumDiaSourcesSelectionMetric",
+    "DiaDipoleOrientationVsParallacticAngle",
+    "DiaDipoleOrientationVsDiaKernelShift",
     "DiaSourcesGoodVsBadRatioMetric",
+    "NumDiaSourcesSelectionMetric",
+    "NumDipolesMetric",
+    "NumGoodDiaSourcesMetrics",
 )
 
 from lsst.pex.config import Field
@@ -128,7 +130,7 @@ class DiaSourcesGoodVsBadRatioMetric(AnalysisTool):
         self.produce.metric.units = {"DiaSourcesGoodVsBadRatio": ""}
 
 
-class DiaSourcesDipoleOrientationVsParallacticAngleMetric(Analysistool):
+class DiaSourcesDipoleOrientationVsParallacticAngleMetric(AnalysisTool):
     """Calculate the dipole orientation w.r.t. parallactic angle.
     
     Calculates the von Mises mu, kappa
@@ -142,36 +144,25 @@ class DiaSourcesDipoleOrientationVsParallacticAngleMetric(Analysistool):
         super().setDefaults()
 
         self.process.buildActions.ParallacticAngle = CalculateParallacticAngle(
-                )
+            diff
+        )
         self.process.buildActions.dipoleOrientationVsParallacticAngle = 
         self.process.calculateActions.DiaSourcesDipoleOrientationVsParallacticAngle = fitVonMises(
-                dipole_orientation_vs_parallactic_angle,
-                )
-        self.produce.metric.units = {
-                "DiaSourcesDipoleOrientationVsParallacticAngleMean": "",
-                "DiaSourcesDipoleOrientationVsParallacticAngleSigma": "",
-                }
-
-
-
-        # filter for and count the number of dia sources that don't have flags
-        self.process.filterActions.goodDiaSources = DownselectVector(
-            vectorKey="parentDiaSourceId", selector=GoodDiaSourceSelector()
-        )
-        self.process.calculateActions.numGoodDiaSources = CountAction(vectorKey="goodDiaSources")
-
-        # Count the total number of dia sources:
-        self.process.calculateActions.numAllDiaSources = CountAction(vectorKey="parentDiaSourceId")
-
-        # And calculate the ratio of good-to-all counts
-        self.process.calculateActions.ratioGoodToAllDiaSources = DivideScalar(
-            actionA=self.process.calculateActions.numGoodDiaSources,
-            actionB=self.process.calculateActions.numAllDiaSources,
+            dipole_orientation_vs_parallactic_angle,
         )
 
-        # the units for the quantity (count, an astropy quantity)
+        self.process.buildActions.diaKernelShift = CalculateDiaKernelShift(
+            diaKernel
+        )
+        self.process.buildActions.dipoleOrientationVsDiaShiftAngle = fitVonMises(
+            dipole_orientation_vs_dia_shift_angle
+        )
+        self.process.calculateActions.DiaSourcesDipoleOrientationVsParallacticAngle = fitVonMises(
+            dipole_orientation_vs_parallactic_angle,
+        )
         self.produce.metric.units = {
-            "numAllDiaSources": "ct",
-            "numGoodDiaSources": "ct",
-            "ratioGoodToAllDiaSources": "",
+            "DiaSourcesDipoleOrientationVsParallacticAngleMean": "",
+            "DiaSourcesDipoleOrientationVsParallacticAngleSigma": "",
+            "DiaSourcesDipoleOrientationVsDiaKernelShiftAngleMean": "",
+            "DiaSourcesDipoleOrientationVsDiaKernelShiftAngleSigma": "",
         }

@@ -13,6 +13,7 @@ from .diffimTaskDetectorVisitMetricsAnalysis import *
 from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
+from .isrTaskDetectorExposureMetricsAnalysis import *
 from .makeMetricTable import *
 from .metricAnalysis import *
 from .objectTableSurveyAnalysis import *

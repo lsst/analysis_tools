@@ -33,7 +33,7 @@ class DiaSourceTest(lsst.utils.tests.TestCase):
         testFile = "tests/assocDiaSrc_test.ecsv"
         self.data = Table.read(testFile)
 
-    def test_metrics(self):
+    def test_count_metrics(self):
         """Test that metrics have the expected values from the test data."""
         NumDiaSources = diaAtool.NumGoodDiaSourcesMetrics()
         NumDiaSources.finalize()
@@ -42,6 +42,13 @@ class DiaSourceTest(lsst.utils.tests.TestCase):
         self.assertEqual(DiaSourceCount["numGoodDiaSources"].quantity.value, 547)
         self.assertEqual(DiaSourceCount["ratioGoodToAllDiaSources"].quantity.value, 547 / 558)
 
+    def test_angle_metrics(self):
+        """Test that angle metrics have the expected values from the test data."""
+        dipoleDiaOrientation = diaAtool.DiaSourcesDipoleOrientationVsParallacticAngleMetric()
+        dipoleDiaOrientation.finalize()
+        statsDipoleDiaOrientationMuSigma = dipoleDiaOrientation(self.data)
+        self.assertEqual(statsDipoleDiaOrientation["mu"].quantity.value, 10)
+        self.assertEqual(statsDipoleDiaOrientation["sigma"].quantity.value, 1)
 
 if __name__ == "__main__":
     lsst.utils.tests.init()

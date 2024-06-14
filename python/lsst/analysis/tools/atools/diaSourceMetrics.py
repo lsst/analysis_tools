@@ -143,7 +143,7 @@ class DiaSourcesDipoleOrientationVsParallacticAngleMetric(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        # What sets capitalization convention here?
+        # What sets the capitalization convention here?
         self.process.buildActions.parallacticAngle = CalculateParallacticAngle(
             diff
         )
@@ -169,8 +169,8 @@ class DiaSourcesDipoleOrientationVsParallacticAngleMetric(AnalysisTool):
             dipole_orientation_vs_parallactic_angle,
         )
         self.produce.metric.units = {
-            "DiaSourcesDipoleOrientationVsParallacticAngleMean": "",
-            "DiaSourcesDipoleOrientationVsParallacticAngleSigma": "",
-            "DiaSourcesDipoleOrientationVsDiaKernelShiftAngleMean": "",
-            "DiaSourcesDipoleOrientationVsDiaKernelShiftAngleSigma": "",
+            "diaSourcesDipoleOrientationVsParallacticAngleMean": "rad",
+            "diaSourcesDipoleOrientationVsParallacticAngleSigma": "rad",
+            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleMean": "rad",
+            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleSigma": "rad",
         }

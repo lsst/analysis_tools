@@ -40,6 +40,9 @@ __all__ = (
     "IqrHistAction",
     "DivideScalar",
     "RmsAction",
+    "VonMisesFitKappaAction",
+    "VonMisesFitMuAction",
+    "VonMisesFitSigmaAction",
 )
 
 import operator
@@ -47,6 +50,8 @@ from math import nan
 from typing import cast
 
 import numpy as np
+from scipy.stats import vonmises
+
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
@@ -434,3 +439,51 @@ class DivideScalar(ScalarAction):
         if scalarB == 0:
             raise ValueError("Denominator is zero!")
         return scalarA / scalarB
+
+
+def vonMisesFit(vector: Vector) -> Scalar:
+    """Return the mu, kappa from a von Mises fit of a vector of angles [rad]."""
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
+        warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
+        mu, kappa = np.asarray(vector)
+
+    kappa, mu, _ = vonmises.fit(vector)
+
+    return cast(Scalar, (kappa, mu))
+
+
+# This split seems stupid.  Can't Scalar be a tuple?
+class VonMisesFitSigmaAction(ScalarFromVectorAction):
+    vectorKey = Field[str](doc="Column key of angles [rad]")
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask = kwargs.get("mask")
+        values = data[self.vectorKey.format(**kwargs)][mask]
+        mu, kappa = vonmises(values) if (len(values) > 1) else (np.NaN, np.NaN)
+        sigma = np.sqrt(1 / kappa)
+
+        return sigma
+
+
+class VonMisesFitKappaAction(ScalarFromVectorAction):
+    vectorKey = Field[str](doc="Column key of angles [rad]")
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask = kwargs.get("mask")
+        values = data[self.vectorKey.format(**kwargs)][mask]
+        mu, kappa = vonmises(values) if (len(values) > 1) else (np.NaN, np.NaN)
+
+        return kappa
+
+
+class VonMisesFitMuAction(ScalarFromVectorAction):
+    vectorKey = Field[str](doc="Column key of angles [rad]")
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask = kwargs.get("mask")
+        values = data[self.vectorKey.format(**kwargs)][mask]
+        mu, kappa = vonmises(values) if (len(values) > 1) else (np.NaN, np.NaN)
+
+        return mu

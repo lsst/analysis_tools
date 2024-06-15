@@ -21,8 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "DiaDipoleOrientationVsParallacticAngle",
-    "DiaDipoleOrientationVsDiaKernelShift",
+    "DiaSourcesDipoleOrientationVsParallacticAngleMetric",
     "DiaSourcesGoodVsBadRatioMetric",
     "NumDiaSourcesSelectionMetric",
     "NumDipolesMetric",
@@ -31,17 +30,22 @@ __all__ = (
 
 from lsst.pex.config import Field
 
-from ..actions.keyedDataActions import AddComputedVector
-from ..actions.scalar import CountAction, DivideScalar
+from ..actions.keyedData import KeyedScalars
+from ..actions.scalar import (
+    CountAction,
+    DivideScalar,
+    VonMisesFitSigmaAction,
+    VonMisesFitKappaAction,
+    VonMisesFitMuAction,
+)
 from ..actions.vector import (
-    DivideVector,
     DownselectVector,
     FlagSelector,
     GoodDiaSourceSelector,
     LoadVector,
     SubtractVector,
 )
-from ..interfaces import AnalysisTool
+from ..interfaces import AnalysisTool, KeyedData, VectorAction
 
 
 class NumGoodDiaSourcesMetrics(AnalysisTool):
@@ -142,62 +146,13 @@ class CalcDipoleOrientationVsParallacticAngle(VectorAction):
     """"""
 
 
-def vonMisesFit(vector: Vector) -> Scalar:
-    """Return the mu, kappa from a von Mises fit of a vector of angles [rad]."""
-    from scipy.stats import vonmises
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings(filterwarnings_action, numpy_all_nan_slice)
-        warnings.filterwarnings(filterwarnings_action, numpy_mean_empty)
-        mu, kappa = np.asarray(vector)
-
-    kappa, mu, _ = vonmises.fit(vector)
-
-    return cast(Scalar, (kappa, mu))
-
-
-# This split seems stupid.  Can't Scalar be a tuple?
-class vonMisesFitSigmaAction(ScalarFromVectorAction):
-    vectorKey = Field[str](doc="Column key of angles [rad]")
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask = kwargs.get("mask")
-        values = data[self.vectorKey.format(**kwargs)][mask]
-        mu, kappa = vonMises(values) if (len(values) > 1) else (np.NaN, np.NaN)
-        sigma = np.sqrt(1 / kappa)
-
-        return sigma
-
-
-class vonMisesFitKappaAction(ScalarFromVectorAction):
-    vectorKey = Field[str](doc="Column key of angles [rad]")
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask = kwargs.get("mask")
-        values = data[self.vectorKey.format(**kwargs)][mask]
-        mu, kappa = vonMises(values) if (len(values) > 1) else (np.NaN, np.NaN)
-
-        return kappa
-
-
-class vonMisesFitMuAction(ScalarFromVectorAction):
-    vectorKey = Field[str](doc="Column key of angles [rad]")
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask = kwargs.get("mask")
-        values = data[self.vectorKey.format(**kwargs)][mask]
-        mu, kappa = vonMises(values) if (len(values) > 1) else (np.NaN, np.NaN)
-
-        return mu
-
-
-class vonMisesFitAction(KeyedScalars):
+class VonMisesFitAction(KeyedScalars):
     vectorKey = Field[str](doc="Column key of angles to fit [rad]")
 
     def setDefaults(self):
         super().setDefaults()
-        self.scalarActions.kappa = vonMisesFitKappaAction(vectorKey=self.vectorKey)
-        self.scalarActions.mu = vonMisesFitMuAction(vectorKey=self.vectorKey)
+        self.scalarActions.kappa = VonMisesFitKappaAction(vectorKey=self.vectorKey)
+        self.scalarActions.mu = VonMisesFitMuAction(vectorKey=self.vectorKey)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         mask = kwargs.get("mask")
@@ -222,50 +177,49 @@ class DiaSourcesDipoleOrientationVsParallacticAngleMetric(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.scalarActions.kappa = vonMisesFitKappaAction(vectorKey=self.vectorKey)
-        self.scalarActions.mu = vonMisesFitMuAction(vectorKey=self.vectorKey)
-        # Get and define Parallactic Angle as a KeyedData Scalar
-        # Although someday need to consider what it means for a set of data beyond one image...
-        # What sets the capitalization convention here?
         # CalculateParallacticAngle(diff)
         # foo = KeyedScalars(scalarActions="parallacticAngle")
         self.process.buildActions.parallacticAngle = LoadVector(vectorKey="parallactic_angle")
 
         # this is the orientation in detector, y from x coordinates.
-        self.process.buildActions.dipoleOrientation = LoadVector(vectorKey="ip_diffim_DipoleFit_orientation")
+        self.process.buildActions.dipoleOrientation = LoadVector(vectorKey="dipoleAngle")
 
         self.process.buildActions.dipoleOrientationVsParallacticAngle = SubtractVector(
-            vectorA="ip_diffim_DipoleFit_orientation", vectorB="parallactic_angle"
+            actionA=LoadVector("dipoleAngle"),
+            actionB=LoadVector("parallactic_angle"),
         )
         self.process.calculateActions.diaSourcesDipoleOrientationVsParallacticAngleSigma = (
-            vonMisesFitSigmaAction(vectorKey="dipoleOrientationVsParallacticAngle")
+            VonMisesFitSigmaAction(vectorKey="dipoleOrientationVsParallacticAngle")
         )
         self.process.calculateActions.diaSourcesDipoleOrientationVsParallacticAngleKappa = (
-            vonMisesFitKappaAction(vectorKey="dipoleOrientationVsParallacticAngle")
+            VonMisesFitKappaAction(vectorKey="dipoleOrientationVsParallacticAngle")
         )
-        self.process.calculateActions.diaSourcesDipoleOrientationVsParallacticAngleMean = vonMisesFitMuAction(
+        self.process.calculateActions.diaSourcesDipoleOrientationVsParallacticAngleMean = VonMisesFitMuAction(
             vectorKey="dipoleOrientationVsParallacticAngle"
         )
 
         # DIA Kernel
         self.process.buildActions.diaKernelShift = CalculateDiaKernelShift(diaKernel)
         self.process.buildActions.dipoleOrientationVsDiaShiftAngle = SubtractVector(
-            vectorA="ip_diffim_DipoleFit_orientation",
-            vectorB="diaKernelShift",
+            actionA="dipoleAngle",
+            actionB="diaKernelShift",
         )
-        self.process.buildActions.dipoleOrientationVsDiaShiftSigma = vonMisesFitSigmaAction(
+        self.process.buildActions.dipoleOrientationVsDiaShiftSigma = VonMisesFitSigmaAction(
             vectorKey="dipoleOrientationVsDiaShiftAngle"
         )
-        self.process.buildActions.dipoleOrientationVsDiaShiftKappa = vonMisesFitKappaAction(
+        self.process.buildActions.dipoleOrientationVsDiaShiftKappa = VonMisesFitKappaAction(
             vectorKey="dipoleOrientationVsDiaShiftAngle"
         )
-        self.process.buildActions.dipoleOrientationVsDiaShiftMean = vonMisesFitMuAction(
+        self.process.buildActions.dipoleOrientationVsDiaShiftMean = VonMisesFitMuAction(
             vectorKey="dipoleOrientationVsDiaShiftAngle"
         )
 
         self.produce.metric.units = {
             "diaSourcesDipoleOrientationVsParallacticAngleMean": "rad",
             "diaSourcesDipoleOrientationVsParallacticAngleSigma": "rad",
-            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleMean": "rad",
-            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleSigma": "rad",
         }
+
+
+#            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleMean": "rad",
+#            "diaSourcesDipoleOrientationVsDiaKernelShiftAngleSigma": "rad",
+#        }

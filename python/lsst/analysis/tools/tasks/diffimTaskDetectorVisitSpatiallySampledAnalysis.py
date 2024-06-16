@@ -70,27 +70,3 @@ class DiffimDetectorVisitSpatiallySampledPlotsTask(AnalysisPipelineTask):
         plotInfo["tableName"] += f", detector: {plotInfo['detector']}"
         inputs["bands"] = plotInfo["band"]
         return plotInfo
-
-
-class DiffimDetectorVisitSpatiallySampledDipoleQuiverPlotTaskConfig(
-    AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitSpatiallySampledPlotsConnections
-):
-    pass
-
-class DiffimDetectorVisitSpatiallySampledDipoleQuiverPlotTask(AnalysisPipelineTask):
-    ConfigClass = DiffimDetectorVisitSpatiallySampledDipoleQuiverPlotTaskConfig
-    _DefaultName = "DiffimDetectorVisitSpatiallySampledDipoleQuiverPlots"
-
-    @inheritDoc(AnalysisPipelineTask)
-    def parsePlotInfo(
-        self, inputs: Mapping[str, Any] | None, dataId: DataCoordinate | None, connectionName: str = "data"
-    ) -> Mapping[str, str]:
-        """
-        Notes
-        -----
-        This adds a 'bands' entry to `inputs`.
-        """
-        plotInfo = super().parsePlotInfo(inputs, dataId, connectionName=connectionName)
-        plotInfo["tableName"] += f", detector: {plotInfo['detector']}"
-        inputs["bands"] = plotInfo["band"]
-        return plotInfo

@@ -25,12 +25,12 @@ __all__ = ("QuiverPlot",)
 import logging
 from typing import Mapping, Optional
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from lsst.pex.config import Field
 from matplotlib.figure import Figure
 
-from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector, Scalar
+from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from .plotUtils import addPlotInfo
 
 _LOG = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ _LOG = logging.getLogger(__name__)
 class QuiverPlot(PlotAction):
     """Plots vectors on the detector focal plane.
 
-    Given the posisions on the detector in x and y, the quiver 
+    Given the posisions on the detector in x and y, the quiver
     plot draws arrows of length `length` and angle `angle`.
     """
 
@@ -47,10 +47,11 @@ class QuiverPlot(PlotAction):
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="y (pixel)", optional=True)
     zAxisLabel = Field[str](doc="Label to use for the arrows.", optional=True)
     qKeyLabel = Field[str](doc="Label to use for the optional quiver Key", optional=True)
+    xCoordSize = Field[int]("Dimensions for X direction field to interpolate", default=4096)
+    yCoordSize = Field[int]("Dimensions for Y direction field to interpolate", default=4096)
 
-    def getInputSchema(self) -> KeyedDataSchema:
+    def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
-
         base.append(("x", Vector))
         base.append(("y", Vector))
         base.append(("angle", Vector))
@@ -78,22 +79,33 @@ class QuiverPlot(PlotAction):
 
     def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None, **kwargs) -> Figure:
 
+        quiverConf = {
+            "pivot": "mid",
+            "color": "blue",
+            "width": 0.004,
+        }
+
         dataSelector = np.isfinite(data["angle"]) & np.isfinite(data["length"])
         dataX = data["x"][dataSelector]
         dataY = data["y"][dataSelector]
         dataA = data["angle"][dataSelector]
         dataL = data["length"][dataSelector]
 
-        X, Y = np.meshgrid(dataX, dataY)
         U = dataL * np.cos(dataA)
         V = dataL * np.sin(dataA)
 
         fig = plt.figure(dpi=300)
         ax = fig.add_subplot(111)
 
-        q = ax.quiver(X, Y, U, V, )
+        q = ax.quiver(dataX, dataY, U, V, **quiverConf)
         if hasattr(self, "qKeyLabel"):
-            qk = ax.quiverkey(q, 0.9, 0.9, 1, self.qKeyLabel, labelpos="E", coordinates="figure")
+            ax.quiverkey(q, 0.9, 0.9, 1, self.qKeyLabel, labelpos="E", coordinates="figure")
+
+        ax.set_xlim(0, self.xCoordSize)
+        ax.set_ylim(0, self.yCoordSize)
+        ax.set_xlabel(self.xAxisLabel)
+        ax.set_ylabel(self.yAxisLabel)
+        ax.set_aspect("equal", "box")
 
         plt.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
 

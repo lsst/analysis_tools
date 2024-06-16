@@ -83,6 +83,10 @@ tasks:
       connections.outputName: diffimPlots
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
+      atools.dipoleQuiver: DiffimSpatialMetricsDipoleQuiverPlot
+      atools.dipoleQuiver.angleName: dipole_direction
+      atools.dipoleQuiver.lengthName: dipole_separation
+      atools.dipoleQuiver.produce.plot.qKeyLabel: "Avg Dipole length (arcsec)"
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
       atools.interpolatedDipoleDensity.metricNames:
@@ -154,6 +158,7 @@ tasks:
         - sensor_edge_mask_fraction
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
+        from lsst.analysis.tools.atools import DiffimSpatialMetricsDipoleQuiverPlot
   initialPviCore:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:

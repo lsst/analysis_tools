@@ -44,6 +44,7 @@ class CalexpSummaryMetrics(AnalysisTool):
         "ra": "degree",
         "dec": "degree",
         "zenithDistance": "degree",
+        "expTime": "s",
         "zeroPoint": "mag",
         "skyBg": "mag",
         "skyNoise": "mag",

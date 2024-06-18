@@ -43,6 +43,7 @@ class CalexpSummaryMetrics(AnalysisTool):
         "psfIxy": "pixel",
         "ra": "degree",
         "dec": "degree",
+        "pixelScale": "",  # There is no astropy arcsec/pixel unit.
         "zenithDistance": "degree",
         "expTime": "s",
         "zeroPoint": "mag",

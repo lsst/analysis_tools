@@ -86,7 +86,11 @@ tasks:
       atools.dipoleQuiver: DiffimSpatialMetricsDipoleQuiverPlot
       atools.dipoleQuiver.angleName: dipole_direction
       atools.dipoleQuiver.lengthName: dipole_separation
-      atools.dipoleQuiver.produce.plot.qKeyLabel: "Avg Dipole length (arcsec)"
+      atools.dipoleQuiver.produce.plot.qKeyLabel: "0.2 arcsec Avg Dipole length"
+      atools.kernelQuiver: DiffimSpatialMetricsDipoleQuiverPlot
+      atools.kernelQuiver.angleName: psfMatchingKernel_position_angle
+      atools.kernelQuiver.lengthName: psfMatchingKernel_length
+      atools.kernelQuiver.produce.plot.qKeyLabel: "0.2 arcsec Kernel offset direction"
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
       atools.interpolatedDipoleDensity.metricNames:

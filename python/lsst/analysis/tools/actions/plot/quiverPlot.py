@@ -99,7 +99,7 @@ class QuiverPlot(PlotAction):
 
         q = ax.quiver(dataX, dataY, U, V, **quiverConf)
         if hasattr(self, "qKeyLabel"):
-            ax.quiverkey(q, 0.9, 0.9, 1, self.qKeyLabel, labelpos="E", coordinates="figure")
+            ax.quiverkey(q, 0.5, 0.9, 0.1, self.qKeyLabel, labelpos="E", coordinates="figure")
 
         ax.set_xlim(0, self.xCoordSize)
         ax.set_ylim(0, self.yCoordSize)

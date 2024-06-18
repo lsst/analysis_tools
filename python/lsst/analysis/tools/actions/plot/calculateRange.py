@@ -25,6 +25,8 @@ __all__ = ("MinMax", "Med2Mad")
 
 from typing import cast
 
+import numpy as np
+
 from ...interfaces import Vector, VectorAction
 from ...math import nanMax, nanMedian, nanMin, nanSigmaMad
 
@@ -45,7 +47,10 @@ class MinMax(VectorAction):
     """
 
     def __call__(self, data: Vector, **kwargs) -> Vector:
-        return cast(Vector, [nanMin(data), nanMax(data)])
+        if len(data) == 0:
+            return cast(Vector, [np.nan, np.nan])
+        else:
+            return cast(Vector, [nanMin(data), nanMax(data)])
 
 
 class Med2Mad(VectorAction):

@@ -25,18 +25,16 @@ __all__ = (
     "MakeMetricTableTask",
 )
 
-
 import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
+from lsst.pex.config import Field
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
 
 class MakeMetricTableConnections(
-    AnalysisBaseConnections,
+    pipeBase.PipelineTaskConnections,
     dimensions=("skymap",),
     defaultTemplates={"metricBundleName": "objectTableCore_metrics"},
 ):
@@ -66,12 +64,31 @@ class MakeMetricTableConnections(
         dimensions=("skymap",),
     )
 
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+        if config.loadMatchedVisitData:
+            self.data = ct.Input(
+                doc="Metric bundle to read from the butler.",
+                name=config.connections.metricBundleName,
+                storageClass="MetricMeasurementBundle",
+                deferLoad=True,
+                dimensions=(
+                    "instrument",
+                    "skymap",
+                    "tract",
+                ),
+                multiple=True,
+            )
 
-class MakeMetricTableConfig(AnalysisBaseConfig, pipelineConnections=MakeMetricTableConnections):
-    pass
+
+class MakeMetricTableConfig(pipeBase.PipelineTaskConfig, pipelineConnections=MakeMetricTableConnections):
+    loadMatchedVisitData = Field[bool](
+        doc="Changes the input connection when true. Necessary because of dimension mismatches.",
+        default=False,
+    )
 
 
-class MakeMetricTableTask(AnalysisPipelineTask):
+class MakeMetricTableTask(pipeBase.PipelineTask):
     """Turn metric bundles which are per tract into a
     summary metric table.
 

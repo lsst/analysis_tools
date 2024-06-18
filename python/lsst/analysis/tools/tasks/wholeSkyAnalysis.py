@@ -34,13 +34,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class WholeSkyAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap",),
-    defaultTemplates={
-        "outputName": "objectTableCore_metricsTable",
-    },
+    defaultTemplates={"outputName": "objectTableCore_wholeSky", "inputName": "objectTableCore_metricsTable"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTableCore_metricsTable",
+        name="{inputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap",),

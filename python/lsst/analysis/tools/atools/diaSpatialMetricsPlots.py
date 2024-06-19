@@ -21,7 +21,7 @@
 __all__ = (
     "DiffimSpatialMetricsHistPlot",
     "DiffimSpatialMetricsInterpolatePlot",
-    "DiffimSpatialMetricsDipoleQuiverPlot",
+    "DiffimSpatialMetricsQuiverPlot",
 )
 
 from lsst.pex.config import Field, ListField
@@ -100,8 +100,8 @@ class DiffimSpatialMetricsInterpolatePlot(AnalysisTool):
             setattr(self.process.buildActions, name, LoadVector(vectorKey=name))
 
 
-class DiffimSpatialMetricsDipoleQuiverPlot(AnalysisTool):
-    """Draw arrow quiver plot with average dipole information from
+class DiffimSpatialMetricsQuiverPlot(AnalysisTool):
+    """Draw arrow quiver plot with average information from
     spatially sampled metrics"""
 
     angleName = Field[str](doc="Angle parameter name to plot", optional=False)

@@ -41,14 +41,18 @@ class QuiverPlot(PlotAction):
 
     Given the posisions on the detector in x and y, the quiver
     plot draws arrows of length `length` and angle `angle`.
+    The quiver key label `qKeyLabel` and size `qKeySize` can be also set
+    up to show reference vector length. In a similar manner as in
+    interpolateDetectorPlot the size of the
     """
 
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="x (pixel)", optional=True)
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="y (pixel)", optional=True)
     zAxisLabel = Field[str](doc="Label to use for the arrows.", optional=True)
     qKeyLabel = Field[str](doc="Label to use for the optional quiver Key", optional=True)
-    xCoordSize = Field[int]("Dimensions for X direction field to interpolate", default=4096)
-    yCoordSize = Field[int]("Dimensions for Y direction field to interpolate", default=4096)
+    qKeySize = Field[float](doc="Size of the vector to use for the optional quiver Key", optional=True)
+    xCoordSize = Field[int]("Dimensions for X detector axis", default=4096)
+    yCoordSize = Field[int]("Dimensions for Y detector axis", default=4096)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
@@ -98,11 +102,11 @@ class QuiverPlot(PlotAction):
         ax = fig.add_subplot(111)
 
         q = ax.quiver(dataX, dataY, U, V, **quiverConf)
-        if hasattr(self, "qKeyLabel"):
-            ax.quiverkey(q, 0.5, 0.9, 0.1, self.qKeyLabel, labelpos="E", coordinates="figure")
+        if hasattr(self, "qKeyLabel") and hasattr(self, "qKeySize"):
+            ax.quiverkey(q, 0.5, 0.9, self.qKeySize, self.qKeyLabel, labelpos="E", coordinates="figure")
 
-        ax.set_xlim(0, self.xCoordSize)
-        ax.set_ylim(0, self.yCoordSize)
+        ax.set_xlim(-10, self.xCoordSize + 10)
+        ax.set_ylim(-10, self.yCoordSize + 10)
         ax.set_xlabel(self.xAxisLabel)
         ax.set_ylabel(self.yAxisLabel)
         ax.set_aspect("equal", "box")

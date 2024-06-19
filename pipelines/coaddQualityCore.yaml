@@ -49,6 +49,7 @@ tasks:
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+      atools.coaddInputCount: CoaddInputCount
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

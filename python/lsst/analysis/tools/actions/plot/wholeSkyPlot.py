@@ -193,6 +193,7 @@ class WholeSkyPlot(PlotAction):
             ax.set_ylim(self.yLimits)
             ax.set_xlabel(self.xAxisLabel)
             ax.set_ylabel(self.yAxisLabel)
+            ax.invert_xaxis()
 
             # Add colored patches showing tract metric values.
             patchCollection = PatchCollection(patches, cmap=blueGreen)

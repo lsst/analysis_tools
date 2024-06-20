@@ -18,12 +18,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-__all__ = ("DiffimSpatialMetricsHistPlot", "DiffimSpatialMetricsInterpolatePlot")
+__all__ = (
+    "DiffimSpatialMetricsHistPlot",
+    "DiffimSpatialMetricsInterpolatePlot",
+    "DiffimSpatialMetricsQuiverPlot",
+)
 
-from lsst.pex.config import ListField
+from lsst.pex.config import Field, ListField
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.interpolateDetectorPlot import InterpolateDetectorMetricPlot
+from ..actions.plot.quiverPlot import QuiverPlot
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
@@ -93,3 +98,23 @@ class DiffimSpatialMetricsInterpolatePlot(AnalysisTool):
     def finalize(self):
         for name in self.metricNames:
             setattr(self.process.buildActions, name, LoadVector(vectorKey=name))
+
+
+class DiffimSpatialMetricsQuiverPlot(AnalysisTool):
+    """Draw arrow quiver plot with average information from
+    spatially sampled metrics"""
+
+    angleName = Field[str](doc="Angle parameter name to plot", optional=False)
+    lengthName = Field[str](doc="Length parameter name to plot", optional=False)
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce.plot = QuiverPlot()
+        self.process.buildActions.x = LoadVector(vectorKey="x")
+        self.process.buildActions.y = LoadVector(vectorKey="y")
+
+    def finalize(self) -> None:
+        self.process.buildActions.angle = LoadVector(vectorKey=self.angleName)
+        self.process.buildActions.length = LoadVector(vectorKey=self.lengthName)

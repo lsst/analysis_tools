@@ -83,6 +83,16 @@ tasks:
       connections.outputName: diffimPlots
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
+      atools.dipoleQuiver: DiffimSpatialMetricsQuiverPlot
+      atools.dipoleQuiver.angleName: dipole_direction
+      atools.dipoleQuiver.lengthName: dipole_separation
+      atools.dipoleQuiver.produce.plot.qKeySize: 0.1
+      atools.dipoleQuiver.produce.plot.qKeyLabel: "0.1 arcsec Avg Dipole length"
+      atools.kernelQuiver: DiffimSpatialMetricsQuiverPlot
+      atools.kernelQuiver.angleName: psfMatchingKernel_direction
+      atools.kernelQuiver.lengthName: psfMatchingKernel_length
+      atools.kernelQuiver.produce.plot.qKeySize: 0.1
+      atools.kernelQuiver.produce.plot.qKeyLabel: "0.1 arcsec Kernel offset direction"
       atools.diaFlagHistogram: DiffimSpatialMetricsHistPlot
       atools.interpolatedDipoleDensity: DiffimSpatialMetricsInterpolatePlot
       atools.interpolatedDipoleDensity.metricNames:
@@ -154,6 +164,7 @@ tasks:
         - sensor_edge_mask_fraction
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
+        from lsst.analysis.tools.atools import DiffimSpatialMetricsQuiverPlot
   initialPviCore:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:

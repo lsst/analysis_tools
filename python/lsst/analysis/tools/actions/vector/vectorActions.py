@@ -35,6 +35,7 @@ __all__ = (
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
     "AngularSeparation",
+    "MagPercentileAction",
 )
 
 import logging
@@ -44,11 +45,11 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from lsst.pex.config import DictField, Field
+from lsst.pex.config import DictField, Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
-from ...math import divide, fluxToMag, log10
+from ...math import divide, fluxToMag, isPercent, log10
 from .selectors import VectorSelector
 
 _LOG = logging.getLogger(__name__)
@@ -404,3 +405,42 @@ class ResidualWithPerGroupStatistic(VectorAction):
 
         result = joinedDf["value_individual"] - joinedDf["value_group"]
         return np.array(result)
+
+
+class MagPercentileAction(VectorAction):
+    """Calculates the magnitude at the given percentile for completeness"""
+
+    matchDistanceKey = Field[str]("Match distance Vector")
+    vectorKey = Field[str](doc="Key of vector which should be loaded")
+    fluxUnits = Field[str](doc="Units for the column.", default="nanojansky")
+    percentiles = ListField[float](doc="The percentiles to find the magnitude at.", default=[16.0, 50.0, 84.0], itemCheck=isPercent)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return (
+            (self.matchDistanceKey, Vector),
+            (self.vectorKey, Vector),
+        )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        matched = np.isfinite(data[self.matchDistanceKey])
+        fluxValues = data[self.vectorKey.format(**kwargs)]
+        values = fluxToMag(fluxValues, flux_unit=u.Unit(self.fluxUnits))
+        nInput, bins = np.histogram(
+            values,
+            range=(np.nanmin(values), np.nanmax(values)),
+            bins=100,
+        )
+        nOutput, _ = np.histogram(
+            values[matched],
+            range=(np.nanmin(values[matched]), np.nanmax(values[matched])),
+            bins=bins,
+        )
+        # Find bin where the fraction recovered first falls below 0.5
+        mags = []
+        for pct in self.percentiles:
+            belowPercentile = np.where((nOutput / nInput < pct / 100))[0]
+            if len(belowPercentile) == 0:
+                mags.append(np.nan)
+            else:
+                mags.append(np.min(bins[belowPercentile]))
+        return np.array(mags)

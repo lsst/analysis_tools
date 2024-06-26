@@ -15,6 +15,7 @@ from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .makeMetricTable import *
 from .metricAnalysis import *
+from .injectedObjectAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .photometricCatalogMatch import *

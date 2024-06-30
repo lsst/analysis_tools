@@ -31,17 +31,51 @@ __all__ = (
     "CalibPtcCovarScatterTool",
 )
 
-from typing import cast
+from typing import cast, TypeVar, Callable, Any, TypeAlias
 
-from lsst.pex.config import Field
+from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ..actions.plot.elements import HistElement, ScatterElement
 from ..actions.plot.gridPlot import GridPanelConfig, GridPlot
 from ..interfaces import AnalysisTool, KeyedData, KeyedDataAction, PlotElement, Vector
 
+_CALIB_AMP_NAME_DICT: dict[int, str] = {
+    0: "C00",
+    1: "C01",
+    2: "C02",
+    3: "C03",
+    4: "C04",
+    5: "C05",
+    6: "C06",
+    7: "C07",
+    8: "C10",
+    9: "C11",
+    10: "C12",
+    11: "C13",
+    12: "C14",
+    13: "C15",
+    14: "C16",
+    15: "C17",
+}
 
-class PrepRepacker(KeyedDataAction):
+#Dummy class just so we can get the type annotations correct
+RepackerLoopFun: TypeAlias = Callable[None, [KeyedData, Any, Any, Any, Any]]
+
+class BaseRepacker(KeyedDataAction):
+    """Base class for Data Repacking actions. Essentially Just adds some helper functions"""
+    def _repack_loop_helper(self, repackfun: RepackerLoopFun, data: KeyedData) -> KeyedData:
+        repackedData: dict[str, Vector] = {}
+        quantitiesData = [data[_] for _ in obj.quantityKey]
+
+        for p, d in zip(data[obj.panelKey], data[obj.dataKey]):
+            for qName, qD in zip(obj.quantityKey, quantitiesData):
+                RepackerLoopFun(repackedData, p, d, qName, qD)
+        return repackedData
+
+
+
+class PrepRepacker(BaseRepacker):
     """Prep action to repack data."""
 
     panelKey = Field[str](
@@ -50,18 +84,15 @@ class PrepRepacker(KeyedDataAction):
     dataKey = Field[str](
         doc="Data selector. Data will be separated into multiple groups in a single panel based on this key.",
     )
-    quantityKey = Field[str](
+    quantityKey = ListField[str](
         doc="Quantity selector. The actual data quantities to be plotted.",
-    )
+        minLength=1, optional=False)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        repackedData = {}
-        # Loop over the length of the data vector and repack row by row
-        for i in range(len(cast(Vector, data[self.panelKey]))):
-            panelVec = cast(Vector, data[self.panelKey])
-            dataVec = cast(Vector, data[self.dataKey])
-            quantityVec = cast(Vector, data[self.quantityKey])
-            repackedData[f"{panelVec[i]}_{dataVec[i]}_{self.quantityKey}"] = quantityVec[i]
+        def rp_loop(rpData: KeyedData, panel, data, quantityName, quantityData):
+            qName = f"{panel}_{data}_{quantityName}"
+            rpData[qName] = quantityData
+        repackedData = self._repack_loop_helper(self, rp_loop, data) 
         return repackedData
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -75,7 +106,7 @@ class PrepRepacker(KeyedDataAction):
         pass
 
 
-class SingleValueRepacker(KeyedDataAction):
+class SingleValueRepacker(BaseRepacker):
     """Prep action to repack data."""
 
     panelKey = Field[str](
@@ -84,27 +115,25 @@ class SingleValueRepacker(KeyedDataAction):
     dataKey = Field[str](
         doc="Data selector. Data will be separated into multiple groups in a single panel based on this key.",
     )
-    quantityKey = Field[str](
+    quantityKey = ListField[str](
         doc="Quantity selector. The actual data quantities to be plotted.",
-    )
+        minLength=1, optional=False)
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        repackedData = {}
-        uniquePanelKeys = list(set(data[self.panelKey]))
+        repackedData: dict[str, Vector] = {}
 
-        # Loop over data vector to repack information as it is expected.
-        for i in range(len(uniquePanelKeys)):
-            repackedData[f"{uniquePanelKeys[i]}_x"] = []
-            repackedData[f"{uniquePanelKeys[i]}"] = []
+        def rp_loop(rpData: KeyedData, panel, data, quantityName, quantityData):
+            if (xlab := f"{panel}_x") not in rpData:
+                rpData[xlab] = [data]
+            else:
+                rpData[xlab].append(data)
 
-        panelVec = cast(Vector, data[self.panelKey])
-        dataVec = cast(Vector, data[self.dataKey])
-        quantityVec = cast(Vector, data[self.quantityKey])
+            if (lab := f"{panel}_{quantityName}") not in rpData:
+                rpData[lab] = [quantityData]
+            else:
+                rpData[lab].append(quantityData)
 
-        for i in range(len(panelVec)):
-            repackedData[f"{panelVec[i]}_x"].append(dataVec[i])
-            repackedData[f"{panelVec[i]}"].append(quantityVec[i])
-
+        repackedData = self._repack_loop_helper(self, rp_loop, data)
         return repackedData
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -152,24 +181,7 @@ class CalibQuantityBaseTool(AnalysisTool):
         self.produce.plot.numCols = 4
 
         # Values to group by to distinguish between data in differing panels
-        self.produce.plot.valsGroupBy = {
-            0: "C00",
-            1: "C01",
-            2: "C02",
-            3: "C03",
-            4: "C04",
-            5: "C05",
-            6: "C06",
-            7: "C07",
-            8: "C10",
-            9: "C11",
-            10: "C12",
-            11: "C13",
-            12: "C14",
-            13: "C15",
-            14: "C16",
-            15: "C17",
-        }
+        self.produce.plot.valsGroupBy = _CALIB_AMP_NAME_DICT
 
     def finalize(self):
         super().finalize()
@@ -214,45 +226,10 @@ class CalibAmpScatterTool(CalibQuantityBaseTool):
         self.produce.plot.numCols = 4
 
         # Values to use for x-axis data
-        self.produce.plot.xDataKeys = {
-            0: "C00_x",
-            1: "C01_x",
-            2: "C02_x",
-            3: "C03_x",
-            4: "C04_x",
-            5: "C05_x",
-            6: "C06_x",
-            7: "C07_x",
-            8: "C10_x",
-            9: "C11_x",
-            10: "C12_x",
-            11: "C13_x",
-            12: "C14_x",
-            13: "C15_x",
-            14: "C16_x",
-            15: "C17_x",
-        }
+        self.produce.plot.xDataKeys = {k : f"{v}_x" for k,v in _CALIB_AMP_NAME_DICT.items()}
 
         # Values to group by to distinguish between data in differing panels
-        self.produce.plot.valsGroupBy = {
-            0: "C00",
-            1: "C01",
-            2: "C02",
-            3: "C03",
-            4: "C04",
-            5: "C05",
-            6: "C06",
-            7: "C07",
-            8: "C10",
-            9: "C11",
-            10: "C12",
-            11: "C13",
-            12: "C14",
-            13: "C15",
-            14: "C16",
-            15: "C17",
-        }
-
+        self.produce.plot.valsGroupBy = _CALIB_AMP_NAME_DICT
         self.prep.panelKey = "amplifier"
         self.prep.dataKey = "mjd"
 

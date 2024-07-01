@@ -34,12 +34,12 @@ class RefCatObjectPhotometricAnalysisConnections(
     defaultTemplates={
         "targetCatalog": "objectTable_tract",
         "refCatalog": "ps1_pv3_3pi_20170110",
-        "outputName": "objectTable_tract_ps1_pv3_3pi_20170110_match",
+        "outputName": "objectTable_tract_ps1_pv3_3pi_20170110_match_photom",
     },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="{targetCatalog}_{refCatalog}_match_photom",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),

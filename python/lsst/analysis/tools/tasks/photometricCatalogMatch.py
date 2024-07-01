@@ -33,12 +33,22 @@ from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
-class PhotometricCatalogMatchConnections(CatalogMatchConnections):
-    pass
+class PhotometricCatalogMatchConnections(
+    CatalogMatchConnections,
+    dimensions=("tract", "skymap"),
+    defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "ps1_pv3_3pi_20170110"},
+):
+    matchedCatalog = pipeBase.connectionTypes.Output(
+        doc="Catalog with matched target and reference objects with separations",
+        name="{targetCatalog}_{refCatalog}_match_photom",
+        storageClass="ArrowAstropy",
+        dimensions=("tract", "skymap"),
+    )
 
 
 class PhotometricCatalogMatchConfig(
-    CatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchConnections
+    CatalogMatchConfig,
+    pipelineConnections=PhotometricCatalogMatchConnections,
 ):
     def setDefaults(self):
         super().setDefaults()
@@ -125,7 +135,7 @@ class PhotometricCatalogMatchVisitConnections(
 
     matchedCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="{targetCatalog}_{refCatalog}_match_photom",
         storageClass="ArrowAstropy",
         dimensions=("visit",),
     )

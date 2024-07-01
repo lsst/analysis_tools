@@ -30,11 +30,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class RefCatSourcePhotometricAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("visit",),
-    defaultTemplates={"outputName": "sourceTable_visit_ps1_pv3_3pi_20170110_match"},
+    defaultTemplates={"outputName": "sourceTable_visit_ps1_pv3_3pi_20170110_match_photom"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="sourceTable_visit_ps1_pv3_3pi_20170110_match",
+        name="sourceTable_visit_ps1_pv3_3pi_20170110_match_photom",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),

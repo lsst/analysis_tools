@@ -39,7 +39,22 @@ from ..actions.vector import StarSelector, VisitPlotFlagSelector
 from ..tasks.catalogMatch import CatalogMatchConfig, CatalogMatchConnections, CatalogMatchTask
 
 
-class AstrometricCatalogMatchConfig(CatalogMatchConfig, pipelineConnections=CatalogMatchConnections):
+class AstrometricCatalogMatchConnections(
+    CatalogMatchConnections,
+    dimensions=("tract", "skymap"),
+    defaultTemplates={"targetCatalog": "objectTable_tract", "refCatalog": "gaia_dr3_20230707"},
+):
+    matchedCatalog = pipeBase.connectionTypes.Output(
+        doc="Catalog with matched target and reference objects with separations",
+        name="{targetCatalog}_{refCatalog}_match_astrom",
+        storageClass="ArrowAstropy",
+        dimensions=("tract", "skymap"),
+    )
+
+
+class AstrometricCatalogMatchConfig(
+    CatalogMatchConfig, pipelineConnections=AstrometricCatalogMatchConnections
+):
     bands = pexConfig.ListField[str](
         doc="The bands to persist downstream",
         default=["u", "g", "r", "i", "z", "y"],
@@ -114,7 +129,7 @@ class AstrometricCatalogMatchVisitConnections(
 
     matchedCatalog = pipeBase.connectionTypes.Output(
         doc="Catalog with matched target and reference objects with separations",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="{targetCatalog}_{refCatalog}_match_astrom",
         storageClass="ArrowAstropy",
         dimensions=("visit",),
     )

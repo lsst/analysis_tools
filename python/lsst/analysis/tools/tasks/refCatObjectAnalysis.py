@@ -34,12 +34,12 @@ class RefCatObjectAnalysisConnections(
     defaultTemplates={
         "targetCatalog": "objectTable_tract",
         "refCatalog": "gaia_dr3_20230707",
-        "outputName": "objectTable_tract_gaia_dr3_20230707_match",
+        "outputName": "objectTable_tract_gaia_dr3_20230707_match_astrom",
     },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="{targetCatalog}_{refCatalog}_match_astrom",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),

@@ -33,12 +33,12 @@ class RefCatSourceAnalysisConnections(
     defaultTemplates={
         "targetCatalog": "sourceTable_visit",
         "refCatalog": "gaia_dr3_20230707",
-        "outputName": "sourceTable_visit_gaia_dr3_20230707_match",
+        "outputName": "sourceTable_visit_gaia_dr3_20230707_match_astrom",
     },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="{targetCatalog}_{refCatalog}_match",
+        name="{targetCatalog}_{refCatalog}_match_astrom",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit",),

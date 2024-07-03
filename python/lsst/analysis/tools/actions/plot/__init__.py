@@ -1,6 +1,7 @@
 from .barPlots import *
 from .calculateRange import *
 from .colorColorFitPlot import *
+from .completenessPlot import *
 from .diaSkyPlot import *
 from .focalPlanePlot import *
 from .gridPlot import *

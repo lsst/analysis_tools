@@ -55,6 +55,7 @@ from .warning_control import (
     numpy_invalid_value_divide,
     numpy_invalid_value_log,
     numpy_invalid_value_log10,
+    numpy_invalid_value_scalar_divide,
     numpy_invalid_value_sin,
     numpy_invalid_value_sqrt,
     numpy_invalid_value_subtract,
@@ -75,6 +76,7 @@ def divide(dividend: Scalar | Vector, divisor: Scalar | Vector) -> Scalar | Vect
     with warnings.catch_warnings():
         warnings.filterwarnings(filterwarnings_action, numpy_divide_zero_divide)
         warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_divide)
+        warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_scalar_divide)
         result = dividend / divisor
     return result
 

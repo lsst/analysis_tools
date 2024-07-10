@@ -31,9 +31,10 @@ __all__ = (
     "numpy_invalid_value_divide",
     "numpy_invalid_value_log",
     "numpy_invalid_value_log10",
-    "numpy_invalid_value_subtract",
+    "numpy_invalid_value_scalar_divide",
     "numpy_invalid_value_sin",
     "numpy_invalid_value_sqrt",
+    "numpy_invalid_value_subtract",
     "numpy_mean_empty",
 )
 
@@ -51,7 +52,8 @@ numpy_invalid_value_cos = r"invalid value encountered in cos"
 numpy_invalid_value_divide = r"invalid value encountered in divide"
 numpy_invalid_value_log = r"invalid value encountered in log"
 numpy_invalid_value_log10 = r"invalid value encountered in log10"
-numpy_invalid_value_subtract = r"invalid value encountered in subtract"
+numpy_invalid_value_scalar_divide = r"invalid value encountered in scalar divide"
 numpy_invalid_value_sin = r"invalid value encountered in sin"
 numpy_invalid_value_sqrt = r"invalid value encountered in sqrt"
+numpy_invalid_value_subtract = r"invalid value encountered in subtract"
 numpy_mean_empty = r"Mean of empty slice"

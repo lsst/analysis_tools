@@ -517,7 +517,7 @@ class BandSelector(VectorAction):
             case _:
                 bands = None
         if bands:
-            mask = np.in1d(data[self.vectorKey], bands)
+            mask = np.isin(data[self.vectorKey], bands).flatten()
         else:
             # No band selection is applied, i.e., select all rows
             mask = np.full(len(data[self.vectorKey]), True)  # type: ignore

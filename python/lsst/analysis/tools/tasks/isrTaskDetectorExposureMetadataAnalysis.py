@@ -51,6 +51,7 @@ class IsrAmpOffsetMetadataAnalysisTask(AnalysisPipelineTask):
     _DefaultName = "isrAmpOffsetMetadataAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        dataId = butlerQC.quantum.dataId
         inputs = butlerQC.get(inputRefs)
         taskName = inputRefs.metadata.datasetType.name
         taskName = taskName[: taskName.find("_")]
@@ -62,6 +63,6 @@ class IsrAmpOffsetMetadataAnalysisTask(AnalysisPipelineTask):
         df = pd.DataFrame(metadata)
 
         inputs["data"] = df
-        outputs = self.run(**inputs)
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+        outputs = self.run(plotInfo=plotInfo, **inputs)
         butlerQC.put(outputs, outputRefs)
-

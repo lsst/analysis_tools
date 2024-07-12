@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("IsrDetectorExposureMetricsAnalysisConfig", "IsrAmpOffsetMetricsAnalysisTask")
+__all__ = ("IsrDetectorExposureMetadataAnalysisConfig", "IsrAmpOffsetMetadataAnalysisTask")
 
 import pandas as pd
 from lsst.pipe.base import NoWorkFound, connectionTypes
@@ -28,7 +28,7 @@ from lsst.pipe.base import NoWorkFound, connectionTypes
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class IsrDetectorExposureMetricsAnalysisConnections(
+class IsrDetectorExposureMetadataAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("instrument", "exposure", "detector"),
 ):
@@ -40,27 +40,28 @@ class IsrDetectorExposureMetricsAnalysisConnections(
     )
 
 
-class IsrDetectorExposureMetricsAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=IsrDetectorExposureMetricsAnalysisConnections
+class IsrDetectorExposureMetadataAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=IsrDetectorExposureMetadataAnalysisConnections
 ):
     pass
 
 
-class IsrAmpOffsetMetricsAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = IsrDetectorExposureMetricsAnalysisConfig
-    _DefaultName = "isrAmpOffsetMetricsAnalysis"
-    _SubTaskName = "ampOffset"
+class IsrAmpOffsetMetadataAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = IsrDetectorExposureMetadataAnalysisConfig
+    _DefaultName = "isrAmpOffsetMetadataAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
         taskName = inputRefs.metadata.datasetType.name
         taskName = taskName[: taskName.find("_")]
-        metadata = inputs["metadata"].metadata[f"{taskName}:{self._SubTaskName}"].to_dict()
+        subTaskName = "ampOffset"
+        metadata = inputs["metadata"].metadata[f"{taskName}:{subTaskName}"].to_dict()
         if not metadata:
-            raise NoWorkFound(f"No metadata entries for {taskName}:{self._SubTaskName}.")
+            raise NoWorkFound(f"No metadata entries for {taskName}:{subTaskName}.")
         inputs.pop("metadata")
         df = pd.DataFrame(metadata)
 
         inputs["data"] = df
         outputs = self.run(**inputs)
         butlerQC.put(outputs, outputRefs)
+

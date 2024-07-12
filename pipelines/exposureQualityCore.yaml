@@ -2,7 +2,7 @@ description: |
   Tier 1 plots and metrics to assess exposure quality
 tasks:
   analyzeAmpOffsetTaskCore:
-    class: lsst.analysis.tools.tasks.IsrAmpOffsetMetricsAnalysisTask
+    class: lsst.analysis.tools.tasks.IsrAmpOffsetMetadataAnalysisTask
     config:
       connections.outputName: isrAmpOffsetMetadata
       atools.isrAmpOffsetMetadataMetric: MetadataMetricTool

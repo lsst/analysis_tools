@@ -32,6 +32,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class IsrMetadataExposureDetectorAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("instrument", "exposure", "detector"),
+    defaultTemplates={"outputName": "isr_metadata_exposure_detector"},
 ):
     metadata = connectionTypes.Input(
         doc="Task metadata from ISR",

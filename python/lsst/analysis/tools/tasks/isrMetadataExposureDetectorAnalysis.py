@@ -70,10 +70,8 @@ class IsrMetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
             taskFullName = taskName
         if not metadata:
             raise NoWorkFound(f"No metadata entries for {taskFullName}.")
-        df = pd.DataFrame(metadata)
 
-        plotInfo = self.parsePlotInfo({"data": inputs["metadata"]}, dataId)
-        inputs["data"] = df
-        inputs.pop("metadata")
+        plotInfo = self.parsePlotInfo({"data": inputs.pop("metadata")}, dataId)
+        inputs["data"] = pd.DataFrame(metadata)
         outputs = self.run(plotInfo=plotInfo, **inputs)
         butlerQC.put(outputs, outputRefs)

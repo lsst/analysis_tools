@@ -72,7 +72,7 @@ class MedianAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = data[self.vectorKey.format(**kwargs)][mask]
-        med = nanMedian(values) if len(values) else np.NaN
+        med = nanMedian(values) if len(values) else np.nan
 
         return med
 
@@ -83,7 +83,7 @@ class MeanAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = data[self.vectorKey.format(**kwargs)][mask]
-        mean = nanMean(values) if len(values) else np.NaN
+        mean = nanMean(values) if len(values) else np.nan
 
         return mean
 
@@ -361,7 +361,7 @@ class MedianHistAction(ScalarAction):
             bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
             med = cast(Scalar, float(self.histMedian(hist, bin_mid)))
         else:
-            med = np.NaN
+            med = np.nan
         return med
 
 
@@ -406,7 +406,7 @@ class IqrHistAction(ScalarAction):
             bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
             iqr = cast(Scalar, float(self.histIqr(hist, bin_mid)))
         else:
-            iqr = np.NaN
+            iqr = np.nan
         return iqr
 
 
@@ -436,6 +436,6 @@ class DivideScalar(ScalarAction):
         scalarB = self.actionB(data, **kwargs)
         if scalarB == 0:
             _LOG.warning("Denominator is zero! Returning NaN.")
-            return np.NaN
+            return np.nan
         else:
             return scalarA / scalarB

@@ -54,7 +54,7 @@ from lsst.pex.config.configurableActions import ConfigurableActionField
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
 
-_LOG = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class ScalarFromVectorAction(ScalarAction):
@@ -435,7 +435,7 @@ class DivideScalar(ScalarAction):
         scalarA = self.actionA(data, **kwargs)
         scalarB = self.actionB(data, **kwargs)
         if scalarB == 0:
-            _LOG.warning("Denominator is zero! Returning NaN.")
+            log.warning("Denominator is zero! Returning NaN.")
             return np.sign(scalarA) * np.inf
         else:
             return scalarA / scalarB

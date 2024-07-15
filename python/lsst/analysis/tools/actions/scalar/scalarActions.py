@@ -435,7 +435,13 @@ class DivideScalar(ScalarAction):
         scalarA = self.actionA(data, **kwargs)
         scalarB = self.actionB(data, **kwargs)
         if scalarB == 0:
-            log.warning("Denominator is zero! Returning NaN.")
-            return np.sign(scalarA) * np.inf
+            if scalarA == 0:
+                log.warning("Both numerator and denominator are zero! Returning NaN.")
+                return np.nan
+            else:
+                log.warning(
+                    "Non-zero scalar divided by zero! Returning %sInf." % ("+" if scalarA > 0 else "-")
+                )
+                return np.sign(scalarA) * np.inf
         else:
             return scalarA / scalarB

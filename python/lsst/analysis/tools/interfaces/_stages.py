@@ -223,7 +223,12 @@ class BaseMetricAction(MetricAction):
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)
             notes = {"metric_tags": kwargs.get("metric_tags", [])}
-            results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit), notes=notes)
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    subFormattedKey = f"{formattedKey}_{k}"
+                    results[subFormattedKey] = Measurement(subFormattedKey, v * apu.Unit(unit), notes=notes)
+            else:
+                results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit), notes=notes)
         return results
 
 

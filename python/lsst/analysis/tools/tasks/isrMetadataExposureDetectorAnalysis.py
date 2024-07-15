@@ -22,7 +22,6 @@ from __future__ import annotations
 
 __all__ = ("IsrMetadataExposureDetectorAnalysisConfig", "IsrMetadataExposureDetectorAnalysisTask")
 
-import pandas as pd
 from lsst.pex.config import Field
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
@@ -55,7 +54,7 @@ class IsrMetadataExposureDetectorAnalysisConfig(
 
 class IsrMetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
     ConfigClass = IsrMetadataExposureDetectorAnalysisConfig
-    _DefaultName = "isrMetadataAnalysis"
+    _DefaultName = "isrMetadataExposureDetectorAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         dataId = butlerQC.quantum.dataId
@@ -72,6 +71,5 @@ class IsrMetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
             raise NoWorkFound(f"No metadata entries for {taskFullName}.")
 
         plotInfo = self.parsePlotInfo({"data": inputs.pop("metadata")}, dataId)
-        inputs["data"] = pd.DataFrame(metadata)
-        outputs = self.run(plotInfo=plotInfo, **inputs)
+        outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

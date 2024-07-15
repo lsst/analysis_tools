@@ -22,18 +22,33 @@ from __future__ import annotations
 
 __all__ = ("MetadataMetricTool",)
 
-from lsst.pex.config import DictField
+from typing import Any, Dict, Iterable
 
-from ..actions.scalar import ValueAction
-from ..interfaces import AnalysisTool
+from lsst.pex.config import DictField, Field
+
+from ..interfaces import AnalysisAction, AnalysisTool
+
+
+class LoadDoubleKeyedData(AnalysisAction):
+    """Load double keyed data"""
+
+    name = Field[str](doc="The name of the key to load.")
+
+    def getInputSchema(self) -> Iterable[tuple[str, Dict]]:
+        return [(self.name, Dict[str, float])]
+
+    def __call__(self, data, **kwds: Any) -> Dict[str, Dict[str, float]]:
+        return data
 
 
 class MetadataMetricTool(AnalysisTool):
     """This tool is designed to extract values from task metadata"""
 
-    metrics = DictField[str, str](doc="The metrics to calculate from the task metadata and their units")
+    metrics = DictField[str, str](
+        doc="The metrics to extract from the task metadata and their respective units."
+    )
 
     def finalize(self):
         for name, unit in self.metrics.items():
-            setattr(self.process.calculateActions, name, ValueAction(vectorKey=name))
+            setattr(self.process.buildActions, f"{name}", LoadDoubleKeyedData(name=name))
         self.produce.metric.units = dict(self.metrics.items())

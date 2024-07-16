@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("MetadataMetricTool",)
 
-from typing import Any, Dict, Iterable
+from typing import Any, Iterable, Mapping
 
 from lsst.pex.config import DictField, Field
 
@@ -30,14 +30,18 @@ from ..interfaces import AnalysisAction, AnalysisTool
 
 
 class LoadDoubleKeyedData(AnalysisAction):
-    """Load double keyed data"""
+    """Load data from nested mappings of primary and secondary keys.
 
-    name = Field[str](doc="The name of the key to load.")
+    This class handles input data where primary keys map to mappings of
+    secondary keys to values.
+    """
 
-    def getInputSchema(self) -> Iterable[tuple[str, Dict]]:
-        return [(self.name, Dict[str, float])]
+    name = Field[str](doc="The name of the primary key for data to load from the nested data.")
 
-    def __call__(self, data, **kwds: Any) -> Dict[str, Dict[str, float]]:
+    def getInputSchema(self) -> Iterable[tuple[str, Mapping[str, Any]]]:
+        return [(self.name, Mapping[str, Any])]
+
+    def __call__(self, data, **kwds: Any) -> Mapping[str, Mapping[str, Any]]:
         return data
 
 

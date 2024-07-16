@@ -24,7 +24,7 @@ __all__ = ("BasePrep", "BaseProcess", "BaseMetricAction", "BaseProduce")
 
 import logging
 from collections import abc
-from typing import Any, cast, Mapping
+from typing import Any, Mapping, cast
 
 import astropy.units as apu
 from healsparse import HealSparseMap

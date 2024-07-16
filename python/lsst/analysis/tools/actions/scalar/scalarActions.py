@@ -439,9 +439,8 @@ class DivideScalar(ScalarAction):
                 log.warning("Both numerator and denominator are zero! Returning NaN.")
                 return np.nan
             else:
-                log.warning(
-                    "Non-zero scalar divided by zero! Returning %sInf." % ("+" if scalarA > 0 else "-")
-                )
-                return np.sign(scalarA) * np.inf
+                value = np.sign(scalarA) * np.inf
+                log.warning("Non-zero scalar divided by zero! Returning %f.", value)
+                return value
         else:
             return scalarA / scalarB

@@ -24,7 +24,7 @@ __all__ = ("BasePrep", "BaseProcess", "BaseMetricAction", "BaseProduce")
 
 import logging
 from collections import abc
-from typing import Any, cast
+from typing import Any, cast, Mapping
 
 import astropy.units as apu
 from healsparse import HealSparseMap
@@ -218,16 +218,18 @@ class BaseMetricAction(MetricAction):
             if formattedKey not in data:
                 raise ValueError(f"Key: {formattedKey} could not be found input data")
             value = data[formattedKey]
-            if not isinstance(value, Scalar):
-                raise ValueError(f"Data for key {key} is not a Scalar type")
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)
             notes = {"metric_tags": kwargs.get("metric_tags", [])}
-            if isinstance(value, dict):
+            if isinstance(value, Mapping):
                 for k, v in value.items():
-                    subFormattedKey = f"{formattedKey}_{k}"
-                    results[subFormattedKey] = Measurement(subFormattedKey, v * apu.Unit(unit), notes=notes)
+                    if not isinstance(v, Scalar):
+                        raise ValueError(f"Data for subkey {k} of key {key} is not a Scalar type")
+                    formattedSubKey = f"{formattedKey}_{k}"
+                    results[formattedSubKey] = Measurement(formattedSubKey, v * apu.Unit(unit), notes=notes)
             else:
+                if not isinstance(value, Scalar):
+                    raise ValueError(f"Data for key {key} is not a Scalar type")
                 results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit), notes=notes)
         return results
 

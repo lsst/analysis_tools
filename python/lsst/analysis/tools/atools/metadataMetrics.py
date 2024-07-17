@@ -22,37 +22,38 @@ from __future__ import annotations
 
 __all__ = ("MetadataMetricTool",)
 
-from typing import Any, Iterable, Mapping
 
 from lsst.pex.config import DictField, Field
 
-from ..interfaces import AnalysisAction, AnalysisTool
-
-
-class LoadDoubleKeyedData(AnalysisAction):
-    """Load data from nested mappings of primary and secondary keys.
-
-    This class handles input data where primary keys map to mappings of
-    secondary keys to values.
-    """
-
-    name = Field[str](doc="The name of the primary key for data to load from the nested data.")
-
-    def getInputSchema(self) -> Iterable[tuple[str, Mapping[str, Any]]]:
-        return [(self.name, Mapping[str, Any])]
-
-    def __call__(self, data, **kwds: Any) -> Mapping[str, Mapping[str, Any]]:
-        return data
+from ..actions.keyedData import KeyedDataKeyAccessAction
+from ..interfaces import AnalysisTool
 
 
 class MetadataMetricTool(AnalysisTool):
     """This tool is designed to extract values from task metadata"""
+
+    taskName = Field[str](
+        doc="The name of the task to extract metadata from.",
+        default=None,
+    )
+
+    subTaskName = Field[str](
+        doc="The name of the subtask to extract metadata from. "
+        "If None, the entire task metadata will be used.",
+        default=None,
+    )
 
     metrics = DictField[str, str](
         doc="The metrics to extract from the task metadata and their respective units."
     )
 
     def finalize(self):
-        for name, unit in self.metrics.items():
-            setattr(self.process.buildActions, f"{name}", LoadDoubleKeyedData(name=name))
+        if self.subTaskName:
+            taskFullName = f"{self.taskName}:{self.subTaskName}"
+        else:
+            taskFullName = self.taskName
+        for metric, unit in self.metrics.items():
+            setattr(
+                self.process.filterActions, f"{metric}", KeyedDataKeyAccessAction(topLevelKey=taskFullName)
+            )
         self.produce.metric.units = dict(self.metrics.items())

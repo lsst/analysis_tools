@@ -20,56 +20,46 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("IsrMetadataExposureDetectorAnalysisConfig", "IsrMetadataExposureDetectorAnalysisTask")
+__all__ = ("MetadataExposureDetectorAnalysisConfig", "MetadataExposureDetectorAnalysisTask")
 
-from lsst.pex.config import Field
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class IsrMetadataExposureDetectorAnalysisConnections(
+class MetadataExposureDetectorAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("instrument", "exposure", "detector"),
-    defaultTemplates={"outputName": "isr_metadata_exposure_detector"},
+    defaultTemplates={"inputName": "isr_metadata", "outputName": "isr_metadata_exposure_detector_analysis"},
 ):
-    metadata = connectionTypes.Input(
-        doc="Task metadata from ISR",
-        name="isr_metadata",
+    data = connectionTypes.Input(
+        doc="Task metadata to load.",
+        name="{inputName}",
         storageClass="TaskMetadata",
         deferLoad=True,
         dimensions=["instrument", "exposure", "detector"],
     )
 
 
-class IsrMetadataExposureDetectorAnalysisConfig(
+class MetadataExposureDetectorAnalysisConfig(
     AnalysisBaseConfig,
-    pipelineConnections=IsrMetadataExposureDetectorAnalysisConnections,
+    pipelineConnections=MetadataExposureDetectorAnalysisConnections,
 ):
-    subTaskName = Field[str](
-        doc="The name of ISR subtask to extract metadata from. If None, the entire metadata will be used.",
-        default=None,
-    )
+    pass
 
 
-class IsrMetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = IsrMetadataExposureDetectorAnalysisConfig
-    _DefaultName = "isrMetadataExposureDetectorAnalysis"
+class MetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = MetadataExposureDetectorAnalysisConfig
+    _DefaultName = "metadataExposureDetectorAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         dataId = butlerQC.quantum.dataId
         inputs = butlerQC.get(inputRefs)
-        taskName = inputRefs.metadata.datasetType.name
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+        taskName = inputRefs.data.datasetType.name
         taskName = taskName[: taskName.find("_")]
-        metadata = inputs["metadata"].get()
-        if self.config.subTaskName:
-            taskFullName = f"{taskName}:{self.config.subTaskName}"
-            metadata = metadata.metadata[taskFullName].to_dict()
-        else:
-            taskFullName = taskName
+        metadata = inputs["data"].get().to_dict()
         if not metadata:
-            raise NoWorkFound(f"No metadata entries for {taskFullName}.")
-
-        plotInfo = self.parsePlotInfo({"data": inputs.pop("metadata")}, dataId)
+            raise NoWorkFound(f"No metadata entries for {taskName}.")
         outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

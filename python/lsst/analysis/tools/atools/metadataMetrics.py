@@ -32,6 +32,10 @@ from ..interfaces import AnalysisTool
 class MetadataMetricTool(AnalysisTool):
     """This tool is designed to extract values from task metadata"""
 
+    parameterizedBand = Field[bool](
+        doc="Does this MetadataMetricTool support band as a name parameter?", default=False
+    )
+
     taskName = Field[str](
         doc="The name of the task to extract metadata from.",
         default=None,

@@ -7,6 +7,7 @@ tasks:
       connections.inputName: isr_metadata
       connections.outputName: isrAmpOffsetMetadata
       atools.isrAmpOffsetMetadataMetric: MetadataMetricTool
+      atools.isrAmpOffsetMetadataMetric.parameterizedBand: false
       atools.isrAmpOffsetMetadataMetric.taskName: isr
       atools.isrAmpOffsetMetadataMetric.subTaskName: ampOffset
       atools.isrAmpOffsetMetadataMetric.metrics:

@@ -42,6 +42,7 @@ __all__ = (
     "RmsAction",
 )
 
+import logging
 import operator
 from math import nan
 from typing import cast
@@ -52,6 +53,8 @@ from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Scalar, ScalarAction, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin, nanSigmaMad, nanStd
+
+log = logging.getLogger(__name__)
 
 
 class ScalarFromVectorAction(ScalarAction):
@@ -69,7 +72,7 @@ class MedianAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = data[self.vectorKey.format(**kwargs)][mask]
-        med = nanMedian(values) if len(values) else np.NaN
+        med = nanMedian(values) if len(values) else np.nan
 
         return med
 
@@ -80,7 +83,7 @@ class MeanAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = data[self.vectorKey.format(**kwargs)][mask]
-        mean = nanMean(values) if len(values) else np.NaN
+        mean = nanMean(values) if len(values) else np.nan
 
         return mean
 
@@ -358,7 +361,7 @@ class MedianHistAction(ScalarAction):
             bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
             med = cast(Scalar, float(self.histMedian(hist, bin_mid)))
         else:
-            med = np.NaN
+            med = np.nan
         return med
 
 
@@ -403,7 +406,7 @@ class IqrHistAction(ScalarAction):
             bin_mid = cast(Vector, data[self.midKey.format(**kwargs)])
             iqr = cast(Scalar, float(self.histIqr(hist, bin_mid)))
         else:
-            iqr = np.NaN
+            iqr = np.nan
         return iqr
 
 
@@ -432,5 +435,12 @@ class DivideScalar(ScalarAction):
         scalarA = self.actionA(data, **kwargs)
         scalarB = self.actionB(data, **kwargs)
         if scalarB == 0:
-            raise ValueError("Denominator is zero!")
-        return scalarA / scalarB
+            if scalarA == 0:
+                log.warning("Both numerator and denominator are zero! Returning NaN.")
+                return np.nan
+            else:
+                value = np.sign(scalarA) * np.inf
+                log.warning("Non-zero scalar divided by zero! Returning %f.", value)
+                return value
+        else:
+            return scalarA / scalarB

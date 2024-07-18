@@ -427,7 +427,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 )
             )
 
-        xLims = self.xLims if self.xLims is not None else [np.Inf, -np.Inf]
+        xLims = self.xLims if self.xLims is not None else [np.inf, -np.inf]
         for j, (
             xs,
             ys,

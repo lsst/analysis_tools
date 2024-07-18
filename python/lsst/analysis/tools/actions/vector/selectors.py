@@ -228,8 +228,8 @@ class RangeSelector(SelectorBase):
     """Selects rows within a range, inclusive of min/exclusive of max."""
 
     vectorKey = Field[str](doc="Key to select from data")
-    maximum = Field[float](doc="The maximum value (exclusive)", default=np.Inf)
-    minimum = Field[float](doc="The minimum value (inclusive)", default=np.nextafter(-np.Inf, 0.0))
+    maximum = Field[float](doc="The maximum value (exclusive)", default=np.inf)
+    minimum = Field[float](doc="The minimum value (inclusive)", default=np.nextafter(-np.inf, 0.0))
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield self.vectorKey, Vector
@@ -517,7 +517,7 @@ class BandSelector(VectorAction):
             case _:
                 bands = None
         if bands:
-            mask = np.in1d(data[self.vectorKey], bands)
+            mask = np.isin(data[self.vectorKey], bands).flatten()
         else:
             # No band selection is applied, i.e., select all rows
             mask = np.full(len(data[self.vectorKey]), True)  # type: ignore

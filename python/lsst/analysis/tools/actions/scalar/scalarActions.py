@@ -274,8 +274,8 @@ class FracInRange(ScalarFromVectorAction):
     minimum and maximum values, and is not NaN.
     """
 
-    maximum = Field[float](doc="The maximum value", default=np.nextafter(np.Inf, 0.0))
-    minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.Inf, 0.0))
+    maximum = Field[float](doc="The maximum value", default=np.nextafter(np.inf, 0.0))
+    minimum = Field[float](doc="The minimum value", default=np.nextafter(-np.inf, 0.0))
     percent = Field[bool](doc="Express result as percentage", default=False)
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:

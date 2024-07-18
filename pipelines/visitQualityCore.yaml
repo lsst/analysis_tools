@@ -39,6 +39,8 @@ tasks:
       atools.photoDiffPsfScatterVisitPlot: TargetRefCatDeltaPsfScatterVisitPlot
       atools.photoDiffCModelScatterVisitPlot: TargetRefCatDeltaAp09ScatterVisitPlot
       python: from lsst.analysis.tools.atools import *
+  objectEpochTable:
+    class: lsst.analysis.tools.tasks.ObjectEpochTableTask
   sourceObjectMatch:
     class: lsst.analysis.tools.tasks.SourceObjectTableAnalysisTask
     config:

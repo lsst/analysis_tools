@@ -14,6 +14,7 @@ from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .makeMetricTable import *
+from .metadataExposureDetectorAnalysis import *
 from .metricAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *

@@ -21,6 +21,7 @@ from .genericPrep import *
 from .genericProduce import *
 from .limitingMagnitudeMetric import *
 from .magDiff import *
+from .metadataMetrics import *
 from .numericalValidity import *
 from .photometricRepeatability import *
 from .photometry import *

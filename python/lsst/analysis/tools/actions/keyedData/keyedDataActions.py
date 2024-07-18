@@ -25,9 +25,10 @@ __all__ = (
     "AddComputedVector",
     "KeyedDataSelectorAction",
     "KeyedScalars",
+    "KeyedDataKeyAccessAction",
 )
 
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 import numpy as np
 from lsst.pex.config import Field
@@ -156,3 +157,18 @@ class KeyedScalars(KeyedDataAction):
         for name, action in self.scalarActions.items():
             result[name] = action(data, **kwargs)
         return result
+
+
+class KeyedDataKeyAccessAction(KeyedDataAction):
+    """Fetches the value for a given top-level key in a KeyedData.
+
+    Note that the returned value may optionally be a KeyedData itself.
+    """
+
+    topLevelKey = Field[str](doc="The top-level key in the KeyedData structure to extract data from.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from [(self.topLevelKey, Any)]
+
+    def __call__(self, data: KeyedData, **kwargs) -> Any:
+        return data[self.topLevelKey]

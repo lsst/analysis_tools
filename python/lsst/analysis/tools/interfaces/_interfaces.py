@@ -103,18 +103,23 @@ Vector = NDArray
 like an NDArray should be considered a Vector.
 """
 
-KeyedData = MutableMapping[str, Vector | Scalar | HealSparseMap | Tensor]
-"""KeyedData is an interface where either a `Vector` or `Scalar` can be
-retrieved using a key which is of str type.
+KeyedData = MutableMapping[str, Vector | Scalar | HealSparseMap | Tensor | Mapping]
+"""KeyedData is an interface where either a `Vector`, `Scalar`,
+`HealSparseMap`, `Tensor`, or `Mapping` can be retrieved using a key which is
+of str type.
 """
 
-KeyedDataTypes = MutableMapping[str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor]]
+KeyedDataTypes = MutableMapping[
+    str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor] | type[Mapping]
+]
 r"""A mapping of str keys to the Types which are valid in `KeyedData` objects.
 This is useful in conjunction with `AnalysisAction`\ 's ``getInputSchema`` and
 ``getOutputSchema`` methods.
 """
 
-KeyedDataSchema = Iterable[tuple[str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor]]]
+KeyedDataSchema = Iterable[
+    tuple[str, type[Vector] | ScalarType | type[HealSparseMap] | type[Tensor] | type[Mapping]]
+]
 r"""An interface that represents a type returned by `AnalysisAction`\ 's
 ``getInputSchema`` and ``getOutputSchema`` methods.
 """

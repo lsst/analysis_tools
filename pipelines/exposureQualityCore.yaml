@@ -1,0 +1,17 @@
+description: |
+  Tier 1 plots and metrics to assess exposure quality
+tasks:
+  analyzeAmpOffsetMetadata:
+    class: lsst.analysis.tools.tasks.MetadataExposureDetectorAnalysisTask
+    config:
+      connections.inputName: isr_metadata
+      connections.outputName: isrAmpOffsetMetadata
+      atools.isrAmpOffsetMetadataMetric: MetadataMetricTool
+      atools.isrAmpOffsetMetadataMetric.parameterizedBand: false
+      atools.isrAmpOffsetMetadataMetric.taskName: isr
+      atools.isrAmpOffsetMetadataMetric.subTaskName: ampOffset
+      atools.isrAmpOffsetMetadataMetric.metrics:
+        # Format is "metric name in the metadata": units
+        AMPOFFSET_PEDESTALS: adu
+      python: |
+        from lsst.analysis.tools.atools import MetadataMetricTool

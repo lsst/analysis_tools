@@ -22,12 +22,16 @@ from __future__ import annotations
 
 __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalysisTask")
 
+import lsst.pex.config as pexConfig
 import numpy as np
+import pandas as pd
 from astropy.table import join, vstack
+from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.geom import Box2D
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from smatch import Matcher
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -70,11 +74,38 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument",),
         isCalibration=True,
     )
+    properMotionCatalogs = ct.Input(
+        doc="Catalog containing proper motions.",
+        name="gbdesAstrometricFit_starCatalog",
+        storageClass="ArrowNumpyDict",
+        dimensions=("instrument", "skymap", "tract", "physical_filter"),
+        multiple=True,
+        deferLoad=True,
+    )
+    visitTable = ct.Input(
+        doc="Catalog containing visit information.",
+        name="visitTable",
+        storageClass="DataFrame",
+        dimensions=("instrument",),
+    )
+
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+
+        if not config.applyProperMotions:
+            self.inputs.remove("properMotionCatalogs")
+            self.inputs.remove("visitTable")
 
 
 class AssociatedSourcesTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=AssociatedSourcesTractAnalysisConnections
 ):
+    applyProperMotions = pexConfig.Field(
+        dtype=bool,
+        default=True,
+        doc="Apply proper motions to source positions.",
+    )
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -99,15 +130,22 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             dataId["tract"],
             inputs["sourceCatalogs"],
             inputs["associatedSources"],
+            inputs["properMotionCatalogs"],
+            inputs["visitTable"],
         )
 
     @classmethod
-    def prepareAssociatedSources(cls, skymap, tract, sourceCatalogs, associatedSources):
+    def prepareAssociatedSources(
+        cls, skymap, tract, sourceCatalogs, associatedSources, properMotionCatalogs=None, visitTable=None
+    ):
         """Concatenate source catalogs and join on associated object index."""
 
         # Keep only sources with associations
         sourceCatalogStack = vstack(sourceCatalogs)
         dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
+
+        if properMotionCatalogs is not None:
+            dataJoined = cls.applyProperMotionCorrections(dataJoined, properMotionCatalogs, visitTable)
 
         # Determine which sources are contained in tract
         ra = np.radians(dataJoined["coord_ra"])
@@ -123,6 +161,76 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         return dataFiltered
 
+    @classmethod
+    def applyProperMotionCorrections(cls, dataJoined, properMotionCatalogs, visitTable):
+        """Use proper motion/parallax catalogs to shift positions to median
+        epoch of the visits.
+
+        Parameters
+        ----------
+        dataJoined : `astropy.table.Table`
+            Table containing source positions.
+        properMotionCatalogs: `dict` [`pd.DataFrame`]
+            Dictionary keyed by band with proper motion and parallax catalogs.
+        visitTable : `pd.DataFrame`
+            Table containing the MJDS of the visits.
+
+        Returns
+        -------
+        dataJoined : `astropy.table.Table`
+            Table containing the source positions shifted to the median visit
+            epoch.
+        """
+
+        for band in np.unique(dataJoined["band"]):
+            bandInd = dataJoined["band"] == band
+            bandSources = dataJoined[bandInd].to_pandas()
+            meanRAs = bandSources.groupby("obj_index")["coord_ra"].aggregate("mean")
+            meanDecs = bandSources.groupby("obj_index")["coord_dec"].aggregate("mean")
+
+            bandPMs = properMotionCatalogs[band]
+            with Matcher(meanRAs, meanDecs) as m:
+                idx, i1, i2, d = m.query_radius(
+                    bandPMs["starX"], bandPMs["starY"], 0.2 / 3600, return_indices=True
+                )
+            import ipdb
+
+            ipdb.set_trace()
+            catRAs = np.zeros(len(meanRAs))
+            catDecs = np.zeros(len(meanRAs))
+            pmRAs = np.zeros(len(meanRAs))
+            pmDecs = np.zeros(len(meanRAs))
+            parallaxes = np.zeros(len(meanRAs))
+            catRAs[i1] = bandPMs["starX"][i2]
+            catDecs[i1] = bandPMs["starY"][i2]
+            pmRAs[i1] = bandPMs["starPMx"][i2]
+            pmDecs[i1] = bandPMs["starPMy"][i2]
+            parallaxes[i1] = bandPMs["starParallax"][i2]
+            pmDf = pd.DataFrame(
+                {
+                    "ra": catRAs,
+                    "dec": catDecs,
+                    "pmRA": pmRAs,
+                    "pmDec": pmDecs,
+                    "parallax": parallaxes,
+                    "obj_index": meanRAs.index,
+                }
+            )
+
+            dataWithPM = pd.merge(bandSources, pmDf, on="obj_index", how="left")
+
+            visits = bandSources["visit"].unique()
+            mjds = [visitTable.loc[visit]["expMidptMJD"] for visit in visits]
+            mjdDf = pd.DataFrame({"MJD": mjds, "visit": visits})
+            dataWithMJD = pd.merge(dataWithPM, mjdDf, on="visit", how="left")
+            medianMJD = np.median(mjds)
+            raCorrection, decCorrection = calculate_apparent_motion(dataWithMJD, medianMJD)
+
+            dataJoined["coord_ra"][bandInd] = dataWithMJD["coord_ra"] - raCorrection.value
+            dataJoined["coord_dec"][bandInd] = dataWithMJD["coord_dec"] - decCorrection.value
+
+        return dataJoined
+
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
 
@@ -134,6 +242,18 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         for handle in inputs["sourceCatalogs"]:
             sourceCatalogs.append(self.loadData(handle, names))
         inputs["sourceCatalogs"] = sourceCatalogs
+
+        if self.config.applyProperMotions:
+            properMotions = {}
+            for pmCatRef in inputs["properMotionCatalogs"]:
+                pmCat = pmCatRef.get(
+                    parameters={"columns": ["starX", "starY", "starPMx", "starPMy", "starParallax"]}
+                )
+                properMotions[pmCatRef.dataId["band"]] = pd.DataFrame(pmCat)
+            inputs["properMotionCatalogs"] = properMotions
+        else:
+            inputs["properMotionCatalogs"] = None
+            inputs["visitTable"] = None
 
         dataId = butlerQC.quantum.dataId
         plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")

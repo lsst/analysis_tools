@@ -88,6 +88,7 @@ tasks:
     config:
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
+      applyProperMotions: false
       atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
       atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
       atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability

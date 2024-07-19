@@ -20,8 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from lsst.analysis.tools.interfaces._interfaces import KeyedDataSchema
-
 __all__ = (
     "CalibQuantityBaseTool",
     "CalibQuantityAmpProfileScatterTool",
@@ -31,14 +29,34 @@ __all__ = (
     "CalibPtcCovarScatterTool",
 )
 
-from typing import cast
+from typing import Optional
 
-from lsst.pex.config import Field
+import numpy as np
+from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ..actions.plot.elements import HistElement, ScatterElement
 from ..actions.plot.gridPlot import GridPanelConfig, GridPlot
-from ..interfaces import AnalysisTool, KeyedData, KeyedDataAction, PlotElement, Vector
+from ..interfaces import AnalysisTool, KeyedData, KeyedDataAction, KeyedDataSchema, PlotElement, Vector
+
+_CALIB_AMP_NAME_DICT: dict[int, str] = {
+    0: "C00",
+    1: "C01",
+    2: "C02",
+    3: "C03",
+    4: "C04",
+    5: "C05",
+    6: "C06",
+    7: "C07",
+    8: "C10",
+    9: "C11",
+    10: "C12",
+    11: "C13",
+    12: "C14",
+    13: "C15",
+    14: "C16",
+    15: "C17",
+}
 
 
 class PrepRepacker(KeyedDataAction):
@@ -50,61 +68,23 @@ class PrepRepacker(KeyedDataAction):
     dataKey = Field[str](
         doc="Data selector. Data will be separated into multiple groups in a single panel based on this key.",
     )
-    quantityKey = Field[str](
-        doc="Quantity selector. The actual data quantities to be plotted.",
+    quantityKey = ListField[str](
+        doc="Quantity selector. The actual data quantities to be plotted.", minLength=1, optional=False
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        repackedData = {}
-        # Loop over the length of the data vector and repack row by row
-        for i in range(len(cast(Vector, data[self.panelKey]))):
-            panelVec = cast(Vector, data[self.panelKey])
-            dataVec = cast(Vector, data[self.dataKey])
-            quantityVec = cast(Vector, data[self.quantityKey])
-            repackedData[f"{panelVec[i]}_{dataVec[i]}_{self.quantityKey}"] = quantityVec[i]
-        return repackedData
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return (
-            (self.panelKey, Vector),
-            (self.dataKey, Vector),
-            (self.quantityKey, Vector),
-        )
-
-    def addInputSchema(self, inputSchema: KeyedDataSchema) -> None:
-        pass
-
-
-class SingleValueRepacker(KeyedDataAction):
-    """Prep action to repack data."""
-
-    panelKey = Field[str](
-        doc="Panel selector. Data will be separated into multiple panels based on this key.",
-    )
-    dataKey = Field[str](
-        doc="Data selector. Data will be separated into multiple groups in a single panel based on this key.",
-    )
-    quantityKey = Field[str](
-        doc="Quantity selector. The actual data quantities to be plotted.",
-    )
-
-    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        repackedData = {}
+        repackedData: dict[str, Vector] = {}
         uniquePanelKeys = list(set(data[self.panelKey]))
 
-        # Loop over data vector to repack information as it is expected.
-        for i in range(len(uniquePanelKeys)):
-            repackedData[f"{uniquePanelKeys[i]}_x"] = []
-            repackedData[f"{uniquePanelKeys[i]}"] = []
+        for pKey in uniquePanelKeys:
+            # Make a boolean array that selects the correct panel data
+            sel: np.ndarray = data[self.panelKey] == pKey
 
-        panelVec = cast(Vector, data[self.panelKey])
-        dataVec = cast(Vector, data[self.dataKey])
-        quantityVec = cast(Vector, data[self.quantityKey])
-
-        for i in range(len(panelVec)):
-            repackedData[f"{panelVec[i]}_x"].append(dataVec[i])
-            repackedData[f"{panelVec[i]}"].append(quantityVec[i])
-
+            # Setup the x axis
+            repackedData[f"{pKey}_x"] = data[self.dataKey][sel]
+            for qkey in self.quantityKey:
+                # Setup a y axis series for each quantityKey
+                repackedData[f"{pKey}_{qkey}"] = data[qkey][sel]
         return repackedData
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -136,6 +116,12 @@ class CalibQuantityBaseTool(AnalysisTool):
         doc="Plot element.",
     )
 
+    def _get_xKey_dict(self, yKeys: Optional[dict[int, str]] = None) -> dict[int, str]:
+        """Generate the dictionary of x axis keys from the y axis ones"""
+        if yKeys is None:
+            yKeys = self.produce.plot.valsGroupBy
+        return {k: f"{v}_x" for k, v in yKeys.items()}
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -152,24 +138,7 @@ class CalibQuantityBaseTool(AnalysisTool):
         self.produce.plot.numCols = 4
 
         # Values to group by to distinguish between data in differing panels
-        self.produce.plot.valsGroupBy = {
-            0: "C00",
-            1: "C01",
-            2: "C02",
-            3: "C03",
-            4: "C04",
-            5: "C05",
-            6: "C06",
-            7: "C07",
-            8: "C10",
-            9: "C11",
-            10: "C12",
-            11: "C13",
-            12: "C14",
-            13: "C15",
-            14: "C16",
-            15: "C17",
-        }
+        self.produce.plot.valsGroupBy = _CALIB_AMP_NAME_DICT
 
     def finalize(self):
         super().finalize()
@@ -206,7 +175,7 @@ class CalibAmpScatterTool(CalibQuantityBaseTool):
         self.plotElement = ScatterElement()
 
         # Repack the input data into a usable format
-        self.prep = SingleValueRepacker()
+        self.prep = PrepRepacker()
 
         self.produce.plot = GridPlot()
         self.produce.plot.panels = {}
@@ -214,44 +183,9 @@ class CalibAmpScatterTool(CalibQuantityBaseTool):
         self.produce.plot.numCols = 4
 
         # Values to use for x-axis data
-        self.produce.plot.xDataKeys = {
-            0: "C00_x",
-            1: "C01_x",
-            2: "C02_x",
-            3: "C03_x",
-            4: "C04_x",
-            5: "C05_x",
-            6: "C06_x",
-            7: "C07_x",
-            8: "C10_x",
-            9: "C11_x",
-            10: "C12_x",
-            11: "C13_x",
-            12: "C14_x",
-            13: "C15_x",
-            14: "C16_x",
-            15: "C17_x",
-        }
-
         # Values to group by to distinguish between data in differing panels
-        self.produce.plot.valsGroupBy = {
-            0: "C00",
-            1: "C01",
-            2: "C02",
-            3: "C03",
-            4: "C04",
-            5: "C05",
-            6: "C06",
-            7: "C07",
-            8: "C10",
-            9: "C11",
-            10: "C12",
-            11: "C13",
-            12: "C14",
-            13: "C15",
-            14: "C16",
-            15: "C17",
-        }
+        self.produce.plot.valsGroupBy = _CALIB_AMP_NAME_DICT
+        self.produce.plot.xDataKeys = self._get_xKey_dict()
 
         self.prep.panelKey = "amplifier"
         self.prep.dataKey = "mjd"
@@ -277,7 +211,7 @@ class CalibDivisaderoScatterTool(CalibQuantityBaseTool):
         self.plotElement = ScatterElement()
 
         # Repack the input data into a usable format
-        self.prep = SingleValueRepacker()
+        self.prep = PrepRepacker()
 
         self.produce.plot = GridPlot()
         self.produce.plot.panels = {}
@@ -287,10 +221,7 @@ class CalibDivisaderoScatterTool(CalibQuantityBaseTool):
         # Values to group by to distinguish between data in differing panels
         self.produce.plot.valsGroupBy = {0: "bank1", 1: "bank0"}
 
-        self.produce.plot.xDataKeys = {
-            0: "bank1_x",
-            1: "bank0_x",
-        }
+        self.produce.plot.xDataKeys = self._get_xKey_dict()
         self.prep.panelKey = "amplifier"
         self.prep.dataKey = "mjd"
 

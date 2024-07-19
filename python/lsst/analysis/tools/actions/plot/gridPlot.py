@@ -84,10 +84,7 @@ class GridPlot(PlotAction):
         doc="Independent data definitions. The key of this dict is the panel ID. The values are keys of data "
         "to plot (comma-separated for multiple) where each key may be a subset of a full key.",
     )
-    figsize = ListField[float](
-        doc="Figure size.",
-        default=[8, 8],
-    )
+    figsize = ListField[float](doc="Figure size.", default=[8, 8], length=2)
     dpi = Field[float](
         doc="Dots per inch.",
         default=150,

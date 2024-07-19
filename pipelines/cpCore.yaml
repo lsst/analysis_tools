@@ -44,28 +44,28 @@ tasks:
       atools.biasMeanByDate: CalibAmpScatterTool
       atools.biasMeanByDate.prep.panelKey: amplifier
       atools.biasMeanByDate.prep.dataKey: mjd
-      atools.biasMeanByDate.prep.quantityKey: BIAS_MEAN
+      atools.biasMeanByDate.prep.quantityKey: ["BIAS_MEAN"]
       atools.biasMeanByDate.produce.plot.xAxisLabel: "MJD"
       atools.biasMeanByDate.produce.plot.yAxisLabel: "Residual bias mean (ADU)"
 
       atools.biasStdByDate: CalibAmpScatterTool
       atools.biasStdByDate.prep.panelKey: amplifier
       atools.biasStdByDate.prep.dataKey: mjd
-      atools.biasStdByDate.prep.quantityKey: BIAS_NOISE
+      atools.biasStdByDate.prep.quantityKey: ["BIAS_NOISE"]
       atools.biasStdByDate.produce.plot.xAxisLabel: "MJD"
       atools.biasStdByDate.produce.plot.yAxisLabel: "Residual bias stdev (ADU)"
 
       atools.biasROCornerByDate: CalibAmpScatterTool
       atools.biasROCornerByDate.prep.panelKey: amplifier
       atools.biasROCornerByDate.prep.dataKey: mjd
-      atools.biasROCornerByDate.prep.quantityKey: BIAS_AMP_CORNER
+      atools.biasROCornerByDate.prep.quantityKey: ["BIAS_AMP_CORNER"]
       atools.biasROCornerByDate.produce.plot.xAxisLabel: "MJD"
       atools.biasROCornerByDate.produce.plot.yAxisLabel: "Residual bias mean at RO corner (ADU)"
 
       atools.biasTestsByDate: CalibAmpScatterTool
       atools.biasTestsByDate.prep.panelKey: amplifier
       atools.biasTestsByDate.prep.dataKey: mjd
-      atools.biasTestsByDate.prep.quantityKey: BIAS_VERIFY_MEAN
+      atools.biasTestsByDate.prep.quantityKey: ["BIAS_VERIFY_MEAN"]
       atools.biasTestsByDate.produce.plot.xAxisLabel: "MJD"
       atools.biasTestsByDate.produce.plot.yAxisLabel: "Bias Test Passing"
 
@@ -118,21 +118,21 @@ tasks:
       atools.darkMeanByDate: CalibAmpScatterTool
       atools.darkMeanByDate.prep.panelKey: amplifier
       atools.darkMeanByDate.prep.dataKey: mjd
-      atools.darkMeanByDate.prep.quantityKey: DARK_MEAN
+      atools.darkMeanByDate.prep.quantityKey: ["DARK_MEAN"]
       atools.darkMeanByDate.produce.plot.xAxisLabel: "MJD"
       atools.darkMeanByDate.produce.plot.yAxisLabel: "Residual dark mean (ADU)"
 
       atools.darkStdByDate: CalibAmpScatterTool
       atools.darkStdByDate.prep.panelKey: amplifier
       atools.darkStdByDate.prep.dataKey: mjd
-      atools.darkStdByDate.prep.quantityKey: DARK_NOISE
+      atools.darkStdByDate.prep.quantityKey: ["DARK_NOISE"]
       atools.darkStdByDate.produce.plot.xAxisLabel: "MJD"
       atools.darkStdByDate.produce.plot.yAxisLabel: "Residual dark std (ADU)"
 
       atools.darkTestsByDate: CalibAmpScatterTool
       atools.darkTestsByDate.prep.panelKey: amplifier
       atools.darkTestsByDate.prep.dataKey: mjd
-      atools.darkTestsByDate.prep.quantityKey: DARK_VERIFY_MEAN
+      atools.darkTestsByDate.prep.quantityKey: ["DARK_VERIFY_MEAN"]
       atools.darkTestsByDate.produce.plot.xAxisLabel: "MJD"
       atools.darkTestsByDate.produce.plot.yAxisLabel: "Dark Test Passing"
 
@@ -148,7 +148,7 @@ tasks:
       atools.flatTestsByDate: CalibAmpScatterTool
       atools.flatTestsByDate.prep.panelKey: amplifier
       atools.flatTestsByDate.prep.dataKey: mjd
-      atools.flatTestsByDate.prep.quantityKey: FLAT_VERIFY_NOISE
+      atools.flatTestsByDate.prep.quantityKey: ["FLAT_VERIFY_NOISE"]
       # TODO: DM-43878
       # FLAT_DET_VERIFY_SCATTER
       atools.flatTestsByDate.produce.plot.xAxisLabel: "MJD"
@@ -210,7 +210,7 @@ tasks:
       atools.ptcPlot: CalibAmpScatterTool
       atools.ptcPlot.prep.panelKey: amplifier
       atools.ptcPlot.prep.dataKey: PTC_PTC_RAW_MEANS
-      atools.ptcPlot.prep.quantityKey: PTC_PTC_RAW_VARIANCE
+      atools.ptcPlot.prep.quantityKey: ["PTC_PTC_RAW_VARIANCE"]
       atools.ptcPlot.produce.plot.xAxisLabel: "Exposure Pair Flux (ADU)"
       atools.ptcPlot.produce.plot.yAxisLabel: "Exposure Pair Variance (ADU^2)"
       python: |

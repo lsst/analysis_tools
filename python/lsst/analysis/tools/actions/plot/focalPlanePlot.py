@@ -192,6 +192,11 @@ class FocalPlanePlot(PlotAction):
         if plotInfo is None:
             plotInfo = {}
 
+        # This is a little hacky but is the easiest way to solve
+        # the bands being printed on the plot correctly.
+        if "band" in plotInfo.keys():
+            plotInfo["bands"] = [plotInfo["band"]]
+
         if len(data["x"]) == 0:
             noDataFig = Figure()
             noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")

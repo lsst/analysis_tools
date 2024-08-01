@@ -62,6 +62,19 @@ class WholeSkyPlotTool(AnalysisTool):
         ", where N is this config value.",
         default=3.0,
     )
+    sequentialMetrics = ListField[str](
+        doc="Partial names of metrics with sequential values. This is a placeholder until metric information "
+        "is available via yaml.",
+        default=["count", "num", "igma", "tdev", "Repeat"],
+    )
+    sequentialColorMap = ListField[str](
+        doc="List of hexidecimal colors for a sequential color map.",
+        default=["#F5F5F5", "#5AB4AC", "#284D48"],
+    )
+    divergentColorMap = ListField[str](
+        doc="List of hexidecimal colors for a divergent color map.",
+        default=["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"],
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -102,6 +115,9 @@ class WholeSkyPlotTool(AnalysisTool):
             self.produce.plot.yAxisLabel = self.yAxisLabel
             self.produce.plot.figureSize = self.figureSize
             self.produce.plot.colorBarRange = self.colorBarRange
+            self.produce.plot.sequentialMetrics = self.sequentialMetrics
+            self.produce.plot.sequentialColorMap = self.sequentialColorMap
+            self.produce.plot.divergentColorMap = self.divergentColorMap
 
             super().finalize()
 

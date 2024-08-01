@@ -54,8 +54,6 @@ class WholeSkyPlot(PlotAction):
     plotKeys = ListField[str](doc="Names of metrics to plot.")
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
-    xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
-    yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
     colorBarRange = Field[float](
         doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
@@ -91,11 +89,47 @@ class WholeSkyPlot(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
-    def _getMaxOutlierVals(self, tracts, values, outlierInds):
+    def _getAxesLimits(self, xs: list, ys: list) -> tuple(list, list):
+        """Get the x and y axes limits in degrees.
+
+        Parameters
+        ----------
+        xs : `list`
+            X coordinates for the tracts to plot.
+        ys : `list`
+            Y coordinates for the tracts to plot.
+
+        Returns
+        -------
+        xlim : `list`
+            Minimun and maximum x axis values.
+        ylim : `list`
+            Minimun and maximum y axis values.
+        """
+
+        # Add some blank space on the edges of the plot.
+        xlim = [np.nanmin(xs) - 5, np.nanmax(xs) + 5]
+        ylim = [np.nanmin(ys) - 5, np.nanmax(ys) + 5]
+
+        # Limit to only show real RA/Dec values.
+        if xlim[0] < 0.0:
+            xlim[0] = 0.0
+        if xlim[1] > 360.0:
+            xlim[1] = 360.0
+        if ylim[0] < -90.0:
+            ylim[0] = -90.0
+        if ylim[1] > 90.0:
+            ylim[1] = 90.0
+
+        return (xlim, ylim)
+
+    def _getMaxOutlierVals(self, multiplier: float, tracts: list, values: list, outlierInds: list) -> str:
         """Get the 5 largest outlier values in a string.
 
         Parameters
         ----------
+        multiplier : `float`
+            Select values whose absolute value is > multiplier * sigmaMAD.
         tracts : `list`
             All the tracts.
         values : `list`
@@ -108,7 +142,7 @@ class WholeSkyPlot(PlotAction):
         text : `str`
             A string containing the 5 tracts with the largest outlier values.
         """
-        text = "Outlier values: "
+        text = f"Tracts with |value| > {multiplier}" + r"$\sigma_{MAD}$" + ": "
         if len(outlierInds) > 0:
             outlierValues = np.array(values)[outlierInds]
             outlierTracts = np.array(tracts)[outlierInds]
@@ -119,7 +153,7 @@ class WholeSkyPlot(PlotAction):
             for ind in maxInds[:5]:
                 val = outlierValues[ind]
                 tract = outlierTracts[ind]
-                text += f"{tract}: {val:.3}, "
+                text += f"{tract}, {val:.3}; "
             # Remove the final trailing comma and whitespace.
             text = text[:-2]
         else:
@@ -191,18 +225,22 @@ class WholeSkyPlot(PlotAction):
 
             # Setup figure.
             fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
-            ax.set_xlim(self.xLimits)
-            ax.set_ylim(self.yLimits)
+            xlim, ylim = self._getAxesLimits(ras, decs)
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
             ax.set_xlabel(self.xAxisLabel)
             ax.set_ylabel(self.yAxisLabel)
+            ax.invert_xaxis()
 
             # Add colored patches showing tract metric values.
             patchCollection = PatchCollection(patches, cmap=blueGreen)
             ax.add_collection(patchCollection)
 
             # Define color bar range.
-            vmin = np.nanmedian(colBarVals) - self.colorBarRange * nanSigmaMad(colBarVals)
-            vmax = np.nanmedian(colBarVals) + self.colorBarRange * nanSigmaMad(colBarVals)
+            med = np.nanmedian(colBarVals)
+            sigmaMad = nanSigmaMad(colBarVals)
+            vmin = med - self.colorBarRange * sigmaMad
+            vmax = med + self.colorBarRange * sigmaMad
 
             # Note tracts with metrics outside (vmin, vmax) as outliers.
             outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
@@ -262,14 +300,14 @@ class WholeSkyPlot(PlotAction):
             if len(handles) > 0:
                 fig.legend(handles=handles)
 
-            # Add text boxes to show the number of tracts, number of NaNs, and
-            # the five largest outlier values.
-            outlierText = self._getMaxOutlierVals(tracts, colBarVals, outlierInds)
+            # Add text boxes to show the number of tracts, number of NaNs,
+            # median, sigma MAD, and the five largest outlier values.
+            outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
             multiplier = 3.5 / self.figureSize[1]
-            verticalSpacing = 0.026 * multiplier
+            verticalSpacing = 0.028 * multiplier
             fig.text(
                 0.01,
-                0.01 + 2 * verticalSpacing,
+                0.01 + 3 * verticalSpacing,
                 f"Num tracts: {len(tracts)}",
                 transform=fig.transFigure,
                 fontsize=8,
@@ -277,8 +315,16 @@ class WholeSkyPlot(PlotAction):
             )
             fig.text(
                 0.01,
-                0.01 + verticalSpacing,
+                0.01 + 2 * verticalSpacing,
                 f"Num nans: {len(nanInds)}",
+                transform=fig.transFigure,
+                fontsize=8,
+                alpha=0.7,
+            )
+            fig.text(
+                0.01,
+                0.01 + verticalSpacing,
+                f"Median: {med:.3f}; " + r"$\sigma_{MAD}$" + f": {sigmaMad:.3f}",
                 transform=fig.transFigure,
                 fontsize=8,
                 alpha=0.7,

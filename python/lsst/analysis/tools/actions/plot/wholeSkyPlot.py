@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Config, Field, ListField
 from matplotlib.collections import PatchCollection
+from matplotlib.colors import CenteredNorm
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, Polygon
 
@@ -59,6 +60,19 @@ class WholeSkyPlot(PlotAction):
         doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
         ", where N is this config value.",
         default=3.0,
+    )
+    sequentialMetrics = ListField[str](
+        doc="Partial names of metrics with sequential values. This is a placeholder until metric information "
+        "is available via yaml.",
+        default=["count", "num", "igma", "tdev", "Repeat"],
+    )
+    sequentialColorMap = ListField[str](
+        doc="List of hexidecimal colors for a sequential color map.",
+        default=["#F5F5F5", "#5AB4AC", "#284D48"],
+    )
+    divergentColorMap = ListField[str](
+        doc="List of hexidecimal colors for a divergent color map.",
+        default=["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"],
     )
 
     def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
@@ -201,14 +215,27 @@ class WholeSkyPlot(PlotAction):
         please see the
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
-        # Make a divergent colormap.
-        blueGreen = mkColormap(["midnightblue", "lightcyan", "darkgreen"])
+        # Make colorblind-friendly colormap options.
+        sequentialColorMap = mkColormap(self.sequentialColorMap)
+        divergentColorMap = mkColormap(self.divergentColorMap)
 
         results = {}
         for key, band in zip(self.plotKeys, self.keyBands):
 
             if plotInfo is None:
                 plotInfo = {}
+
+            # Choose the color map based on metric type.
+            for metricType in self.sequentialMetrics:
+                if metricType in key:
+                    colorMap = sequentialColorMap
+                    # Choose arbitrary color bar center.
+                    norm = None
+                    break
+                else:
+                    colorMap = divergentColorMap
+                    # Center color bar on zero.
+                    norm = CenteredNorm()
 
             # Create patches using the corners of each tract.
             patches = []
@@ -233,7 +260,7 @@ class WholeSkyPlot(PlotAction):
             ax.invert_xaxis()
 
             # Add colored patches showing tract metric values.
-            patchCollection = PatchCollection(patches, cmap=blueGreen)
+            patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
             ax.add_collection(patchCollection)
 
             # Define color bar range.
@@ -255,9 +282,10 @@ class WholeSkyPlot(PlotAction):
                     outlierPatches.append(patches[ind])
                 outlierPatchCollection = PatchCollection(
                     outlierPatches,
-                    cmap=blueGreen,
+                    cmap=colorMap,
+                    norm=norm,
                     facecolors="none",
-                    edgecolors="r",
+                    edgecolors="k",
                     linewidths=0.5,
                     zorder=100,
                 )
@@ -265,7 +293,7 @@ class WholeSkyPlot(PlotAction):
                 # Add legend information.
                 outlierPatch = Patch(
                     facecolor="none",
-                    edgecolor="r",
+                    edgecolor="k",
                     linewidth=0.5,
                     label="Outlier",
                 )
@@ -280,6 +308,7 @@ class WholeSkyPlot(PlotAction):
                 nanPatchCollection = PatchCollection(
                     nanPatches,
                     cmap=None,
+                    norm=norm,
                     facecolors="white",
                     edgecolors="grey",
                     linestyles="dotted",
@@ -303,6 +332,7 @@ class WholeSkyPlot(PlotAction):
             # Add text boxes to show the number of tracts, number of NaNs,
             # median, sigma MAD, and the five largest outlier values.
             outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
+            # Make vertical text spacing readable for different figure sizes.
             multiplier = 3.5 / self.figureSize[1]
             verticalSpacing = 0.028 * multiplier
             fig.text(

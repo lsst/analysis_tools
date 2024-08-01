@@ -53,7 +53,8 @@ class WholeSkyAnalysisConnections(
 
 
 class WholeSkyAnalysisConfig(AnalysisBaseConfig, pipelineConnections=WholeSkyAnalysisConnections):
-    pass
+    def setDefaults(self):
+        self.bands = []
 
 
 class WholeSkyAnalysisTask(AnalysisPipelineTask):

@@ -50,9 +50,10 @@ class WholeSkyPlot(PlotAction):
     The default axes limits and figure size were chosen to plot HSC PDR2.
     """
 
+    keyBands = ListField[str](doc="Band for each metric, if any.")
+    plotKeys = ListField[str](doc="Names of metrics to plot.")
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
-    plotKeys = ListField[str](doc="Names of metrics to plot.")
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
@@ -170,7 +171,8 @@ class WholeSkyPlot(PlotAction):
         blueGreen = mkColormap(["midnightblue", "lightcyan", "darkgreen"])
 
         results = {}
-        for key in self.plotKeys:
+        for key, band in zip(self.plotKeys, self.keyBands):
+
             if plotInfo is None:
                 plotInfo = {}
 
@@ -312,9 +314,11 @@ class WholeSkyPlot(PlotAction):
             text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
 
             # Finalize plot appearance.
-            plt.grid(True)
+            ax.grid()
+            ax.set_axisbelow(True)
             ax.set_aspect("equal")
             fig = plt.gcf()
+            plotInfo["bands"] = band
             fig = addPlotInfo(fig, plotInfo)
             plt.subplots_adjust(left=0.08, right=0.97, top=0.8, bottom=0.17, wspace=0.35)
 

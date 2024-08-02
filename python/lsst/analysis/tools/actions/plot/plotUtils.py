@@ -661,9 +661,14 @@ def plotProjectionWithBinning(
 
     xBinEdges = np.linspace(xMin, xMax, xNumBins + 1)
     yBinEdges = np.linspace(yMin, yMax, yNumBins + 1)
+    finiteMask = np.isfinite(zs)
+    xs = xs[finiteMask]
+    ys = ys[finiteMask]
+    zs = zs[finiteMask]
     binnedStats, xEdges, yEdges, binNums = binned_statistic_2d(
         xs, ys, zs, statistic="median", bins=(xBinEdges, yBinEdges)
     )
+
     if len(xs) >= nPointBinThresh:
         s = min(10, max(0.5, nPointBinThresh / 10 / (len(xs) ** 0.5)))
         lw = (s**0.5) / 10

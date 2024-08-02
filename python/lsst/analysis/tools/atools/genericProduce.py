@@ -47,6 +47,16 @@ class MagnitudeScatterPlot(MagnitudeXTool):
 
     def finalize(self):
         super().finalize()
+        # Set plot types based on config
+        object_classes = []
+        if self.use_galaxies:
+            object_classes.append("galaxy")
+        if self.use_stars:
+            object_classes.append("star")
+        self.produce.plot.plotTypes = [
+            self.get_class_name_plural(object_class) for object_class in object_classes
+        ]
+
         config_x = self.config_mag_x
         label_x = f"{config_x.name_flux} (mag)"
         # Hacky way to check if setup is complete
@@ -75,24 +85,27 @@ class MagnitudeScatterPlot(MagnitudeXTool):
         if key_err != self.mag_x:
             keys_filter.append(("", "flux_", key_err))
 
-        for prefix, plural in (("star", "Stars"), ("galaxy", "Galaxies")):
+        for object_class in object_classes:
+            plural = self.get_class_name_plural(object_class)
             for suffix, prefix_vec, key in keys_filter:
+                name_selector = self.get_name_attr_selector(object_class)
                 setattr(
                     self.process.filterActions,
-                    f"{prefix}_{key}_flux{suffix}",
+                    f"{object_class}_{key}_flux{suffix}",
                     DownselectVector(
                         vectorKey=f"{prefix_vec}{key}",
-                        selector=VectorSelector(vectorKey=f"{prefix}Selector"),
+                        selector=VectorSelector(vectorKey=name_selector),
                     ),
                 )
 
+            name_y = self.get_name_attr_values(object_class)
             for suffix_y in self.suffixes_y_finalize:
                 statAction = ScatterPlotStatsAction(
-                    vectorKey=f"y{plural.capitalize()}{suffix_y}",
+                    vectorKey=f"{name_y}{suffix_y}",
                     prefix=plural,
                     suffix=suffix_y,
                 )
-                fluxType = f"{prefix}_{key_err}_flux"
+                fluxType = f"{object_class}_{key_err}_flux"
                 statAction.highSNSelector.fluxType = fluxType
                 statAction.highSNSelector.threshold = 200
                 statAction.lowSNSelector.fluxType = fluxType

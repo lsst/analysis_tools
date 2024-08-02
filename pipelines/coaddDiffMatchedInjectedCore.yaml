@@ -1,0 +1,201 @@
+description: |
+  Matched difference (measured vs reference) plots/metrics
+parameters:
+  color_diff_zoom_min: -50
+  color_diff_zoom_max: 50
+  color_diff_full_min: -25
+  color_diff_full_max: 25
+  dist_diff_full_max: 500
+  dist_diff_zoom_max: 20
+  dist_chi_max: 5
+  mag_x_min: 17.5
+  mag_x_zoom_max: 23.5
+  mag_x_full_max: 30.5
+  mag_diff_full_min: -1000
+  mag_diff_full_max: 1000
+  mag_diff_zoom_min: -50
+  mag_diff_zoom_max: 50
+  mag_chi_min: -5
+  mag_chi_max: 5
+  pos_diff_full_min: -500
+  pos_diff_full_max: 500
+  pos_diff_zoom_min: -10
+  pos_diff_zoom_max: 10
+  pos_chi_min: -5
+  pos_chi_max: 5
+  scale_pixel: 200.0
+tasks:
+  diff_matched_analysis:
+    class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
+    config:
+      connections.inputName: matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract
+      connections.outputName: matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract
+
+      atools.matchedRefCompleteness: MatchedRefCoaddCompurityTool
+      atools.matchedRefCompleteness.mag_target: psf_err
+      atools.matchedRefCompleteness.mag_bins.mag_low_min: mmag_low_min
+      atools.matchedRefCompleteness.mag_bins.mag_low_max: mmag_low_max
+      atools.matchedRefCompleteness.mag_bins_plot.mag_low_min: mmag_low_min
+      atools.matchedRefCompleteness.mag_bins_plot.mag_low_max: mmag_low_max
+
+      atools.matchedRefAngularSeparationDiff: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationDiff.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefAngularSeparationDiff.produce.plot.yLims: lims_dist_diff_full
+
+      atools.matchedRefAngularSeparationDiffZoom: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationDiffZoom.produce.plot.xLims: lims_mag_x_zoom
+      atools.matchedRefAngularSeparationDiffZoom.produce.plot.yLims: lims_dist_diff_zoom
+      atools.matchedRefAngularSeparationDiffZoom.produce.metric: NoMetric
+
+      atools.matchedRefAngularSeparationChi: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationChi.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefAngularSeparationChi.produce.plot.yLims: lims_dist_chi
+      atools.matchedRefAngularSeparationChi.compute_chi: true
+
+      atools.matchedRefPsfColorDiff: MatchedRefCoaddDiffColorTool
+      atools.matchedRefPsfColorDiff.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPsfColorDiff.produce.plot.yLims: lims_color_diff_full
+
+      atools.matchedRefPsfColorDiffZoom: MatchedRefCoaddDiffColorTool
+      atools.matchedRefPsfColorDiffZoom.produce.plot.xLims: lims_mag_x_zoom
+      atools.matchedRefPsfColorDiffZoom.produce.plot.yLims: lims_color_diff_zoom
+      atools.matchedRefPsfColorDiffZoom.produce.metric: NoMetric
+
+      atools.matchedRefPsfColorChi: MatchedRefCoaddDiffColorTool
+      atools.matchedRefPsfColorChi.compute_chi: true
+      atools.matchedRefPsfColorChi.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPsfColorChi.produce.plot.yLims: lims_mag_chi
+
+      atools.matchedRefPsfMagDiff: MatchedRefCoaddDiffMagTool
+      atools.matchedRefPsfMagDiff.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPsfMagDiff.produce.plot.yLims: lims_mag_diff_full
+
+      atools.matchedRefPsfMagDiffZoom: MatchedRefCoaddDiffMagTool
+      atools.matchedRefPsfMagDiffZoom.produce.plot.xLims: lims_mag_x_zoom
+      atools.matchedRefPsfMagDiffZoom.produce.plot.yLims: lims_mag_diff_zoom
+      atools.matchedRefPsfMagDiffZoom.produce.metric: NoMetric
+
+      atools.matchedRefPsfMagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefPsfMagChi.compute_chi: true
+      atools.matchedRefPsfMagChi.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPsfMagChi.produce.plot.yLims: lims_mag_chi
+
+#      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
+#      atools.matchedRefPositionXDiff.coord_meas: x
+#      atools.matchedRefPositionXDiff.coord_ref: refcat_x
+#      atools.matchedRefPositionXDiff.produce.plot.xLims: lims_mag_x_full
+#      atools.matchedRefPositionXDiff.produce.plot.yLims: lims_pos_diff_full
+#      atools.matchedRefPositionXDiff.scale_factor: parameters.scale_pixel
+#
+#      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
+#      atools.matchedRefPositionXChi.coord_meas: x
+#      atools.matchedRefPositionXChi.coord_ref: refcat_x
+#      atools.matchedRefPositionXChi.produce.plot.xLims: lims_mag_x_full
+#      atools.matchedRefPositionXChi.produce.plot.yLims: lims_pos_chi
+#      atools.matchedRefPositionXChi.compute_chi: true
+#
+#      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionTool
+#      atools.matchedRefPositionYDiff.coord_meas: y
+#      atools.matchedRefPositionYDiff.coord_ref: refcat_y
+#      atools.matchedRefPositionYDiff.produce.plot.xLims: lims_mag_x_full
+#      atools.matchedRefPositionYDiff.produce.plot.yLims: lims_pos_diff_full
+#      atools.matchedRefPositionYDiff.scale_factor: parameters.scale_pixel
+#
+#      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
+#      atools.matchedRefPositionYChi.coord_meas: y
+#      atools.matchedRefPositionYChi.coord_ref: refcat_y
+#      atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x_full
+#      atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
+#      atools.matchedRefPositionYChi.compute_chi: true
+
+      atools.matchedRefPositionRaDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionRaDiff.coord_meas: coord_ra
+      atools.matchedRefPositionRaDiff.coord_ref: ref_ra
+      atools.matchedRefPositionRaDiff.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPositionRaDiff.produce.plot.yLims: lims_pos_diff_full
+
+      atools.matchedRefPositionRaDiffZoom: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionRaDiffZoom.coord_meas: coord_ra
+      atools.matchedRefPositionRaDiffZoom.coord_ref: ref_ra
+      atools.matchedRefPositionRaDiffZoom.produce.plot.xLims: lims_mag_x_zoom
+      atools.matchedRefPositionRaDiffZoom.produce.plot.yLims: lims_pos_diff_zoom
+      atools.matchedRefPositionRaDiffZoom.produce.metric: NoMetric
+
+      atools.matchedRefPositionRaChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionRaChi.coord_meas: coord_ra
+      atools.matchedRefPositionRaChi.coord_ref: ref_ra
+      atools.matchedRefPositionRaChi.coord_ref_cos: ref_dec
+      atools.matchedRefPositionRaChi.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPositionRaChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionRaChi.compute_chi: true
+
+      atools.matchedRefPositionDecDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionDecDiff.coord_meas: coord_dec
+      atools.matchedRefPositionDecDiff.coord_ref: ref_dec
+      atools.matchedRefPositionDecDiff.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPositionDecDiff.produce.plot.yLims: lims_pos_diff_full
+
+      atools.matchedRefPositionDecDiffZoom: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionDecDiffZoom.coord_meas: coord_dec
+      atools.matchedRefPositionDecDiffZoom.coord_ref: ref_dec
+      atools.matchedRefPositionDecDiffZoom.produce.plot.xLims: lims_mag_x_zoom
+      atools.matchedRefPositionDecDiffZoom.produce.plot.yLims: lims_pos_diff_zoom
+      atools.matchedRefPositionDecDiffZoom.produce.metric: NoMetric
+
+      atools.matchedRefPositionDecChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionDecChi.coord_meas: coord_dec
+      atools.matchedRefPositionDecChi.coord_ref: ref_dec
+      atools.matchedRefPositionDecChi.produce.plot.xLims: lims_mag_x_full
+      atools.matchedRefPositionDecChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionDecChi.compute_chi: true
+
+      python: |
+        from lsst.analysis.tools.atools.genericBuild import MagnitudeTool
+        from lsst.analysis.tools.atools.diffMatched import (
+         MatchedRefCoaddCompurityTool,
+          MatchedRefCoaddDiffColorTool,
+          MatchedRefCoaddDiffDistanceTool,
+          MatchedRefCoaddDiffMagTool,
+          MatchedRefCoaddDiffPositionTool,
+        )
+        from lsst.analysis.tools.interfaces import NoMetric
+        # A convenient shortcut to change labels and names without having
+        # to change every single tool
+        MagnitudeTool.fluxes_default.ref_matched.key_flux="ref_{band}_flux"
+        MagnitudeTool.fluxes_default.ref_matched.name_flux = "Truth"
+        MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
+        # Change some common defaults
+        for klass in (
+          MatchedRefCoaddCompurityTool,
+          MatchedRefCoaddDiffColorTool,
+          MatchedRefCoaddDiffDistanceTool,
+          MatchedRefCoaddDiffMagTool,
+          MatchedRefCoaddDiffPositionTool,
+        ):
+          klass.context.default = "injection"
+          klass.use_any.default = False
+          klass.use_galaxies.default = False
+        if "u" in MatchedRefCoaddDiffColorTool.bands.default:
+          del MatchedRefCoaddDiffColorTool.bands.default["u"]
+        MatchedRefCoaddDiffColorTool.mag_y1.default = "psf_err"
+        MatchedRefCoaddDiffMagTool.mag_y.default = "psf_err"
+        MatchedRefCoaddDiffDistanceTool.mag_sn.default = "psf_err"
+        MatchedRefCoaddDiffPositionTool.mag_sn.default = "psf_err"
+        MatchedRefCoaddCompurityTool.mag_target.default = "psf_err"
+
+        mmag_low_min = int(round(float(parameters.mag_x_min)*1000))
+        mmag_low_max = int(round(float(parameters.mag_x_full_max)*1000))
+
+        lims_color_diff_full = (parameters.color_diff_full_min, parameters.color_diff_full_max)
+        lims_color_diff_zoom = (parameters.color_diff_zoom_min, parameters.color_diff_zoom_max)
+        lims_dist_diff_full = (0., parameters.dist_diff_full_max)
+        lims_dist_diff_zoom = (0., parameters.dist_diff_zoom_max)
+        lims_dist_chi = (0., parameters.dist_chi_max)
+        lims_mag_x_full = (parameters.mag_x_min, parameters.mag_x_full_max)
+        lims_mag_x_zoom = (parameters.mag_x_min, parameters.mag_x_zoom_max)
+        lims_mag_chi = (parameters.mag_chi_min, parameters.mag_chi_max)
+        lims_mag_diff_full = (parameters.mag_diff_full_min, parameters.mag_diff_full_max)
+        lims_mag_diff_zoom = (parameters.mag_diff_zoom_min, parameters.mag_diff_zoom_max)
+        lims_pos_chi = (parameters.pos_chi_min, parameters.pos_chi_max)
+        lims_pos_diff_full = (parameters.pos_diff_full_min, parameters.pos_diff_full_max)
+        lims_pos_diff_zoom = (parameters.pos_diff_zoom_min, parameters.pos_diff_zoom_max)

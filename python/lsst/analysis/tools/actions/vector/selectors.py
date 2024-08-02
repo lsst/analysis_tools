@@ -411,7 +411,7 @@ class GoodDiaSourceSelector(FlagSelector):
         ]
 
 
-class ExtendednessSelector(VectorAction):
+class ExtendednessSelector(SelectorBase):
     """A selector that picks between extended and point sources."""
 
     vectorKey = Field[str](

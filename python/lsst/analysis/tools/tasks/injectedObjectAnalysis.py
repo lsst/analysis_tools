@@ -20,27 +20,24 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = (
-    "ObjectTableTractAnalysisConnections",
-    "ObjectTableTractAnalysisConfig",
-    "ObjectTableTractAnalysisTask",
-)
+__all__ = ("InjectedObjectAnalysisConfig", "InjectedObjectAnalysisTask")
 
-import lsst.pex.config as pexConfig
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class ObjectTableTractAnalysisConnections(
+class InjectedObjectAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"inputName": "objectTable_tract", "outputName": "objectTable_tract"},
+    defaultTemplates={
+        "outputName": "matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract",
+    },
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="{inputName}",
+        name="{outputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),
@@ -53,18 +50,15 @@ class ObjectTableTractAnalysisConnections(
         dimensions=("skymap",),
     )
 
-    def __init__(self, *, config=None):
-        super().__init__(config=config)
-        if not config.load_skymap:
-            del self.skymap
+
+class InjectedObjectAnalysisConfig(AnalysisBaseConfig, pipelineConnections=InjectedObjectAnalysisConnections):
+    pass
 
 
-class ObjectTableTractAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=ObjectTableTractAnalysisConnections
-):
-    load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap", default=True)
+class InjectedObjectAnalysisTask(AnalysisPipelineTask):
+    """Make plots and metrics using a table of objects matched to reference
+    catalog sources.
+    """
 
-
-class ObjectTableTractAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = ObjectTableTractAnalysisConfig
-    _DefaultName = "objectTableTractAnalysis"
+    ConfigClass = InjectedObjectAnalysisConfig
+    _DefaultName = "injectedObjectAnalysisTask"

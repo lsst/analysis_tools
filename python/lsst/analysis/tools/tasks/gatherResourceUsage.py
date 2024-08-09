@@ -40,7 +40,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from lsst.daf.butler import Butler, DatasetRef, DatasetType
-from lsst.daf.butler.utils import globToRegex
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import (
     Instrument,
@@ -573,10 +572,9 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         # build the pipeline.
         input_dataset_types: Any
         if not dataset_type_names:
-            base_dataset_type_filter = re.compile(r"\w+_metadata")
-            input_dataset_types = base_dataset_type_filter
+            input_dataset_types = "*_metadata"
         else:
-            input_dataset_types = [globToRegex(expr) for expr in dataset_type_names]
+            input_dataset_types = dataset_type_names
         pipeline_graph = PipelineGraph()
         metadata_refs: dict[str, set[DatasetRef]] = {}
         consolidate_config = ConsolidateResourceUsageConfig()

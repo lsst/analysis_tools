@@ -23,12 +23,33 @@ from __future__ import annotations
 
 __all__ = (
     "ShapeSizeFractionalScalars",
-    "BasePsfResidual",
-    "ShapeSizeFractionalDiff",
-    "E1Diff",
-    "E2Diff",
+    "BasePsfResidualCoadd",
+    "BasePsfResidualVisit",
+    "E1DiffScatter",
+    "E1DiffScatterVisit",
+    "E2DiffScatter",
+    "E2DiffScatterVisit",
+    "ShapeSizeFractionalDiffScatter",
+    "ShapeSizeFractionalDiffScatterVisit",
+    "E1DiffSky",
+    "E1DiffSkyVisit",
+    "E2DiffSky",
+    "E2DiffSkyVisit",
+    "ShapeSizeFractionalDiffSky",
+    "ShapeSizeFractionalDiffSkyVisit",
     "RhoStatistics",
     "RelativeSizeResidualPlot",
+    "EBase",
+    "EScatter",
+    "E1ScatterVisit",
+    "E2ScatterVisit",
+    "ESky",
+    "E1SkyVisit",
+    "E2SkyVisit",
+    "EFocalPlane",
+    "E1FocalPlane",
+    "E2FocalPlane",
+    "ShapeSizeFractionalDiffFocalPlane",
 )
 
 from lsst.pex.config import Field
@@ -38,9 +59,12 @@ from ..actions.keyedData import KeyedScalars
 from ..actions.plot import FocalPlanePlot
 from ..actions.plot.rhoStatisticsPlot import RhoStatisticsPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
+from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar import CountAction, MedianAction, SigmaMadAction
 from ..actions.vector import (
     CalcE,
+    CalcE1,
+    CalcE2,
     CalcEDiff,
     CalcMomentSize,
     CalcRhoStatistics,
@@ -54,6 +78,7 @@ from ..actions.vector import (
     VectorSelector,
     VisitPlotFlagSelector,
 )
+from ..contexts import CoaddContext, VisitContext
 from ..interfaces import AnalysisTool, KeyedData, VectorAction
 
 
@@ -81,7 +106,7 @@ class ShapeSizeFractionalScalars(KeyedScalars):
         return super().__call__(data, **kwargs | dict(mask=mask))
 
 
-class BasePsfResidual(AnalysisTool):
+class BasePsfResidualCoadd(AnalysisTool):
     """Shared configuration for `prep` and `process` stages of PSF residuals.
 
     This is a mixin class used by `BasePsfResidualScatterPlot` and
@@ -90,12 +115,14 @@ class BasePsfResidual(AnalysisTool):
 
     def setDefaults(self):
         super().setDefaults()
+
+        self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.snSelector = SnSelector(fluxType="{band}_psfFlux", threshold=100)
 
-        self.process.buildActions.patchWhole = LoadVector()
-        self.process.buildActions.patchWhole.vectorKey = "patch"
-
+        self.process.calculateActions.stars = ScatterPlotStatsAction(
+            vectorKey="yStars",
+        )
         self.process.buildActions.mags = ConvertFluxToMag(vectorKey="{band}_psfFlux")
 
         self.process.buildActions.fracDiff = FractionalDifference(
@@ -112,26 +139,99 @@ class BasePsfResidual(AnalysisTool):
         self.process.buildActions.e1Diff.component = "1"
         self.process.buildActions.e2Diff = self.process.buildActions.eDiff
         self.process.buildActions.e2Diff.component = "2"
-        # pre-compute a stellar selector mask so it can be used in the filter
-        # actions while only being computed once, alternatively the stellar
-        # selector could be calculated and applied twice in the filter stage
-        self.process.buildActions.starSelector = StarSelector()
 
-        self.process.filterActions.xStars = DownselectVector(
-            vectorKey="mags", selector=VectorSelector(vectorKey="starSelector")
-        )
-        # downselect the psfFlux as well
-        self.process.filterActions.psfFlux = DownselectVector(
-            vectorKey="{band}_psfFlux", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.process.filterActions.psfFluxErr = DownselectVector(
-            vectorKey="{band}_psfFluxErr", selector=VectorSelector(vectorKey="starSelector")
-        )
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
 
-        self.process.filterActions.patch = DownselectVector(
-            vectorKey="patchWhole", selector=VectorSelector(vectorKey="starSelector")
-        )
+        self.process.buildActions.xStars = ConvertFluxToMag(vectorKey="{band}_psfFlux")
+        self.process.buildActions.psfFlux = LoadVector(vectorKey="{band}_psfFlux")
+        self.process.buildActions.psfFluxErr = LoadVector(vectorKey="{band}_psfFluxErr")
 
+
+class BasePsfResidualVisit(AnalysisTool):
+    """Shared configuration for `prep` and `process` stages of PSF residuals.
+
+    This is a mixin class used by `BasePsfResidualScatterPlot` and
+    `BasePsfResidualMetric` to share common default configuration.
+    """
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.snSelector = SnSelector(fluxType="psfFlux", threshold=50)
+        self.prep.selectors.starSelector = StarSelector(vectorKey="extendedness")
+
+        self.process.buildActions.xStars = ConvertFluxToMag(vectorKey="psfFlux")
+
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
+
+        self.process.buildActions.fracDiff = FractionalDifference(
+            actionA=CalcMomentSize(colXx="ixx", colYy="iyy", colXy="ixy"),
+            actionB=CalcMomentSize(colXx="ixxPSF", colYy="iyyPSF", colXy="ixyPSF"),
+        )
+        # Define an eDiff action and let e1Diff and e2Diff differ only in
+        # component.
+        self.process.buildActions.eDiff = CalcEDiff(
+            colA=CalcE(colXx="ixx", colYy="iyy", colXy="ixy"),
+            colB=CalcE(colXx="ixxPSF", colYy="iyyPSF", colXy="ixyPSF"),
+        )
+        self.process.buildActions.e1Diff = self.process.buildActions.eDiff
+        self.process.buildActions.e1Diff.component = "1"
+        self.process.buildActions.e2Diff = self.process.buildActions.eDiff
+        self.process.buildActions.e2Diff.component = "2"
+
+
+class SkyCoadd(BasePsfResidualCoadd):
+    """A base class for coadd level sky plots."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec"
+
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
+
+        self.produce.plot = SkyPlot()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.xAxisLabel = "R.A. (degrees)"
+        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+
+
+class SkyVisit(BasePsfResidualVisit):
+    """A base class for visit level sky plots."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec"
+
+        self.process.buildActions.starStatMask = SnSelector()
+        self.process.buildActions.starStatMask.fluxType = "psfFlux"
+
+        self.produce.plot = SkyPlot()
+
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.xAxisLabel = "R.A. (degrees)"
+        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+
+        self.produce.plot.plotOutlines = False
+
+
+class ScatterCoadd(BasePsfResidualCoadd):
+    """A base class for coadd level scatter plots."""
+
+    def setDefaults(self):
+        super().setDefaults()
         self.process.calculateActions.stars = ScatterPlotStatsAction(
             vectorKey="yStars",
         )
@@ -156,31 +256,209 @@ class BasePsfResidual(AnalysisTool):
         self.produce.plot.magLabel = "PSF Magnitude (mag)"
 
 
-class ShapeSizeFractionalDiff(BasePsfResidual):
+class ScatterVisit(BasePsfResidualVisit):
+    """A base class for visit level sky plots."""
+
     def setDefaults(self):
         super().setDefaults()
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="fracDiff", selector=VectorSelector(vectorKey="starSelector")
+        self.process.calculateActions.stars = ScatterPlotStatsAction(
+            vectorKey="yStars",
         )
+
+        # use the downselected psfFlux
+        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.highSNSelector.threshold = 500
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux"
+        self.process.calculateActions.stars.lowSNSelector.threshold = 100
+        self.process.calculateActions.stars.fluxType = "psfFlux"
+
+        self.produce.metric.units = {
+            "{band}_highSNStars_median": "pixel",
+            "{band}_highSNStars_sigmaMad": "pixel",
+            "{band}_highSNStars_count": "count",
+            "{band}_lowSNStars_median": "pixel",
+            "{band}_lowSNStars_sigmaMad": "pixel",
+            "{band}_lowSNStars_count": "count",
+        }
+
+        self.produce.metric.newNames = {
+            "{band}_highSNStars_median": "highSNStars_median",
+            "{band}_highSNStars_sigmaMad": "highSNStars_sigmaMad",
+            "{band}_highSNStars_count": "highSNStars_count",
+            "{band}_lowSNStars_median": "lowSNStars_median",
+            "{band}_lowSNStars_sigmaMad": "lowSNStars_sigmaMad",
+            "{band}_lowSNStars_count": "lowSNStars_count",
+        }
+
+        self.produce.plot = ScatterPlotWithTwoHists()
+
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.plot.magLabel = "PSF Magnitude (mag)"
+
+        self.produce.plot.addSummaryPlot = False
+
+
+class E1DiffScatter(ScatterCoadd):
+    """The difference between E1 and E1 PSF plotted on
+    a scatter plot. Used in coaddQualityCore.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.applyContext(CoaddContext)
+        self.process.filterActions.yStars = LoadVector(vectorKey="e1Diff")
+        self.produce.plot.yAxisLabel = "Ellipticity residuals (e1 - e1_PSF)"
+
+
+class E1DiffScatterVisit(ScatterVisit):
+    """The difference between E1 and E1 PSF plotted on
+    a scatter plot for visit level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = LoadVector(vectorKey="e1Diff")
+        self.applyContext(VisitContext)
+        self.produce.plot.yAxisLabel = "Ellipticity residuals (e1 - e1_PSF)"
+
+
+class E2DiffScatter(ScatterCoadd):
+    """The difference between E2 and E2 PSF plotted on
+    a scatter plot for coadd level data.
+    Used in coaddQualityCore.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = LoadVector(vectorKey="e2Diff")
+        self.produce.plot.yAxisLabel = "Ellipticity residuals (e2 - e2_PSF)"
+        self.applyContext(CoaddContext)
+
+
+class E2DiffScatterVisit(ScatterVisit):
+    """The difference between E2 and E2 PSF plotted on
+    a scatter plot for visit level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.yStars = LoadVector(vectorKey="e2Diff")
+        self.applyContext(VisitContext)
+        self.produce.plot.yAxisLabel = "Ellipticity residuals (e2 - e2_PSF)"
+
+
+class ShapeSizeFractionalDiffScatter(ScatterCoadd):
+    """The difference between shape and shape PSF plotted on
+    a scatter plot for coadd level data.
+    Used in coaddQualityCore.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.applyContext(CoaddContext)
+        self.process.filterActions.yStars = LoadVector(vectorKey="fracDiff")
         self.produce.plot.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
 
 
-class E1Diff(BasePsfResidual):
+class ShapeSizeFractionalDiffScatterVisit(ScatterVisit):
+    """The difference between shape and shape PSF plotted on
+    a scatter plot for visit level data.
+    Used in debugPsf.
+    """
+
     def setDefaults(self):
         super().setDefaults()
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="e1Diff", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.produce.plot.yAxisLabel = "Ellipticty residuals (e1 - e1_PSF)"
+        self.process.filterActions.yStars = LoadVector(vectorKey="fracDiff")
+        self.applyContext(VisitContext)
+        self.produce.plot.yAxisLabel = "Fractional size residuals (S/S_PSF - 1)"
 
 
-class E2Diff(BasePsfResidual):
+class E1DiffSky(SkyCoadd):
+    """The difference between E1 and E1 PSF plotted on
+    a sky plot for coadd level data.
+    Used in debugPSF.
+    """
+
     def setDefaults(self):
         super().setDefaults()
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey="e2Diff", selector=VectorSelector(vectorKey="starSelector")
-        )
-        self.produce.plot.yAxisLabel = "Ellipticty residuals (e2 - e2_PSF)"
+        self.process.filterActions.zStars = LoadVector(vectorKey="e1Diff")
+        self.produce.plot.zAxisLabel = "E1 Diff"
+        self.produce.plot.plotName = "E1 Diff Sky"
+        self.applyContext(CoaddContext)
+
+
+class E1DiffSkyVisit(SkyVisit):
+    """The difference between E1 and E1 PSF plotted on
+    a sky plot for visit level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.zStars = LoadVector(vectorKey="e1Diff")
+        self.produce.plot.zAxisLabel = "E1 Diff"
+        self.produce.plot.plotName = "E1 Diff Sky"
+        self.applyContext(VisitContext)
+
+
+class E2DiffSky(SkyCoadd):
+    """The difference between E2 and E2 PSF plotted on
+    a sky plot for coadd level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.zStars = LoadVector(vectorKey="e2Diff")
+        self.produce.plot.zAxisLabel = "E2 Diff"
+        self.produce.plot.plotName = "E2 Diff Sky"
+        self.applyContext(CoaddContext)
+
+
+class E2DiffSkyVisit(SkyVisit):
+    """The difference between E2 and E2 PSF plotted on
+    a sky plot for visit level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.zStars = LoadVector(vectorKey="e2Diff")
+        self.produce.plot.zAxisLabel = "E2 Diff"
+        self.produce.plot.plotName = "E2 Diff Sky"
+        self.applyContext(VisitContext)
+
+
+class ShapeSizeFractionalDiffSky(SkyCoadd):
+    """The difference between shape and shape PSF plotted on
+    a sky plot for coadd level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.applyContext(CoaddContext)
+        self.process.filterActions.zStars = LoadVector(vectorKey="fracDiff")
+        self.produce.plot.zAxisLabel = "E1 Diff"
+        self.produce.plot.plotName = "Fractional Diff Sky"
+
+
+class ShapeSizeFractionalDiffSkyVisit(SkyVisit):
+    """The difference between shape and shape PSF plotted on
+    a sky plot for visit level data.
+    Used in debugPSF.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.filterActions.zStars = LoadVector(vectorKey="fracDiff")
+        self.produce.plot.zAxisLabel = "E1 Diff"
+        self.produce.plot.plotName = "Fractional Diff Sky"
+
+        self.applyContext(VisitContext)
 
 
 class RhoStatistics(AnalysisTool):
@@ -222,3 +500,192 @@ class RelativeSizeResidualPlot(AnalysisTool):
         self.process.buildActions.statMask = SnSelector()
         self.process.buildActions.statMask.threshold = 20
         self.process.buildActions.statMask.fluxType = "psfFlux"
+
+
+class EBase(AnalysisTool):
+    """A base class for plotting ellipticity plots."""
+
+    def setDafaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.snSelector = SnSelector()
+
+        self.prep.selectors.starSelector = StarSelector()
+
+        self.produce.plot.plotTypes = ["stars"]
+
+        def visitContext(self):
+            self.parameterizedBand = False
+            self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+
+            self.prep.selectors.snSelector.fluxType = "psfFlux"
+            self.prep.selectors.snSelector.threshold = 100
+
+            self.prep.selectors.starSelector.vectorKey = "extendedness"
+
+            self.process.buildActions.xStars.vectorKey = "psfFlux"
+
+
+class EScatter(EBase):
+    """Base class for ellipticity scatter plots."""
+
+    def setDafaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.xStars = ConvertFluxToMag()
+
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "yStars"
+        self.process.calculateActions.sigmaMad = SigmaMadAction()
+        self.process.calculateActions.sigmaMad.vectorKey = "yStars"
+
+        self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.xAxisLabel = "PSF Magnitude (Mag)"
+        self.produce.plot.magLabel = "PSF Magnitude (Mag)"
+
+        self.produce.metric.units = {"median": "pix", "sigmaMad": "pix"}
+
+
+class E1ScatterVisit(EScatter):
+    """Visit level scatter plot for E1."""
+
+    parameterizedBand: bool = False
+
+    def setDafaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.yStarsAll = CalcE1(colXx="ixx", colYy="iyy", colXy="ixy")
+        self.process.buildActions.yStars = DownselectVector(
+            vectorKey="yStarsAll", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+        self.produce.plot.yAxisLabel = "e1"
+
+        self.produce.metric.newNames = {
+            "median": "e1_median",
+            "sigmaMad": "e1_sigmaMad",
+        }
+        self.applyContext(VisitContext)
+
+
+class E2ScatterVisit(EScatter):
+    """Visit level scatter plot for E2."""
+
+    parameterizedBand: bool = False
+
+    def setDafaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.yStarsAll = CalcE2(colXx="ixx", colYy="iyy", colXy="ixy")
+        self.process.buildActions.yStars = DownselectVector(
+            vectorKey="yStarsAll", selector=VectorSelector(vectorKey="starSelector")
+        )
+
+        self.produce.plot.yAxisLabel = "e2"
+
+        self.produce.metric.newNames = {
+            "median": "e2_median",
+            "sigmaMad": "e2_sigmaMad",
+        }
+        self.applyContext(VisitContext)
+
+
+class ESky(EBase):
+    """Base class for ellipticity sky plots."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.xStars = LoadVector()
+        self.process.buildActions.xStars.vectorKey = "coord_ra"
+        self.process.buildActions.yStars = LoadVector()
+        self.process.buildActions.yStars.vectorKey = "coord_dec"
+
+        self.produce.plot = SkyPlot()
+        self.produce.plot.xAxisLabel = "R.A. (degrees)"
+        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+
+
+class E1SkyVisit(ESky):
+    """A sky plot of E1 for visit level data."""
+
+    parameterizedBand: bool = False
+
+    def setDafaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.zStars = CalcE1(colXx="ixx", colYy="iyy", colXy="ixy")
+
+        self.produce.plot.zAxisLabel = "e1"
+
+        self.applyContext(VisitContext)
+
+
+class E2SkyVisit(ESky):
+    """A visit level sky plot for E2."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.zStars = CalcE2(colXx="ixx", colYy="iyy", colXy="ixy")
+
+        self.produce.plot.zAxisLabel = "e2"
+
+        self.applyContext(VisitContext)
+
+
+class EFocalPlane(EBase):
+    """Base class for ellipticity focal plane plots."""
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.x = LoadVector(vectorKey="x")
+        self.process.buildActions.y = LoadVector(vectorKey="y")
+        self.process.buildActions.detector = LoadVector(vectorKey="detector")
+
+        self.process.buildActions.statMask = SnSelector()
+        self.process.buildActions.statMask.threshold = 20
+        self.process.buildActions.statMask.fluxType = "psfFlux"
+
+        self.produce.plot = FocalPlanePlot()
+
+
+class E1FocalPlane(EFocalPlane):
+    """A focal plane plot of E1."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.z = CalcE1(colXx="ixx", colYy="iyy", colXy="ixy")
+        self.produce.plot.zAxisLabel = "e1"
+
+
+class E2FocalPlane(EFocalPlane):
+    """A focal plane plot of E2."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.z = CalcE2(colXx="ixx", colYy="iyy", colXy="ixy")
+        self.produce.plot.zAxisLabel = "e2"
+
+
+class ShapeSizeFractionalDiffFocalPlane(EFocalPlane):
+    """A focal plane plot of shape - psf shape."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.z = FractionalDifference(
+            actionA=CalcMomentSize(colXx="ixx", colYy="iyy", colXy="ixy"),
+            actionB=CalcMomentSize(colXx="ixxPSF", colYy="iyyPSF", colXy="ixyPSF"),
+        )
+        self.produce.plot.zAxisLabel = "Fractional size residuals (S/S_PSF - 1)"

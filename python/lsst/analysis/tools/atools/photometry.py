@@ -61,6 +61,7 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.process.buildActions.yStars.vectorKey = "coord_dec"
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
 
         self.process.buildActions.zStars = ExtinctionCorrectedMagDiff()
         self.process.buildActions.zStars.magDiff.col1 = "{band}_ap12Flux"
@@ -81,7 +82,6 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
         self.produce.plot.zAxisLabel = "Ap 12 - PSF [mag]"
-        self.produce.plot.plotOutlines = False
 
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 
@@ -114,18 +114,18 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "{band}_psfFlux"
         self.process.buildActions.starStatMask.threshold = 300
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
 
         self.process.buildActions.zStars = MagDiff()
-        self.process.buildActions.zStars.col1 = "{band}_psfFlux"
-        self.process.buildActions.zStars.col2 = "{band}_cModelFlux"
+        self.process.buildActions.zStars.col1 = "{band}_cModelFlux"
+        self.process.buildActions.zStars.col2 = "{band}_psfFlux"
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.plotName = "{band}_psf-cModel"
+        self.produce.plot.plotName = "cModel-{band}_psf"
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
-        self.produce.plot.zAxisLabel = "PSF - cModel [mmag]"
-        self.produce.plot.plotOutlines = False
+        self.produce.plot.zAxisLabel = "cModel - PSF [mmag]"
 
 
 class PsfCModelScatterPlot(AnalysisTool):

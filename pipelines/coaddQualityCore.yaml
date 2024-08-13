@@ -5,9 +5,9 @@ tasks:
     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
     config:
       connections.outputName: objectTableCore
-      atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiff
-      atools.e1Diff: E1Diff
-      atools.e2Diff: E2Diff
+      atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiffScatter  #  shapes.py
+      atools.e1Diff: E1DiffScatter  #  shapes.py
+      atools.e2Diff: E2DiffScatter  #  shapes.py
       atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
       atools.skyFluxStatisticMetric.applyContext: CoaddContext
       atools.parentDeblenderMetrics: ParentDeblenderMetrics

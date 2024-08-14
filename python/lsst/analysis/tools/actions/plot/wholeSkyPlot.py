@@ -55,6 +55,9 @@ class WholeSkyPlot(PlotAction):
     plotKeys = ListField[str](doc="Names of metrics to plot.")
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
+    autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
+    xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
+    yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
     colorBarRange = Field[float](
         doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
@@ -252,7 +255,10 @@ class WholeSkyPlot(PlotAction):
 
             # Setup figure.
             fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
-            xlim, ylim = self._getAxesLimits(ras, decs)
+            if self.autoAxesLimits:
+                xlim, ylim = self._getAxesLimits(ras, decs)
+            else:
+                xlim, ylim = self.xLimits, self.yLimits
             ax.set_xlim(xlim)
             ax.set_ylim(ylim)
             ax.set_xlabel(self.xAxisLabel)

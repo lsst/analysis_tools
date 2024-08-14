@@ -56,6 +56,9 @@ class WholeSkyPlotTool(AnalysisTool):
     )
     xAxisLabel = Field[str](doc="Label for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label for the y axis.", default="Dec (degrees)")
+    autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
+    xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
+    yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
     colorBarRange = Field[float](
         doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
@@ -113,6 +116,9 @@ class WholeSkyPlotTool(AnalysisTool):
             self.produce.plot.plotKeys = self.plotKeys
             self.produce.plot.xAxisLabel = self.xAxisLabel
             self.produce.plot.yAxisLabel = self.yAxisLabel
+            self.produce.plot.xLimits = self.xLimits
+            self.produce.plot.yLimits = self.yLimits
+            self.produce.plot.autoAxesLimits = self.autoAxesLimits
             self.produce.plot.figureSize = self.figureSize
             self.produce.plot.colorBarRange = self.colorBarRange
             self.produce.plot.sequentialMetrics = self.sequentialMetrics

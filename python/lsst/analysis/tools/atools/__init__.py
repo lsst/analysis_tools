@@ -4,6 +4,7 @@ from .calexpMetrics import *
 from .calibQuantityProfile import *
 from .calibration import *
 from .coaddInputCount import *
+from .counts import *
 from .coveragePlots import *
 from .deblenderMetric import *
 from .deltaSkyCorr import *

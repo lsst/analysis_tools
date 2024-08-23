@@ -539,7 +539,10 @@ class AnalysisPipelineTask(PipelineTask):
 
         """
         inputs = set()
-        for band in self.config.bands:
+
+        if not (localBands := self.config.bands):
+            localBands = [""]
+        for band in localBands:
             for action in self.config.atools:
                 for key, _ in action.getFormattedInputSchema(band=band):
                     inputs.add(key)

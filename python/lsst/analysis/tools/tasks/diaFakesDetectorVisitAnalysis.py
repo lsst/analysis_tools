@@ -21,26 +21,26 @@
 from __future__ import annotations
 
 __all__ = (
-    "DiaFakesDetectorVisitAnalysisConnections",
     "DiaFakesDetectorVisitAnalysisConfig",
     "DiaFakesDetectorVisitAnalysisTask",
 )
 
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pipe.base.connectionTypes import Input
+
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
 class DiaFakesDetectorVisitAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("visit", "band", "detector"),
+    dimensions=("instrument", "visit", "detector"),
     defaultTemplates={"coaddName": "goodSeeing", "fakesType": "fakes_"},
 ):
-    data = ct.Input(
+    data = Input(
         doc="CcdVisit-based Matched fake to load from the butler",
         name="{fakesType}{coaddName}Diff_matchDiaSrc",
         storageClass="DataFrame",
         deferLoad=True,
-        dimensions=("visit", "band", "detector"),
+        dimensions=("instrument", "visit", "detector"),
     )
 
 
@@ -48,6 +48,7 @@ class DiaFakesDetectorVisitAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=DiaFakesDetectorVisitAnalysisConnections
 ):
     pass
+
 
 class DiaFakesDetectorVisitAnalysisTask(AnalysisPipelineTask):
     ConfigClass = DiaFakesDetectorVisitAnalysisConfig

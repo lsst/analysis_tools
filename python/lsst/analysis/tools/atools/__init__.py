@@ -5,9 +5,9 @@ from .calibQuantityProfile import *
 from .calibration import *
 from .coaddInputCount import *
 from .coveragePlots import *
-from .diaFakeMetrics import *
 from .deblenderMetric import *
 from .deltaSkyCorr import *
+from .diaFakeMetrics import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
 from .diaSourceTableTractMetrics import *

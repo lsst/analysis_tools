@@ -617,6 +617,8 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
                 gather_task_label, gather_dataset_type_name = self._add_gather_task(
                     pipeline_graph, input_metadata_dataset_type
                 )
+                if gather_task_label is None or gather_dataset_type_name is None:
+                    continue
                 metadata_refs[gather_task_label] = refs_for_type
                 consolidate_config.input_names.append(gather_dataset_type_name)
         pipeline_graph.add_task(
@@ -649,7 +651,7 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
     @classmethod
     def _add_gather_task(
         cls, pipeline_graph: PipelineGraph, input_metadata_dataset_type: DatasetType
-    ) -> tuple[str, str]:
+    ) -> tuple[str | None, str | None]:
         """Add a single configuration of `GatherResourceUsageTask` to a
         pipeline graph.
 
@@ -664,15 +666,19 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
 
         Returns
         -------
-        gather_task_label : `str`
-            Label of the new task in the pipeline.
-        gather_dataset_type_name : `str
-            Name of the task's output table dataset type.
+        gather_task_label : `str` or `None`
+            Label of the new task in the pipeline, or `None` if the given
+            dataset type is not a metadata dataset type or is itself a
+            gatherResourceUsage metadata dataset type.
+        gather_dataset_type_name : `str or `None`
+            Name of the task's output table dataset type, or `None` if the
+            given dataset type is not a metadata dataset type or is itself a
+            gatherResourceUsage metadata dataset type.
         """
         if (m := re.fullmatch(r"^(\w+)_metadata$", input_metadata_dataset_type.name)) is None:
-            return
+            return None, None
         elif "gatherResourceUsage" in input_metadata_dataset_type.name:
-            return
+            return None, None
         else:
             input_task_label = m.group(1)
         gather_task_label = f"{input_task_label}_gatherResourceUsage"

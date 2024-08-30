@@ -637,11 +637,12 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         # to do that again in process_subgraph, even though that's where most
         # QG builders do their queries.
         self.gather_inputs: dict[str, list[DatasetKey]] = {}
+        self.existing_inputs: list[DatasetRef] = []
         for gather_task_label, gather_input_refs in metadata_refs.items():
             gather_inputs_for_task: list[DatasetKey] = []
             for ref in gather_input_refs:
                 dataset_key = DatasetKey(ref.datasetType.name, ref.dataId.required_values)
-                self.existing_datasets.inputs[dataset_key] = ref
+                self.existing_inputs.append(ref)
                 gather_inputs_for_task.append(dataset_key)
             self.gather_inputs[gather_task_label] = gather_inputs_for_task
 
@@ -689,6 +690,9 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
 
     def process_subgraph(self, subgraph: PipelineGraph) -> QuantumGraphSkeleton:
         skeleton = QuantumGraphSkeleton(subgraph.tasks.keys())
+        for ref in self.existing_inputs:
+            skeleton.add_dataset_node(ref.datasetType.name, ref.dataId)
+            skeleton.set_dataset_ref(ref)
         consolidate_inputs = []
         for task_node in subgraph.tasks.values():
             if task_node.task_class is GatherResourceUsageTask:

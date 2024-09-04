@@ -76,13 +76,13 @@ tasks:
   makeMetricTableObjectTableCoreRefCatMatch:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
-      connections.metricBundleName: "objectTable_tract_gaia_dr3_20230707_match_metrics"
+      connections.metricBundleName: objectTable_tract_gaia_dr3_20230707_match_astrom_metrics
       python: |
         from lsst.analysis.tools.atools import *
   objectTableCoreRefCatMatchWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
-      connections.inputName: "objectTable_tract_gaia_dr3_20230707_match_metricsTable"
+      connections.inputName: "objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable"
       connections.outputName: "objectTableCoreRefCatMatch_wholeSky"
       atools.wholeSkyMetric: WholeSkyPlotTool
       atools.wholeSkyMetric.plotKeys: []

@@ -6,6 +6,8 @@ from .calexpSummaryAnalysis import *
 from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
+from .diaFakesDetectorVisitAnalysis import *
+from .diaFakesVisitAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diaSourceDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *

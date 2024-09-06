@@ -1,0 +1,66 @@
+description: |
+  AP plots and metrics to assess quality in Prompt Processing using Fake sources
+parameters:
+  # Note that these parameter names are shared with ApPipe, and are overwritten
+  # by changes in the values there.
+  coaddName: goodSeeing
+  fakesType: 'fakes_'
+
+tasks:
+  analyzeDiaFakesDetectorVisitCore:
+    class: lsst.analysis.tools.tasks.DiaFakesDetectorVisitAnalysisTask
+    config:
+      atools.numFoundFakesDiaAllMetric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaAllMetric.snrMin: 0
+      # atools.numFoundFakesDiaAllMetric.snrMax: NO MAXIMUM: all the fakes
+      # Bins of SNR
+      atools.numFoundFakesDiaSNR0t3Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR0t3Metric.snrMin: 0
+      atools.numFoundFakesDiaSNR0t3Metric.snrMax: 3
+      atools.numFoundFakesDiaSNR3t6Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR3t6Metric.snrMin: 3
+      atools.numFoundFakesDiaSNR3t6Metric.snrMax: 6
+      atools.numFoundFakesDiaSNR6t8Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR6t8Metric.snrMin: 6
+      atools.numFoundFakesDiaSNR6t8Metric.snrMax: 8
+      atools.numFoundFakesDiaSNR8t10Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR8t10Metric.snrMin: 8
+      atools.numFoundFakesDiaSNR8t10Metric.snrMax: 10
+      atools.numFoundFakesDiaSNR10t20Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR10t20Metric.snrMin: 10
+      atools.numFoundFakesDiaSNR10t20Metric.snrMax: 20
+      # From 6 to infinity
+      atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      connections.outputName: diaFakesDetectorVisitCore
+      python: |
+        from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
+  analyzeDiaFakesVisitCore:
+    class: lsst.analysis.tools.tasks.DiaFakesVisitAnalysisTask
+    config:
+      atools.numFoundFakesDiaAllMetric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaAllMetric.snrMin: 0
+      # atools.numFoundFakesDiaAllMetric.snrMax: NO MAXIMUM: all the fakes
+      # Bins of SNR
+      atools.numFoundFakesDiaSNR0t3Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR0t3Metric.snrMin: 0
+      atools.numFoundFakesDiaSNR0t3Metric.snrMax: 3
+      atools.numFoundFakesDiaSNR3t6Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR3t6Metric.snrMin: 3
+      atools.numFoundFakesDiaSNR3t6Metric.snrMax: 6
+      atools.numFoundFakesDiaSNR6t8Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR6t8Metric.snrMin: 6
+      atools.numFoundFakesDiaSNR6t8Metric.snrMax: 8
+      atools.numFoundFakesDiaSNR8t10Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR8t10Metric.snrMin: 8
+      atools.numFoundFakesDiaSNR8t10Metric.snrMax: 10
+      atools.numFoundFakesDiaSNR10t20Metric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR10t20Metric.snrMin: 10
+      atools.numFoundFakesDiaSNR10t20Metric.snrMax: 20
+      # From 6 to infinity
+      atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesDiaSnrMetric
+      atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      connections.data: "fakes_{coaddName}Diff_matchDiaSourceTable"
+      connections.outputName: diaFakesVisitCore
+      python: |
+        from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric

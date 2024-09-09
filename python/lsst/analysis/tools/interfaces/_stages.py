@@ -62,7 +62,7 @@ class BasePrep(KeyedDataAction):
     def getInputSchema(self) -> KeyedDataSchema:
         yield from (
             (column, Vector | Scalar | HealSparseMap | Tensor)
-            for column in set(self.keysToLoad).union(self.vectorKeys)
+            for column in sorted(set(self.keysToLoad).union(self.vectorKeys))
         )
         for action in self.selectors:
             yield from action.getInputSchema()
@@ -70,7 +70,7 @@ class BasePrep(KeyedDataAction):
     def getOutputSchema(self) -> KeyedDataSchema:
         return (
             (column, Vector | Scalar | HealSparseMap | Tensor)
-            for column in set(self.keysToLoad).union(self.vectorKeys)
+            for column in sorted(set(self.keysToLoad).union(self.vectorKeys))
         )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
@@ -82,7 +82,7 @@ class BasePrep(KeyedDataAction):
             else:
                 mask *= subMask  # type: ignore
         result: dict[str, Any] = {}
-        for key in set(self.keysToLoad).union(self.vectorKeys):
+        for key in sorted(set(self.keysToLoad).union(self.vectorKeys)):
             formattedKey = key.format_map(kwargs)
             result[formattedKey] = cast(Vector, data[formattedKey])
         if mask is not None:
@@ -101,8 +101,8 @@ class BasePrep(KeyedDataAction):
             existing.append(name)
             if typ == Vector:
                 existingVectors.append(name)
-        self.keysToLoad = set(existing)
-        self.vectorKeys = set(existingVectors)
+        self.keysToLoad = sorted(set(existing))
+        self.vectorKeys = sorted(set(existingVectors))
 
 
 class BaseProcess(KeyedDataAction):

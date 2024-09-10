@@ -48,4 +48,4 @@ class DiffMatchedAnalysisConfig(
 
 class DiffMatchedAnalysisTask(ObjectTableTractAnalysisTask):
     ConfigClass = DiffMatchedAnalysisConfig
-    _DefaultName = "DiffMatchedAnalysisTask"
+    _DefaultName = "diffMatchedAnalysis"

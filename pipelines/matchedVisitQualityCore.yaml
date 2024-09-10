@@ -88,6 +88,8 @@ tasks:
     config:
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
+      # Proper motion catalogs are not available for `preSourceTables`
+      applyAstrometricCorrections: false
       atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
       atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
       atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability

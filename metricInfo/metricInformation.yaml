@@ -1,0 +1,217 @@
+e1Diff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.03
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e1Diff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.0
+    highThreshold: 0.02
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e1Diff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The number of high SN stars used to calculate statistics in the g band"
+e1Diff_g_lowSNStars_median:
+    lowThreshold: -0.0025
+    highThreshold: 0.0125
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e1Diff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.0175
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e1Diff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The number of low SN stars used to calculate statistics in the g band"
+e2Diff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.01
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e2Diff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.01
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e2Diff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The number of high SN stars used to calculate statistics in the g band"
+e2Diff_g_lowSNStars_median:
+    lowThreshold: -0.0025
+    highThreshold: 0.0025
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e2Diff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.0025
+    highThreshold: 0.0075
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+e2Diff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The number of low SN stars used to calculate statistics in the g band"
+shapeSizeFractionalDiff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.01
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+shapeSizeFractionalDiff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.0
+    highThreshold: 0.02
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments"
+shapeSizeFractionalDiff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The number of high SN stars used to calculate statistics in the g band"
+shapeSizeFractionalDiff_g_lowSNStars_median:
+    lowThreshold: -0.005
+    highThreshold: 0.005
+    divergent: True
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        "The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+shapeSizeFractionalDiff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.009
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments"
+shapeSizeFractionalDiff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: False
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        "The number of low SN stars used to calculate statistics in the g band"
+
+yPerpPSF_yPerp_psfFlux_median:
+    lowThreshold: -4
+    highThreshold: 4
+    divergent: False
+    plot: objectTableCore_yPerpPSF_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the y perp stellar locus width for psf fluxes
+yPerpPSF_yPerp_psfFlux_sigmaMAD:
+    lowThreshold: 10
+    highThreshold: 25
+    divergent: False
+    plot: objectTableCore_yPerpPSF_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the y perp stellar locus width for psf fluxes
+wPerpPSFP_wPerp_psfFlux_median:
+    lowThreshold: -4
+    highThreshold: 4
+    divergent: False
+    plot: objectTableCore_wPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the w perp stellar locus width for psf fluxes
+wPerpPSFP_wPerp_psfFlux_sigmaMAD:
+    lowThreshold: 10
+    highThreshold: 25
+    divergent: False
+    plot: objectTableCore_wPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the w perp stellar locus width for psf fluxes
+xPerpPSFP_xPerp_psfFlux_median:
+    lowThreshold: -15
+    highThreshold: 15
+    divergent: False
+    plot: objectTableCore_xPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the x perp stellar locus width for psf fluxes
+xPerpPSF_xPerp_psfFlux_sigmaMAD:
+    lowThreshold: 25
+    highThreshold: 80
+    divergent: False
+    plot: objectTableCore_xPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the x perp stellar locus width for psf fluxes

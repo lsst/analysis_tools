@@ -44,6 +44,7 @@ __all__ = (
 )
 
 import copy
+import inspect
 from abc import abstractmethod
 
 import astropy.units as u
@@ -83,7 +84,7 @@ from ..actions.vector.selectors import (
     SelectorBase,
     VectorSelector,
 )
-from ..interfaces import BaseMetricAction, NoMetric
+from ..interfaces import AnalysisBaseConfig, BaseMetricAction, NoMetric
 from .genericBuild import MagnitudeTool, MagnitudeXTool, ObjectClassTool
 from .genericMetricAction import StructMetricAction
 from .genericPlotAction import StructPlotAction
@@ -196,9 +197,8 @@ class MatchedRefCoaddTool(ObjectClassTool):
             case "star":
                 return self.selector_ref_star
 
-    @classmethod
-    def reconfigure_diff_defaults(
-        cls,
+    def reconfigure(
+        self,
         context: str | None = None,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | list[str] | None = None,
@@ -235,20 +235,22 @@ class MatchedRefCoaddTool(ObjectClassTool):
         """
 
         if context is not None:
-            cls.context.default = context
+            self.context = context
         if use_any is not None:
-            cls.use_any.default = use_any
+            self.use_any = use_any
         if use_galaxies is not None:
-            cls.use_galaxies.default = use_galaxies
+            self.use_galaxies = use_galaxies
         if use_stars is not None:
-            cls.use_stars.default = use_stars
+            self.use_stars = use_stars
+
+        # This allows the method to work automatically on class defaults
+        kwargs = {"self": self} if inspect.isclass(self) else {}
 
         # Change any dependent magnitudes
-        cls.reconfigure_dependent_magnitudes(key_flux_meas=key_flux_meas, bands_color=bands_color)
+        self.reconfigure_dependent_magnitudes(key_flux_meas=key_flux_meas, bands_color=bands_color, **kwargs)
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | list[str] | None = None,
     ):
@@ -642,14 +644,13 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         CompletenessHist(action=completeness_plot),
                     )
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | list[str] | None = None,
     ):
         if key_flux_meas is not None:
-            cls.mag_target.default = key_flux_meas
+            self.mag_target = key_flux_meas
 
     def setDefaults(self):
         MagnitudeTool.setDefaults(self)
@@ -799,28 +800,28 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):
     def get_key_flux_y(self) -> str:
         return self.mag_y1
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | list[str] | None = None,
     ):
         if key_flux_meas is not None:
-            cls.mag_y1.default = key_flux_meas
+            self.mag_y1 = key_flux_meas
         if bands_color is not None:
             if isinstance(bands_color, dict):
-                cls.bands.default = bands_color
+                self.bands = bands_color
             else:
                 bands_new = {}
+                bands_old = self.bands.default if inspect.isclass(self) else self.bands
                 for band in bands_color:
-                    colors = cls.bands.default.get(band)
+                    colors = bands_old.get(band)
                     if colors is None:
                         raise ValueError(
-                            f"Passed {bands_color=} to reconfigure colors for {cls=} but {band=}"
-                            f" is not in {cls.bands.default=}."
+                            f"Passed {bands_color=} to reconfigure colors for {self=} but {band=}"
+                            f" is not in {bands_old=}."
                         )
                     bands_new[band] = ",".join(band for band in colors.split(",") if band in bands_color)
-                cls.bands.default = bands_new
+                self.bands = bands_new
 
     def setDefaults(self):
         super().setDefaults()
@@ -905,14 +906,13 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
     def get_key_flux_y(self) -> str:
         return self.mag_y
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            cls.mag_y.default = key_flux_meas
+            self.mag_y = key_flux_meas
 
     def setDefaults(self):
         super().setDefaults()
@@ -1033,14 +1033,13 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
     def get_key_flux_y(self) -> str:
         return self.mag_sn
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            cls.mag_sn.default = key_flux_meas
+            self.mag_sn = key_flux_meas
 
     def setDefaults(self):
         super().setDefaults()
@@ -1151,14 +1150,13 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffPlot):
     def get_key_flux_y(self) -> str:
         return self.mag_sn
 
-    @classmethod
     def reconfigure_dependent_magnitudes(
-        cls,
+        self,
         key_flux_meas: str | None = None,
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            cls.mag_sn.default = key_flux_meas
+            self.mag_sn = key_flux_meas
 
     def setDefaults(self):
         super().setDefaults()
@@ -1180,6 +1178,7 @@ class MatchedRefCoaddDiffDistanceZoomTool(MatchedRefCoaddDiffDistanceTool):
 
 
 def reconfigure_diff_matched_defaults(
+    config: AnalysisBaseConfig | None = None,
     context: str | None = None,
     key_flux_meas: str | None = None,
     bands_color: dict[str, str] | list[str] | None = None,
@@ -1192,6 +1191,9 @@ def reconfigure_diff_matched_defaults(
 
     Parameters
     ----------
+    config
+        An existing analysis config. Overrides will be applied to any of its
+        member MatchedRefCoaddTool atools.
     context
         The context to set. Must be a valid choice for
         MatchedRefCoaddTool.context.
@@ -1259,8 +1261,10 @@ def reconfigure_diff_matched_defaults(
         booleans rather than exclusive choices.
     """
 
+    # This sets defaults for all known subclasses
     for tool in subclasses:
-        tool.reconfigure_diff_defaults(
+        tool.reconfigure(
+            tool,
             context=context,
             key_flux_meas=key_flux_meas,
             bands_color=bands_color,
@@ -1268,3 +1272,20 @@ def reconfigure_diff_matched_defaults(
             use_galaxies=use_galaxies,
             use_stars=use_stars,
         )
+
+    # This sets defaults for all existing tools
+    # If a pipeline A imports a pipeline B, any atools already set in B will
+    # be instantiated before overrides from A are applied. Therefore, changing
+    # only the defaults will have no effect on those existing tools.
+    if config is not None:
+        for tool in config.atools:
+            if isinstance(tool, MatchedRefCoaddTool):
+                tool: MatchedRefCoaddTool = tool
+                tool.reconfigure(
+                    context=context,
+                    key_flux_meas=key_flux_meas,
+                    bands_color=bands_color,
+                    use_any=use_any,
+                    use_galaxies=use_galaxies,
+                    use_stars=use_stars,
+                )

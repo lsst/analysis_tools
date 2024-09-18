@@ -26,11 +26,11 @@ __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.colors
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
+from lsst.utils.plotting import make_figure
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
@@ -44,10 +44,6 @@ from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
 from ..vector import ConvertFluxToMag, SnSelector
 from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
-
-# ignore because coolwarm is actually part of module
-cmapPatch = plt.cm.coolwarm.copy()  # type: ignore
-cmapPatch.set_bad(color="none")
 
 
 class ScatterPlotStatsAction(KeyedDataAction):
@@ -358,7 +354,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "hlineStyle" not in kwargs:
             kwargs["hlineStyle"] = (0, (1, 4))
 
-        fig = plt.figure(dpi=300)
+        fig = make_figure(dpi=300)
         gs = gridspec.GridSpec(4, 4)
 
         # add the various plot elements
@@ -372,8 +368,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             label = self.yAxisLabel
             fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
-        plt.draw()
-        plt.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
+        fig.canvas.draw()
+        fig.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
         fig = addPlotInfo(fig, plotInfo)
         return fig
 
@@ -814,4 +810,6 @@ class ScatterPlotWithTwoHists(PlotAction):
         if self.plot2DHist and histIm is not None:
             divider = make_axes_locatable(sideHist)
             cax = divider.append_axes("right", size="8%", pad=0)
-            plt.colorbar(histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin")
+            sideHist.get_figure().colorbar(
+                histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin"
+            )

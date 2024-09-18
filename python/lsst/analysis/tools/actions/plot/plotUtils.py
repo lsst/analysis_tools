@@ -25,11 +25,10 @@ __all__ = ("PanelConfig",)
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.geom import Box2D, SpherePoint, degrees
 from lsst.pex.config import Config, Field
-from matplotlib import colors
+from matplotlib import cm, colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
@@ -434,7 +433,7 @@ def addSummaryPlot(fig, loc, sumStats, label):
             axCorner.annotate(dataId, (cenX, cenY), color="k", fontsize=4, ha="center", va="center")
 
     # Set the bad color to transparent and make a masked array
-    cmapPatch = plt.cm.coolwarm.copy()
+    cmapPatch = cm.coolwarm.copy()
     cmapPatch.set_bad(color="none")
     colors = np.ma.array(colors, mask=np.isnan(colors))
     collection = PatchCollection(patches, cmap=cmapPatch)
@@ -451,7 +450,7 @@ def addSummaryPlot(fig, loc, sumStats, label):
     pos = axCorner.get_position()
     yOffset = (pos.y1 - pos.y0) / 3
     cax = fig.add_axes([pos.x0, pos.y1 + yOffset, pos.x1 - pos.x0, 0.025])
-    plt.colorbar(collection, cax=cax, orientation="horizontal")
+    fig.colorbar(collection, cax=cax, orientation="horizontal")
     cax.text(
         0.5,
         0.48,

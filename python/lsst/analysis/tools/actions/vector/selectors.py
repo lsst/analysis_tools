@@ -34,6 +34,7 @@ __all__ = (
     "GalaxySelector",
     "UnknownSelector",
     "VectorSelector",
+    "FiniteSelector",
     "VisitPlotFlagSelector",
     "ThresholdSelector",
     "BandSelector",
@@ -471,6 +472,18 @@ class UnknownSelector(ExtendednessSelector):
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         extendedness = super().__call__(data, **kwargs)
         return extendedness == 9
+
+
+class FiniteSelector(VectorAction):
+    """Return a mask of finite values for a vector key"""
+
+    vectorKey = Field[str](doc="Key to make a mask of finite values for.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        return cast(Vector, np.isfinite(data[self.vectorKey.format(**kwargs)]))
 
 
 class VectorSelector(VectorAction):

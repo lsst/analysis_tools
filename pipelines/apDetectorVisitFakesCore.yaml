@@ -32,9 +32,20 @@ tasks:
       # From 6 to infinity
       atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesDiaSnrMetric
       atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      # Completeness as function of magnitude
+      atools.numFoundFakesDiaMag20t22Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag20t22Metric.magMin: 20
+      atools.numFoundFakesDiaMag20t22Metric.magMax: 22
+      atools.numFoundFakesDiaMag22t24Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag22t24Metric.magMin: 22
+      atools.numFoundFakesDiaMag22t24Metric.magMax: 24
+      atools.numFoundFakesDiaMag24t26Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag24t26Metric.magMin: 24
+      atools.numFoundFakesDiaMag24t26Metric.magMax: 26
       connections.outputName: diaFakesDetectorVisitCore
       python: |
         from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
+        from lsst.analysis.tools.atools import FractionFoundFakesDiaMagMetric
   analyzeDiaFakesVisitCore:
     class: lsst.analysis.tools.tasks.DiaFakesVisitAnalysisTask
     config:
@@ -60,7 +71,18 @@ tasks:
       # From 6 to infinity
       atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesDiaSnrMetric
       atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      # Completeness as function of magnitude
+      atools.numFoundFakesDiaMag20t22Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag20t22Metric.magMin: 20
+      atools.numFoundFakesDiaMag20t22Metric.magMax: 22
+      atools.numFoundFakesDiaMag22t24Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag22t24Metric.magMin: 22
+      atools.numFoundFakesDiaMag22t24Metric.magMax: 24
+      atools.numFoundFakesDiaMag24t26Metric: FractionFoundFakesDiaMagMetric
+      atools.numFoundFakesDiaMag24t26Metric.magMin: 24
+      atools.numFoundFakesDiaMag24t26Metric.magMax: 26
       connections.data: "fakes_{coaddName}Diff_matchDiaSourceTable"
       connections.outputName: diaFakesVisitCore
       python: |
         from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
+        from lsst.analysis.tools.atools import FractionFoundFakesDiaMagMetric

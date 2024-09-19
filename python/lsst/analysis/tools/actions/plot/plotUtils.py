@@ -24,6 +24,7 @@ __all__ = ("PanelConfig",)
 
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 
+import esutil
 import matplotlib
 import numpy as np
 from lsst.geom import Box2D, SpherePoint, degrees
@@ -74,13 +75,20 @@ def generateSummaryStats(data, skymap, plotInfo):
     patchInfoDict = {}
     maxPatchNum = tractInfo.num_patches.x * tractInfo.num_patches.y
     patches = np.arange(0, maxPatchNum, 1)
+
+    # Histogram (group) the patch values, and return an array of
+    # "reverse indices" which is a specially encoded array of where
+    # every patch is in the overall array.
+    if len(data["patch"]) == 0:
+        rev = np.full(maxPatchNum + 2, maxPatchNum + 2)
+    else:
+        _, rev = esutil.stat.histogram(data["patch"], min=0, max=maxPatchNum - 1, rev=True)
+
     for patch in patches:
-        if patch is None:
-            continue
-        # Once the objectTable_tract catalogues are using gen 3 patches
-        # this will go away
-        onPatch = data["patch"] == patch
-        if sum(onPatch) == 0:
+        # Pull out the onPatch indices
+        onPatch = rev[rev[patch] : rev[patch + 1]]
+
+        if len(onPatch) == 0:
             stat = np.nan
         else:
             stat = nanMedian(data[yCol][onPatch])

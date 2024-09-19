@@ -279,8 +279,18 @@ class ColorColorFitPlot(PlotAction):
         # Calculate the point density for the Used and NotUsed subsamples.
         xyUsed = np.vstack([xs[fitPoints], ys[fitPoints]])
         xyNotUsed = np.vstack([xs[~fitPoints & goodPoints], ys[~fitPoints & goodPoints]])
-        zUsed = scipy.stats.gaussian_kde(xyUsed)(xyUsed)
-        zNotUsed = scipy.stats.gaussian_kde(xyNotUsed)(xyNotUsed)
+
+        # Try using a Gaussian KDE to get color bars showing number density. If
+        # there are not enough points for KDE, use a constant color.
+        try:
+            zUsed = scipy.stats.gaussian_kde(xyUsed)(xyUsed)
+        except np.linalg.LinAlgError:
+            zUsed = np.ones(np.sum(fitPoints))
+
+        try:
+            zNotUsed = scipy.stats.gaussian_kde(xyNotUsed)(xyNotUsed)
+        except np.linalg.LinAlgError:
+            zNotUsed = np.ones(np.sum(~fitPoints & goodPoints))
 
         notUsedScatter = ax.scatter(
             xs[~fitPoints & goodPoints], ys[~fitPoints & goodPoints], c=zNotUsed, cmap=newGrays, s=0.3

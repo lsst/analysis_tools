@@ -269,13 +269,12 @@ class SourceObjectTableAnalysisConfig(
     astrometricCorrectionParameters = pexConfig.DictField(
         keytype=str,
         itemtype=str,
-        # TODO: DM-45845 Change default names.
         default={
-            "ra": "starX",
-            "dec": "starY",
-            "pmRA": "starPMx",
-            "pmDec": "starPMy",
-            "parallax": "starParallax",
+            "ra": "ra",
+            "dec": "dec",
+            "pmRA": "pm_ra",
+            "pmDec": "pm_dec",
+            "parallax": "parallax",
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )

@@ -1,0 +1,28 @@
+None
+compurity test
+PhotoCalib: None, Astrometry: None[newline]Table: , Bands: r
+
+
+Reference magnitude
+Completeness
+completeness
+wrong class
+right class
+counts
+90%: 21.37
+80%: 21.88
+50%: 23.26
+20%: 25.00
+10%: 25.00
+
+Measured magnitude
+Purity
+wrong class
+right class
+counts
+
+
+Reference counts/mag
+
+
+Object counts/mag

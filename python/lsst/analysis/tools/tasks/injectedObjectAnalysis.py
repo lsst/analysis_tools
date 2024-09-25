@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("DiffMatchedAnalysisConfig", "DiffMatchedAnalysisTask")
+__all__ = ("InjectedObjectAnalysisConfig", "InjectedObjectAnalysisTask")
 
 from .objectTableTractAnalysis import (
     ObjectTableTractAnalysisConfig,
@@ -29,23 +29,26 @@ from .objectTableTractAnalysis import (
 )
 
 
-class DiffMatchedAnalysisConnections(
+class InjectedObjectAnalysisConnections(
     ObjectTableTractAnalysisConnections,
     dimensions=("skymap", "tract"),
     defaultTemplates={
-        "inputName": "matched_truth_summary_objectTable_tract",
-        "outputName": "matched_truth_summary_objectTable_tract",
+        "outputName": "matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract",
     },
 ):
     pass
 
 
-class DiffMatchedAnalysisConfig(
-    ObjectTableTractAnalysisConfig, pipelineConnections=DiffMatchedAnalysisConnections
+class InjectedObjectAnalysisConfig(
+    ObjectTableTractAnalysisConfig, pipelineConnections=InjectedObjectAnalysisConnections
 ):
     pass
 
 
-class DiffMatchedAnalysisTask(ObjectTableTractAnalysisTask):
-    ConfigClass = DiffMatchedAnalysisConfig
-    _DefaultName = "diffMatchedAnalysis"
+class InjectedObjectAnalysisTask(ObjectTableTractAnalysisTask):
+    """Make plots and metrics using a table of measured objects matched to
+    injected inputs.
+    """
+
+    ConfigClass = InjectedObjectAnalysisConfig
+    _DefaultName = "injectedObjectAnalysisTask"

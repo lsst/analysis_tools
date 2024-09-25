@@ -20,12 +20,20 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("ExtendednessTool", "FluxConfig", "MagnitudeTool", "MagnitudeXTool", "SizeConfig", "SizeTool")
+__all__ = (
+    "ExtendednessTool",
+    "FluxConfig",
+    "MagnitudeTool",
+    "MagnitudeXTool",
+    "ObjectClassTool",
+    "SizeConfig",
+    "SizeTool",
+)
 
 import copy
 
 from lsst.pex.config import ChoiceField, Config, ConfigDictField, ConfigField, Field
-from lsst.pex.config.configurableActions import ConfigurableActionStructField
+from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
 from ..actions.vector import (
     CalcMomentSize,
@@ -40,10 +48,12 @@ from ..actions.vector import (
 from ..actions.vector.selectors import (
     CoaddPlotFlagSelector,
     GalaxySelector,
+    SelectorBase,
     StarSelector,
+    ThresholdSelector,
     VisitPlotFlagSelector,
 )
-from ..interfaces import AnalysisTool, VectorAction
+from ..interfaces import AnalysisTool, KeyedData, Vector, VectorAction
 
 
 class ExtendednessTool(AnalysisTool):
@@ -60,12 +70,12 @@ class ExtendednessTool(AnalysisTool):
     )
 
     def coaddContext(self) -> None:
-        self.selectors.flagSelector = CoaddPlotFlagSelector()
-        self.selectors.flagSelector.bands = ["{band}"]
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.flagSelector.bands = ["{band}"]
 
     def visitContext(self) -> None:
         self.parameterizedBand = False
-        self.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
 
     def setDefaults(self):
         super().setDefaults()
@@ -106,9 +116,139 @@ class FluxesDefaultConfig(Config):
     ref_matched = ConfigField[FluxConfig](doc="Reference catalog magnitude")
 
 
-class MagnitudeTool(AnalysisTool):
+class ObjectSelector(ThresholdSelector):
+    """A selector that selects primary objects from an object table."""
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        result = super().__call__(data=data, **kwargs)
+        if self.plotLabelKey:
+            self._addValueToPlotInfo("primary objects", **kwargs)
+        return result
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.op = "eq"
+        self.threshold = 1
+        self.plotLabelKey = ""
+        self.vectorKey = "detect_isPrimary"
+
+
+class ObjectClassTool(AnalysisTool):
+    """Config for tools that compute metrics for multiple classes of object.
+
+    Class refers to e.g. the star-galaxy classification (including other
+    types such as AGN), whereas type refers to the more generic (un)resolved
+    status of the object. Variability may be included in the future.
+    """
+
+    _plurals = {
+        # This is a bit of a hack to keep metric names consistent
+        # They never changed from all to any, whereas scatterPlot did
+        "any": "all",
+        "galaxy": "galaxies",
+        "star": "stars",
+    }
+
+    selection_suffix = Field[str](
+        doc="Suffix to append to selector names to summarize selection criteria",
+        default="",
+    )
+    selector_all = ConfigurableActionField[SelectorBase](
+        doc="The selector for target objects of all types",
+        default=ObjectSelector,
+    )
+    selector_galaxy = ConfigurableActionField[SelectorBase](
+        doc="The selector for target galaxies",
+        default=GalaxySelector,
+    )
+    selector_star = ConfigurableActionField[SelectorBase](
+        doc="The selector for target stars",
+        default=StarSelector,
+    )
+
+    type_any = Field[str](doc="The classification for any type", default="all")
+    type_galaxies = Field[str](doc="The classification for galaxies", default="resolved")
+    type_stars = Field[str](doc="The classification for galaxies", default="unresolved")
+
+    use_any = Field[bool](doc="Whether any (all types) be a used category of type", default=True)
+    use_galaxies = Field[bool](doc="Whether galaxies be a used category of type", default=True)
+    use_stars = Field[bool](doc="Whether stars should be a used category of types", default=True)
+
+    def get_class_name_plural(self, object_class: str):
+        """Return the plural form of a class name."""
+        return self._plurals[object_class]
+
+    def get_class_type(self, object_class: str):
+        """Return the type of a given class of objects."""
+        match object_class:
+            case "any":
+                return self.type_any
+            case "galaxy":
+                return self.type_galaxies
+            case "star":
+                return self.type_stars
+
+    def get_classes(self):
+        """Return all of the classes to be used."""
+        classes = []
+        if self.use_any:
+            classes.append("any")
+        if self.use_galaxies:
+            classes.append("galaxy")
+        if self.use_stars:
+            classes.append("star")
+        return classes
+
+    def get_name_attr_selector(self, object_class: str, selector_suffix: str = None):
+        if selector_suffix is None:
+            selector_suffix = self.selection_suffix
+        return f"selector{selector_suffix}_{self.get_class_name_plural(object_class)}"
+
+    def get_name_attr_values(self, object_class: str, prefix: str = "y"):
+        return f"{prefix}{self.get_class_name_plural(object_class).capitalize()}"
+
+    def get_selector(self, object_class: str):
+        """Get the selector for a given object class."""
+        match object_class:
+            case "any":
+                return self.selector_all
+            case "galaxy":
+                return self.selector_galaxy
+            case "star":
+                return self.selector_star
+
+    def finalize(self):
+        for object_class in self.get_classes():
+            name_selector = self.get_name_attr_selector(object_class)
+            selector = self.get_selector(object_class)
+            # This is a build action because selectors in prep are applied
+            # with the and operator. We're not using these to filter all rows
+            # but to make several parallel selections.
+            setattr(self.process.buildActions, name_selector, selector)
+
+    def setDefaults(self):
+        super().setDefaults()
+        for selector in (self.selector_galaxy, self.selector_star):
+            selector.vectorKey = "refExtendedness"
+
+
+class MagnitudeTool(ObjectClassTool):
     """Compute magnitudes from flux columns.
 
+    This tool is designed to make it easy to configure multiple fluxes that
+    are then converted into magnitudes. For example, a plot might show one
+    magnitude on the x-axis, a second on the y-axis, and plot statistics as a
+    function of signal-to-noise from a third magnitude.
+
+    The fluxes_default attribute contains commonly used configurations for
+    object tables. The "_err" suffix that a flux has an associated error
+    column that is needed for some calculation; it can and should be omitted
+    if the error column is unneeded. Some flux columns in reference catalogs
+    may not have an error at all, such as injection catalogs or truth catalogs
+    from simulations.
+
+    Notes
+    -----
     Any tool that reads in flux columns and converts them to magnitudes can
     derive from this class and use the _add_flux method to set the
     necessary build actions in their own finalize() methods.
@@ -186,6 +326,27 @@ class MagnitudeTool(AnalysisTool):
         self._set_action(self.process.buildActions, f"mag_{name}", ConvertFluxToMag, vectorKey=key_flux)
         return name
 
+    def _config_mag(self, name_mag: str = "mag_x"):
+        attr = getattr(self, name_mag)
+        if attr not in self.fluxes:
+            raise KeyError(f"self.{name_mag}={attr} not in {self.fluxes}; was finalize called?")
+        return self.fluxes[attr]
+
+    def _finalize_mag(self, name_mag: str = "mag_x", prefix: str = "x"):
+        self._set_flux_default(name_mag)
+        attr = getattr(self, name_mag)
+        key_mag = f"mag_{attr}"
+        classes = self.get_classes()
+        for object_class in classes:
+            name_selector = self.get_name_attr_selector(object_class)
+            self._set_action(
+                self.process.filterActions,
+                self.get_name_attr_values(object_class, prefix=prefix),
+                DownselectVector,
+                vectorKey=key_mag,
+                selector=VectorSelector(vectorKey=name_selector),
+            )
+
     def _set_action(self, target: ConfigurableActionStructField, name: str, action, *args, **kwargs):
         """Set an action attribute on a target tool's struct field.
 
@@ -213,7 +374,7 @@ class MagnitudeTool(AnalysisTool):
         else:
             setattr(target, name, action(*args, **kwargs))
 
-    def _set_flux_default(self: str, attr, band: str | None = None, name_mag: str | None = None):
+    def _set_flux_default(self, attr: str, band: str | None = None, name_mag: str | None = None) -> str:
         """Set own config attr to appropriate string flux name.
 
         Parameters
@@ -273,31 +434,19 @@ class MagnitudeTool(AnalysisTool):
 
 
 class MagnitudeXTool(MagnitudeTool):
-    """A Tool metrics/plots with a magnitude as the dependent variable."""
+    """A Tool for metrics/plots with a magnitude as the dependent variable."""
 
-    mag_x = Field[str](default="", doc="Flux (magnitude) field to bin metrics or plot on x-axis")
+    mag_x = Field[str](
+        doc="Flux (magnitude) FluxConfig key (in self.fluxes) to bin metrics by or plot on x-axis",
+    )
 
     @property
     def config_mag_x(self):
-        if self.mag_x not in self.fluxes:
-            raise KeyError(f"{self.mag_x=} not in {self.fluxes}; was finalize called?")
-        # This is a logic error: it shouldn't be called before finalize
-        assert self.mag_x in self.fluxes
-        return self.fluxes[self.mag_x]
+        return self._config_mag()
 
     def finalize(self):
         super().finalize()
-        self._set_flux_default("mag_x")
-        key_mag = f"mag_{self.mag_x}"
-        subsets = (("xAll", "allSelector"), ("xGalaxies", "galaxySelector"), ("xStars", "starSelector"))
-        for name, key in subsets:
-            self._set_action(
-                self.process.filterActions,
-                name,
-                DownselectVector,
-                vectorKey=key_mag,
-                selector=VectorSelector(vectorKey=key),
-            )
+        self._finalize_mag()
 
 
 class SizeConfig(Config):
@@ -345,8 +494,16 @@ class MomentsConfig(Config):
     yy = Field[str](doc="Suffix for the y/yy moments.", default="yy")
 
 
-class SizeTool(AnalysisTool):
-    """Compute various object size definitions in linear or log space."""
+class SizeTool(ObjectClassTool):
+    """Compute various object size definitions in linear or log space.
+
+    This tool is designed to make it easy to configure a size based on the
+    definition of the size and the configuration of the columns that it is
+    read from.
+
+    It currently only supports a single size but may be refactored to
+    support arbitrary sizes, like MagnitudeTool.
+    """
 
     attr_prefix = Field[str](doc="Prefix to prepend to size names as attrs", default="size_", optional=False)
     config_moments = ConfigField[MomentsConfig](
@@ -414,10 +571,11 @@ class SizeTool(AnalysisTool):
         self.produce.plot.legendLocation = "lower left"
 
     def finalize(self):
-        super().finalize()
         # A lazy check for whether finalize has already been called
-        if hasattr(self.process.filterActions, "yAll"):
+        classes = self.get_classes()
+        if hasattr(self.process.filterActions, self.get_name_attr_values(classes[0])):
             return
+        super().finalize()
         if not self.size_y:
             raise ValueError("Must specify size_y")
         elif self.size_y not in self.sizes:
@@ -446,12 +604,13 @@ class SizeTool(AnalysisTool):
             setattr(self.process.buildActions, self.get_attr_name(name), action)
 
         attr = self.get_attr_name(self.size_y)
-        self.process.filterActions.yAll = DownselectVector(
-            vectorKey=attr, selector=VectorSelector(vectorKey="allSelector")
-        )
-        self.process.filterActions.yGalaxies = DownselectVector(
-            vectorKey=attr, selector=VectorSelector(vectorKey="galaxySelector")
-        )
-        self.process.filterActions.yStars = DownselectVector(
-            vectorKey=attr, selector=VectorSelector(vectorKey="starSelector")
-        )
+        classes = self.get_classes()
+        for object_class in classes:
+            setattr(
+                self.process.filterActions,
+                self.get_name_attr_values(object_class),
+                DownselectVector(
+                    vectorKey=attr,
+                    selector=VectorSelector(vectorKey=self.get_name_attr_selector(object_class)),
+                ),
+            )

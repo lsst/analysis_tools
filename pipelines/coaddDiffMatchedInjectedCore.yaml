@@ -1,0 +1,32 @@
+description: |
+  Matched difference (measured vs reference) plots/metrics
+tasks:
+  diff_matched_analysis:
+    class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
+    config:
+      connections.inputName: matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract
+      connections.outputName: matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract
+
+      atools.matchedRefCompleteness: MatchedRefCoaddCompurityTool
+      atools.matchedRefAngularSeparationDiff: MatchedRefCoaddDiffDistanceTool
+      atools.matchedRefAngularSeparationDiffZoom: MatchedRefCoaddDiffDistanceZoomTool
+      atools.matchedRefAngularSeparationChi: MatchedRefCoaddChiDistanceTool
+      atools.matchedRefPsfColorDiff: MatchedRefCoaddDiffColorTool
+      atools.matchedRefPsfColorDiffZoom: MatchedRefCoaddDiffColorZoomTool
+      atools.matchedRefPsfColorChi: MatchedRefCoaddChiColorTool
+      atools.matchedRefPsfMagDiff: MatchedRefCoaddDiffMagTool
+      atools.matchedRefPsfMagDiffZoom: MatchedRefCoaddDiffMagZoomTool
+      atools.matchedRefPsfMagChi: MatchedRefCoaddChiMagTool
+      atools.matchedRefPositionRaDiff: MatchedRefCoaddDiffCoordRaTool
+      atools.matchedRefPositionRaDiffZoom: MatchedRefCoaddDiffCoordRaZoomTool
+      atools.matchedRefPositionRaChi: MatchedRefCoaddChiCoordRaTool
+      atools.matchedRefPositionDecDiff: MatchedRefCoaddDiffCoordDecTool
+      atools.matchedRefPositionDecDiffZoom: MatchedRefCoaddDiffCoordDecZoomTool
+      atools.matchedRefPositionDecChi: MatchedRefCoaddChiCoordDecTool
+
+      python: |
+        from lsst.analysis.tools.atools.diffMatched import *
+
+        reconfigure_diff_matched_defaults(
+          context="injection", use_any=False, use_galaxies=False, key_flux_meas="psf",
+        )

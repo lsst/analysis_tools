@@ -35,6 +35,7 @@ __all__ = (
     "ResidualWithPerGroupStatistic",
     "RAcosDec",
     "AngularSeparation",
+    "IsMatchedObjectSameClass",
 )
 
 import logging
@@ -404,3 +405,39 @@ class ResidualWithPerGroupStatistic(VectorAction):
 
         result = joinedDf["value_individual"] - joinedDf["value_group"]
         return np.array(result)
+
+
+class IsMatchedObjectSameClass(VectorAction):
+    """Action to return whether matched objects are the same class."""
+
+    key_is_ref_galaxy = Field[str](
+        doc="The key of the boolean field selecting reference galaxies",
+    )
+    key_is_ref_star = Field[str](
+        doc="The key of the boolean field selecting reference stars",
+    )
+    key_is_target_galaxy = Field[str](
+        doc="The key of the boolean field selecting observed galaxies",
+    )
+    key_is_target_star = Field[str](
+        doc="The key of the boolean field selecting observed starss",
+    )
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        mask = kwargs.get("mask")
+        is_ref_galaxy = data[self.key_is_ref_galaxy]
+        is_ref_star = data[self.key_is_ref_star]
+        is_target_galaxy = data[self.key_is_target_galaxy]
+        is_target_star = data[self.key_is_target_star]
+        if mask:
+            is_ref_galaxy = is_ref_galaxy[mask]
+            is_ref_star = is_ref_star[mask]
+            is_target_galaxy = is_target_galaxy[mask]
+            is_target_star = is_target_star[mask]
+        return (is_ref_galaxy & is_target_galaxy) | (is_ref_star & is_target_star)
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.key_is_ref_galaxy, Vector
+        yield self.key_is_ref_star, Vector
+        yield self.key_is_target_galaxy, Vector
+        yield self.key_is_target_star, Vector

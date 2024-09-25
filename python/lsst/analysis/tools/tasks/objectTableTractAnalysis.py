@@ -21,10 +21,12 @@
 from __future__ import annotations
 
 __all__ = (
+    "ObjectTableTractAnalysisConnections",
     "ObjectTableTractAnalysisConfig",
     "ObjectTableTractAnalysisTask",
 )
 
+import lsst.pex.config as pexConfig
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -34,11 +36,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class ObjectTableTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract"),
-    defaultTemplates={"outputName": "objectTable_tract"},
+    defaultTemplates={"inputName": "objectTable_tract", "outputName": "objectTable_tract"},
 ):
     data = ct.Input(
         doc="Tract based object table to load from the butler",
-        name="objectTable_tract",
+        name="{inputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("skymap", "tract"),
@@ -51,11 +53,16 @@ class ObjectTableTractAnalysisConnections(
         dimensions=("skymap",),
     )
 
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+        if not config.load_skymap:
+            del self.skymap
+
 
 class ObjectTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=ObjectTableTractAnalysisConnections
 ):
-    pass
+    load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap", default=True)
 
 
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):

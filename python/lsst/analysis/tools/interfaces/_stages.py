@@ -86,11 +86,13 @@ class BasePrep(KeyedDataAction):
             formattedKey = key.format_map(kwargs)
             result[formattedKey] = cast(Vector, data[formattedKey])
         if mask is not None:
-            for key in self.vectorKeys:
+            # Convert to ordered set to avoid formatting duplicate keys
+            # multiple times
+            formattedKeys = list({key.format_map(kwargs): None for key in self.vectorKeys}.keys())
+            for tempFormat in formattedKeys:
                 # ignore type since there is not fully proper mypy support for
                 # vector type casting. In the future there will be, and this
                 # makes it clearer now what type things should be.
-                tempFormat = key.format_map(kwargs)
                 result[tempFormat] = cast(Vector, result[tempFormat])[mask]  # type: ignore
         return result
 

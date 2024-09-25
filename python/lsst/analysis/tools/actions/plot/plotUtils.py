@@ -24,12 +24,12 @@ __all__ = ("PanelConfig",)
 
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 
+import esutil
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.geom import Box2D, SpherePoint, degrees
 from lsst.pex.config import Config, Field
-from matplotlib import colors
+from matplotlib import cm, colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
@@ -75,13 +75,20 @@ def generateSummaryStats(data, skymap, plotInfo):
     patchInfoDict = {}
     maxPatchNum = tractInfo.num_patches.x * tractInfo.num_patches.y
     patches = np.arange(0, maxPatchNum, 1)
+
+    # Histogram (group) the patch values, and return an array of
+    # "reverse indices" which is a specially encoded array of where
+    # every patch is in the overall array.
+    if len(data["patch"]) == 0:
+        rev = np.full(maxPatchNum + 2, maxPatchNum + 2)
+    else:
+        _, rev = esutil.stat.histogram(data["patch"], min=0, max=maxPatchNum - 1, rev=True)
+
     for patch in patches:
-        if patch is None:
-            continue
-        # Once the objectTable_tract catalogues are using gen 3 patches
-        # this will go away
-        onPatch = data["patch"] == patch
-        if sum(onPatch) == 0:
+        # Pull out the onPatch indices
+        onPatch = rev[rev[patch] : rev[patch + 1]]
+
+        if len(onPatch) == 0:
             stat = np.nan
         else:
             stat = nanMedian(data[yCol][onPatch])
@@ -434,7 +441,7 @@ def addSummaryPlot(fig, loc, sumStats, label):
             axCorner.annotate(dataId, (cenX, cenY), color="k", fontsize=4, ha="center", va="center")
 
     # Set the bad color to transparent and make a masked array
-    cmapPatch = plt.cm.coolwarm.copy()
+    cmapPatch = cm.coolwarm.copy()
     cmapPatch.set_bad(color="none")
     colors = np.ma.array(colors, mask=np.isnan(colors))
     collection = PatchCollection(patches, cmap=cmapPatch)
@@ -451,7 +458,7 @@ def addSummaryPlot(fig, loc, sumStats, label):
     pos = axCorner.get_position()
     yOffset = (pos.y1 - pos.y0) / 3
     cax = fig.add_axes([pos.x0, pos.y1 + yOffset, pos.x1 - pos.x0, 0.025])
-    plt.colorbar(collection, cax=cax, orientation="horizontal")
+    fig.colorbar(collection, cax=cax, orientation="horizontal")
     cax.text(
         0.5,
         0.48,

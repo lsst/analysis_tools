@@ -161,6 +161,7 @@ tasks:
     class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
     config:
       connections.outputName: cpPtcCore
+      connections.data: verifyPtcResults
 
       atools.ptcGainPerAmp: CalibStatisticFocalPlanePlot
       atools.ptcGainPerAmp.produce.plot.addHistogram: true

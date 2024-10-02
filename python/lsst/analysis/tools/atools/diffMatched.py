@@ -613,7 +613,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
 
                 completeness_plot = CalcCompletenessHistogramAction(
                     action=CalcBinnedCompletenessAction(
-                        name_prefix=f"{name_prefix_class}plot_",
+                        name_prefix=name_prefix_class,
                         selector_range_ref=RangeSelector(vectorKey=key_mag_ref),
                         selector_range_target=RangeSelector(vectorKey=key_mag_target),
                         key_mask_ref=name_selector_ref,

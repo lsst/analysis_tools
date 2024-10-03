@@ -139,4 +139,4 @@ class CalcCompletenessHistogramAction(KeyedDataAction):
         return result
 
     def getPercentileName(self, percentile: float) -> str:
-        return f"{percentile:.2f}pc"
+        return f"{percentile:.2f}_pct".replace(".", "p")

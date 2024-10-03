@@ -610,15 +610,10 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                             action.name_purity_good_match: unit_select,
                         }
                     )
-                setattr(
-                    self.produce.metric.actions,
-                    object_class,
-                    BaseMetricAction(units=units),
-                )
 
                 completeness_plot = CalcCompletenessHistogramAction(
                     action=CalcBinnedCompletenessAction(
-                        name_prefix=f"{name_prefix_class}plot_",
+                        name_prefix=name_prefix_class,
                         selector_range_ref=RangeSelector(vectorKey=key_mag_ref),
                         selector_range_target=RangeSelector(vectorKey=key_mag_target),
                         key_mask_ref=name_selector_ref,
@@ -637,6 +632,16 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         completeness_plot.getPercentileName(pct)
                     )
                     units[name_pct] = unit_select
+
+                # Make the metric action for the given object class
+                # This will include units for metrics from the plot histogram
+                # (i.e. the magnitude for a given completeness threshold)
+                setattr(
+                    self.produce.metric.actions,
+                    object_class,
+                    BaseMetricAction(units=units),
+                )
+
                 if self.make_plots:
                     setattr(
                         self.produce.plot.actions,

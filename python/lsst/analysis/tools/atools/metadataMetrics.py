@@ -45,6 +45,7 @@ class MetadataMetricTool(AnalysisTool):
         doc="The name of the subtask to extract metadata from. "
         "If None, the entire task metadata will be used.",
         default=None,
+        optional=True,
     )
 
     metrics = DictField[str, str](

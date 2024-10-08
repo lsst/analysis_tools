@@ -210,10 +210,21 @@ tasks:
 
       atools.ptcPlot: CalibAmpScatterTool
       atools.ptcPlot.prep.panelKey: amplifier
-      atools.ptcPlot.prep.dataKey: PTC_PTC_RAW_MEANS
-      atools.ptcPlot.prep.quantityKey: PTC_PTC_RAW_VARIANCE
+      atools.ptcPlot.prep.dataKey: PTC_PTC_FINAL_MEANS
+      atools.ptcPlot.prep.quantityKey: PTC_PTC_FINAL_VARIANCE
       atools.ptcPlot.produce.plot.xAxisLabel: "Exposure Pair Flux (ADU)"
       atools.ptcPlot.produce.plot.yAxisLabel: "Exposure Pair Variance (ADU^2)"
+      atools.ptcPlot.produce.plot.suptitle:
+        t: "PTC (Final)"
+
+      atools.rawPtcPlot: CalibAmpScatterTool
+      atools.rawPtcPlot.prep.panelKey: amplifier
+      atools.rawPtcPlot.prep.dataKey: PTC_PTC_RAW_MEANS
+      atools.rawPtcPlot.prep.quantityKey: PTC_PTC_RAW_VARIANCE
+      atools.rawPtcPlot.produce.plot.xAxisLabel: "Exposure Pair Flux (ADU)"
+      atools.rawPtcPlot.produce.plot.yAxisLabel: "Exposure Pair Variance (ADU^2)"
+      atools.rawPtcPlot.produce.plot.suptitle:
+        t: "PTC (Raw)"
       python: |
         from lsst.analysis.tools.atools import *
 

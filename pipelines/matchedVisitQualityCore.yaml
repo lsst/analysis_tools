@@ -5,6 +5,9 @@ tasks:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
       connections.outputName: matchedVisitCore
+      connections.sourceCatalogs: sourceTable_visit
+      connections.associatedSources: new_isolated_star_sources
+      connections.associatedSourcesInputName: new_isolated_star_sources
       atools.stellarPhotometricRepeatability: StellarPhotometricRepeatability
       atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
       atools.stellarPhotometricRepeatabilityCalib: StellarPhotometricRepeatability
@@ -37,6 +40,9 @@ tasks:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
       connections.outputName: matchedVisitExtended
+      connections.sourceCatalogs: sourceTable_visit
+      connections.associatedSources: new_isolated_star_sources
+      connections.associatedSourcesInputName: new_isolated_star_sources
       atools.modelPhotRepStarSn5to10: StellarPhotometricRepeatability
       atools.modelPhotRepStarSn5to10.fluxType: gaussianFlux
       atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
@@ -88,6 +94,8 @@ tasks:
     config:
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
+      connections.associatedSources: new_isolated_star_presources
+      connections.associatedSourcesInputName: new_isolated_star_presources
       # Proper motion catalogs are not available for `preSourceTables`
       applyAstrometricCorrections: false
       atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability

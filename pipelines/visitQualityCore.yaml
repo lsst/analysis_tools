@@ -44,5 +44,7 @@ tasks:
   sourceObjectMatch:
     class: lsst.analysis.tools.tasks.SourceObjectTableAnalysisTask
     config:
+      connections.associatedSources: new_isolated_star_sources
+      connections.associatedSourcesInputName: new_isolated_star_sources
       atools.astromColorDiffMetrics: TargetRefCatDeltaColorMetrics
       python: from lsst.analysis.tools.atools import *

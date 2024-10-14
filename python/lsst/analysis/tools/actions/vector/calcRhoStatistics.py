@@ -31,7 +31,9 @@ from typing import TYPE_CHECKING, Any, Mapping, cast
 
 import numpy as np
 import treecorr  # type: ignore[import]
-from lsst.pex.config import ChoiceField, Config, ConfigField, Field
+from deprecated.sphinx import deprecated
+from lsst.meas.algorithms.treecorrUtils import TreecorrConfig as TreecorrConfigNew
+from lsst.pex.config import ChoiceField, ConfigField, Field
 
 from ...interfaces import KeyedData, KeyedDataAction, Vector
 from .calcMomentSize import CalcMomentSize
@@ -44,6 +46,18 @@ if TYPE_CHECKING:
     from ...interfaces import KeyedDataSchema
 
 _LOG = logging.getLogger(__name__)
+
+
+@deprecated(
+    reason=(
+        "TreecorrConfig is no longer a part of analysis_tools (DM-45899)"
+        "Please use lsst.meas.algorithms.treecorrUtils.TreecorrConfig instead."
+    ),
+    version="v28.0",
+    category=FutureWarning,
+)
+class TreecorrConfig(TreecorrConfigNew):
+    pass
 
 
 class CalcRhoStatistics(KeyedDataAction):

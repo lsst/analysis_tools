@@ -1,0 +1,58 @@
+description: |
+  Placeholder yaml file to house tasks that will analyse output
+  from calibrateImageTask.
+  TO DO : DM-46931
+  These tasks should be moved to (likely)
+  either visitQualityCore or visitQualityExtended, and this
+  file deleted once the Great Calibrate Refactor has completed.
+tasks:
+  analyzeCalibrateImageMetadata:
+    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    config:
+      connections.taskName: calibrateImage
+      connections.outputName: calibrateImage_metadata
+      metadataDimensions: ["instrument", "visit", "detector"]
+      atools.calibrateImageMetadataMetrics: MetadataMetricTool
+      atools.calibrateImageMetadataMetrics.taskName: calibrateImage
+      atools.calibrateImageMetadataMetrics.metrics:
+        initial_psf_positive_footprint_count: ct
+        initial_psf_negative_footprint_count: ct
+        initial_psf_positive_peak_count: ct
+        initial_psf_negative_peak_count: ct
+        simple_psf_positive_footprint_count: ct
+        simple_psf_negative_footprint_count: ct
+        simple_psf_positive_peak_count: ct
+        simple_psf_negative_peak_count: ct
+        bad_mask_fraction: ""
+        cr_mask_fraction: ""
+        crosstalk_mask_fraction: ""
+        detected_mask_fraction: ""
+        detected_negative_mask_fraction: ""
+        edge_mask_fraction: ""
+        intrp_mask_fraction: ""
+        no_data_mask_fraction: ""
+        sat_mask_fraction: ""
+        suspect_mask_fraction: ""
+        unmaskednan_mask_fraction: ""
+        numAvailStars: ct
+        numGoodStars: ct
+        sky_footprint_count: ct
+        post_deblend_source_count: ct
+        star_count: ct
+        saturated_source_count: ct
+        bad_source_count: ct
+        cosmic_ray_count: ct
+        matched_psf_star_count: ct
+        final_psf_sigma: pixel
+        astrometry_matches_count: ct
+        photometry_matches_count: ct
+      atools.calibrateImageMetadataMetrics.subTaskNames:
+        numAvailStars: psf_measure_psf
+        numGoodStars: psf_measure_psf
+        sky_footprint_count: star_sky_sources
+        cosmic_ray_count: psf_repair
+      atools.calibrateImageMetadataMetrics.newNames:
+        numAvailStars: psf_available_star_count
+        numGoodStars: psf_good_star_count
+      python: |
+        from lsst.analysis.tools.atools import MetadataMetricTool

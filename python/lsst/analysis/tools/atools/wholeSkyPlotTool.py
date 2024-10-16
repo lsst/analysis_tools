@@ -78,6 +78,10 @@ class WholeSkyPlotTool(AnalysisTool):
         doc="List of hexidecimal colors for a divergent color map.",
         default=["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"],
     )
+    useSkyProj = Field[bool](doc="Plot with sky projection.", default=True)
+    projectionType = Field[str](
+        doc="Type of sky projection. Options include 'McBryde' and 'Mollweide'", default="McBryde"
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -124,6 +128,8 @@ class WholeSkyPlotTool(AnalysisTool):
             self.produce.plot.sequentialMetrics = self.sequentialMetrics
             self.produce.plot.sequentialColorMap = self.sequentialColorMap
             self.produce.plot.divergentColorMap = self.divergentColorMap
+            self.produce.plot.useSkyProj = self.useSkyProj
+            self.produce.plot.projectionType = self.projectionType
 
             super().finalize()
 

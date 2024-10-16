@@ -26,18 +26,21 @@ __all__ = ("WholeSkyPlot",)
 from collections.abc import Iterable
 from typing import Mapping, Optional
 
+import healsparse as hsp
+import matplotlib
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
+import skyproj
+from lsst.analysis.tools.actions.plot.plotUtils import addPlotInfo, mkColormap
+from lsst.analysis.tools.interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
+from lsst.analysis.tools.math import nanSigmaMad
 from lsst.pex.config import Config, Field, ListField
+from lsst.sphgeom import HealpixPixelization
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import CenteredNorm
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, Polygon
-
-from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
-from ...math import nanSigmaMad
-from .plotUtils import addPlotInfo, mkColormap
 
 
 class WholeSkyPlot(PlotAction):
@@ -77,6 +80,10 @@ class WholeSkyPlot(PlotAction):
         doc="List of hexidecimal colors for a divergent color map.",
         default=["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"],
     )
+    useSkyProj = Field[bool](doc="Plot with sky projection.", default=True)
+    projectionType = Field[str](
+        doc="Type of sky projection. Options include 'McBryde' and 'Mollweide'", default="McBryde"
+    )
 
     def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
         return list(self.plotKeys)
@@ -106,7 +113,7 @@ class WholeSkyPlot(PlotAction):
             if isScalar and typ != Scalar:
                 raise ValueError(f"Data keyed by {name} has type {colType} but action requires type {typ}")
 
-    def _getAxesLimits(self, xs: list, ys: list) -> tuple(list, list):
+    def _getAxesLimits(self, xs: list, ys: list):
         """Get the x and y axes limits in degrees.
 
         Parameters
@@ -178,9 +185,160 @@ class WholeSkyPlot(PlotAction):
 
         return text
 
+    def _makeCartesianPlot(self, corners, colorMap, norm, ax, colorBarVals, vmin, vmax, outlierInds, nanInds):
+        """tmp"""
+        # Add colored patches showing tract metric values.
+        patches = [Polygon(corner, closed=True) for corner in corners]
+        patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
+        ax.add_collection(patchCollection)
+        patchCollection.set_array(colorBarVals)
+        # Add outlier patches.
+        outlierPatches = []
+        if len(outlierInds) > 0:
+            outlierPatches = [patches[ind] for ind in outlierInds]
+            outlierPatchCollection = PatchCollection(
+                outlierPatches,
+                cmap=colorMap,
+                norm=norm,
+                facecolors="none",
+                edgecolors="k",
+                linewidths=0.5,
+                zorder=100,
+            )
+            ax.add_collection(outlierPatchCollection)
+
+        # Add NaN patches.
+        nanPatches = []
+        if len(nanInds) > 0:
+            nanPatches = [patches[ind] for ind in nanInds]
+            nanPatchCollection = PatchCollection(
+                nanPatches,
+                cmap=None,
+                norm=norm,
+                facecolors="white",
+                edgecolors="grey",
+                linestyles="dotted",
+                linewidths=0.5,
+                zorder=10,
+            )
+            ax.add_collection(nanPatchCollection)
+
+        return ax
+
+    def _makeProjectedPlot(
+        self,
+        nside_coverage,
+        level,
+        tracts,
+        skymap,
+        colorBarVals,
+        projectionType,
+        ax,
+        xsize,
+        vmin,
+        vmax,
+        lon_range,
+        lat_range,
+        norm,
+        cmap,
+        corners,
+        outlierInds,
+        nanInds,
+    ):
+        """tmp"""
+        # Define a healsparse map
+        hspmap = hsp.HealSparseMap.make_empty(
+            nside_coverage=nside_coverage, nside_sparse=2**level, dtype=np.float32
+        )
+        hpPixelization = HealpixPixelization(level=level)
+
+        # Fill tracts with metric values.
+        for i, tract in enumerate(tracts):
+            innerRegion = skymap[tract].getInnerSkyRegion()
+            interiorRanges = hpPixelization.interior(innerRegion)
+            # Fill all pixels with the metric value
+            hspmap.update_values_pix(np.asarray(interiorRanges.ranges()), colorBarVals[i].astype(np.float32))
+
+        # Choose the projection type.
+        match projectionType:
+            case "McBryde":
+                sp = skyproj.McBrydeSkyproj(ax=ax)
+            case "Mollweide":
+                sp = skyproj.MollweideSkyproj(ax=ax)
+            case _:
+                raise ValueError("projectionType must be either 'McBryde' or 'Mollweide'")
+
+        # Draw tracts colored by metric value.
+        print(lon_range, lat_range)
+        _ = sp.draw_hspmap(
+            hspmap,
+            zoom=True,
+            xsize=xsize,
+            vmin=vmin,
+            vmax=vmax,
+            rasterized=True,
+            lon_range=lon_range,
+            lat_range=lat_range,
+            valid_mask=False,
+            norm="linear",
+            cmap=cmap,
+        )
+
+        # Draw tracts with outlier and NaN values.
+        outlierCorners = corners[outlierInds]
+        nanCorners = corners[nanInds]
+        for outlierCorner in outlierCorners:
+            sp.draw_polygon(
+                outlierCorner.T[0], outlierCorner.T[1], facecolor="none", edgecolor="k", linewidth=0.5
+            )
+        for nanCorner in nanCorners:
+            sp.draw_polygon(
+                nanCorner.T[0],
+                nanCorner.T[1],
+                facecolor="white",
+                edgecolor="grey",
+                linestyle="dotted",
+                linewidth=0.5,
+            )
+
+        return hspmap, ax
+
+    def _makeLegendHandles(
+        self,
+        outlierInds,
+        nanInds,
+    ):
+        """tmp"""
+        # Initialize legend handles.
+        handles = []
+
+        # Create outlier handle.
+        if len(outlierInds) > 0:
+            outlierPatch = Patch(
+                facecolor="none",
+                edgecolor="k",
+                linewidth=0.5,
+                label="Outlier",
+            )
+            handles.append(outlierPatch)
+
+        # Create NaN label.
+        if len(nanInds) > 0:
+            nanPatch = Patch(
+                facecolor="white",
+                edgecolor="grey",
+                linestyle="dotted",
+                linewidth=0.5,
+                label="NaN",
+            )
+            handles.append(nanPatch)
+
+        return handles
+
     def makePlot(
         self,
         data: KeyedData,
+        skymap,
         plotInfo: Optional[Mapping[str, str]] = None,
         **kwargs,
     ) -> Figure:
@@ -190,6 +348,8 @@ class WholeSkyPlot(PlotAction):
         ----------
         data : `KeyedData`
             The catalog to plot the points from.
+        skymap : `lsst.skymap.BaseSkyMap`
+            The skymap associated with the data.
         plotInfo : `dict`
             A dictionary of information about the data being plotted with keys:
 
@@ -241,13 +401,11 @@ class WholeSkyPlot(PlotAction):
                     norm = CenteredNorm()
 
             # Create patches using the corners of each tract.
-            patches = []
             colBarVals = []
             tracts = []
             ras = []
             decs = []
             for i, corners in enumerate(data["corners"]):
-                patches.append(Polygon(corners, closed=True))
                 colBarVals.append(data[key][i])
                 tracts.append(data["tract"][i])
                 ras.append(corners[0][0])
@@ -255,19 +413,22 @@ class WholeSkyPlot(PlotAction):
 
             # Setup figure.
             fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
+            # fig = Figure(figsize=self.figureSize, dpi=500)
+            # FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax = fig.subplots(1,1)
+            # fig = make_figure(figsize=self.figureSize, dpi=500)
+            # ax = matplotlib.axes.Axes(fig)
+            # fig.add_axes(ax)
             if self.autoAxesLimits:
                 xlim, ylim = self._getAxesLimits(ras, decs)
             else:
                 xlim, ylim = self.xLimits, self.yLimits
-            ax.set_xlim(xlim)
-            ax.set_ylim(ylim)
+            # ax.set_xlim(xlim)
+            # ax.set_ylim(ylim)
             ax.set_xlabel(self.xAxisLabel)
             ax.set_ylabel(self.yAxisLabel)
             ax.invert_xaxis()
-
-            # Add colored patches showing tract metric values.
-            patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
-            ax.add_collection(patchCollection)
 
             # Define color bar range.
             med = np.nanmedian(colBarVals)
@@ -277,61 +438,38 @@ class WholeSkyPlot(PlotAction):
 
             # Note tracts with metrics outside (vmin, vmax) as outliers.
             outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
-
-            # Initialize legend handles.
-            handles = []
-
-            # Plot the outlier patches.
-            outlierPatches = []
-            if len(outlierInds) > 0:
-                for ind in outlierInds:
-                    outlierPatches.append(patches[ind])
-                outlierPatchCollection = PatchCollection(
-                    outlierPatches,
-                    cmap=colorMap,
-                    norm=norm,
-                    facecolors="none",
-                    edgecolors="k",
-                    linewidths=0.5,
-                    zorder=100,
-                )
-                ax.add_collection(outlierPatchCollection)
-                # Add legend information.
-                outlierPatch = Patch(
-                    facecolor="none",
-                    edgecolor="k",
-                    linewidth=0.5,
-                    label="Outlier",
-                )
-                handles.append(outlierPatch)
-
-            # Plot tracts with NaN metric values.
+            # Note tracts with NaN metric values.
             nanInds = np.where(~np.isfinite(colBarVals))[0]
-            nanPatches = []
-            if len(nanInds) > 0:
-                for ind in nanInds:
-                    nanPatches.append(patches[ind])
-                nanPatchCollection = PatchCollection(
-                    nanPatches,
-                    cmap=None,
-                    norm=norm,
-                    facecolors="white",
-                    edgecolors="grey",
-                    linestyles="dotted",
-                    linewidths=0.5,
-                    zorder=10,
-                )
-                ax.add_collection(nanPatchCollection)
-                # Add legend information.
-                nanPatch = Patch(
-                    facecolor="white",
-                    edgecolor="grey",
-                    linestyle="dotted",
-                    linewidth=0.5,
-                    label="NaN",
-                )
-                handles.append(nanPatch)
+            # Truncate the color range to (vmin, vmax).
+            colorBarVals = np.clip(np.array(colBarVals), vmin, vmax)
 
+            # Plot the tracts colored by metric value
+            if self.useSkyProj:
+                hspmap, ax = self._makeProjectedPlot(
+                    nside_coverage=32,
+                    level=10,
+                    tracts=tracts,
+                    skymap=skymap,
+                    colorBarVals=colorBarVals,
+                    projectionType=self.projectionType,
+                    ax=ax,
+                    xsize=1000,
+                    vmin=vmin,
+                    vmax=vmax,
+                    lon_range=xlim,
+                    lat_range=ylim,
+                    norm=norm,
+                    cmap=colorMap,
+                    corners=data["corners"],
+                    outlierInds=outlierInds,
+                    nanInds=nanInds,
+                )
+            else:
+                ax = self._makeCartesianPlot(
+                    data["corners"], colorMap, norm, ax, colorBarVals, vmin, vmax, outlierInds, nanInds
+                )
+            # Create legend
+            handles = self._makeLegendHandles(outlierInds, nanInds)
             if len(handles) > 0:
                 fig.legend(handles=handles)
 
@@ -367,17 +505,15 @@ class WholeSkyPlot(PlotAction):
             )
             fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
 
-            # Truncate the color range to (vmin, vmax).
-            colorBarVals = np.clip(np.array(colBarVals), vmin, vmax)
-            patchCollection.set_array(colorBarVals)
             # Make the color bar with a metric label.
-            cbar = plt.colorbar(
-                patchCollection,
+            cbar = fig.colorbar(
+                matplotlib.cm.ScalarMappable(norm=norm, cmap=colorMap),
                 ax=ax,
                 shrink=0.7,
                 extend="both",
                 location="top",
                 orientation="horizontal",
+                fraction=0.1,  # TODO: figure out how to shift color bar up a bit
             )
             cbarText = key
             if data[key].unit is not None:
@@ -402,7 +538,12 @@ class WholeSkyPlot(PlotAction):
             fig = plt.gcf()
             plotInfo["bands"] = band
             fig = addPlotInfo(fig, plotInfo)
-            plt.subplots_adjust(left=0.08, right=0.97, top=0.8, bottom=0.17, wspace=0.35)
+            fig.subplots_adjust(left=0.08, right=0.97, top=0.8, bottom=0.17, wspace=0.35)
 
             results[key] = fig
+
         return results
+        # if self.useSkyProj:
+        #     return hspmap, results
+        # else:
+        #     return results

@@ -84,7 +84,9 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
         # the HSC ones do, this is a bit hacky but fixes this
         if bands[0].startswith("lsst") or "sim" in bands[0] or "smeared" in bands[0]:
             bands = self.config.filterNames
-
+        elif bands[0].startswith("monster"):
+            bands = [band[-1] for band in bands]
+        
         columns = self.prepColumns(bands)
         table = inputs["catalog"].get(parameters={"columns": columns})
 

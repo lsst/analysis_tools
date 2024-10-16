@@ -37,6 +37,7 @@ from lsst.analysis.tools.actions.scalar import (
 from lsst.analysis.tools.actions.vector import (
     CalcBinnedStatsAction,
     CalcMomentSize,
+    CalcRhoStatistics,
     ConvertFluxToMag,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -138,6 +139,21 @@ class TestVectorActions(unittest.TestCase):
 
         self.data = pd.DataFrame.from_dict(data)
 
+        np.random.seed(42)
+        sizeRho = 1000
+        dataRhoStats = {
+            "coord_ra": np.random.uniform(-120, 120, sizeRho),
+            "coord_dec": np.random.uniform(-120, 120, sizeRho),
+            "r_ixx": np.random.normal(scale=1e-3, size=sizeRho),
+            "r_iyy": np.random.normal(scale=1e-3, size=sizeRho),
+            "r_ixy": np.random.normal(scale=1e-3, size=sizeRho),
+            "r_ixxPSF": np.random.normal(scale=1e-3, size=sizeRho),
+            "r_iyyPSF": np.random.normal(scale=1e-3, size=sizeRho),
+            "r_ixyPSF": np.random.normal(scale=1e-3, size=sizeRho),
+        }
+
+        self.dataRhoStats = pd.DataFrame.from_dict(dataRhoStats)
+
     def _checkSchema(self, action, truth):
         schema = sorted([col for col, colType in action.getInputSchema()])
         self.assertEqual(schema, truth)
@@ -174,7 +190,16 @@ class TestVectorActions(unittest.TestCase):
         for key, value in truth.items():
             self.assertEqual(result[key], value, key)
 
-    # def testCalcRhoStatistics(self): TODO: implement
+    def testCalcRhoStatistics(self):
+
+        rho = CalcRhoStatistics()
+        rho.treecorr.nbins = 21
+        rho.treecorr.min_sep = 0.01
+        rho.treecorr.max_sep = 100.0
+        rho.treecorr.sep_units = "arcmin"
+        result = rho(self.dataRhoStats, band="r")
+        if result is None:
+            raise ValueError("something is wrong, need to implement better test")
 
     def testCalcMomentSize(self):
         xx = self.data["r_ixx"]

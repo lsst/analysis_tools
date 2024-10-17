@@ -104,7 +104,7 @@ class ScatterElement(PlotElement):
             data[self.xKey] if self.xKey is not None else range(len(data[self.valsKey])),  # type: ignore
             data[self.valsKey],  # type: ignore
             color=self.color if self.color is not None else None,
-            marker=self.marker if self.marker is not None else None,
+            marker=self.marker if self.marker is not None else ".",
             linestyle=self.linestyle if self.linestyle is not None else None,
             linewidth=self.linewidth if self.linewidth is not None else None,
             markersize=self.markersize if self.markersize is not None else None,

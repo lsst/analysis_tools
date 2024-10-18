@@ -23,10 +23,10 @@ from __future__ import annotations
 __all__ = ("FractionFoundFakesDiaSnrMetric", "FractionFoundFakesDiaMagMetric")
 
 import numpy as np
-from lsst.pex.config import Field
+from lsst.pex.config import Field, ListField
 
 from ..actions.scalar import CountAction, FracThreshold
-from ..actions.vector import DownselectVector, RangeSelector
+from ..actions.vector import FlagSelector, MultiCriteriaDownselectVector, RangeSelector
 from ..interfaces import AnalysisTool
 
 
@@ -44,6 +44,20 @@ class FractionFoundFakesDiaSnrMetric(AnalysisTool):
         "Flux type for fake sources metric calculation.", default="forced_base_PsfFlux_instFlux"
     )
 
+    fakeFlagsWhenTrue = ListField[str](
+        "Flags for fake source cleaning before metrics calculation.", default=[]
+    )
+
+    fakeFlagsWhenFalse = ListField[str](
+        "Flags for fake source cleaning before metrics calculation.",
+        default=[
+            "forced_base_PixelFlags_flag_bad",
+            "forced_base_LocalBackground_flag",
+            "forced_base_PixelFlags_flag_interpolated",
+            "forced_base_PixelFlags_flag_edgeCenter",
+        ],
+    )
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -51,39 +65,51 @@ class FractionFoundFakesDiaSnrMetric(AnalysisTool):
         # There is no need to calculate the SNR as it is already estimated
         # Select the fake sources using their SNR values for the given range
         # and flux type estimation
-        # For including vectors selection from flags I need to replace
-        # with MultiCriteriaDownselectVector
-        self.process.filterActions.fakeSourcesDiaSrcId = DownselectVector(
-            vectorKey="diaSourceId",
-            selector=RangeSelector(
-                vectorKey=f"{self.fluxType}_SNR", maximum=self.snrMax, minimum=self.snrMin
-            ),
+        self.process.filterActions.fakeSourcesDiaSrcId = MultiCriteriaDownselectVector(
+            vectorKey="diaSourceId"
         )
 
-        self.process.calculateActions.numTotalFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId")
+        self.process.filterActions.fakeSourcesDiaSrcId.selectors.snrange = RangeSelector(
+            vectorKey=f"{self.fluxType}_SNR", maximum=self.snrMax, minimum=self.snrMin
+        )
+
+        self.process.filterActions.fakeSourcesDiaSrcId.selectors.fakeFlags = FlagSelector(
+            selectWhenFalse=self.fakeFlagsWhenFalse, selectWhenTrue=self.fakeFlagsWhenTrue
+        )
+
+        self.process.calculateActions.numTotalFakeSources = CountAction(vectorKey="fakeSourcesDiaSrcId")
 
         self.process.calculateActions.numFoundFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+        )
 
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+        )
 
-        self.process.filterActions.fakeSourcesAssocDiaSrcId = DownselectVector(
-            vectorKey="isAssocDiaSource",
-            selector=RangeSelector(
-                vectorKey=f"{self.fluxType}_SNR", maximum=self.snrMax, minimum=self.snrMin
-            ),
+        self.process.filterActions.fakeSourcesAssocDiaSrcId = MultiCriteriaDownselectVector(
+            vectorKey="isAssocDiaSource"
+        )
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId.selectors.snrange = RangeSelector(
+            vectorKey=f"{self.fluxType}_SNR", maximum=self.snrMax, minimum=self.snrMin
+        )
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId.selectors.fakeFlags = FlagSelector(
+            selectWhenFalse=self.fakeFlagsWhenFalse, selectWhenTrue=self.fakeFlagsWhenTrue
         )
 
         self.process.calculateActions.numTotalFakeAssocSources = CountAction(
-            vectorKey="fakeSourcesAssocDiaSrcId")
+            vectorKey="fakeSourcesAssocDiaSrcId"
+        )
 
         self.process.calculateActions.numFoundFakeAssocSources = CountAction(
-            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0
+        )
 
         self.process.calculateActions.fractionFoundFakesAssocDiaAll = FracThreshold(
-            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0
+        )
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {
@@ -106,35 +132,67 @@ class FractionFoundFakesDiaMagMetric(AnalysisTool):
 
     magMax = Field[float](doc="Maximum magnitude for fake sources metric calculation.", default=22)
 
+    fakeFlagsWhenTrue = ListField[str](
+        "Flags for fake source cleaning before metrics calculation.", default=[]
+    )
+
+    fakeFlagsWhenFalse = ListField[str](
+        "Flags for fake source cleaning before metrics calculation.",
+        default=[
+            "forced_base_PixelFlags_flag_interpolated",
+            "forced_base_LocalBackground_flag",
+            "forced_base_PixelFlags_flag_bad",
+            "forced_base_PixelFlags_flag_edgeCenter",
+        ],
+    )
+
     def finalize(self):
         # Selecting the fake sources using the truth magnitude values.
-        self.process.filterActions.fakeSourcesDiaSrcId = DownselectVector(
-            vectorKey="diaSourceId",
-            selector=RangeSelector(vectorKey="mag", maximum=self.magMax, minimum=self.magMin),
+        self.process.filterActions.fakeSourcesDiaSrcId = MultiCriteriaDownselectVector(
+            vectorKey="diaSourceId"
         )
 
-        self.process.calculateActions.numTotalFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId")
+        self.process.filterActions.fakeSourcesDiaSrcId.selectors.magrange = RangeSelector(
+            vectorKey="mag", maximum=self.magMax, minimum=self.magMin
+        )
+
+        self.process.filterActions.fakeSourcesDiaSrcId.selectors.fakeFlags = FlagSelector(
+            selectWhenFalse=self.fakeFlagsWhenFalse, selectWhenTrue=self.fakeFlagsWhenTrue
+        )
+
+        self.process.calculateActions.numTotalFakeSources = CountAction(vectorKey="fakeSourcesDiaSrcId")
 
         self.process.calculateActions.numFoundFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+        )
 
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+        )
 
-        self.process.filterActions.fakeSourcesAssocDiaSrcId = DownselectVector(
-            vectorKey="isAssocDiaSource",
-            selector=RangeSelector(vectorKey="mag", maximum=self.magMax, minimum=self.magMin),
+        self.process.filterActions.fakeSourcesAssocDiaSrcId = MultiCriteriaDownselectVector(
+            vectorKey="isAssocDiaSource"
+        )
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId.selectors.magrange = RangeSelector(
+            vectorKey="mag", maximum=self.magMax, minimum=self.magMin
+        )
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId.selectors.fakeFlags = FlagSelector(
+            selectWhenFalse=self.fakeFlagsWhenFalse, selectWhenTrue=self.fakeFlagsWhenTrue
         )
 
         self.process.calculateActions.numTotalFakeAssocSources = CountAction(
-            vectorKey="fakeSourcesAssocDiaSrcId")
+            vectorKey="fakeSourcesAssocDiaSrcId"
+        )
 
         self.process.calculateActions.numFoundFakeAssocSources = CountAction(
-            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0
+        )
 
         self.process.calculateActions.fractionFoundFakesAssocDiaAll = FracThreshold(
-            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0
+        )
 
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {

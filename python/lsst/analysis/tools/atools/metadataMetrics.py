@@ -41,9 +41,11 @@ class MetadataMetricTool(AnalysisTool):
         default=None,
     )
 
-    subTaskName = Field[str](
-        doc="The name of the subtask to extract metadata from. "
-        "If None, the entire task metadata will be used.",
+    subTaskNames = DictField[str, str](
+        doc="The names of the subtasks to extract metadata from. "
+        "If the metric name is identified as one of the keys, then "
+        "the corresponding value is taken as the subTask metadata "
+        "from which to extract metadata.",
         default=None,
         optional=True,
     )
@@ -52,13 +54,23 @@ class MetadataMetricTool(AnalysisTool):
         doc="The metrics to extract from the task metadata and their respective units."
     )
 
+    newNames = DictField[str, str](
+        doc="New names to allocate to the extracted metrics. Keys are the current "
+        "names, values are the new names.",
+        default=None,
+        optional=True,
+    )
+
     def finalize(self):
-        if self.subTaskName:
-            taskFullName = f"{self.taskName}:{self.subTaskName}"
-        else:
-            taskFullName = self.taskName
         for metric, unit in self.metrics.items():
+            if self.subTaskNames is not None and metric in self.subTaskNames:
+                taskFullName = f"{self.taskName}:{self.subTaskNames[metric]}"
+            else:
+                taskFullName = self.taskName
             setattr(
                 self.process.filterActions, f"{metric}", KeyedDataKeyAccessAction(topLevelKey=taskFullName)
             )
         self.produce.metric.units = dict(self.metrics.items())
+
+        if self.newNames is not None:
+            self.produce.metric.newNames = dict(self.newNames.items())

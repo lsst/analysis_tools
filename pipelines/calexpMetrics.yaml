@@ -1,5 +1,9 @@
 description: |
   Metrics created from the analysis of calibrated exposures.
+  DEPRECATED : The task in this yaml file -- calexpSummary --
+  has been moved to visitQualityCore.yaml.
+  See ticket DM-46965 : This yaml file will be removed on or
+  soon after 13 Dec 2024.
 tasks:
   calexpSummary:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask

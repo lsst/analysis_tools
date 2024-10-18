@@ -9,9 +9,10 @@ tasks:
       atools.isrAmpOffsetMetadataMetric: MetadataMetricTool
       atools.isrAmpOffsetMetadataMetric.parameterizedBand: false
       atools.isrAmpOffsetMetadataMetric.taskName: isr
-      atools.isrAmpOffsetMetadataMetric.subTaskName: ampOffset
       atools.isrAmpOffsetMetadataMetric.metrics:
         # Format is "metric name in the metadata": units
         AMPOFFSET_PEDESTALS: adu
+      atools.isrAmpOffsetMetadataMetric.subTaskNames:
+        AMPOFFSET_PEDESTALS: ampOffset
       python: |
         from lsst.analysis.tools.atools import MetadataMetricTool

@@ -51,6 +51,8 @@ class FractionFoundFakesDiaSnrMetric(AnalysisTool):
         # There is no need to calculate the SNR as it is already estimated
         # Select the fake sources using their SNR values for the given range
         # and flux type estimation
+        # For including vectors selection from flags I need to replace
+        # with MultiCriteriaDownselectVector
         self.process.filterActions.fakeSourcesDiaSrcId = DownselectVector(
             vectorKey="diaSourceId",
             selector=RangeSelector(
@@ -58,19 +60,39 @@ class FractionFoundFakesDiaSnrMetric(AnalysisTool):
             ),
         )
 
-        self.process.calculateActions.numTotalFakeSources = CountAction(vectorKey="fakeSourcesDiaSrcId")
+        self.process.calculateActions.numTotalFakeSources = CountAction(
+            vectorKey="fakeSourcesDiaSrcId")
 
         self.process.calculateActions.numFoundFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
-        )
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId = DownselectVector(
+            vectorKey="isAssocDiaSource",
+            selector=RangeSelector(
+                vectorKey=f"{self.fluxType}_SNR", maximum=self.snrMax, minimum=self.snrMin
+            ),
         )
+
+        self.process.calculateActions.numTotalFakeAssocSources = CountAction(
+            vectorKey="fakeSourcesAssocDiaSrcId")
+
+        self.process.calculateActions.numFoundFakeAssocSources = CountAction(
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+
+        self.process.calculateActions.fractionFoundFakesAssocDiaAll = FracThreshold(
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {
             "numTotalFakeSources": "ct",
             "numFoundFakeSources": "ct",
             "fractionFoundFakesDiaAll": "",
+            "numTotalFakeAssocSources": "ct",
+            "numFoundFakeAssocSources": "ct",
+            "fractionFoundFakesAssocDiaAll": "",
         }
 
 
@@ -91,17 +113,35 @@ class FractionFoundFakesDiaMagMetric(AnalysisTool):
             selector=RangeSelector(vectorKey="mag", maximum=self.magMax, minimum=self.magMin),
         )
 
-        self.process.calculateActions.numTotalFakeSources = CountAction(vectorKey="fakeSourcesDiaSrcId")
+        self.process.calculateActions.numTotalFakeSources = CountAction(
+            vectorKey="fakeSourcesDiaSrcId")
 
         self.process.calculateActions.numFoundFakeSources = CountAction(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
-        )
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+
         self.process.calculateActions.fractionFoundFakesDiaAll = FracThreshold(
-            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0
+            vectorKey="fakeSourcesDiaSrcId", op="gt", threshold=0)
+
+        self.process.filterActions.fakeSourcesAssocDiaSrcId = DownselectVector(
+            vectorKey="isAssocDiaSource",
+            selector=RangeSelector(vectorKey="mag", maximum=self.magMax, minimum=self.magMin),
         )
+
+        self.process.calculateActions.numTotalFakeAssocSources = CountAction(
+            vectorKey="fakeSourcesAssocDiaSrcId")
+
+        self.process.calculateActions.numFoundFakeAssocSources = CountAction(
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+
+        self.process.calculateActions.fractionFoundFakesAssocDiaAll = FracThreshold(
+            vectorKey="fakeSourcesAssocDiaSrcId", op="gt", threshold=0)
+
         # the units for the quantity (count, an astropy quantity)
         self.produce.metric.units = {
             "numTotalFakeSources": "ct",
             "numFoundFakeSources": "ct",
             "fractionFoundFakesDiaAll": "",
+            "numTotalFakeAssocSources": "ct",
+            "numFoundFakeAssocSources": "ct",
+            "fractionFoundFakesAssocDiaAll": "",
         }

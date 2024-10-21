@@ -142,8 +142,8 @@ def nanSigmaMad(vector: Vector) -> Scalar:
     with warnings.catch_warnings():
         # This is needed to catch inf median in sigma_mad
         warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_subtract)
-        result = cast(Scalar, sps.median_abs_deviation(np.asarray(vector), scale="normal", nan_policy="omit"))
-    return result
+        result = sps.median_abs_deviation(np.asarray(vector), axis=None, scale="normal", nan_policy="omit")
+    return cast(Scalar, result)
 
 
 def nanMax(vector: Vector) -> Scalar:

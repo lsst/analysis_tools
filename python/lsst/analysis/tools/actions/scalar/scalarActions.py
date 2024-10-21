@@ -205,7 +205,7 @@ class ApproxFloor(ScalarFromVectorAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
-        values = np.sort(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])  # type: ignore
+        values = np.sort(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask], axis=None)  # type: ignore
         x = values.size // 10
         return nanMedian(values[-x:])
 

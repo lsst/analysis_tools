@@ -80,10 +80,21 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
         for filterName in self.config.filterNames:
             bands.append(self.config.referenceCatalogLoader.refObjLoader.filterMap[filterName])
 
-        # For some reason the imsim filterMaps don't work the same way as
-        # the HSC ones do, this is a bit hacky but fixes this
+        # For some reason the imsim filterMaps don't work the same way
+        # as the HSC ones do, this is a bit hacky but fixes this.
+        # This code makes the assumption that filterMap is a dict
+        # mapping observed filter names: band, but filterMap is
+        # currently defined as a mapping of:
+        # observed filter names -> reference catalog filter names.
+        # Therefore, when the reference catalog filter name is
+        # not the band name we need this work around.
+        # TODO: workaround for DM-46728
         if bands[0].startswith("lsst") or "sim" in bands[0] or "smeared" in bands[0]:
             bands = self.config.filterNames
+        elif bands[0].startswith("monster"):
+            # for the_monster_20240904 the reference catalog filter name is
+            # "monster_{system}_{band}" the last character is the band
+            bands = [band[-1] for band in bands]
 
         columns = self.prepColumns(bands)
         table = inputs["catalog"].get(parameters={"columns": columns})
@@ -182,11 +193,23 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         # For some reason the imsim filterMaps don't work the same way as
         # the HSC ones do, this is a bit hacky but fixes this
+        # This code makes the assumption that filterMap is a dict
+        # mapping observed filter names: band, but filterMap is
+        # currently defined as a mapping of:
+        # observed filter names -> reference catalog filter names.
+        # Therefore, when the reference catalog filter name is
+        # not the band name we need this work around.
+        # TODO: workaround for DM-46728
         if "sim" in physicalFilter:
             physicalFilter = physicalFilter[0]
             bands = [physicalFilter]
+        elif self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter].startswith("monster"):
+            # filtermap gives the column name for the refcat
+            # which is monster_{system}_{band}
+            bands = [self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter][-1]]
         else:
             bands = [self.config.referenceCatalogLoader.refObjLoader.filterMap[physicalFilter]]
+
         # No bands needed for visit tables
         # but we do need them later for the matching
         columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()

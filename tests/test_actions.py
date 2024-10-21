@@ -78,17 +78,34 @@ class TestScalarActions(unittest.TestCase):
         x[41] = np.nan
         x[59] = np.nan
         y = x**2
-        self.data = {"r_y": x, "i_y": y}
-        self.mask = np.zeros(100, dtype=bool)
-        self.mask[1:50] = 1
+        self.data = {
+            "r_y": x,
+            "i_y": y,
+            "z_y": y.reshape((10, 10)),
+        }
+        mask = np.zeros(100, dtype=bool)
+        mask[1:50] = 1
+        self.mask = {
+            "r": mask,
+            "i": mask,
+            "z": mask.reshape((10, 10)),
+        }
 
     def _testScalarActionAlmostEqual(self, cls, truth, maskedTruth):
         action = cls(vectorKey="{band}_y")
         schema = [col for col, colType in action.getInputSchema()]
         self.assertEqual(schema, ["{band}_y"])
+
         result = action(self.data, band="i")
         self.assertAlmostEqual(result, truth)
-        result = action(self.data, mask=self.mask, band="i")
+
+        result = action(self.data, band="z")
+        self.assertAlmostEqual(result, truth)
+
+        result = action(self.data, mask=self.mask["i"], band="i")
+        self.assertAlmostEqual(result, maskedTruth)
+
+        result = action(self.data, mask=self.mask["z"], band="z")
         self.assertAlmostEqual(result, maskedTruth)
 
     def testMedianAction(self):

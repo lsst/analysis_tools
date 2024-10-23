@@ -26,10 +26,10 @@ __all__ = ("SkyPlot",)
 from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
+from lsst.utils.plotting import make_figure
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
@@ -216,7 +216,7 @@ class SkyPlot(PlotAction):
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
 
-        fig = plt.figure(dpi=300)
+        fig = make_figure(dpi=300)
         ax = fig.add_subplot(111)
 
         if sumStats is None:
@@ -361,7 +361,7 @@ class SkyPlot(PlotAction):
                 showExtremeOutliers=self.showExtremeOutliers,
             )
             cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
-            plt.colorbar(plotOut, cax=cax, extend="both")
+            fig.colorbar(plotOut, cax=cax, extend="both")
             colorBarLabel = "{}: {}".format(self.zAxisLabel, label)
             text = cax.text(
                 0.5,
@@ -386,7 +386,7 @@ class SkyPlot(PlotAction):
         ax.tick_params(labelsize=7)
 
         ax.set_aspect("equal")
-        plt.draw()
+        fig.canvas.draw()
 
         # Find some useful axis limits
         lenXs = [len(xs) for (xs, _, _, _, _) in toPlotList]
@@ -399,8 +399,7 @@ class SkyPlot(PlotAction):
             ax.invert_xaxis()
 
         # Add useful information to the plot
-        plt.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
-        fig = plt.gcf()
+        fig.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
         fig = addPlotInfo(fig, plotInfo)
 
         return fig

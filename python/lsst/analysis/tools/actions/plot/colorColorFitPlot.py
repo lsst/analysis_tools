@@ -26,10 +26,10 @@ __all__ = ("ColorColorFitPlot",)
 from typing import Mapping, cast
 
 import matplotlib.patheffects as pathEffects
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats
 from lsst.pex.config import Field, ListField, RangeField
+from lsst.utils.plotting import make_figure
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.ndimage import median_filter
@@ -234,15 +234,15 @@ class ColorColorFitPlot(PlotAction):
 
         # TODO: Make a no data fig function and use here.
         if sum(fitPoints) < paramDict["minObjectForFit"]:
-            fig = plt.figure(dpi=120)
+            fig = make_figure(dpi=120)
             ax = fig.add_axes([0.12, 0.25, 0.43, 0.62])
             ax.tick_params(labelsize=7)
             noDataText = (
                 "Number of objects after cuts ({})\nis less than the minimum required\nby "
                 "paramDict[minObjectForFit] ({})".format(sum(fitPoints), int(paramDict["minObjectForFit"]))
             )
-            plt.text(0.5, 0.5, noDataText, ha="center", va="center", fontsize=8)
-            fig = addPlotInfo(plt.gcf(), plotInfo)
+            fig.text(0.5, 0.5, noDataText, ha="center", va="center", fontsize=8)
+            fig = addPlotInfo(fig, plotInfo)
             return fig
 
         # Define new colormaps.
@@ -250,7 +250,7 @@ class ColorColorFitPlot(PlotAction):
         newGrays = mkColormap(["lightslategray", "white"])
 
         # Make a figure with three panels.
-        fig = plt.figure(dpi=300)
+        fig = make_figure(dpi=300)
         ax = fig.add_axes([0.12, 0.25, 0.43, 0.62])
         if self.doPlotDistVsColor:
             axLowerRight = fig.add_axes([0.65, 0.11, 0.26, 0.34])
@@ -301,7 +301,7 @@ class ColorColorFitPlot(PlotAction):
 
         # Add colorbars.
         cbAx = fig.add_axes([0.12, 0.07, 0.43, 0.04])
-        plt.colorbar(fitScatter, cax=cbAx, orientation="horizontal")
+        fig.colorbar(fitScatter, cax=cbAx, orientation="horizontal")
         cbKwargs = {
             "color": "k",
             "rotation": "horizontal",
@@ -319,7 +319,7 @@ class ColorColorFitPlot(PlotAction):
         cbText.set_path_effects([pathEffects.Stroke(linewidth=1.5, foreground="w"), pathEffects.Normal()])
         cbAx.set_xticks([np.min(zUsed), np.max(zUsed)], labels=["Less", "More"], fontsize=7)
         cbAxNotUsed = fig.add_axes([0.12, 0.11, 0.43, 0.04])
-        plt.colorbar(notUsedScatter, cax=cbAxNotUsed, orientation="horizontal")
+        fig.colorbar(notUsedScatter, cax=cbAxNotUsed, orientation="horizontal")
         cbText = cbAxNotUsed.text(
             0.5,
             0.5,
@@ -541,7 +541,7 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.legend(fontsize=4, loc="upper right", handlelength=1.0)
             # Add colorbars.
             cbAx = fig.add_axes([0.915, 0.11, 0.014, 0.34])
-            plt.colorbar(lowerRightPlot, cax=cbAx, orientation="vertical")
+            fig.colorbar(lowerRightPlot, cax=cbAx, orientation="vertical")
             cbKwargs = {
                 "color": "k",
                 "rotation": "vertical",
@@ -580,6 +580,7 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
         axLowerRight.tick_params(labelsize=6)
 
-        fig = addPlotInfo(plt.gcf(), plotInfo)
+        fig.canvas.draw()
+        fig = addPlotInfo(fig, plotInfo)
 
         return fig

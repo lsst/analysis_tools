@@ -26,7 +26,6 @@ import logging
 from collections import defaultdict
 from typing import Mapping
 
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import (
     ChoiceField,
@@ -38,6 +37,8 @@ from lsst.pex.config import (
     FieldValidationError,
     ListField,
 )
+from lsst.utils.plotting import make_figure
+from matplotlib import cm
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
@@ -272,7 +273,7 @@ class HistPlot(PlotAction):
         """
 
         # set up figure
-        fig = plt.figure(dpi=300)
+        fig = make_figure(dpi=300)
         hist_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[3, 1])
         axs, ncols, nrows = self._makeAxes(hist_fig)
 
@@ -327,7 +328,7 @@ class HistPlot(PlotAction):
             hist_fig = addPlotInfo(hist_fig, plotInfo)
 
         # finish up
-        plt.draw()
+        fig.canvas.draw()
         return fig
 
     def _makeAxes(self, fig):
@@ -395,7 +396,7 @@ class HistPlot(PlotAction):
             all_colors = custom_cmaps[self.cmap]
         else:
             try:
-                all_colors = getattr(plt.cm, self.cmap).copy().colors
+                all_colors = getattr(cm, self.cmap).copy().colors
             except AttributeError:
                 raise ValueError(f"Unrecognized color map: {self.cmap}")
 
@@ -597,7 +598,7 @@ class HistPlot(PlotAction):
         """Add an adjoining panel containing histogram summary statistics."""
         ax = fig.add_subplot(1, 1, 1)
         ax.axis("off")
-        plt.subplots_adjust(left=0.05, right=0.95, bottom=0.0, top=1.0)
+        fig.subplots_adjust(left=0.05, right=0.95, bottom=0.0, top=1.0)
         # empty handle, used to populate the bespoke legend layout
         empty = Rectangle((0, 0), 1, 1, fc="w", fill=False, edgecolor="none", linewidth=0)
 

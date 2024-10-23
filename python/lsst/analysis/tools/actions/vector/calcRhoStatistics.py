@@ -48,9 +48,10 @@ if TYPE_CHECKING:
 _LOG = logging.getLogger(__name__)
 
 
+# TO DO: Remove TreecorrConfig in here for next major release (DM-47072)
 @deprecated(
     reason=(
-        "TreecorrConfig is no longer a part of analysis_tools (DM-45899)"
+        "TreecorrConfig is no longer a part of analysis_tools (DM-45899). "
         "Please use lsst.meas.algorithms.treecorrUtils.TreecorrConfig instead."
     ),
     version="v28.0",
@@ -174,13 +175,13 @@ class CalcRhoStatistics(KeyedDataAction):
         },
     )
 
-    treecorr = ConfigField[TreecorrConfig](
+    treecorr = ConfigField[TreecorrConfigNew](
         doc="TreeCorr configuration",
     )
 
     def setDefaults(self):
         super().setDefaults()
-        self.treecorr = TreecorrConfig()
+        self.treecorr = TreecorrConfigNew()
         self.treecorr.sep_units = "arcmin"
         self.treecorr.max_sep = 100.0
 

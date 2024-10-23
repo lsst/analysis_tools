@@ -88,6 +88,8 @@ tasks:
     config:
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
+      connections.associatedSources: isolated_star_presources
+      connections.associatedSourcesInputName: isolated_star_presources
       # Proper motion catalogs are not available for `preSourceTables`
       applyAstrometricCorrections: false
       atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability

@@ -156,7 +156,7 @@ class MatchedRefCoaddTool(ObjectClassTool):
     name_suffix = pexConfig.Field[str](
         doc="The suffix for metric names. Can include {name_mag} as a "
         " template for the magnitude algorithm",
-        default="_mag{name_mag}",
+        default="_ref_mag{name_mag}",
     )
     unit = pexConfig.Field[str](doc="Astropy unit of y-axis values", default=None, optional=True)
 
@@ -663,6 +663,9 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
 
         self.mag_bins_plot.mag_interval = 100
         self.mag_bins_plot.mag_width = 200
+        # Completeness/purity don't need a ref/target suffix as they are by
+        # definition a function of ref/target mags, respectively
+        self.name_suffix = "_mag{name_mag}"
 
 
 class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):

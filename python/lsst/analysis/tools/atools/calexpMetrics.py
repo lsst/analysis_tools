@@ -35,39 +35,41 @@ class CalexpSummaryMetrics(AnalysisTool):
 
     # raCorners and decCorners statistics cannot be written to a metric,
     # as metrics can only be single-valued (i.e., scalars).
+    # Units in comments are to indicate compound units, which are currently
+    # unsupported.
     _units = {
         "psfSigma": "pixel",
-        "psfArea": "",  # There is no astropy sq. pixel unit.
-        "psfIxx": "pixel",
-        "psfIyy": "pixel",
-        "psfIxy": "pixel",
+        "psfArea": "",  # pixel**2
+        "psfIxx": "",  # pixel**2
+        "psfIyy": "",  # pixel**2
+        "psfIxy": "",  # pixel**2
         "ra": "degree",
         "dec": "degree",
-        "pixelScale": "",  # There is no astropy arcsec/pixel unit.
+        "pixelScale": "",  # arcsec/pixel.
         "zenithDistance": "degree",
         "expTime": "s",
         "zeroPoint": "mag",
-        "skyBg": "mag",
-        "skyNoise": "mag",
-        "meanVar": "mag",
+        "skyBg": "electron",
+        "skyNoise": "electron",
+        "meanVar": "",  # electron**2
         "astromOffsetMean": "arcsec",
         "astromOffsetStd": "arcsec",
-        "nPsfStar": "",
-        "psfStarDeltaE1Median": "pixel",
-        "psfStarDeltaE2Median": "pixel",
-        "psfStarDeltaE1Scatter": "pixel",
-        "psfStarDeltaE2Scatter": "pixel",
+        "nPsfStar": "ct",
+        "psfStarDeltaE1Median": "",
+        "psfStarDeltaE2Median": "",
+        "psfStarDeltaE1Scatter": "",
+        "psfStarDeltaE2Scatter": "",
         "psfStarDeltaSizeMedian": "pixel",
         "psfStarDeltaSizeScatter": "pixel",
-        "psfStarScaledDeltaSizeScatter": "pixel",
+        "psfStarScaledDeltaSizeScatter": "",
         "psfTraceRadiusDelta": "pixel",
-        "psfApFluxDelta": "",  # This is a normalized-to-one value.
-        "psfApCorrSigmaScaledDelta": "",  # This is a multiplicative factor.
-        "maxDistToNearestPsf": "deg",
+        "psfApFluxDelta": "",
+        "psfApCorrSigmaScaledDelta": "",
+        "maxDistToNearestPsf": "pixel",
         "effTime": "s",
-        "effTimePsfSigmaScale": "s",
-        "effTimeSkyBgScale": "s",
-        "effTimeZeroPointScale": "s",
+        "effTimePsfSigmaScale": "",
+        "effTimeSkyBgScale": "",
+        "effTimeZeroPointScale": "",
     }
 
     def setDefaults(self):

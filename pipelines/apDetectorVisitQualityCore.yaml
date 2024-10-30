@@ -74,6 +74,8 @@ tasks:
         templatePsfSize: pixel
         scaleScienceVarianceFactor: ''
         scaleTemplateVarianceFactor: ''
+        spatialConditionNum: ''
+        spatialKernelSum: ''
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool

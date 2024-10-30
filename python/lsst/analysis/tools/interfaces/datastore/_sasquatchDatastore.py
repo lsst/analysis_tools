@@ -259,6 +259,9 @@ class SasquatchDatastore(GenericBaseDatastore):
     def getURIs(self, datasetRef: DatasetRef, predict: bool = False) -> DatasetRefURIs:
         raise NotImplementedError()
 
+    def ingest_zip(self, zip_path: ResourcePath, transfer: str | None) -> None:
+        raise NotImplementedError()
+
     def retrieveArtifacts(
         self,
         refs: Iterable[DatasetRef],

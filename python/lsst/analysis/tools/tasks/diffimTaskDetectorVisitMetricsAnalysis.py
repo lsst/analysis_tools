@@ -22,6 +22,7 @@ from __future__ import annotations
 
 __all__ = ("DiffimDetectorVisitMetricsAnalysisConfig", "DiffimDetectorVisitMetricsAnalysisTask")
 
+import lsst.pex.config
 import pandas as pd
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
@@ -49,7 +50,11 @@ class DiffimDetectorVisitMetricsAnalysisConnections(
 class DiffimDetectorVisitMetricsAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=DiffimDetectorVisitMetricsAnalysisConnections
 ):
-    pass
+    kernelSubtaskName = lsst.pex.config.Field(
+        dtype=str,
+        default="makeKernel",
+        doc="Perform diffim decorrelation to undo pixel correlation due to A&L ",
+    )
 
 
 class DiffimDetectorVisitMetricsAnalysisTask(AnalysisPipelineTask):
@@ -64,12 +69,15 @@ class DiffimDetectorVisitMetricsAnalysisTask(AnalysisPipelineTask):
         if not metadata:
             raise NoWorkFound("No metadata entries for detectAndMeasure.")
         inputs.pop("metadataDetect")
+
         subtractTaskName = inputRefs.metadataSubtract.datasetType.name
         subtractTaskName = subtractTaskName[: subtractTaskName.find("_")]
         metadata |= inputs["metadataSubtract"].metadata[subtractTaskName].to_dict()
+        kernelSubtaskLabel = subtractTaskName + ":" + self.config.kernelSubtaskName
+        metadata |= inputs["metadataSubtract"].metadata[kernelSubtaskLabel].to_dict()
         inputs.pop("metadataSubtract")
-        df = pd.DataFrame(metadata)
-
-        inputs["data"] = df
-        outputs = self.run(**inputs)
+        # Some metadata entries might have different lengths or simply floats.
+        # Pass the dict in a list to tell Pandas that this is one row in the
+        # dataframe.
+        outputs = self.run(data=pd.DataFrame([metadata]))
         butlerQC.put(outputs, outputRefs)

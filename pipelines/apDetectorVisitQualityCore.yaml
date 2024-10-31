@@ -72,8 +72,10 @@ tasks:
         nBadPixelsDetectedNegative: ct
         sciencePsfSize: pixel
         templatePsfSize: pixel
-        scaleScienceVarianceFactor: ct
-        scaleTemplateVarianceFactor: ct
+        scaleScienceVarianceFactor: ''
+        scaleTemplateVarianceFactor: ''
+        spatialConditionNum: ''
+        spatialKernelSum: ''
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool

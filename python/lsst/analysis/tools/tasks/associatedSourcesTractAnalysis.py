@@ -42,8 +42,8 @@ class AssociatedSourcesTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract", "instrument"),
     defaultTemplates={
-        "outputName": "isolated_star_sources",
-        "associatedSourcesInputName": "isolated_star_sources",
+        "outputName": "isolated_star_presources",
+        "associatedSourcesInputName": "isolated_star_presources",
     },
 ):
     sourceCatalogs = ct.Input(

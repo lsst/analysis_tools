@@ -219,7 +219,8 @@ class AstrometricRelativeRepeatability(AnalysisTool):
         self.prep.selectors.bandSelector = BandSelector()
         # Following what was done in faro, only sources with S/N between 50
         # and 50000 are included. The other filtering that was done in faro
-        # is now covered by only including sources from isolated_star_sources.
+        # is now covered by only including sources from
+        # isolated_star_presources.
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.threshold = 50
         self.prep.selectors.snSelector.maxSN = 50000

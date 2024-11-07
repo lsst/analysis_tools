@@ -147,7 +147,7 @@ class SourceObjectTableAnalysisConnections(
     defaultTemplates={
         "inputName": "sourceTable_visit",
         "inputCoaddName": "deep",
-        "associatedSourcesInputName": "isolated_star_sources",
+        "associatedSourcesInputName": "isolated_star_presources",
         "outputName": "sourceObjectTable",
     },
 ):

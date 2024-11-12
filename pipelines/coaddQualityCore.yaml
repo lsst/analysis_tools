@@ -22,7 +22,7 @@ tasks:
       atools.yPerpCModel: YPerpCModel
       atools.skyObjectSky: SkyObjectSkyPlot
       atools.skyObjectFlux: SkyObjectHistPlot
-      atools.psfCModelScatter: PsfCModelScatterPlot
+      atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
       atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
       atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
       atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
@@ -50,6 +50,7 @@ tasks:
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
       atools.coaddInputCount: CoaddInputCount
+      atools.coaddPatchCount: CountPatches  #  counts.py
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

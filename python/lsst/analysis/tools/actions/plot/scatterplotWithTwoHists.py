@@ -484,7 +484,18 @@ class ScatterPlotWithTwoHists(PlotAction):
             fiveSigmaHigh = medYs + 5.0 * sigMadYs
             fiveSigmaLow = medYs - 5.0 * sigMadYs
             binSize = (fiveSigmaHigh - fiveSigmaLow) / 101.0
+            # When the binsize is 0 try using the 1st and 99th
+            # percentile instead of the sigmas.
+            if binSize == 0.0:
+                p1, p99 = np.nanpercentile(ys, [1, 99])
+                binSize = (p99 - p1) / 101.0
+
+            # If fiveSigmaHigh and fiveSigmaLow are the same
+            # then use the 1st and 99th percentiles to define the
+            # yEdges.
             yEdges = np.arange(fiveSigmaLow, fiveSigmaHigh, binSize)
+            if fiveSigmaLow == fiveSigmaHigh:
+                yEdges = np.arange(p1, p99, binSize)
 
             counts, xBins, yBins = np.histogram2d(xs, ys, bins=(xEdges, yEdges))
             yBinsOut.append(yBins)

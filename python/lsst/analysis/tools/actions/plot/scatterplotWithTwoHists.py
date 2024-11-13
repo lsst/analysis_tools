@@ -359,6 +359,12 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         # add the various plot elements
         ax, imhist = self._scatterPlot(data, fig, gs, **kwargs)
+        if ax is None:
+            noDataFig = Figure()
+            noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
+            noDataFig = addPlotInfo(noDataFig, plotInfo)
+            return noDataFig
+
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
         # Needs info from run quantum
@@ -424,6 +430,15 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
 
         xLims = self.xLims if self.xLims is not None else [np.inf, -np.inf]
+
+        # If there is no data to plot make a
+        # no data figure
+        numData = 0
+        for xs, _, _, _, _, _, _, _, _, _ in toPlotList:
+            numData += len(xs)
+        if numData == 0:
+            return None, None
+
         for j, (
             xs,
             ys,
@@ -733,17 +748,25 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
             keys_notany = self.plotTypes
         if x_any is not None:
-            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=True, label=f"Any ({len(x_any)})")
+            if np.sum(x_any > 0) > 0:
+                log = True
+            else:
+                log = False
+            topHist.hist(x_any, bins=bins, color="grey", alpha=0.3, log=log, label=f"Any ({len(x_any)})")
 
         for key in keys_notany:
             config_datatype = self._datatypes[key]
             vector = data[f"x{config_datatype.suffix_xy}{suf_x}"]
+            if np.sum(vector > 0) > 0:
+                log = True
+            else:
+                log = False
             topHist.hist(
                 vector,
                 bins=bins,
                 color=config_datatype.color,
                 histtype="step",
-                log=True,
+                log=log,
                 label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
@@ -778,14 +801,19 @@ class ScatterPlotWithTwoHists(PlotAction):
             )
             keys_notany = self.plotTypes
         if y_any is not None:
+            if np.sum(np.array(y_any) > 0) > 0:
+                log = True
+            else:
+                log = False
             sideHist.hist(
                 np.array(y_any),
                 bins=bins,
                 color="grey",
                 alpha=0.3,
                 orientation="horizontal",
-                log=True,
+                log=log,
             )
+
         kwargs_hist = dict(
             bins=bins,
             histtype="step",
@@ -794,6 +822,15 @@ class ScatterPlotWithTwoHists(PlotAction):
         )
         for key in keys_notany:
             config_datatype = self._datatypes[key]
+            # If the data has no positive values then it
+            # cannot be log scaled and it prints a bunch
+            # of irritating warnings, in this case don't
+            # try.
+            numPos = np.sum(data[f"y{config_datatype.suffix_xy}{suf_y}"] > 0)
+
+            if numPos <= 0:
+                kwargs_hist["log"] = False
+
             vector = data[f"y{config_datatype.suffix_xy}{suf_y}"]
             sideHist.hist(
                 vector,

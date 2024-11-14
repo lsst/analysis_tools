@@ -139,11 +139,30 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
 
+  analyzeFlatCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTaskByFilter
+    config:
+      connections.outputName: cpFlatCore
+      connections.data: verifyFlatResults
+
+      atools.flatMeanPerAmp: CalibStatisticFocalPlanePlot
+      atools.flatMeanPerAmp.produce.plot.addHistogram: true
+      atools.flatMeanPerAmp.quantityKey: FLAT_MEAN
+      atools.flatMeanPerAmp.unit: electron
+
+      atools.flatNoisePerAmp: CalibStatisticFocalPlanePlot
+      atools.flatNoisePerAmp.produce.plot.addHistogram: true
+      atools.flatNoisePerAmp.quantityKey: FLAT_NOISE
+      atools.flatNoisePerAmp.unit: electron
+
+      python: |
+        from lsst.analysis.tools.atools import *
+
   analyzeFlatDetCore:
     class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTaskByFilter
     config:
       connections.outputName: cpFlatDetCore
-      connections.data: verifyFlatResults
+      connections.data: verifyFlatDetResults
 
       atools.flatTestsByDate: CalibAmpScatterTool
       atools.flatTestsByDate.prep.panelKey: amplifier
@@ -153,6 +172,27 @@ tasks:
       # FLAT_DET_VERIFY_SCATTER
       atools.flatTestsByDate.produce.plot.xAxisLabel: "MJD"
       atools.flatTestsByDate.produce.plot.yAxisLabel: "Test Pass Results"
+
+      atools.flatMeansByDate: CalibAmpScatterTool
+      atools.flatMeansByDate.prep.panelKey: amplifier
+      atools.flatMeansByDate.prep.dataKey: mjd
+      atools.flatMeansByDate.prep.quantityKey: FLAT_MEAN
+      atools.flatMeansByDate.produce.plot.xAxisLabel: "MJD"
+      atools.flatMeansByDate.produce.plot.yAxisLabel: "Flat Mean (electrons)"
+
+      atools.flatNoiseByDate: CalibAmpScatterTool
+      atools.flatNoiseByDate.prep.panelKey: amplifier
+      atools.flatNoiseByDate.prep.dataKey: mjd
+      atools.flatNoiseByDate.prep.quantityKey: FLAT_NOISE
+      atools.flatNoiseByDate.produce.plot.xAxisLabel: "MJD"
+      atools.flatNoiseByDate.produce.plot.yAxisLabel: "Flat Noise (electrons)"
+
+      atools.flatNoiseByMean: CalibAmpScatterTool
+      atools.flatNoiseByMean.prep.panelKey: amplifier
+      atools.flatNoiseByMean.prep.dataKey: FLAT_MEAN
+      atools.flatNoiseByMean.prep.quantityKey: FLAT_NOISE
+      atools.flatNoiseByMean.produce.plot.xAxisLabel: "Flat Mean (electrons)"
+      atools.flatNoiseByMean.produce.plot.yAxisLabel: "Flat Noise (electrons)"
 
       python: |
         from lsst.analysis.tools.atools import *

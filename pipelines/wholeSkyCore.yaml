@@ -63,6 +63,10 @@ tasks:
   makeMetricTableObjectTableCore:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
+      connections.metricBundleName: "objectTableCore_metrics"
+      inputDataDimensions: ["skymap", "tract"]
+      outputTableDimensions: ["skymap"]
+      dataIdFieldsToIncludeAsColumns: ["tract"]
       python: |
         from lsst.analysis.tools.atools import *
   objectTableCoreWholeSkyPlot:
@@ -77,6 +81,9 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: objectTable_tract_gaia_dr3_20230707_match_astrom_metrics
+      inputDataDimensions: ["skymap", "tract"]
+      outputTableDimensions: ["skymap"]
+      dataIdFieldsToIncludeAsColumns: ["tract"]
       python: |
         from lsst.analysis.tools.atools import *
   objectTableCoreRefCatMatchWholeSkyPlot:
@@ -93,7 +100,9 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: "matchedVisitCore_metrics"
-      loadMatchedVisitData: true
+      inputDataDimensions: ["instrument", "skymap", "tract"]
+      outputTableDimensions: ["skymap"]
+      dataIdFieldsToIncludeAsColumns: ["tract"]
       python: |
         from lsst.analysis.tools.atools import *
   matchedVisitCoreWholeSkyPlot:

@@ -20,8 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CalexpSummaryMetrics",)
+__all__ = (
+    "CalexpSummaryMetrics",
+    "CalexpMetricsPlot",
+)
 
+from ..actions.plot import HistPanel, HistPlot
+from ..actions.vector import LoadVector, BandSelector
 from ..interfaces import AnalysisTool
 
 
@@ -77,3 +82,21 @@ class CalexpSummaryMetrics(AnalysisTool):
 
         self.prep.keysToLoad = list(self._units.keys())
         self.produce.metric.units = self._units
+
+
+class CalexpMetricsPlot(AnalysisTool):
+
+    def setDefaults(self):
+        self.prep.selectors.bandSelector = BandSelector()
+
+        self.process.buildActions.posFootprintCount = LoadVector()
+        self.process.buildActions.posFootprintCount.vectorKey = (
+            "calexpMetadataMetrics_positive_footprint_count"
+        )
+
+        self.produce.plot = HistPlot()
+        self.produce.plot.panels["panel_footprint_count"] = HistPanel()
+        self.produce.plot.panels["panel_footprint_count"].hists = dict(
+            posFootprintCount="Number of calexps"
+        )
+        self.produce.plot.panels["panel_footprint_count"].label = "Positive Footprint Count"

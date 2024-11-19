@@ -123,3 +123,24 @@ tasks:
         config.properties["sky_background"].operations = ["weighted_mean"]
         config.properties["sky_noise"] = PropertyMapConfig
         config.properties["sky_noise"].operations = ["weighted_mean"]
+plotPropertyMapSurvey:
+    class: lsst.analysis.tools.tasks.PropertyMapSurveyAnalysisTask
+    config:
+      connections.outputName: propertyMapSurvey
+      atools.HealSparseMap: PropertyMapTool
+      python: |
+        from lsst.analysis.tools.atools import *
+        config.properties["dcr_ddec"] = PropertyMapConfig
+        config.properties["dcr_ddec"].operations = ["weighted_mean"]
+        config.properties["dcr_dra"] = PropertyMapConfig
+        config.properties["dcr_dra"].operations = ["weighted_mean"]
+        config.properties["dcr_e1"] = PropertyMapConfig
+plotPropertyMapSurveyExposureTime:
+    class: lsst.analysis.tools.tasks.PropertyMapSurveyAnalysisTask
+    config:
+      connections.outputName: propertyMapSurvey
+      atools.HealSparseMap1: PropertyMapTool
+      python: |
+        from lsst.analysis.tools.atools import *
+        config.properties["dcr_ddec"] = PropertyMapConfig
+        config.properties["dcr_ddec"].operations = ["weighted_mean"]

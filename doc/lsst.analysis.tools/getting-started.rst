@@ -342,12 +342,12 @@ to add the class to a pipeline.
      An example pipeline to run our new plot
    tasks:
      testNewPlot:
-     class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
-     config:
-       connections.outputName: testNewPlot
-       plots.newPlot: newPlotMetric
-     python: |
-       from lsst.analysis.tools.analysisPlots import *
+       class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+       config:
+         connections.outputName: testNewPlot
+         atools.newPlotMetric: newPlotMetric
+         python: |
+           from lsst.analysis.tools.atools import *
 
 The class line assumes that we want to run the plot on an objectTable_tract. Each different dataset type has
 its own associated task. Many tasks already exist for different dataset types but depending on what you want
@@ -361,6 +361,7 @@ Once we have the pipeline we can run it, the same as we would run other pipetask
    -b /sdf/group/rubin/repo/main/butler.yaml
    -i HSC/runs/RC2/w_2022_28/DM-35609
    -o u/sr525/newPlotTest
+   --instrument lsst.obs.subaru.HyperSuprimeCam
    --register-dataset-types --prune-replaced=purge --replace-run
 
 Let's look at each of the parts that go into the command.
@@ -388,6 +389,13 @@ Let's look at each of the parts that go into the command.
    -o u/sr525/newPlotTest
 
 -o is the output collection that you want the plots to go into. The standard way of organising things is to put them into u/your-user-name.
+
+.. code-block:: bash
+
+   --instrument lsst.obs.subaru.HyperSuprimeCam
+
+--instrument tells the pipetask that you are running on HSC data, for example this makes the plot/metric run
+over the HsC bands, g, r, i, z and y. It also applies other instrument specific config overrides.
 
 .. code-block:: bash
 

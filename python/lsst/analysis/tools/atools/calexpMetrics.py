@@ -20,8 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CalexpSummaryMetrics",)
+__all__ = (
+    "CalexpSummaryMetrics",
+    "CalexpMetricHists",
+)
 
+from lsst.pex.config import DictField
+
+from ..actions.plot import HistPanel, HistPlot
+from ..actions.vector import BandSelector, LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -77,3 +84,26 @@ class CalexpSummaryMetrics(AnalysisTool):
 
         self.prep.keysToLoad = list(self._units.keys())
         self.produce.metric.units = self._units
+
+
+class CalexpMetricHists(AnalysisTool):
+    """
+    Class to generate histograms of metrics extracted from a Metrics Table.
+    One plot per band.
+    """
+
+    parameterizedBand: bool = False
+    metrics = DictField[str, str](doc="The metrics to plot and their respective labels.")
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # Band is passed as a kwarg from the calling task.
+        self.prep.selectors.bandSelector = BandSelector()
+        self.produce.plot = HistPlot()
+
+    def finalize(self):
+
+        for metric, label in self.metrics.items():
+            setattr(self.process.buildActions, metric, LoadVector(vectorKey=metric))
+            self.produce.plot.panels[metric] = HistPanel(hists={metric: "Number of calexps"}, label=label)

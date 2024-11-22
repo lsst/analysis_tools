@@ -153,31 +153,44 @@ class AnalysisBaseConnections(
 
         # Accumulate all the names to be used from all of the defined
         # AnalysisPlots.
-        names: list[str] = []
+        # names: Mapping[str, ConfigurableAction] = {}
+        names = {}
         for action in config.atools:
             if action.dynamicOutputNames:
                 outNames = action.getOutputNames(config=config)
             else:
                 outNames = action.getOutputNames()
-            if action.parameterizedBand:
+            if action.parameterizedBand and "band" in self.dimensions:
                 for band in config.bands:
-                    names.extend(name.format(band=band) for name in outNames)
+                    #names.extend(name.format(band=band) for name in outNames)
+                    # names.extend("_".join((band, name)) for name in outNames)
+                    names.update({name.format(band=band): action for name in outNames})
             else:
-                names.extend(outNames)
+                # names.extend(outNames)
+                names.update({name: action for name in outNames})
 
         # For each of the names found, create output connections.
-        for name in names:
+        for name, action in names.items():
             name = f"{outputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
                     f"Plot with name {name} conflicts with existing connection"
                     " are two plots named the same?"
                 )
+
+            if action.parameterizedBand and "band" not in self.dimensions:
+                multiple = True
+                dimensions = self.dimensions.union({"band"})
+            else:
+                multiple = False
+                dimensions = self.dimensions
+
             outConnection = ct.Output(
                 name=name,
                 storageClass="Plot",
                 doc="Dynamic connection for plotting",
-                dimensions=self.dimensions,
+                dimensions=dimensions,
+                multiple=multiple,
             )
             setattr(self, name, outConnection)
 
@@ -453,7 +466,32 @@ class AnalysisPipelineTask(PipelineTask):
             raise RuntimeError("'data' is a required input connection, but is not defined.")
         data = self.loadData(inputData)
         outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
-        butlerQC.put(outputs, outputRefs)
+
+        if "band" in dataId:
+            # Branch for when the PipelineTask has band in its dimensions.
+            butlerQC.put(outputs, outputRefs)
+        else:
+            for outputRefName in outputRefs.keys():
+                bits = outputRefName.split("_")
+                if outputRefName == "metrics":
+                    butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
+                    continue
+
+                assert bits[0] == self.config.connections.outputName, "Output name does not match"
+                try:
+                    datasetRef = getattr(outputRefs, outputRefName)
+                    if hasattr(datasetRef, '__iter__'):
+                        for outputRef in datasetRef:
+                            band = outputRef.dataId["band"]
+                            newOutputName = "_".join([bits[0], band, *bits[1:]])
+                            if dataset := getattr(outputs, newOutputName, None):
+                                butlerQC.put(dataset, outputRef)
+                    else:
+                        if dataset := getattr(outputs, outputRefName, None):
+                            butlerQC.put(dataset, datasetRef)
+                except Exception as e:
+                    pass
+                    raise e
 
     def _populatePlotInfoWithDataId(
         self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None

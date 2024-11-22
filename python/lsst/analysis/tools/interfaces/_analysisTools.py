@@ -293,6 +293,8 @@ class AnalysisTool(AnalysisAction):
         else:
             prefix = f"{self.identity}" if self.identity else ""
 
+        prefix = f"{self.identity}" if self.identity else ""
+
         if outNames:
             for name in outNames:
                 results.append("_".join(x for x in (prefix, name, suffix) if x))

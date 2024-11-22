@@ -250,7 +250,7 @@ class AnalysisTool(AnalysisAction):
     def populatePrepFromProcess(self):
         """Add additional inputs to the prep stage if supported.
 
-        If the configured prep action supports adding to it's input schema,
+        If the configured prep action supports adding to its input schema,
         attempt to add the required inputs schema from the process stage to the
         prep stage.
 

@@ -136,7 +136,7 @@ class AnalysisBaseConnections(
             hasMetrics = False
 
         # Set the dimensions for the metric
-        if hasMetrics and False:
+        if hasMetrics:
             self.metrics = ct.Output(
                 name=self.metrics.name,
                 doc=self.metrics.doc,
@@ -184,6 +184,10 @@ class AnalysisBaseConnections(
             if action.parameterizedBand and "band" not in self.dimensions:
                 multiple = True
                 dimensions = self.dimensions.union({"band"})
+                # Struct attribute has the structure of {outputName}_{band}_{name}.
+                band_name = name.split(outputName, maxsplit=1)[1]
+                band, name = band_name.split("_", maxsplit=2)[1:]
+                name = f"{outputName}_{name}"
             else:
                 multiple = False
                 dimensions = self.dimensions
@@ -247,8 +251,7 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     metrics = atools
     bands = ListField[str](
         doc="Filter bands on which to run all of the actions",
-        default=[],
-        optional=True,
+        default=["u", "g", "r", "i", "z", "y"],
     )
     metric_tags = ListField[str](
         doc="List of tags which will be added to all configurable actions", default=[]
@@ -482,11 +485,12 @@ class AnalysisPipelineTask(PipelineTask):
             butlerQC.put(outputs, outputRefs)
         else:
             for outputRefName in outputRefs.keys():
-                name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
-                # _, name = band_name.split("_", maxsplit=2)[1:]
                 if outputRefName == "metrics":
                     butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
                     continue
+
+                name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
+                # _, name = band_name.split("_", maxsplit=2)[1:]
 
                 try:
                     datasetRef = getattr(outputRefs, outputRefName)
@@ -593,8 +597,10 @@ class AnalysisPipelineTask(PipelineTask):
 
         if not (localBands := self.config.bands):
             localBands = set("")
-        if dataId is not None:
-            localBands.update(dataId.get("band", ""))
+        else:
+            localBands = set(localBands)
+        if dataId is not None and "band" in dataId:
+            localBands.update(dataId["band"])
         for band in localBands:
             for action in self.config.atools:
                 for key, _ in action.getFormattedInputSchema(band=band):

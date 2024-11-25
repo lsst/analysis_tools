@@ -54,7 +54,7 @@ class WholeSkyAnalysisConnections(
 
 class WholeSkyAnalysisConfig(AnalysisBaseConfig, pipelineConnections=WholeSkyAnalysisConnections):
     def setDefaults(self):
-        super().setDefaults()
+        # super().setDefaults()
         self.bands = []  # ["u", "g", "r", "i", "z", "y"]
 
 

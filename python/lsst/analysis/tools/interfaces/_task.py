@@ -596,7 +596,7 @@ class AnalysisPipelineTask(PipelineTask):
         inputs = set()
 
         if not (localBands := self.config.bands):
-            localBands = set("")
+            localBands = {""}
         else:
             localBands = set(localBands)
         if dataId is not None and "band" in dataId:

@@ -20,7 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("PropertyMapPlot",)
+__all__ = (
+    "PropertyMapPlot",
+    "PropertyMapSurveyWidePlot",
+)
 
 import logging
 from typing import Iterable, Mapping, Union
@@ -31,6 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
 from healsparse.healSparseMap import HealSparseMap
+from lsst.analysis.tools.tasks.propertyMapSurveyAnalysis import PropertyMapSurveyWideAnalysisConfig
 from lsst.analysis.tools.tasks.propertyMapTractAnalysis import PropertyMapTractAnalysisConfig
 from lsst.skymap.tractInfo import ExplicitTractInfo
 from matplotlib.figure import Figure
@@ -39,6 +43,116 @@ from matplotlib.legend_handler import HandlerTuple
 from ...interfaces import KeyedData, PlotAction
 
 _LOG = logging.getLogger(__name__)
+
+
+def getZoomedExtent(fullExtent, n):
+    """Get zoomed extent centered on the original full plot.
+
+    Parameters
+    ----------
+    fullExtent : `tuple` [`float`]
+        The full extent defined by (lon_min, lon_max, lat_min, lat_max):
+
+        * ``lon_min``
+            Minimum longitude of the original extent (`float`).
+        * ``"lon_max"``
+            Maximum longitude of the original extent (`float`).
+        * ``lat_min``
+            Minimum latitude of the original extent (`float`).
+        * ``"lat_max"``
+            Maximum latitude of the original extent (`float`).
+
+    n : `float`, optional
+        Zoom factor; for instance, n=2 means zooming in 2 times at the
+        center. If None, the function returns None.
+
+    Returns
+    -------
+    `tuple` [`float`]
+        New extent as (new_lon_min, new_lon_max, new_lat_min, new_lat_max).
+    """
+    if n is None:
+        return None
+    lon_min, lon_max, lat_min, lat_max = fullExtent
+    lon_center, lat_center = (lon_min + lon_max) / 2, (lat_min + lat_max) / 2
+    half_lon = (lon_max - lon_min) * np.cos(np.radians(lat_center)) / (2 * n)
+    half_lat = (lat_max - lat_min) / (2 * n)
+    return lon_center - half_lon, lon_center + half_lon, lat_center - half_lat, lat_center + half_lat
+
+
+def getLongestSuffixMatch(s, options):
+    """Find the longest suffix in the provided list that matches the end of
+    the given string.
+
+    Parameters
+    ----------
+    s : `str`
+        The target string for which we want to find a matching suffix.
+    options : `list` [`str`]
+        A list of potential suffix strings to match against the target
+        string `s`.
+
+    Returns
+    -------
+    `str`
+        The longest matching suffix from the `options` list. If no match is
+        found, returns `None`.
+    """
+    return next((opt for opt in sorted(options, key=len, reverse=True) if s.endswith(opt)), None)
+
+
+def addTextToColorbar(
+    cb, text, orientation="vertical", color="black", fontsize=14, fontweight="bold", alpha=0.8
+):
+    """Helper method to add text inside the horizontal colorbar.
+
+    Parameters
+    ----------
+    cb : `~matplotlib.colorbar.Colorbar`
+        The colorbar object.
+    text : `str`
+        The text to add.
+    orientation : `str`, optional
+        The orientation of the colorbar. Can be either "vertical" or
+        "horizontal".
+    fontsize : `int`, optional
+        The fontsize of the text.
+    fontweight : `str`, optional
+        The fontweight of the text.
+    alpha : `float`, optional
+        The alpha value of the text.
+
+    Returns
+    -------
+    `None`
+        The text is added to the colorbar in place.
+    """
+    if color is None:
+        color = "black"
+    vmid = (cb.vmin + cb.vmax) / 2
+    positions = {"vertical": (0.5, vmid), "horizontal": (vmid, 0.5)}
+    cbtext = cb.ax.text(
+        *positions[orientation],
+        text,
+        color=color,
+        va="center",
+        ha="center",
+        fontsize=fontsize,
+        fontweight=fontweight,
+        rotation=orientation,
+        alpha=alpha,
+    )
+    # Add a distinct outline around the text for better visibility in
+    # various backgrounds.
+    cbtext.set_path_effects(
+        [mpl_path_effects.Stroke(linewidth=4, foreground="white", alpha=0.8), mpl_path_effects.Normal()]
+    )
+
+
+def prettyPrintFloat(n):
+    if n.is_integer():
+        return str(int(n))
+    return str(n)
 
 
 class CustomHandler(HandlerTuple):
@@ -293,7 +407,7 @@ class PropertyMapPlot(PlotAction):
                         plotInfo["unit"] = "dimensionless"
                 else:
                     hasMetadata = False
-                    plotInfo["operation"] = self.getLongestSuffixMatch(
+                    plotInfo["operation"] = getLongestSuffixMatch(
                         mapName, ["min", "max", "mean", "weighted_mean", "sum"]
                     ).replace("_", " ")
                 plotInfo["coaddName"] = mapName.split("Coadd_")[0]
@@ -330,7 +444,7 @@ class PropertyMapPlot(PlotAction):
                 for ax, zoom, zoomFactor, histColor in zip(
                     [ax1, ax3, ax4], [True, False, False], [None, *zoomFactors], histColors
                 ):
-                    extent = self.getZoomedExtent(fullExtent, zoomFactor)
+                    extent = getZoomedExtent(fullExtent, zoomFactor)
                     sp = skyproj.GnomonicSkyproj(
                         ax=ax,
                         lon_0=tractInfo.ctr_coord.getRa().asDegrees(),
@@ -348,10 +462,8 @@ class PropertyMapPlot(PlotAction):
                     sp.ax.set_ylabel("Dec")
                     cbar = sp.draw_colorbar(location="right", fraction=0.15, aspect=colorBarAspect, pad=0)
                     cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-                    cbarText = (
-                        "Full Tract" if zoomFactor is None else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
-                    )
-                    self.addTextToColorbar(cbar, cbarText, color=histColor)
+                    cbarText = "Full Tract" if zoomFactor is None else f"{prettyPrintFloat(zoomFactor)}x Zoom"
+                    addTextToColorbar(cbar, cbarText, color=histColor)
                     if zoomFactor is None:
                         # Save the skyproj object of the full-tract plot.
                         # Will be used in drawing zoom rectangles etc.
@@ -374,7 +486,7 @@ class PropertyMapPlot(PlotAction):
                         zoomText = spf.ax.text(
                             (x0 + x1) / 2,
                             y0,
-                            f"{self.prettyPrintFloat(zoomFactor)}x",
+                            f"{prettyPrintFloat(zoomFactor)}x",
                             color=histColor,
                             fontsize=14,
                             fontweight="bold",
@@ -425,7 +537,7 @@ class PropertyMapPlot(PlotAction):
                     zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
                 ):
                     weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
-                    histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                    histLabel = f"{prettyPrintFloat(zoomFactor)}x Zoom"
                     histValues = ax2.hist(
                         values[zidx],
                         bins=bins,
@@ -506,112 +618,211 @@ class PropertyMapPlot(PlotAction):
 
         return outputNames
 
-    @staticmethod
-    def getZoomedExtent(fullExtent, n):
-        """Get zoomed extent centered on the original full plot.
+
+class PropertyMapSurveyWidePlot(PlotAction):
+    plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
+
+    nBinsHist = pexConfig.Field(
+        dtype=int,
+        doc="Number of bins to use for the histogram.",
+        default=35,
+    )
+
+    def __call__(
+        self,
+        data: KeyedData,
+        plotConfig: PropertyMapSurveyWideAnalysisConfig,
+        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        **kwargs,
+    ) -> Mapping[str, Figure]:
+        return self.makePlot(data, plotConfig, plotInfo)
+
+    def addPlotInfo(
+        self,
+        fig: Figure,
+        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        mapName: Mapping[str, str],
+    ) -> Figure:
+        """Add useful information to the plot.
 
         Parameters
         ----------
-        fullExtent : `tuple` [`float`]
-            The full extent defined by (lon_min, lon_max, lat_min, lat_max):
-
-            * ``lon_min``
-                Minimum longitude of the original extent (`float`).
-            * ``"lon_max"``
-                Maximum longitude of the original extent (`float`).
-            * ``lat_min``
-                Minimum latitude of the original extent (`float`).
-            * ``"lat_max"``
-                Maximum latitude of the original extent (`float`).
-
-        n : `float`, optional
-            Zoom factor; for instance, n=2 means zooming in 2 times at the
-            center. If None, the function returns None.
+        fig : `matplotlib.figure.Figure`
+            The figure to add the information to.
+        plotInfo : `dict`
+            A dictionary of the plot information.
+        mapName : `str`
+            The name of the map being plotted.
 
         Returns
         -------
-        `tuple` [`float`]
-            New extent as (new_lon_min, new_lon_max, new_lat_min, new_lat_max).
+        fig : `matplotlib.figure.Figure`
+            The figure with the information added.
         """
-        if n is None:
-            return None
-        lon_min, lon_max, lat_min, lat_max = fullExtent
-        lon_center, lat_center = (lon_min + lon_max) / 2, (lat_min + lat_max) / 2
-        half_lon = (lon_max - lon_min) * np.cos(np.radians(lat_center)) / (2 * n)
-        half_lat = (lat_max - lat_min) / (2 * n)
-        return lon_center - half_lon, lon_center + half_lon, lat_center - half_lat, lat_center + half_lat
 
-    @staticmethod
-    def prettyPrintFloat(n):
-        if n.is_integer():
-            return str(int(n))
-        return str(n)
+        run = plotInfo["run"]
+        tableType = f"\nTable: {plotInfo['tableNames'][mapName]}"
 
-    @staticmethod
-    def addTextToColorbar(
-        cb, text, orientation="vertical", color="black", fontsize=14, fontweight="bold", alpha=0.8
-    ):
-        """Helper method to add text inside the horizontal colorbar.
-
-        Parameters
-        ----------
-        cb : `~matplotlib.colorbar.Colorbar`
-            The colorbar object.
-        text : `str`
-            The text to add.
-        orientation : `str`, optional
-            The orientation of the colorbar. Can be either "vertical" or
-            "horizontal".
-        fontsize : `int`, optional
-            The fontsize of the text.
-        fontweight : `str`, optional
-            The fontweight of the text.
-        alpha : `float`, optional
-            The alpha value of the text.
-
-        Returns
-        -------
-        `None`
-            The text is added to the colorbar in place.
-        """
-        if color is None:
-            color = "black"
-        vmid = (cb.vmin + cb.vmax) / 2
-        positions = {"vertical": (0.5, vmid), "horizontal": (vmid, 0.5)}
-        cbtext = cb.ax.text(
-            *positions[orientation],
-            text,
-            color=color,
-            va="center",
-            ha="center",
-            fontsize=fontsize,
-            fontweight=fontweight,
-            rotation=orientation,
-            alpha=alpha,
+        dataIdText = f"Band: {plotInfo['band']}"
+        propertyDescription = plotInfo["description"]
+        # Lowercase the first letter unless the string starts with more than
+        # one uppercase letter in which case we keep it as is, e.g. PSF, DCR.
+        if propertyDescription[0].isupper() and propertyDescription[1].islower():
+            propertyDescription = propertyDescription[0].lower() + propertyDescription[1:]
+        mapText = (
+            f", Property: {propertyDescription}, "
+            f"Unit: {plotInfo['unit']}, "
+            f"Operation: {plotInfo['operation']}, "
+            f"Coadd: {plotInfo['coaddName']}"
         )
-        # Add a distinct outline around the text for better visibility in
-        # various backgrounds.
-        cbtext.set_path_effects(
-            [mpl_path_effects.Stroke(linewidth=4, foreground="white", alpha=0.8), mpl_path_effects.Normal()]
-        )
+        geomText = f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., " f"NSIDE: {plotInfo['nside']}"
+        infoText = f"\n{dataIdText}{mapText}"
 
-    @staticmethod
-    def getLongestSuffixMatch(s, options):
-        """Find the longest suffix in the provided list that matches the end of
-        the given string.
+        fig.text(
+            0.04,
+            0.965,
+            f'{plotInfo["plotName"]}: {plotInfo["property"]}',
+            fontsize=19,
+            transform=fig.transFigure,
+            ha="left",
+            va="top",
+        )
+        t = fig.text(
+            0.04,
+            0.942,
+            f"{run}{tableType}{geomText}{infoText}",
+            fontsize=15,
+            transform=fig.transFigure,
+            alpha=0.6,
+            ha="left",
+            va="top",
+        )
+        t.set_linespacing(1.4)
+
+        return fig
+
+    def makePlot(
+        self,
+        data: KeyedData,
+        plotConfig: PropertyMapSurveyWideAnalysisConfig,
+        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+    ) -> Figure:
+        """Make the survey property map plot.
 
         Parameters
         ----------
-        s : `str`
-            The target string for which we want to find a matching suffix.
-        options : `list` [`str`]
-            A list of potential suffix strings to match against the target
-            string `s`.
+        data : `KeyedData`
+            The HealSparseMap to plot the points from.
+        plotConfig :
+            `~lsst.analysis.tools.tasks.propertyMapSurveyAnalysis.
+            PropertyMapSurveyWideAnalysisConfig`
+            The configuration for the plot.
+        plotInfo : `dict`
+            A dictionary of information about the data being plotted.
 
         Returns
         -------
-        `str`
-            The longest matching suffix from the `options` list. If no match is
-            found, returns `None`.
+        fig : `~matplotlib.figure.Figure`
+            The resulting figure.
         """
-        return next((opt for opt in sorted(options, key=len, reverse=True) if s.endswith(opt)), None)
+
+        # 'plotName' defaults to the attribute specified in
+        # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
+        # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
+        # it will override this default.
+        if self.plotName:
+            # Set the plot name using 'produce.plot.plotName' from
+            # PropertyMapTool's instance.
+            plotInfo["plotName"] = self.plotName
+
+        # Plotting customization.
+        colorbarTickLabelSize = 14
+        rcparams = {
+            "axes.labelsize": 18,
+            "axes.linewidth": 1.8,
+            "xtick.labelsize": 13,
+            "ytick.labelsize": 13,
+        }
+
+        mapName = data["data"].ref.datasetType.name
+        mapData = data["data"].get()
+
+        with plt.rc_context(rcparams):
+            # Create the figure
+            fig, ax = plt.subplots(figsize=(20, 16))
+
+            # Get the values for the valid pixels of the full tract.
+            values = mapData[mapData.valid_pixels]
+            goodValues = np.isfinite(values)
+            values = values[goodValues]  # As a precaution.
+
+            # Make a concise human-readable label for the plot.
+            plotInfo["unit"] = "N/A"  # Unless overridden.
+            if hasattr(mapData, "metadata") and all(
+                key in mapData.metadata for key in ["DESCRIPTION", "OPERATION", "UNIT"]
+            ):
+                hasMetadata = True
+                metadata = mapData.metadata
+                plotInfo["description"] = metadata["DESCRIPTION"]
+                plotInfo["operation"] = metadata["OPERATION"]
+                if metadata["UNIT"]:
+                    plotInfo["unit"] = metadata["UNIT"]
+                elif metadata["UNIT"] == "":
+                    plotInfo["unit"] = "dimensionless"
+            else:
+                hasMetadata = False
+                plotInfo["operation"] = getLongestSuffixMatch(
+                    mapName, ["min", "max", "mean", "weighted_mean", "sum"]
+                ).replace("_", " ")
+            plotInfo["coaddName"] = mapName.split("Coadd_")[0]
+            plotInfo["operation"] = plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
+            propertyName = mapName[len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])].strip(
+                "_"
+            )
+            if not hasMetadata:
+                # Infer the property description from the map name (all
+                # lower case), and properly handle formatting.
+                plotInfo["description"] = (
+                    propertyName.replace("_", " ")
+                    .replace("psf", "PSF")
+                    .replace("dcr", "DCR")
+                    .replace("dra", "delta-RA")
+                    .replace("ddec", "delta-Dec")
+                )
+            plotInfo["property"] = (
+                propertyName.replace("_", " ")
+                .title()  # Capitalize and handle edge cases below.
+                .replace("Psf", "PSF")
+                .replace("Dcr", "DCR")
+                .replace("Dra", "delta-RA")
+                .replace("Ddec", "delta-Dec")
+                .replace("E1", "e1")
+                .replace("E2", "e2")
+            )
+
+            zoom = True
+            sp = skyproj.GnomonicSkyproj(
+                ax=ax,
+                extent=None,
+                rcparams=rcparams,
+            )
+            sp.draw_hspmap(mapData, zoom=zoom)
+            sp.ax.set_xlabel("RA")
+            sp.ax.set_ylabel("Dec")
+            cbar = sp.draw_colorbar(location="top", fraction=0.1, aspect=20, pad=0)
+            unit = f" [{plotInfo['unit']}]" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
+            cbar.ax.set_xlabel(f"{plotInfo['property']}{unit}")
+            cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
+
+            # Add extra info to plotInfo.
+            plotInfo["nside"] = mapData.nside_sparse
+            plotInfo["valid_area"] = mapData.get_valid_area()
+
+            # Add useful information to the plot.
+            self.addPlotInfo(fig, plotInfo, mapName)
+
+        _LOG.info(
+            f"Made survey-wide property map plot for dataset type {mapName}, " f"band: '{plotInfo['band']}'."
+        )
+
+        return fig

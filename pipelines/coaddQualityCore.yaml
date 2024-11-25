@@ -123,24 +123,23 @@ tasks:
         config.properties["sky_background"].operations = ["weighted_mean"]
         config.properties["sky_noise"] = PropertyMapConfig
         config.properties["sky_noise"].operations = ["weighted_mean"]
-plotPropertyMapSurvey:
-    class: lsst.analysis.tools.tasks.PropertyMapSurveyAnalysisTask
+  plotPropertyMapSurvey:
+    class: lsst.analysis.tools.tasks.PropertyMapSurveyWideAnalysisTask
     config:
       connections.outputName: propertyMapSurvey
-      atools.HealSparseMap: PropertyMapTool
+      atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_e1_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_e2_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_min: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_max: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_exposure_time_consolidated_map_sum: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_e1_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_e2_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_size_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_sky_background_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_sky_noise_consolidated_map_weighted_mean: HealSparsePropertyMapTool
       python: |
         from lsst.analysis.tools.atools import *
-        config.properties["dcr_ddec"] = PropertyMapConfig
-        config.properties["dcr_ddec"].operations = ["weighted_mean"]
-        config.properties["dcr_dra"] = PropertyMapConfig
-        config.properties["dcr_dra"].operations = ["weighted_mean"]
-        config.properties["dcr_e1"] = PropertyMapConfig
-plotPropertyMapSurveyExposureTime:
-    class: lsst.analysis.tools.tasks.PropertyMapSurveyAnalysisTask
-    config:
-      connections.outputName: propertyMapSurvey
-      atools.HealSparseMap1: PropertyMapTool
-      python: |
-        from lsst.analysis.tools.atools import *
-        config.properties["dcr_ddec"] = PropertyMapConfig
-        config.properties["dcr_ddec"].operations = ["weighted_mean"]

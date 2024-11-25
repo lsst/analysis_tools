@@ -23,6 +23,7 @@ from .metricAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .photometricCatalogMatch import *
+from .propertyMapSurveyAnalysis import *
 from .propertyMapTractAnalysis import *
 from .refCatObjectAnalysis import *
 from .refCatObjectPhotometricAnalysis import *

@@ -21,14 +21,13 @@
 from __future__ import annotations
 
 __all__ = [
-    "PropertyMapSurveyAnalysisConfig",
-    "PropertyMapSurveyAnalysisTask",
+    "PropertyMapSurveyWideAnalysisConfig",
+    "PropertyMapSurveyWideAnalysisTask",
 ]
 
 from typing import Any, Mapping, Union
 
 from lsst.daf.butler import DataCoordinate
-from lsst.pex.config import Config, ConfigDictField, Field, ListField
 from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
@@ -36,27 +35,9 @@ from lsst.skymap import BaseSkyMap
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class PropertyMapConfig(Config):
-    coaddName = Field(
-        dtype=str,
-        doc="Coadd name: typically one of deep or goodSeeing.",
-        default="deep",
-    )
-    operations = ListField(
-        dtype=str,
-        doc="List of operations whose corresponding maps should be retrieved.",
-        default=["min", "max", "mean", "weighted_mean", "sum"],
-    )
-    nBinsHist = Field(
-        dtype=int,
-        doc="Number of bins to use for the histogram.",
-        default=100,
-    )
-
-
-class PropertyMapSurveyAnalysisConnections(
+class PropertyMapSurveyWideAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap" "band"),
+    dimensions=("skymap", "band"),
     defaultTemplates={"outputName": "propertyMapSurvey"},
 ):
     healSparsePropertyMapsConfig = ct.Input(
@@ -85,47 +66,33 @@ class PropertyMapSurveyAnalysisConnections(
         }
 
         # Making connections for the maps that are configured to run.
-        for propertyName in config.properties:
-            coaddName = config.properties[propertyName].coaddName
-            for operationName in config.properties[propertyName].operations:
-                operationLongName = operationNameLookup[operationName]
-                name = f"{coaddName}Coadd_{propertyName}_map_{operationName}"
-                setattr(
-                    self,
-                    f"{coaddName}Coadd_{propertyName}_{operationName}",
-                    ct.Input(
-                        doc=f"{operationLongName}-value map of {{propertyLongName}}",
-                        name=name,
-                        storageClass="HealSparseMap",
-                        dimensions=("tract", "skymap", "band"),
-                        multiple=False,
-                        deferLoad=True,
-                    ),
-                )
+        for name in config.atools.fieldNames:
+            propertyName, operationName = name.split("_consolidated_map_")
+            coaddName, propertyName = propertyName.split("Coadd_")
+            propertyName = propertyName.replace("_", " ")
+            operationLongName = operationNameLookup[operationName]
+            setattr(
+                self,
+                name,
+                ct.Input(
+                    doc=f"{operationLongName}-value consolidated map of {propertyName} for {coaddName} coadd",
+                    name=name,
+                    storageClass="HealSparseMap",
+                    dimensions=("skymap", "band"),
+                    multiple=False,
+                    deferLoad=True,
+                ),
+            )
 
 
-class PropertyMapSurveyAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=PropertyMapSurveyAnalysisConnections
+class PropertyMapSurveyWideAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=PropertyMapSurveyWideAnalysisConnections
 ):
-    # zoomFactors = ListField(
-    #     dtype=float,
-    #     doc="Two-element list of zoom factors to use when plotting the maps.",
-    #     default=[2, 8],
-    # )
-
-    properties = ConfigDictField(
-        doc="A configurable dictionary describing the property maps to be plotted, and the coadd name and "
-        "operations for each map. The available properties include 'exposure_time', 'psf_size', 'psf_e1', "
-        "'psf_e2', 'psf_maglim', 'sky_noise', 'sky_background', 'dcr_dra', 'dcr_ddec', 'dcr_e1', 'dcr_e2', "
-        "and 'epoch'.",
-        keytype=str,
-        itemtype=PropertyMapConfig,
-        default={},
-    )
+    pass
 
 
-class PropertyMapSurveyAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = PropertyMapSurveyAnalysisConfig
+class PropertyMapSurveyWideAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = PropertyMapSurveyWideAnalysisConfig
     _DefaultName = "propertyMapSurveyAnalysisTask"
 
     def parsePlotInfo(
@@ -186,14 +153,8 @@ class PropertyMapSurveyAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
 
-        mapsDict = {}
-        for key, value in inputs.items():
-            if key in ["skymap", "healSparsePropertyMapsConfig"]:
-                continue
-            mapsDict[key] = value
+        data = {k: v for k, v in inputs.items() if k not in {"skymap", "healSparsePropertyMapsConfig"}}
 
-        plotInfo = self.parsePlotInfo(inputs, dataId, list(mapsDict.keys()))
-        outputs = self.run(
-            data={"maps": mapsDict}, plotConfig=self.config, plotInfo=plotInfo
-        )
+        plotInfo = self.parsePlotInfo(inputs, dataId, list(data.keys()))
+        outputs = self.run(data=data, plotConfig=self.config, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

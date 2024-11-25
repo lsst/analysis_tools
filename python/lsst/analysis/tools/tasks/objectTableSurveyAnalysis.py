@@ -37,7 +37,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class ObjectTableSurveyAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap",),
+    dimensions=("skymap", "band"),
     defaultTemplates={"input": "deepCoadd"},
 ):
     skymap = ct.Input(

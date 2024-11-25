@@ -113,6 +113,8 @@ class BasePsfResidualCoadd(AnalysisTool):
     `BasePsfResidualMetric` to share common default configuration.
     """
 
+    parameterizedBand: bool = True  # False
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -187,6 +189,8 @@ class BasePsfResidualVisit(AnalysisTool):
 class SkyCoadd(BasePsfResidualCoadd):
     """A base class for coadd level sky plots."""
 
+    parameterizedBand: bool = True  # False
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -229,6 +233,8 @@ class SkyVisit(BasePsfResidualVisit):
 
 class ScatterCoadd(BasePsfResidualCoadd):
     """A base class for coadd level scatter plots."""
+
+    parameterizedBand: bool = True  # False
 
     def setDefaults(self):
         super().setDefaults()

@@ -6,6 +6,12 @@ tasks:
     config:
       connections.outputName: objectTableCore
       atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiffScatter  #  shapes.py
+      atools.wPerpPSFP: WPerpPSF
+      atools.wPerpCModel: WPerpCModel
+      atools.xPerpPSFP: XPerpPSF
+      atools.xPerpCModel: XPerpCModel
+      atools.yPerpPSF: YPerpPSF
+      atools.yPerpCModel: YPerpCModel
       atools.e1Diff: E1DiffScatter  #  shapes.py
       atools.e2Diff: E2DiffScatter  #  shapes.py
       atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
@@ -14,12 +20,6 @@ tasks:
       atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
       atools.blendMetrics: BlendMetrics
       atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
-      atools.wPerpPSFP: WPerpPSF
-      atools.wPerpCModel: WPerpCModel
-      atools.xPerpPSFP: XPerpPSF
-      atools.xPerpCModel: XPerpCModel
-      atools.yPerpPSF: YPerpPSF
-      atools.yPerpCModel: YPerpCModel
       atools.skyObjectSky: SkyObjectSkyPlot
       atools.skyObjectFlux: SkyObjectHistPlot
       atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
@@ -54,6 +54,22 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
+  analyzeObjectTableTractCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableCore
+      # atools.wPerpPSFP: WPerpPSF
+      # atools.wPerpCModel: WPerpCModel
+      # atools.xPerpPSFP: XPerpPSF
+      # atools.xPerpCModel: XPerpCModel
+      # atools.yPerpPSF: YPerpPSF
+      # atools.yPerpCModel: YPerpCModel
+      atools.e1Diff: E1DiffScatter  #  shapes.py
+      atools.e2Diff: E2DiffScatter  #  shapes.py
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
+        config.dimensions = ["tract", "skymap", "band"]
   analyzeObjectTableSurveyCore:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:

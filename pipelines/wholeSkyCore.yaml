@@ -34,12 +34,12 @@ parameters:
     "skippedDeblenderMetrics_numBlendTooManyMasked",
   ]
   objectTableCoreRefCatMatchKeysWithBand: [
-    "astromDiffMetrics_{band}_AA1_RA_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_RA_coadd",
-    "astromDiffMetrics_{band}_AA1_Dec_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_Dec_coadd",
-    "astromDiffMetrics_{band}_AA1_tot_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_tot_coadd",
+    "astromDiffMetrics_AA1_RA_coadd",
+    "astromDiffMetrics_AA1_sigmaMad_RA_coadd",
+    "astromDiffMetrics_AA1_Dec_coadd",
+    "astromDiffMetrics_AA1_sigmaMad_Dec_coadd",
+    "astromDiffMetrics_AA1_tot_coadd",
+    "astromDiffMetrics_AA1_sigmaMad_tot_coadd",
   ]
   matchedVisitCoreKeysWithBand: [
     "stellarAstrometricRepeatability1_{band}_AM1",
@@ -85,8 +85,8 @@ tasks:
       connections.inputName: "objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable"
       connections.outputName: "objectTableCoreRefCatMatch_wholeSky"
       atools.wholeSkyMetric: WholeSkyPlotTool
-      atools.wholeSkyMetric.plotKeys: []
-      atools.wholeSkyMetric.keysWithBand: parameters.objectTableCoreRefCatMatchKeysWithBand
+      atools.wholeSkyMetric.plotKeys: parameters.objectTableCoreRefCatMatchKeysWithBand
+      atools.wholeSkyMetric.keysWithBand: []
       python: |
         from lsst.analysis.tools.atools import *
   makeMetricTableMatchedVisitCore:

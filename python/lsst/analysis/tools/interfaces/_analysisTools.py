@@ -162,7 +162,7 @@ class AnalysisTool(AnalysisAction):
         if "plotInfo" in kwargs and kwargs.get("plotInfo") is not None:
             if "plotName" not in kwargs["plotInfo"] or kwargs["plotInfo"]["plotName"] is None:
                 kwargs["plotInfo"]["plotName"] = self.identity
-        if not self.parameterizedBand or bands is None:
+        if not self.parameterizedBand or not bands:
             if "band" not in kwargs:
                 # Some tasks require a "band" key for naming. This shouldn't
                 # affect the results. DM-35813 should make this unnecessary.
@@ -177,7 +177,11 @@ class AnalysisTool(AnalysisAction):
             for key, value in subResult.items():
                 match value:
                     case PlotTypes():
-                        results[f"{band}_{key}"] = value
+                        results[f"{band}_{key}"] = value  # assumes a naming convention
+                        # if key in results:
+                        #     results[key][band] = value
+                        # else:
+                        #     results[key] = {band: value}
                     case Measurement():
                         results[key] = value
         return results
@@ -292,8 +296,6 @@ class AnalysisTool(AnalysisAction):
             prefix = "_".join(x for x in ("{band}", self.identity) if x)
         else:
             prefix = f"{self.identity}" if self.identity else ""
-
-        prefix = f"{self.identity}" if self.identity else ""
 
         if outNames:
             for name in outNames:

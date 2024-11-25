@@ -118,6 +118,9 @@ class AnalysisBaseConnections(
         # course of operation code execution paths ensure this will not be None
         assert config is not None
 
+        if config.dimensions:
+            self.dimensions = set(config.dimensions)
+
         for tool in config.atools:
             match tool.produce:
                 case JointAction():
@@ -133,7 +136,7 @@ class AnalysisBaseConnections(
             hasMetrics = False
 
         # Set the dimensions for the metric
-        if hasMetrics:
+        if hasMetrics and False:
             self.metrics = ct.Output(
                 name=self.metrics.name,
                 doc=self.metrics.doc,
@@ -160,9 +163,9 @@ class AnalysisBaseConnections(
                 outNames = action.getOutputNames(config=config)
             else:
                 outNames = action.getOutputNames()
-            if action.parameterizedBand and "band" in self.dimensions:
+            if action.parameterizedBand and not "band" in self.dimensions:
                 for band in config.bands:
-                    #names.extend(name.format(band=band) for name in outNames)
+                    # names.extend(name.format(band=band) for name in outNames)
                     # names.extend("_".join((band, name)) for name in outNames)
                     names.update({name.format(band=band): action for name in outNames})
             else:
@@ -243,7 +246,9 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     plots = atools
     metrics = atools
     bands = ListField[str](
-        doc="Filter bands on which to run all of the actions", default=["u", "g", "r", "i", "z", "y"]
+        doc="Filter bands on which to run all of the actions",
+        default=[],
+        optional=True,
     )
     metric_tags = ListField[str](
         doc="List of tags which will be added to all configurable actions", default=[]
@@ -263,6 +268,9 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         "given in the form %Y%m%dT%H%M%S%z",
         default="run_timestamp",
         check=_timestampValidator,
+    )
+    dimensions = ListField[str](
+        doc="The dimensions of the input and output connections", default=None, optional=True
     )
 
     def applyConfigOverrides(
@@ -464,7 +472,9 @@ class AnalysisPipelineTask(PipelineTask):
             inputData = inputs.pop("data")
         except KeyError:
             raise RuntimeError("'data' is a required input connection, but is not defined.")
-        data = self.loadData(inputData)
+        if band := dataId.get("band", None):
+            inputs["band"] = band
+        data = self.loadData(inputData, dataId=dataId)
         outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
 
         if "band" in dataId:
@@ -472,18 +482,19 @@ class AnalysisPipelineTask(PipelineTask):
             butlerQC.put(outputs, outputRefs)
         else:
             for outputRefName in outputRefs.keys():
-                bits = outputRefName.split("_")
+                name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
+                # _, name = band_name.split("_", maxsplit=2)[1:]
                 if outputRefName == "metrics":
                     butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
                     continue
 
-                assert bits[0] == self.config.connections.outputName, "Output name does not match"
                 try:
                     datasetRef = getattr(outputRefs, outputRefName)
-                    if hasattr(datasetRef, '__iter__'):
+                    if hasattr(datasetRef, "__iter__"):
                         for outputRef in datasetRef:
                             band = outputRef.dataId["band"]
-                            newOutputName = "_".join([bits[0], band, *bits[1:]])
+                            # name would already have a leading underscore.
+                            newOutputName = f"{self.config.connections.outputName}_{band}{name}"
                             if dataset := getattr(outputs, newOutputName, None):
                                 butlerQC.put(dataset, outputRef)
                     else:
@@ -541,7 +552,9 @@ class AnalysisPipelineTask(PipelineTask):
         self._populatePlotInfoWithDataId(plotInfo, dataId)
         return plotInfo
 
-    def loadData(self, handle: DeferredDatasetHandle, names: Iterable[str] | None = None) -> KeyedData:
+    def loadData(
+        self, handle: DeferredDatasetHandle, names: Iterable[str] | None = None, dataId=None
+    ) -> KeyedData:
         """Load the minimal set of keyed data from the input dataset.
 
         Parameters
@@ -561,10 +574,10 @@ class AnalysisPipelineTask(PipelineTask):
             The dataset with only the specified keys loaded.
         """
         if names is None:
-            names = self.collectInputNames()
+            names = self.collectInputNames(dataId=dataId)
         return cast(KeyedData, handle.get(parameters={"columns": names}))
 
-    def collectInputNames(self) -> Iterable[str]:
+    def collectInputNames(self, dataId=None) -> Iterable[str]:
         """Get the names of the inputs.
 
         If using the default `loadData` method this will gather the names
@@ -579,7 +592,9 @@ class AnalysisPipelineTask(PipelineTask):
         inputs = set()
 
         if not (localBands := self.config.bands):
-            localBands = [""]
+            localBands = set("")
+        if dataId is not None:
+            localBands.update(dataId.get("band", ""))
         for band in localBands:
             for action in self.config.atools:
                 for key, _ in action.getFormattedInputSchema(band=band):

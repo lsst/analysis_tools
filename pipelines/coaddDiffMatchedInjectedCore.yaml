@@ -28,5 +28,5 @@ tasks:
         from lsst.analysis.tools.atools.diffMatched import *
 
         reconfigure_diff_matched_defaults(
-          context="injection", use_any=False, use_galaxies=False, key_flux_meas="psf",
+          context="injection", use_any=False, use_galaxies=False, key_flux_meas="psf", bands_color=["g","r","i","z","y"],
         )

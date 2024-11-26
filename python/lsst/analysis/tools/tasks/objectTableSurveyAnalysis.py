@@ -94,10 +94,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         return plotInfo
 
     def loadData(  # type: ignore[override]
-        self,
-        handle: Iterable[DeferredDatasetHandle],
-        names: Iterable[str] | None = None,
-        **kwargs
+        self, handle: Iterable[DeferredDatasetHandle], names: Iterable[str] | None = None, **kwargs
     ) -> KeyedData:
         """Load the minimal set of keyed data from the input dataset.
 

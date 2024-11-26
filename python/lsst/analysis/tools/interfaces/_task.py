@@ -163,7 +163,7 @@ class AnalysisBaseConnections(
                 outNames = action.getOutputNames(config=config)
             else:
                 outNames = action.getOutputNames()
-            if action.parameterizedBand: # and not "band" in self.dimensions:
+            if action.parameterizedBand:  # and not "band" in self.dimensions:
                 for band in config.bands:
                     # names.extend(name.format(band=band) for name in outNames)
                     # names.extend("_".join((band, name)) for name in outNames)

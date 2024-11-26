@@ -295,4 +295,5 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
-        butlerQC.put(outputs, outputRefs)
+
+        self.putByBand(butlerQC, outputs, outputRefs)

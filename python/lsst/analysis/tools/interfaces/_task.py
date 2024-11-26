@@ -182,9 +182,14 @@ class AnalysisBaseConnections(
                 )
 
             if action.parameterizedBand and "band" not in self.dimensions:
+                # If band is in self.dimensions, but the bands still appear
+                # in the output names, then it is likely a user error. To avoid
+                # the band from appearing, either parametrizedBand needs to be
+                # set to False or the bands should be an empty list.
                 multiple = True
                 dimensions = self.dimensions.union({"band"})
-                # Struct attribute has the structure of {outputName}_{band}_{name}.
+                # Struct attribute has the structure of
+                # {outputName}_{band}_{name}.
                 band_name = name.split(outputName, maxsplit=1)[1]
                 band, name = band_name.split("_", maxsplit=2)[1:]
                 name = f"{outputName}_{name}"
@@ -484,29 +489,52 @@ class AnalysisPipelineTask(PipelineTask):
             # Branch for when the PipelineTask has band in its dimensions.
             butlerQC.put(outputs, outputRefs)
         else:
-            for outputRefName in outputRefs.keys():
-                if outputRefName == "metrics":
-                    butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
-                    continue
+            self.putByBand(butlerQC, outputs, outputRefs)
 
-                name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
-                # _, name = band_name.split("_", maxsplit=2)[1:]
+    def putByBand(self, butlerQC, outputs, outputRefs):
+        """Handle the outputs by band.
 
-                try:
-                    datasetRef = getattr(outputRefs, outputRefName)
-                    if hasattr(datasetRef, "__iter__"):
-                        for outputRef in datasetRef:
-                            band = outputRef.dataId["band"]
-                            # name would already have a leading underscore.
-                            newOutputName = f"{self.config.connections.outputName}_{band}{name}"
-                            if dataset := getattr(outputs, newOutputName, None):
-                                butlerQC.put(dataset, outputRef)
-                    else:
-                        if dataset := getattr(outputs, outputRefName, None):
-                            butlerQC.put(dataset, datasetRef)
-                except Exception as e:
-                    pass
-                    raise e
+        This is a convenience method to handle the case where the
+        PipelineTaskConnection had to instantiate multiple output connections
+        for plots to loop over bands.
+
+        Parameters
+        ----------
+        butlerQC : `~lsst.pipe.base.QuantumContext`
+            A butler which is specialized to operate in the context of a
+            `lsst.daf.butler.Quantum`.
+        outputs : `~lsst.pipe.base.Struct`
+            The accumulated results of all the plots and metrics produced by
+            the `run` method of this `PipelineTask`.
+        outputRefs : `OutputQuantizedConnection`
+            Datastructure whose attribute names are the names that identify
+            connections defined in corresponding `PipelineTaskConnections`
+            class. The values of these attributes are the
+            `lsst.daf.butler.DatasetRef` objects associated with the defined
+            output connections.
+        """
+        for outputRefName in outputRefs.keys():
+            if outputRefName == "metrics":
+                butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
+                continue
+
+            name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
+
+            try:
+                datasetRef = getattr(outputRefs, outputRefName)
+                if hasattr(datasetRef, "__iter__"):
+                    for outputRef in datasetRef:
+                        band = outputRef.dataId.get["band"]
+                        # name would already have a leading underscore.
+                        newOutputName = f"{self.config.connections.outputName}_{band}{name}"
+                        if dataset := getattr(outputs, newOutputName, None):
+                            butlerQC.put(dataset, outputRef)
+                else:
+                    if dataset := getattr(outputs, outputRefName, None):
+                        butlerQC.put(dataset, datasetRef)
+            except Exception as e:
+                pass
+                raise e
 
     def _populatePlotInfoWithDataId(
         self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None

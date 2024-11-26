@@ -25,7 +25,7 @@ __all__ = ("WholeSkyPlotTool",)
 import re
 from string import Formatter
 
-from lsst.pex.config import Field, ListField
+from lsst.pex.config import Field, FieldValidationError, ListField
 
 from ..actions.plot.wholeSkyPlot import WholeSkyPlot
 from ..interfaces import AnalysisTool
@@ -128,10 +128,11 @@ class WholeSkyPlotTool(AnalysisTool):
             super().finalize()
 
     def validate(self):
-        # super().validate()
+        super().validate()
         # Check that corners and tract are in the keys to load.
         if set(("corners", "tract")) - set(self.prep.keysToLoad):
-            raise ValueError(f"'corners' and 'tract' must be in {self.prep.keysToLoad=}")
+            msg = f"'corners' and 'tract' must be in {self.prep.keysToLoad=}"
+            raise FieldValidationError(self.prep.__class__.keysToLoad, self, msg)
 
     def findBand(self, pattern: str, inputString: str) -> str:
         """Search for a band in the metric key.

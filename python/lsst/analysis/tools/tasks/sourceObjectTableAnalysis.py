@@ -48,7 +48,7 @@ class ObjectEpochTableConnections(
     objectCat = ct.Input(
         doc="Catalog of positions in each patch.",
         name="objectTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         dimensions=["skymap", "tract", "patch"],
         multiple=True,
         deferLoad=True,
@@ -96,7 +96,7 @@ class ObjectEpochTableTask(pipeBase.PipelineTask):
 
         Parameters
         ----------
-        cat : `pd.DataFrame`
+        cat : `astropy.table.Table`
             Catalog containing object positions.
         epochMapDict: `dict` [`DeferredDatasetHandle`]
             Dictionary of handles for healsparse maps containing the mean epoch
@@ -104,7 +104,7 @@ class ObjectEpochTableTask(pipeBase.PipelineTask):
 
         Returns
         -------
-        epochDf = `pd.DataFrame`
+        epochDf = `astropy.table.Table`
             Catalog with mean epoch of visits at each object position.
         """
         allEpochs = {}
@@ -121,7 +121,7 @@ class ObjectEpochTableTask(pipeBase.PipelineTask):
                 bandEpochs[~epochsValid] = np.nan
                 epochs[validPositions] = bandEpochs
             allEpochs[f"{band}_epoch"] = epochs
-        allEpochs["objectId"] = cat.index
+        allEpochs["objectId"] = cat["objectId"]
 
         epochTable = Table(allEpochs)
         return epochTable
@@ -130,6 +130,7 @@ class ObjectEpochTableTask(pipeBase.PipelineTask):
         inputs = butlerQC.get(inputRefs)
 
         columns = [f"{band}_{coord}" for band in self.config.bands for coord in ["ra", "dec"]]
+        columns.append("objectId")
 
         inputs["epochMap"] = {ref.dataId["band"]: ref.get() for ref in inputs["epochMap"]}
 
@@ -435,10 +436,11 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         for refCatRef in inputs["refCat"]:
             refCat = refCatRef.get(
                 parameters={
-                    "columns": ["detect_isPrimary", self.config.ra_column, self.config.dec_column]
+                    "columns": ["detect_isPrimary", self.config.ra_column, self.config.dec_column, "objectId"]
                     + refCatSelectors
                 }
             )
+            refCat.set_index("objectId")
             if self.config.applyAstrometricCorrections:
                 refCat = pd.merge(refCat, refCatEpochs[refCatRef.dataId["patch"]].to_pandas(), on="objectId")
             goodInds = (

@@ -50,7 +50,7 @@ class WholeSkyPlotTool(AnalysisTool):
     )
     keysWithBand = ListField[str](
         doc="Metrics to plot that are band-specific.",
-        default=["e1Diff_{band}_highSNStars_median"],
+        default=["{band}_e1Diff_highSNStars_median"],
         itemCheck=lambda x: "{band}" in x,
         listCheck=lambda x: len(set(x)) == len(x),
     )

@@ -73,6 +73,15 @@ tasks:
       atools.wholeSkyMetric.keysWithBand: parameters.objectTableCoreKeysWithBand
       python: |
         from lsst.analysis.tools.atools import *
+  # objectTableCoreWholeSkyPlot2:
+  #   class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+  #   config:
+  #     atools.wholeSkyMetric: WholeSkyPlotTool
+  #     #atools.wholeSkyMetric.parameterizedBand: True
+  #     atools.wholeSkyMetric.plotKeys: parameters.objectTableCorePlotKeys
+  #     atools.wholeSkyMetric.keysWithBand: [] # parameters.objectTableCoreKeysWithBand
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
   makeMetricTableObjectTableCoreRefCatMatch:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:

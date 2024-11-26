@@ -37,7 +37,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class ObjectTableSurveyAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap", "band"),
+    dimensions=("skymap",),
     defaultTemplates={"input": "deepCoadd"},
 ):
     skymap = ct.Input(
@@ -97,6 +97,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         self,
         handle: Iterable[DeferredDatasetHandle],
         names: Iterable[str] | None = None,
+        **kwargs
     ) -> KeyedData:
         """Load the minimal set of keyed data from the input dataset.
 
@@ -119,7 +120,7 @@ class ObjectTableSurveyAnalysisTask(AnalysisPipelineTask):
         # Except associatedSourceTractAnalysis, all other tasks trivially
         # subclass this, so names don't get utilized.
         if names is None:
-            names = self.collectInputNames()
+            names = self.collectInputNames(**kwargs)
 
         cats = []
         for h in handle:

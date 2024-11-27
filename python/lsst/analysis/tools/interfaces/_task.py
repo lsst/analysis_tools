@@ -1,4 +1,5 @@
-# This file is part of analysis_tools.  #
+# This file is part of analysis_tools.
+#
 # Developed for the LSST Data Management System.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).

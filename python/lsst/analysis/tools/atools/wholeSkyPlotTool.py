@@ -128,6 +128,7 @@ class WholeSkyPlotTool(AnalysisTool):
             super().finalize()
 
     def validate(self):
+        super().validate()
         # Check that corners and tract are in the keys to load.
         if set(("corners", "tract")) - set(self.prep.keysToLoad):
             raise ValueError(f"'corners' and 'tract' must be in {self.prep.keysToLoad=}")

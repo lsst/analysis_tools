@@ -51,8 +51,8 @@ class WholeSkyPlot(PlotAction):
     The default axes limits and figure size were chosen to plot HSC PDR2.
     """
 
-    keyBands = ListField[str](doc="Band for each metric, if any.")
-    plotKeys = ListField[str](doc="Names of metrics to plot.")
+    keyBands = ListField[str](doc="Band for each metric, if any.", optional=True)
+    plotKeys = ListField[str](doc="Names of metrics to plot.", optional=True)
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)

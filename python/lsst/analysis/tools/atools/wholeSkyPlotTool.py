@@ -164,3 +164,5 @@ class WholeSkyPlotTool(AnalysisTool):
                 return found[0]
             else:
                 return ""
+
+        return ""

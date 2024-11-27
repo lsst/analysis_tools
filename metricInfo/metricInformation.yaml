@@ -1,3 +1,15 @@
+#  How to add a metric
+#
+#  myMetricName:
+#    lowThreshold:  # value the metric shouldn't usually go below
+#    highThreshold:  # value the metric shouldn't usually go above
+#    divergent:  # set true if you would use a divergent color map, i.e., above/below zero, to plot the metric
+#    plot:  # if relevant, butler-gettable plot or visualization to click through to (optional)
+#    debugGroup:  # label or tag within this file
+#    atoolsFile:  # analysis_tools/atools file where metric is defined for traceability
+#    description: |
+#        What the metric measures and why
+#
 #  PSF Metrics
 #  -----------
 #  E1 Metrics
@@ -111,6 +123,8 @@ e2Diff_g_lowSNStars_count:
     atoolsFile: shapes.py
     description: |
         The number of low SN stars used to calculate statistics in the g band
+
+# Shape Size Metrics
 shapeSizeFractionalDiff_g_highSNStars_median:
     lowThreshold: -0.01
     highThreshold: 0.01
@@ -120,8 +134,6 @@ shapeSizeFractionalDiff_g_highSNStars_median:
     atoolFile: shapes.py
     description: |
         The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
-
-# Shape Size Metrics
 shapeSizeFractionalDiff_g_highSNStars_sigmaMad:
     lowThreshold: 0.0
     highThreshold: 0.02
@@ -182,7 +194,7 @@ yPerpPSF_yPerp_psfFlux_median:
 yPerpPSF_yPerp_psfFlux_sigmaMAD:
     lowThreshold: 10
     highThreshold: 25
-    divergent: False
+    divergent: false
     plot: objectTableCore_yPerpPSF_ColorColorFitPlot
     debugGroup: stellarLocus
     atoolsFile: stellarLocus.py
@@ -224,3 +236,112 @@ xPerpPSF_xPerp_psfFlux_sigmaMAD:
     atoolsFile: stellarLocus.py
     description: |
         Sigma MAD of the x perp stellar locus width for psf fluxes
+
+#  Difference Imaging Metrics
+#  --------------------------
+# subtractImageTask metrics
+sciencePsfSize:
+    lowThreshold: 0.4
+    highThreshold: 3.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The FWHM of the science image PSF computed at its average position
+templatePsfSize:
+    lowThreshold: 0.4
+    highThreshold: 2.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The FWHM of the template image PSF computed at its average position
+templateCoveragePercent:
+    lowThreshold: 0.8
+    highThreshold: 1.0  # full coverage is ideal
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is covered by a template image
+diffimLimitingMagnitude:
+    lowThreshold: 10.0
+    highThreshold: 30.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The limiting magnitude of the difference image based on photometric zeropoint and average PSF FWHM
+scaleTemplateVarianceFactor:
+    lowThreshold: 0.9
+    highThreshold: 1.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The factor by which the template image variance plane was scaled
+scaleScienceVarianceFactor:
+    lowThreshold: 0.9
+    highThreshold: 1.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The factor by which the science image variance plane was scaled
+
+# detectAndMeasureTask metrics
+detected_mask_fraction:
+    lowThreshold: 0.01
+    highThreshold: 0.2  # higher is OK for crowded fields
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked DETECTED
+detected_negative_mask_fraction:
+    lowThreshold: 0.01
+    highThreshold: 0.2  # higher is OK for crowded fields
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked DETECTED_NEGATIVE
+streak_mask_fraction:
+    lowThreshold: 0  # it is OK if it is 0
+    highThreshold: 0.2
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked STREAK
+
+# general diaSource metrics
+ratioGoodToAllDiaSources:
+    lowThreshold: 0.2
+    highThreshold: 0.8
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diaSourceMetrics.py
+    description: |
+        The ratio of numGoodDiaSources/numAllDiaSources, where numGoodDiaSources is the number of diaSources
+        that do not have known bad/quality flags set true
+diaSourcesGoodVsBadRatio:
+    lowThreshold: 0.2
+    highThreshold: 0.8
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diaSourceMetrics.py
+    description: |
+        The ratio of the number of diaSources with high reliability (>0.9)
+        over the number of diaSources with low reliability (<0.1)

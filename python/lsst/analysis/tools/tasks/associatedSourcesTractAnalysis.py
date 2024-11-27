@@ -128,9 +128,6 @@ class AssociatedSourcesTractAnalysisConfig(
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
 
-    def setDefaults(self):
-        super().setDefaults()
-
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = AssociatedSourcesTractAnalysisConfig

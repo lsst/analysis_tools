@@ -167,18 +167,39 @@ class AnalysisBaseConnections(
                 names.update({name: action for name in outNames})
 
         # For each of the names found, create output connections.
-        for name in names:
+        for name, action in names.items():
             name = f"{outputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
                     f"Plot with name {name} conflicts with existing connection"
                     " are two plots named the same?"
                 )
+
+            if action.parameterizedBand and "band" not in self.dimensions:
+                # If band is in self.dimensions, but the bands still appear
+                # in the output names, then it is likely a user error or the
+                # user is intentional in having a pair-wise plot. So we will
+                # let the band names pass through in the else block. To avoid
+                # the band from appearing, parametrizedBand needs to be False.
+                multiple = True
+                dimensions = self.dimensions.union({"band"})
+                # Struct attributes have the structure
+                # {outputName}_{band}_{name}.
+                band_name = name.split(outputName, maxsplit=1)[1]  # _{band}_{name}.
+                # Limit the maximum split to 2 to avoid splitting the name
+                # that may contain underscores.
+                band, name = band_name.split("_", maxsplit=2)[1:]  # ["", band, name].
+                name = f"{outputName}_{name}"
+            else:
+                multiple = False
+                dimensions = self.dimensions
+
             outConnection = ct.Output(
                 name=name,
                 storageClass="Plot",
                 doc="Dynamic connection for plotting",
-                dimensions=self.dimensions,
+                dimensions=dimensions,
+                multiple=multiple,
             )
             setattr(self, name, outConnection)
 
@@ -454,7 +475,7 @@ class AnalysisPipelineTask(PipelineTask):
             raise RuntimeError("'data' is a required input connection, but is not defined.")
         data = self.loadData(inputData)
         outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
-        butlerQC.put(outputs, outputRefs)
+        self.putByBand(butlerQC, outputs, outputRefs)
 
     def putByBand(self, butlerQC: QuantumContext, outputs: Struct, outputRefs: OutputQuantizedConnection):
         """Handle the outputs by band.

@@ -154,7 +154,7 @@ class AnalysisBaseConnections(
 
         # Accumulate all the names to be used from all of the defined
         # AnalysisPlots.
-        names: list[str] = []
+        names: Mapping[str, AnalysisTool] = {}
         for action in config.atools:
             if action.dynamicOutputNames:
                 outNames = action.getOutputNames(config=config)
@@ -162,9 +162,9 @@ class AnalysisBaseConnections(
                 outNames = action.getOutputNames()
             if action.parameterizedBand:
                 for band in config.bands:
-                    names.extend(name.format(band=band) for name in outNames)
+                    names.update({name.format(band=band): action for name in outNames})
             else:
-                names.extend(outNames)
+                names.update({name: action for name in outNames})
 
         # For each of the names found, create output connections.
         for name in names:

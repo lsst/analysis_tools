@@ -28,25 +28,22 @@ __all__ = (
 import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
-from lsst.pex.config import Field
+from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
 
 class MakeMetricTableConnections(
     pipeBase.PipelineTaskConnections,
-    dimensions=("skymap",),
-    defaultTemplates={"metricBundleName": "objectTableCore_metrics"},
+    dimensions=(),
+    defaultTemplates={"metricBundleName": ""},
 ):
     data = ct.Input(
         doc="Metric bundle to read from the butler",
         name="{metricBundleName}",
         storageClass="MetricMeasurementBundle",
         deferLoad=True,
-        dimensions=(
-            "skymap",
-            "tract",
-        ),
+        dimensions=(),
         multiple=True,
     )
 
@@ -61,48 +58,67 @@ class MakeMetricTableConnections(
         doc="A summary table of all metrics by tract.",
         name="{metricBundleName}Table",
         storageClass="ArrowAstropy",
-        dimensions=("skymap",),
+        dimensions=(),
     )
 
     def __init__(self, *, config=None):
         super().__init__(config=config)
-        if config.loadMatchedVisitData:
-            self.data = ct.Input(
-                doc="Metric bundle to read from the butler.",
-                name=config.connections.metricBundleName,
-                storageClass="MetricMeasurementBundle",
-                deferLoad=True,
-                dimensions=(
-                    "instrument",
-                    "skymap",
-                    "tract",
-                ),
-                multiple=True,
-            )
+        self.data = ct.Input(
+            doc=self.data.doc,
+            name=self.data.name,
+            storageClass=self.data.storageClass,
+            deferLoad=self.data.deferLoad,
+            dimensions=frozenset(sorted(config.inputDataDimensions)),
+            multiple=self.data.multiple,
+        )
+        self.metricTable = ct.Output(
+            doc=self.metricTable.doc,
+            name=self.metricTable.name,
+            storageClass=self.metricTable.storageClass,
+            dimensions=frozenset(sorted(config.outputTableDimensions)),
+        )
+
+        assert config is not None, "Missing required config object."
+
+        if "tract" not in config.inputDataDimensions:
+            del self.skymap
+
+        self.dimensions.update(frozenset(sorted(config.outputTableDimensions)))
 
 
-class MakeMetricTableConfig(pipeBase.PipelineTaskConfig, pipelineConnections=MakeMetricTableConnections):
-    loadMatchedVisitData = Field[bool](
-        doc="Changes the input connection when true. Necessary because of dimension mismatches.",
-        default=False,
+class MakeMetricTableConfig(
+    pipeBase.PipelineTaskConfig,
+    pipelineConnections=MakeMetricTableConnections,
+):
+    inputDataDimensions = ListField[str](
+        doc="Dimensions of the input data.",
+        default=(),
+        optional=False,
+    )
+    outputTableDimensions = ListField[str](
+        doc="Dimensions of the output data.",
+        default=(),
+        optional=False,
+    )
+    dataIdFieldsToIncludeAsColumns = ListField[str](
+        doc="DataId fields to include as columns in the table. "
+        "These are added in addition to the Metric names. "
+        "At least one field must be specified.",
+        default=None,
+        optional=False,
     )
 
 
 class MakeMetricTableTask(pipeBase.PipelineTask):
-    """Turn metric bundles which are per tract into a
-    summary metric table.
-
-    TO DO: DM-44485 make sure this works for visit
-    level data as well.
-    """
+    """Turn metric bundles and combine them into a metric table."""
 
     ConfigClass = MakeMetricTableConfig
     _DefaultName = "makeMetricTable"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
-        """Take a metric bundle for all the tracts and
-        seperate it into different metrics then make it
-        into a table.
+        """Take a set of metric bundles, seperate each into its different
+        metrics, then put the values into a table with the metric names as
+        column headers.
 
         Parameters
         ----------
@@ -112,62 +128,76 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
         """
 
         inputs = butlerQC.get(inputRefs)
-        skymap = inputs["skymap"]
+        if "skymap" in inputs:
+            skymap = inputs["skymap"]
+        else:
+            skymap = None
 
-        # Make a list of tracts
-        tracts = []
+        # Extract the info from the dataIds that is needed
+        # to populate the requested columns.
+        fields = self.config.dataIdFieldsToIncludeAsColumns
+        dataIdInfo = []
         for data in inputRefs.data:
-            tracts.append(data.dataId["tract"])
+            dataIdInfo.append({field: data.dataId[field] for field in fields})
 
         metricBundles = []
         for inputHandle in inputs["data"]:
             metricBundles.append(inputHandle.get())
 
-        outputs = self.run(tracts, metricBundles, skymap)
+        outputs = self.run(dataIdInfo, metricBundles, skymap)
         butlerQC.put(outputs, outputRefs)
 
-    def run(self, tracts, metricBundles, skymap):
-        """Take the metric bundles and expand them out,
-        add the tract corner information and then make
-        a table of the information.
+    def run(self, dataIdInfo, metricBundles, skymap):
+        """Take the metric bundles and expand them out, then make a table of
+        the information. Add tract corner information if the bundles are
+        tract-level.
 
         Parameters
         ----------
-        tracts : `list`
-            A list of the tracts that the metricBundles cover
+        dataIdInfo : `list`
+            A list of dicts that hold information extracted from the metric
+            bundle dataIds.
         metricBundles : `list` of
             `lsst.analysis.tools.interfaces._metricMeasurementBundle.MetricMeasurementBundle`
         skymap : `lsst.skymap`
 
         Returns
         -------
-        tMetrics : `pipe.base.Struct` containing `astropy.table.Table`
+        metricTableStruct : `pipe.base.Struct` containing `astropy.table.Table`
         """
+
+        if len(dataIdInfo) == 0:
+            raise pipeBase.NoWorkFound("dataIdInfo list is empty")
+        if len(metricBundles) == 0:
+            raise pipeBase.NoWorkFound("metricBundles list is empty")
 
         # Make an initial dict of the columns needed
         metricsDict = {}
-        tract = tracts[0]
-        metricsDict["tract"] = [tract]
-        corners = self.getTractCorners(skymap, tract)
-        metricsDict["corners"] = [corners]
+        for key, value in dataIdInfo[0].items():
+            metricsDict[key] = [value]
 
-        # Add the metrics for the first tract to the dict
+        # Add tract corners if inputs are at the tract-level
+        if "tract" in self.config.inputDataDimensions:
+            corners = self.getTractCorners(skymap, dataIdInfo[0]["tract"])
+            metricsDict["corners"] = [corners]
+
+        # Add the metrics from the first bundle to the dict
         for name, metrics in metricBundles[0].items():
             for metric in metrics:
                 fullName = f"{name}_{metric.metric_name}"
                 metricValue = metric.quantity
                 metricsDict[fullName] = [metricValue]
 
-        # Go through the rest of the tracts and check
-        # if any additional columns are needed and add
-        # the values to the dict
-
+        # Check if any additional columns are needed; add to dict if needed.
         for i, metricBundle in enumerate(metricBundles[1:]):
-            tract = tracts[i + 1]
-            metricsDict["tract"].append(tract)
-            corners = self.getTractCorners(skymap, tract)
-            metricsDict["corners"].append(corners)
-            metricNames = ["tract", "corners"]
+            for key, value in dataIdInfo[i + 1].items():
+                metricsDict[key].append(value)
+
+            if "tract" in self.config.inputDataDimensions:
+                corners = self.getTractCorners(skymap, dataIdInfo[0]["tract"])
+                metricsDict["corners"].append(corners)
+
+            metricNames = list(metricsDict)
             for name, metrics in metricBundle.items():
                 for metric in metrics:
                     fullName = f"{name}_{metric.metric_name}"
@@ -176,19 +206,19 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                     if fullName in metricsDict.keys():
                         metricsDict[fullName].append(metricValue)
                     else:
-                        values = [np.nan] * (len(metricsDict["tract"]) - 1)
+                        values = [np.nan] * (len(metricsDict[metricNames[0]]) - 1)
                         values.append(metricValue)
                         metricsDict[fullName] = values
                     metricNames.append(fullName)
 
-            # If a metric that existed for a previous tract does
+            # If a metric that existed in a previous bundle does
             # not exist for this one then add a nan
             for metricName in metricsDict.keys():
                 if metricName not in metricNames:
                     metricsDict[metricName].append(np.nan)
 
-        tMetrics = pipeBase.Struct(metricTable=Table(metricsDict))
-        return tMetrics
+        metricTableStruct = pipeBase.Struct(metricTable=Table(metricsDict))
+        return metricTableStruct
 
     def getTractCorners(self, skymap, tract):
         """Calculate the corners of a tract, given  skymap.

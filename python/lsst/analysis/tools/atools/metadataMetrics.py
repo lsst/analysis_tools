@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MetadataMetricTool",)
+__all__ = ("MetadataMetricTool", "TaskMetadataMetricTool", )
 
 
 from lsst.pex.config import DictField, Field
@@ -30,6 +30,36 @@ from ..interfaces import AnalysisTool
 
 
 class MetadataMetricTool(AnalysisTool):
+    """This tool is designed to extract values from metadata of data products"""
+
+    parameterizedBand = Field[bool](
+        doc="Does this MetadataMetricTool support band as a name parameter?", default=False
+    )
+
+    metrics = DictField[str, str](
+        doc="The metrics to extract from the metadata and their respective units."
+    )
+
+    newNames = DictField[str, str](
+        doc="New names to allocate to the extracted metrics. Keys are the current "
+        "names, values are the new names.",
+        default=None,
+        optional=True,
+    )
+
+    def finalize(self):
+        for metric, unit in self.metrics.items():
+            validMetricName = metric.replace(" ", "_")
+            setattr(
+                self.process.filterActions, f"{validMetricName}", KeyedDataKeyAccessAction(topLevelKey="metadata_metrics")
+            )
+        self.produce.metric.units = dict(self.metrics.items())
+
+        if self.newNames is not None:
+            self.produce.metric.newNames = dict(self.newNames.items())
+
+
+class TaskMetadataMetricTool(AnalysisTool):
     """This tool is designed to extract values from task metadata"""
 
     parameterizedBand = Field[bool](

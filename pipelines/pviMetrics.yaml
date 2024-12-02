@@ -7,10 +7,11 @@ description: |
   file deleted once the Great Calibrate Refactor has completed.
 tasks:
   analyzeCalibrateImageMetadata:
-    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.taskName: calibrateImage
       connections.outputName: calibrateImage_metadata
+      isTaskMetadata: true
       metadataDimensions: ["instrument", "visit", "detector"]
       atools.calibrateImageMetadataMetrics: MetadataMetricTool
       atools.calibrateImageMetadataMetrics.taskName: calibrateImage

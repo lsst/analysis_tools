@@ -20,9 +20,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MetadataAnalysisConfig", "MetadataAnalysisTask")
+__all__ = ("MetadataAnalysisConfig", "TaskMetadataAnalysisTask", "DictTypeDatasetMetadataAnalysisTask")
 
-import lsst.pex.config
+from lsst.pex.config import Field, ListField
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -31,18 +31,12 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class MetadataAnalysisConnections(
     AnalysisBaseConnections,
     dimensions={"instrument", "exposure", "detector"},
-    defaultTemplates={"taskName": "isr"},
+    defaultTemplates={"taskName": "", "datasetType": "", "storageClass": ""},
 ):
-    data = connectionTypes.Input(
-        doc="Task metadata to load.",
-        name="{taskName}_metadata",
-        storageClass="TaskMetadata",
-        deferLoad=True,
-        dimensions={"instrument", "exposure", "detector"},
-    )
 
     def __init__(self, *, config=None):
-        """Customize the connections for a specific task's metadata.
+        """Customize the connections for a specific task's or dataset type's
+        metadata.
 
         Parameters
         ----------
@@ -50,31 +44,53 @@ class MetadataAnalysisConnections(
             A config for `MetadataMetricTask` or one of its subclasses.
         """
         super().__init__(config=config)
-        if config and config.metadataDimensions != self.data.dimensions:
+
+        if set(config.metadataDimensions) != self.dimensions:
             self.dimensions.clear()
             self.dimensions.update(config.metadataDimensions)
-            self.data = connectionTypes.Input(
-                name=self.data.name,
-                doc=self.data.doc,
-                storageClass=self.data.storageClass,
-                deferLoad=self.data.deferLoad,
-                dimensions=frozenset(config.metadataDimensions),
-            )
 
+        if config.isTaskMetadata:
+            if not config.connections.taskName:
+                raise ValueError("Task name must be set to use task metadata.")
+            if config.connections.datasetType or config.connections.storageClass:
+                raise ValueError("Dataset type and storage class are not used with task metadata.")
+            name = f"{config.connections.taskName}_metadata"
+            doc = "Task metadata to load."
+            storageClass = "TaskMetadata"
+        else:
+            if not config.connections.datasetType or not config.connections.storageClass:
+                raise ValueError("Dataset type and storage class must be set to use dataset metadata.")
+            if config.connections.taskName:
+                raise ValueError("Task name is not used with dataset metadata.")
+            name = f"{config.connections.datasetType}"
+            doc = "Input dataset type to load."
+            storageClass = f"{config.connections.storageClass}"
+
+        self.data = connectionTypes.Input(
+            doc=doc,
+            name=name,
+            storageClass=storageClass,
+            deferLoad=True,
+            dimensions=frozenset(config.metadataDimensions),
+        )
 
 class MetadataAnalysisConfig(
     AnalysisBaseConfig,
     pipelineConnections=MetadataAnalysisConnections,
 ):
-    metadataDimensions = lsst.pex.config.ListField(
+    isTaskMetadata = Field[bool](
+        doc="Whether to use task metadata instead of metadata from a dataset type.",
+        default=True,
+    )
+
+    metadataDimensions = ListField(
         # Sort to ensure default order is consistent between runs
         default=sorted(MetadataAnalysisConnections.dimensions),
         dtype=str,
         doc="Override for the dimensions of the input data.",
     )
 
-
-class MetadataAnalysisTask(AnalysisPipelineTask):
+class TaskMetadataAnalysisTask(AnalysisPipelineTask):
     ConfigClass = MetadataAnalysisConfig
     _DefaultName = "metadataAnalysis"
 
@@ -88,4 +104,27 @@ class MetadataAnalysisTask(AnalysisPipelineTask):
             taskName = taskName[: taskName.find("_")]
             raise NoWorkFound(f"No metadata entries for {taskName}.")
         outputs = self.run(data=metadata, plotInfo=plotInfo)
+        butlerQC.put(outputs, outputRefs)
+
+class DictTypeDatasetMetadataAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = MetadataAnalysisConfig
+    _DefaultName = "dictTypeMetadataAnalysis"
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        dataId = butlerQC.quantum.dataId
+        inputs = butlerQC.get(inputRefs)
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+        data = inputs["data"].get()
+
+        # Collect all the metrics that are configured to run.
+        metadata = {}
+        for name in self.config.atools.fieldNames:
+            atool = getattr(self.config.atools, name)
+            if hasattr(atool, "metrics"):
+                for metric in atool.metrics:
+                    metadata[metric] = data.metadata.get_dict(metric)
+                    if not metadata[metric]:
+                        raise NoWorkFound(f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}.")
+
+        outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

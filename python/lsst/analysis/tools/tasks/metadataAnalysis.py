@@ -33,7 +33,6 @@ class MetadataAnalysisConnections(
     dimensions={"instrument", "exposure", "detector"},
     defaultTemplates={"taskName": "", "datasetType": "", "storageClass": ""},
 ):
-
     def __init__(self, *, config=None):
         """Customize the connections for a specific task's or dataset type's
         metadata.
@@ -74,6 +73,7 @@ class MetadataAnalysisConnections(
             dimensions=frozenset(config.metadataDimensions),
         )
 
+
 class MetadataAnalysisConfig(
     AnalysisBaseConfig,
     pipelineConnections=MetadataAnalysisConnections,
@@ -90,6 +90,7 @@ class MetadataAnalysisConfig(
         doc="Override for the dimensions of the input data.",
     )
 
+
 class TaskMetadataAnalysisTask(AnalysisPipelineTask):
     ConfigClass = MetadataAnalysisConfig
     _DefaultName = "metadataAnalysis"
@@ -105,6 +106,7 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
             raise NoWorkFound(f"No metadata entries for {taskName}.")
         outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
+
 
 class DictTypeDatasetMetadataAnalysisTask(AnalysisPipelineTask):
     ConfigClass = MetadataAnalysisConfig
@@ -124,7 +126,9 @@ class DictTypeDatasetMetadataAnalysisTask(AnalysisPipelineTask):
                 for metric in atool.metrics:
                     metadata[metric] = data.metadata.get_dict(metric)
                     if not metadata[metric]:
-                        raise NoWorkFound(f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}.")
+                        raise NoWorkFound(
+                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}."
+                        )
 
         outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

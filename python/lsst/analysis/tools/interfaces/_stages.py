@@ -218,7 +218,7 @@ class BaseMetricAction(MetricAction):
         for key, unit in self.units.items():
             formattedKey = key.format(**kwargs)
             if formattedKey not in data:
-                raise ValueError(f"Key: {formattedKey} could not be found input data")
+                raise ValueError(f"Key: {formattedKey} could not be found in input data {data}")
             value = data[formattedKey]
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)

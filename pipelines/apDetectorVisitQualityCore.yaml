@@ -79,6 +79,19 @@ tasks:
         templateCoveragePercent: percent
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+  associationCore:
+    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    config:
+      connections.taskName: diaPipe
+      connections.outputName: diaPipe_metadata
+      metadataDimensions: ["instrument", "visit", "detector"]
+      atools.calexpMetadataMetrics: MetadataMetricTool
+      atools.calexpMetadataMetrics.taskName: diaPipe
+      atools.calexpMetadataMetrics.metrics:
+        nExpectedSsObjects: ct
+        nAssociatedSsObjects: ct
+      python: |
+        from lsst.analysis.tools.atools import MetadataMetricTool
   diffimTaskPlots:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
@@ -180,6 +193,7 @@ subsets:
       - analyzeAssocDiaSrcCore
       - analyzeTrailedDiaSrcCore
       - diffimTaskCore
+      - associationCore
       - diffimTaskPlots
       - initialPviCore
     description: >

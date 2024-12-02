@@ -338,9 +338,14 @@ class PropertyMapPlot(PlotAction):
                         extent=extent,
                         rcparams=rcparams,
                     )
-                    sp.draw_hspmap(mapData, zoom=zoom)
-                    sp.set_xlabel("RA")
-                    sp.set_ylabel("Dec")
+                    # Work around skyproj bug that will fail to zoom on empty
+                    # map.
+                    if mapData.n_valid == 0:
+                        sp.draw_hspmap(mapData, zoom=False)
+                    else:
+                        sp.draw_hspmap(mapData, zoom=zoom)
+                    sp.ax.set_xlabel("RA")
+                    sp.ax.set_ylabel("Dec")
                     cbar = sp.draw_colorbar(location="right", fraction=0.15, aspect=colorBarAspect, pad=0)
                     cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
                     cbarText = (

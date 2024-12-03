@@ -1,4 +1,5 @@
-# This file is part of analysis_tools.  #
+# This file is part of analysis_tools.
+#
 # Developed for the LSST Data Management System.
 # This product includes software developed by the LSST Project
 # (https://www.lsst.org).
@@ -153,7 +154,7 @@ class AnalysisBaseConnections(
 
         # Accumulate all the names to be used from all of the defined
         # AnalysisPlots.
-        names: list[str] = []
+        names: Mapping[str, AnalysisTool] = {}
         for action in config.atools:
             if action.dynamicOutputNames:
                 outNames = action.getOutputNames(config=config)
@@ -161,23 +162,44 @@ class AnalysisBaseConnections(
                 outNames = action.getOutputNames()
             if action.parameterizedBand:
                 for band in config.bands:
-                    names.extend(name.format(band=band) for name in outNames)
+                    names.update({name.format(band=band): action for name in outNames})
             else:
-                names.extend(outNames)
+                names.update({name: action for name in outNames})
 
         # For each of the names found, create output connections.
-        for name in names:
+        for name, action in names.items():
             name = f"{outputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
                     f"Plot with name {name} conflicts with existing connection"
                     " are two plots named the same?"
                 )
+
+            if action.parameterizedBand and "band" not in self.dimensions:
+                # If band is in self.dimensions, but the bands still appear
+                # in the output names, then it is likely a user error or the
+                # user is intentional in having a pair-wise plot. So we will
+                # let the band names pass through in the else block. To avoid
+                # the band from appearing, parametrizedBand needs to be False.
+                multiple = True
+                dimensions = self.dimensions.union({"band"})
+                # Struct attributes have the structure
+                # {outputName}_{band}_{name}.
+                band_name = name.split(outputName, maxsplit=1)[1]  # _{band}_{name}.
+                # Limit the maximum split to 2 to avoid splitting the name
+                # that may contain underscores.
+                band, name = band_name.split("_", maxsplit=2)[1:]  # ["", band, name].
+                name = f"{outputName}_{name}"
+            else:
+                multiple = False
+                dimensions = self.dimensions
+
             outConnection = ct.Output(
                 name=name,
                 storageClass="Plot",
                 doc="Dynamic connection for plotting",
-                dimensions=self.dimensions,
+                dimensions=dimensions,
+                multiple=multiple,
             )
             setattr(self, name, outConnection)
 
@@ -453,7 +475,48 @@ class AnalysisPipelineTask(PipelineTask):
             raise RuntimeError("'data' is a required input connection, but is not defined.")
         data = self.loadData(inputData)
         outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
-        butlerQC.put(outputs, outputRefs)
+        self.putByBand(butlerQC, outputs, outputRefs)
+
+    def putByBand(self, butlerQC: QuantumContext, outputs: Struct, outputRefs: OutputQuantizedConnection):
+        """Handle the outputs by band.
+
+        This is a convenience method to handle the case where the
+        PipelineTaskConnection had to instantiate multiple output connections
+        for plots to loop over bands.
+
+        Parameters
+        ----------
+        butlerQC : `~lsst.pipe.base.QuantumContext`
+            A butler which is specialized to operate in the context of a
+            `lsst.daf.butler.Quantum`.
+        outputs : `~lsst.pipe.base.Struct`
+            The accumulated results of all the plots and metrics produced by
+            the `run` method of this `PipelineTask`.
+        outputRefs : `OutputQuantizedConnection`
+            Datastructure whose attribute names are the names that identify
+            connections defined in corresponding `PipelineTaskConnections`
+            class. The values of these attributes are the
+            `lsst.daf.butler.DatasetRef` objects associated with the defined
+            output connections.
+        """
+        for outputRefName in outputRefs.keys():
+            if outputRefName == "metrics":
+                butlerQC.put(getattr(outputs, outputRefName), getattr(outputRefs, outputRefName))
+                continue
+
+            name = outputRefName.split(self.config.connections.outputName, maxsplit=1)[1]
+
+            datasetRef = getattr(outputRefs, outputRefName)
+            if hasattr(datasetRef, "__iter__"):
+                for outputRef in datasetRef:
+                    band = outputRef.dataId.get("band", "")
+                    # name would already have a leading underscore.
+                    newOutputName = f"{self.config.connections.outputName}_{band}{name}"
+                    if dataset := getattr(outputs, newOutputName, None):
+                        butlerQC.put(dataset, outputRef)
+            else:
+                if dataset := getattr(outputs, outputRefName, None):
+                    butlerQC.put(dataset, datasetRef)
 
     def _populatePlotInfoWithDataId(
         self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None

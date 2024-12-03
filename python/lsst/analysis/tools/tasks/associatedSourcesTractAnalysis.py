@@ -128,9 +128,6 @@ class AssociatedSourcesTractAnalysisConfig(
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
 
-    def setDefaults(self):
-        super().setDefaults()
-
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = AssociatedSourcesTractAnalysisConfig
@@ -295,4 +292,4 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
-        butlerQC.put(outputs, outputRefs)
+        self.putByBand(butlerQC, outputs, outputRefs)

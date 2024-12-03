@@ -505,7 +505,7 @@ class RelativeSizeResidualPlot(AnalysisTool):
 class EBase(AnalysisTool):
     """A base class for plotting ellipticity plots."""
 
-    def setDafaults(self):
+    def setDefaults(self):
         super().setDefaults()
 
         self.prep.selectors.snSelector = SnSelector()
@@ -529,7 +529,7 @@ class EBase(AnalysisTool):
 class EScatter(EBase):
     """Base class for ellipticity scatter plots."""
 
-    def setDafaults(self):
+    def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.xStars = ConvertFluxToMag()
@@ -551,7 +551,7 @@ class E1ScatterVisit(EScatter):
 
     parameterizedBand: bool = False
 
-    def setDafaults(self):
+    def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.yStarsAll = CalcE1(colXx="ixx", colYy="iyy", colXy="ixy")
@@ -573,7 +573,7 @@ class E2ScatterVisit(EScatter):
 
     parameterizedBand: bool = False
 
-    def setDafaults(self):
+    def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.yStarsAll = CalcE2(colXx="ixx", colYy="iyy", colXy="ixy")
@@ -611,7 +611,7 @@ class E1SkyVisit(ESky):
 
     parameterizedBand: bool = False
 
-    def setDafaults(self):
+    def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.zStars = CalcE1(colXx="ixx", colYy="iyy", colXy="ixy")

@@ -9,11 +9,11 @@ tasks:
   analyzeCalibrateImageMetadata:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.taskName: calibrateImage
-      connections.outputName: calibrateImage_metadata
-      isTaskMetadata: true
-      metadataDimensions: ["instrument", "visit", "detector"]
-      atools.calibrateImageMetadataMetrics: MetadataMetricTool
+      connections.inputName: calibrateImage_metadata
+      connections.outputName: calibrateImage_metadata_analysis
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.calibrateImageMetadataMetrics: TaskMetadataMetricTool
       atools.calibrateImageMetadataMetrics.taskName: calibrateImage
       atools.calibrateImageMetadataMetrics.metrics:
         initial_psf_positive_footprint_count: ct
@@ -56,4 +56,4 @@ tasks:
         numAvailStars: psf_available_star_count
         numGoodStars: psf_good_star_count
       python: |
-        from lsst.analysis.tools.atools import MetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool

@@ -11,12 +11,13 @@ tasks:
       atools.calexpSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
   analyzeCalibrateMetadata:
-    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.taskName: calibrate
-      connections.outputName: calibrate_metadata
-      metadataDimensions: ["instrument", "visit", "detector"]
-      atools.calexpMetadataMetrics: MetadataMetricTool
+      connections.inputName: calibrate_metadata
+      connections.outputName: calibrate_metadata_analysis
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.calexpMetadataMetrics: TaskMetadataMetricTool
       atools.calexpMetadataMetrics.taskName: calibrate
       atools.calexpMetadataMetrics.metrics:
         positive_footprint_count: ct
@@ -38,4 +39,4 @@ tasks:
         suspect_mask_fraction: ''
         unmaskednan_mask_fraction: ''
       python: |
-        from lsst.analysis.tools.atools import MetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool

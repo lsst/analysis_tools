@@ -21,7 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
-    "MetadataMetricTool",
+    "DatasetMetadataMetricTool",
     "TaskMetadataMetricTool",
 )
 
@@ -33,7 +33,7 @@ from ..interfaces import AnalysisTool
 
 
 class MetadataMetricTool(AnalysisTool):
-    """Tool designed to extract values from metadata of data products"""
+    """Base class for tools designed to extract values from metadata"""
 
     parameterizedBand = Field[bool](
         doc="Does this MetadataMetricTool support band as a name parameter?", default=False
@@ -48,12 +48,33 @@ class MetadataMetricTool(AnalysisTool):
         optional=True,
     )
 
+    @staticmethod
+    def makeValidAttributeName(name):
+        """Make a valid attribute name using a simple replacement."""
+        return name.replace(" ", "_")
+
+    def validate(self):
+        for metric in self.metrics.keys():
+            if not self.makeValidAttributeName(metric).isidentifier():
+                raise ValueError(
+                    f"{metric=} must be a valid identifier after replacing spaces with underscores."
+                )
+
+
+class DatasetMetadataMetricTool(MetadataMetricTool):
+    """Tool designed to extract values from metadata of data products"""
+
+    metricsStoredAsDict = DictField[str, bool](
+        doc="Whether metrics are stored as a dictionary using `set_dict()`.",
+        default=None,
+        optional=True,
+    )
+
     def finalize(self):
-        for metric, unit in self.metrics.items():
-            validMetricName = metric.replace(" ", "_")
+        for metric in self.metrics.keys():
             setattr(
                 self.process.filterActions,
-                f"{validMetricName}",
+                self.makeValidAttributeName(metric),
                 KeyedDataKeyAccessAction(topLevelKey="metadata_metrics"),
             )
         self.produce.metric.units = dict(self.metrics.items())
@@ -62,12 +83,8 @@ class MetadataMetricTool(AnalysisTool):
             self.produce.metric.newNames = dict(self.newNames.items())
 
 
-class TaskMetadataMetricTool(AnalysisTool):
+class TaskMetadataMetricTool(MetadataMetricTool):
     """This tool is designed to extract values from task metadata"""
-
-    parameterizedBand = Field[bool](
-        doc="Does this MetadataMetricTool support band as a name parameter?", default=False
-    )
 
     taskName = Field[str](
         doc="The name of the task to extract metadata from.",
@@ -83,25 +100,16 @@ class TaskMetadataMetricTool(AnalysisTool):
         optional=True,
     )
 
-    metrics = DictField[str, str](
-        doc="The metrics to extract from the task metadata and their respective units."
-    )
-
-    newNames = DictField[str, str](
-        doc="New names to allocate to the extracted metrics. Keys are the current "
-        "names, values are the new names.",
-        default=None,
-        optional=True,
-    )
-
     def finalize(self):
-        for metric, unit in self.metrics.items():
+        for metric in self.metrics.keys():
             if self.subTaskNames is not None and metric in self.subTaskNames:
                 taskFullName = f"{self.taskName}:{self.subTaskNames[metric]}"
             else:
                 taskFullName = self.taskName
             setattr(
-                self.process.filterActions, f"{metric}", KeyedDataKeyAccessAction(topLevelKey=taskFullName)
+                self.process.filterActions,
+                self.makeValidAttributeName(metric),
+                KeyedDataKeyAccessAction(topLevelKey=taskFullName),
             )
         self.produce.metric.units = dict(self.metrics.items())
 

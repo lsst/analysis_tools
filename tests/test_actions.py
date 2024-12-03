@@ -37,6 +37,7 @@ from lsst.analysis.tools.actions.scalar import (
 from lsst.analysis.tools.actions.vector import (
     CalcBinnedStatsAction,
     CalcMomentSize,
+    CalcRhoStatistics,
     ConvertFluxToMag,
     DownselectVector,
     ExtinctionCorrectedMagDiff,
@@ -190,8 +191,6 @@ class TestVectorActions(unittest.TestCase):
 
         for key, value in truth.items():
             self.assertEqual(result[key], value, key)
-
-    # def testCalcRhoStatistics(self): TODO: implement
 
     def testCalcMomentSize(self):
         xx = self.data["r_ixx"]
@@ -407,6 +406,75 @@ class TestVectorActions(unittest.TestCase):
     # def testPerGroupStatistic(self): TODO: implement
 
     # def testResidualWithPerGroupStatistic(self): TODO: implement
+
+
+class TestVectorRhoStats(unittest.TestCase):
+    """Test Rho stats"""
+
+    def setUp(self):
+        # generate data just for testCalcRhoStatistics.
+        np.random.seed(42)
+        sizeRho = 1000
+        size_src = np.random.normal(scale=1e-3, size=sizeRho)
+        e1_src = np.random.normal(scale=1e-3, size=sizeRho)
+        e2_src = np.random.normal(scale=1e-3, size=sizeRho)
+
+        size_psf = np.random.normal(scale=1e-3, size=sizeRho)
+        e1_psf = np.random.normal(scale=1e-3, size=sizeRho)
+        e2_psf = np.random.normal(scale=1e-3, size=sizeRho)
+
+        src_data = np.array(
+            [self.getMatrixElements(size, e1, e2) for size, e1, e2 in zip(size_src, e1_src, e2_src)]
+        )
+        psf_data = np.array(
+            [self.getMatrixElements(size, e1, e2) for size, e1, e2 in zip(size_psf, e1_psf, e2_psf)]
+        )
+
+        dataRhoStats = {
+            "coord_ra": np.random.uniform(-120, 120, sizeRho),
+            "coord_dec": np.random.uniform(-120, 120, sizeRho),
+            "r_ixx": src_data[:, 0],
+            "r_iyy": src_data[:, 1],
+            "r_ixy": src_data[:, 2],
+            "r_ixxPSF": psf_data[:, 0],
+            "r_iyyPSF": psf_data[:, 1],
+            "r_ixyPSF": psf_data[:, 2],
+        }
+
+        self.dataRhoStats = pd.DataFrame.from_dict(dataRhoStats)
+
+    # Needed for testCalcRhoStatistics.
+    @staticmethod
+    def getMatrixElements(size, e1, e2):
+        # puting guards just in case e1 or e2 are
+        # supprior to 1, but unlikely.
+        if abs(e1) >= 1:
+            e1 = 0
+        if abs(e2) >= 1:
+            e2 = 0
+        e = np.sqrt(e1**2 + e2**2)
+        q = (1 - e) / (1 + e)
+        phi = 0.5 * np.arctan2(e2, e1)
+        rot = np.array([[np.cos(phi), np.sin(phi)], [-np.sin(phi), np.cos(phi)]])
+        ell = np.array([[size**2, 0], [0, (size * q) ** 2]])
+        L = np.dot(rot.T, ell.dot(rot))
+        return [L[0, 0], L[1, 1], L[0, 1]]
+
+    def testCalcRhoStatistics(self):
+
+        # just check if runs
+        rho = CalcRhoStatistics()
+        rho.treecorr.nbins = 21
+        rho.treecorr.min_sep = 0.01
+        rho.treecorr.max_sep = 100.0
+        rho.treecorr.sep_units = "arcmin"
+        result = rho(self.dataRhoStats, band="r")
+        for rho in result:
+            if rho != "rho3alt":
+                self.assertEqual(np.sum(np.isfinite(result[rho].xip)), len(result[rho].xip))
+                self.assertEqual(np.sum(np.isfinite(result[rho].xim)), len(result[rho].xim))
+            else:
+                self.assertEqual(np.sum(np.isfinite(result[rho].xi)), len(result[rho].xi))
 
 
 class TestVectorSelectors(unittest.TestCase):

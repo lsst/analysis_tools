@@ -37,6 +37,7 @@ from healsparse.healSparseMap import HealSparseMap
 from lsst.analysis.tools.tasks.propertyMapAnalysis import PropertyMapSurveyWideAnalysisConfig
 from lsst.analysis.tools.tasks.propertyMapTractAnalysis import PropertyMapTractAnalysisConfig
 from lsst.skymap.tractInfo import ExplicitTractInfo
+from lsst.utils.plotting import make_figure
 from matplotlib.figure import Figure
 from matplotlib.legend_handler import HandlerTuple
 
@@ -752,7 +753,9 @@ class PropertyMapSurveyWidePlot(PlotAction):
 
         with plt.rc_context(rcparams):
             # The figsize should be decided based on the survey footprint.
-            fig, ax = plt.subplots(1, 1, figsize=(19, 7))
+            # fig, ax = plt.subplots(1, 1, figsize=(19, 7))
+            fig = make_figure(dpi=300)
+            ax = fig.add_subplot(111)
 
             # Leave some room at the top for plotInfo.
             fig.subplots_adjust(left=0.072, right=0.945, top=0.55)

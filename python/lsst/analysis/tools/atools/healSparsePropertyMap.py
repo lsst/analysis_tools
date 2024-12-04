@@ -53,3 +53,4 @@ class HealSparsePropertyMapTool(AnalysisTool):
         self.process.buildActions.data = LoadHealSparseMap()
         self.process.buildActions.data.mapKey = self._name.split(".")[1]
         self.produce.plot = PropertyMapSurveyWidePlot()
+        self.produce.plot.plotName = "Survey-Wide HealSparse Property Map"

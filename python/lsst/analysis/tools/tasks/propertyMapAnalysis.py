@@ -28,8 +28,13 @@ __all__ = [
 from typing import Any, Mapping, Union
 
 from lsst.daf.butler import DataCoordinate
-from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
-from lsst.pipe.base import connectionTypes as ct
+from lsst.pex.config import DictField
+from lsst.pipe.base import (
+    InputQuantizedConnection,
+    OutputQuantizedConnection,
+    QuantumContext,
+    connectionTypes,
+)
 from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -40,14 +45,14 @@ class PropertyMapSurveyWideAnalysisConnections(
     dimensions=("skymap", "band"),
     defaultTemplates={"outputName": "propertyMapSurvey"},
 ):
-    healSparsePropertyMapsConfig = ct.Input(
+    healSparsePropertyMapsConfig = connectionTypes.Input(
         doc="Configuration parameters for HealSparseInputMapTask in pipe_tasks.",
         name="healSparsePropertyMaps_config",
         storageClass="Config",
         dimensions=(),
     )
 
-    skymap = ct.Input(
+    skymap = connectionTypes.Input(
         doc="The skymap which the data has been mapped onto.",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
@@ -74,7 +79,7 @@ class PropertyMapSurveyWideAnalysisConnections(
             setattr(
                 self,
                 name,
-                ct.Input(
+                connectionTypes.Input(
                     doc=f"{operationLongName}-value consolidated map of {propertyName} for {coaddName} coadd",
                     name=name,
                     storageClass="HealSparseMap",
@@ -88,7 +93,14 @@ class PropertyMapSurveyWideAnalysisConnections(
 class PropertyMapSurveyWideAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=PropertyMapSurveyWideAnalysisConnections
 ):
-    pass
+    colorbarKwargs = DictField(
+        keytype=str,
+        itemtype=str,
+        doc="Keyword arguments to pass to the colorbar.",
+        default={"orientation": "horizontal", "location": "top", "cmap": "viridis"},
+    )
+    # TODO: Mixed types will be allowed after DM-47937. You can then add things
+    # like "aspect": 20, rather than just strings.
 
 
 class PropertyMapSurveyWideAnalysisTask(AnalysisPipelineTask):

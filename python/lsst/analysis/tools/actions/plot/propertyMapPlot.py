@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
 from healsparse.healSparseMap import HealSparseMap
-from lsst.analysis.tools.tasks.propertyMapSurveyAnalysis import PropertyMapSurveyWideAnalysisConfig
+from lsst.analysis.tools.tasks.propertyMapAnalysis import PropertyMapSurveyWideAnalysisConfig
 from lsst.analysis.tools.tasks.propertyMapTractAnalysis import PropertyMapTractAnalysisConfig
 from lsst.skymap.tractInfo import ExplicitTractInfo
 from matplotlib.figure import Figure
@@ -147,12 +147,6 @@ def addTextToColorbar(
     cbtext.set_path_effects(
         [mpl_path_effects.Stroke(linewidth=4, foreground="white", alpha=0.8), mpl_path_effects.Normal()]
     )
-
-
-def prettyPrintFloat(n):
-    if n.is_integer():
-        return str(int(n))
-    return str(n)
 
 
 class CustomHandler(HandlerTuple):
@@ -462,7 +456,9 @@ class PropertyMapPlot(PlotAction):
                     sp.ax.set_ylabel("Dec")
                     cbar = sp.draw_colorbar(location="right", fraction=0.15, aspect=colorBarAspect, pad=0)
                     cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-                    cbarText = "Full Tract" if zoomFactor is None else f"{prettyPrintFloat(zoomFactor)}x Zoom"
+                    cbarText = (
+                        "Full Tract" if zoomFactor is None else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                    )
                     addTextToColorbar(cbar, cbarText, color=histColor)
                     if zoomFactor is None:
                         # Save the skyproj object of the full-tract plot.
@@ -486,7 +482,7 @@ class PropertyMapPlot(PlotAction):
                         zoomText = spf.ax.text(
                             (x0 + x1) / 2,
                             y0,
-                            f"{prettyPrintFloat(zoomFactor)}x",
+                            f"{self.prettyPrintFloat(zoomFactor)}x",
                             color=histColor,
                             fontsize=14,
                             fontweight="bold",
@@ -537,7 +533,7 @@ class PropertyMapPlot(PlotAction):
                     zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
                 ):
                     weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
-                    histLabel = f"{prettyPrintFloat(zoomFactor)}x Zoom"
+                    histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
                     histValues = ax2.hist(
                         values[zidx],
                         bins=bins,
@@ -618,6 +614,12 @@ class PropertyMapPlot(PlotAction):
 
         return outputNames
 
+    @staticmethod
+    def prettyPrintFloat(n):
+        if n.is_integer():
+            return str(int(n))
+        return str(n)
+
 
 class PropertyMapSurveyWidePlot(PlotAction):
     plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
@@ -678,18 +680,19 @@ class PropertyMapSurveyWidePlot(PlotAction):
         geomText = f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., " f"NSIDE: {plotInfo['nside']}"
         infoText = f"\n{dataIdText}{mapText}"
 
-        fig.text(
-            0.04,
-            0.965,
+        titleBoxTopLeftCorner = (0.045, 0.89)
+        title = fig.text(
+            *titleBoxTopLeftCorner,
             f'{plotInfo["plotName"]}: {plotInfo["property"]}',
             fontsize=19,
             transform=fig.transFigure,
             ha="left",
             va="top",
         )
-        t = fig.text(
-            0.04,
-            0.942,
+        lineHeightFraction = title.get_fontsize() / (fig.get_size_inches()[1] * fig.dpi)
+        infoBoxTopLeftCorner = (titleBoxTopLeftCorner[0], titleBoxTopLeftCorner[1] - 1.8 * lineHeightFraction)
+        info = fig.text(
+            *infoBoxTopLeftCorner,
             f"{run}{tableType}{geomText}{infoText}",
             fontsize=15,
             transform=fig.transFigure,
@@ -697,7 +700,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
             ha="left",
             va="top",
         )
-        t.set_linespacing(1.4)
+        info.set_linespacing(1.4)
 
         return fig
 
@@ -728,15 +731,15 @@ class PropertyMapSurveyWidePlot(PlotAction):
 
         # 'plotName' defaults to the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
-        # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
-        # it will override this default.
+        # set in `~lsst.analysis.tools.atools.healSparsePropertyMap.
+        # HealSparsePropertyMapTool`, it will override this default.
         if self.plotName:
             # Set the plot name using 'produce.plot.plotName' from
-            # PropertyMapTool's instance.
+            # HealSparsePropertyMapTool's instance.
             plotInfo["plotName"] = self.plotName
 
         # Plotting customization.
-        colorbarTickLabelSize = 14
+        colorbarTickLabelSize = 16
         rcparams = {
             "axes.labelsize": 18,
             "axes.linewidth": 1.8,
@@ -748,8 +751,11 @@ class PropertyMapSurveyWidePlot(PlotAction):
         mapData = data["data"].get()
 
         with plt.rc_context(rcparams):
-            # Create the figure
-            fig, ax = plt.subplots(figsize=(20, 16))
+            # The figsize should be decided based on the survey footprint.
+            fig, ax = plt.subplots(1, 1, figsize=(19, 7))
+
+            # Leave some room at the top for plotInfo.
+            fig.subplots_adjust(left=0.072, right=0.945, top=0.55)
 
             # Get the values for the valid pixels of the full tract.
             values = mapData[mapData.valid_pixels]
@@ -776,9 +782,9 @@ class PropertyMapSurveyWidePlot(PlotAction):
                 ).replace("_", " ")
             plotInfo["coaddName"] = mapName.split("Coadd_")[0]
             plotInfo["operation"] = plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
-            propertyName = mapName[len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])].strip(
-                "_"
-            )
+            propertyName = mapName[
+                len(f"{plotInfo['coaddName']}Coadd_") : -len(f"consolidated_map_{plotInfo['operation']}")
+            ].strip("_")
             if not hasMetadata:
                 # Infer the property description from the map name (all
                 # lower case), and properly handle formatting.
@@ -800,19 +806,30 @@ class PropertyMapSurveyWidePlot(PlotAction):
                 .replace("E2", "e2")
             )
 
-            zoom = True
             sp = skyproj.GnomonicSkyproj(
                 ax=ax,
                 extent=None,
                 rcparams=rcparams,
             )
-            sp.draw_hspmap(mapData, zoom=zoom)
+            # Work around skyproj bug that will fail to zoom on empty map.
+            if mapData.n_valid == 0:
+                sp.draw_hspmap(mapData, zoom=False)
+            else:
+                sp.draw_hspmap(mapData, zoom=True)
             sp.ax.set_xlabel("RA")
             sp.ax.set_ylabel("Dec")
-            cbar = sp.draw_colorbar(location="top", fraction=0.1, aspect=20, pad=0)
-            unit = f" [{plotInfo['unit']}]" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
-            cbar.ax.set_xlabel(f"{plotInfo['property']}{unit}")
+
+            # In the below, colorbarKwargs takes precedence over hardcoded
+            # arguments in case of conflict.
+            cbar = sp.draw_colorbar(**{"location": "top", "pad": 0.2, **plotConfig.colorbarKwargs})
             cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
+            unit = f" [{plotInfo['unit']}]" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
+            cbarText = f"{plotInfo['property']}{unit}"
+            cbarLoc = plotConfig.colorbarKwargs["location"]
+            cbarOrientation = plotConfig.colorbarKwargs.get("orientation", None)
+            if cbarOrientation is None:
+                cbarOrientation = "vertical" if cbarLoc in ["right", "left"] else "horizontal"
+            addTextToColorbar(cbar, cbarText, color="#265D40", fontsize=16, orientation=cbarOrientation)
 
             # Add extra info to plotInfo.
             plotInfo["nside"] = mapData.nside_sparse

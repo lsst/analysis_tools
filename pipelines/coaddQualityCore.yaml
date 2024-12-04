@@ -123,10 +123,14 @@ tasks:
         config.properties["sky_background"].operations = ["weighted_mean"]
         config.properties["sky_noise"] = PropertyMapConfig
         config.properties["sky_noise"].operations = ["weighted_mean"]
-  plotPropertyMapSurvey:
+  plotPropertyMapSurveyWide:
     class: lsst.analysis.tools.tasks.PropertyMapSurveyWideAnalysisTask
     config:
-      connections.outputName: propertyMapSurvey
+      connections.outputName: propertyMapSurveyWide
+      colorbarKwargs:
+        location: top
+        cmap: viridis
+      # The entries in the 'atools' namespace must exactly match the dataset type.
       atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean: HealSparsePropertyMapTool
       atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean: HealSparsePropertyMapTool
       atools.deepCoadd_dcr_e1_consolidated_map_weighted_mean: HealSparsePropertyMapTool
@@ -142,4 +146,4 @@ tasks:
       atools.deepCoadd_sky_background_consolidated_map_weighted_mean: HealSparsePropertyMapTool
       atools.deepCoadd_sky_noise_consolidated_map_weighted_mean: HealSparsePropertyMapTool
       python: |
-        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.atools import HealSparsePropertyMapTool

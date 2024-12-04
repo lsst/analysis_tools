@@ -10,7 +10,7 @@ tasks:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: calibrateImage_metadata
-      connections.outputName: calibrateImage_metadata_analysis
+      connections.outputName: calibrateImage_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
       inputDimensions: ["instrument", "visit", "detector"]
       atools.calibrateImageMetadataMetrics: TaskMetadataMetricTool

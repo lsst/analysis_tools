@@ -21,7 +21,7 @@ tasks:
     class: lsst.analysis.tools.tasks.DatasetMetadataAnalysisTask
     config:
       connections.inputName: postISRCCD
-      connections.outputName: ampOffset_metadata_analysis
+      connections.outputName: ampOffset_metadata  # Will be appended with "_metrics"
       connections.storageClass: Exposure
       inputDimensions: ["instrument", "exposure", "detector"]
       atools.isrAmpInterfaceOffsetMetadataMetric: DatasetMetadataMetricTool

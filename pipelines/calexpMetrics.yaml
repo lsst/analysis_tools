@@ -14,7 +14,7 @@ tasks:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: calibrate_metadata
-      connections.outputName: calibrate_metadata_analysis
+      connections.outputName: calibrate_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
       inputDimensions: ["instrument", "visit", "detector"]
       atools.calexpMetadataMetrics: TaskMetadataMetricTool

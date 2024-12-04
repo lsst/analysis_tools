@@ -47,9 +47,12 @@ class MetadataAnalysisConnections(
             A config for analyzing task or dataset metadata with this
             connection.
         """
+        # The following must come before super().__init__ so the input
+        # dimensions are propagated into the output metric bundle by
+        # the base class __init__
+        self.dimensions = frozenset(config.inputDimensions)
         super().__init__(config=config)
 
-        self.dimensions = frozenset(config.inputDimensions)
         self.data = connectionTypes.Input(
             doc="Input dataset to extract metadata from.",
             name=config.connections.inputName,

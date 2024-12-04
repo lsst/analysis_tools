@@ -148,8 +148,7 @@ class PropertyMapSurveyWideAnalysisTask(AnalysisPipelineTask):
             tableName = inputs[connectionName].ref.datasetType.name
             plotInfo["tableNames"][connectionName] = tableName
 
-        # Add the dataId information where the band, skymap and tract are the
-        # same for all connections.
+        # Add the dataId information, same for all connections.
         self._populatePlotInfoWithDataId(plotInfo, dataId)
 
         return plotInfo

@@ -7,12 +7,13 @@ description: |
   file deleted once the Great Calibrate Refactor has completed.
 tasks:
   analyzeCalibrateImageMetadata:
-    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.taskName: calibrateImage
-      connections.outputName: calibrateImage_metadata
-      metadataDimensions: ["instrument", "visit", "detector"]
-      atools.calibrateImageMetadataMetrics: MetadataMetricTool
+      connections.inputName: calibrateImage_metadata
+      connections.outputName: calibrateImage_metadata  # Will be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.calibrateImageMetadataMetrics: TaskMetadataMetricTool
       atools.calibrateImageMetadataMetrics.taskName: calibrateImage
       atools.calibrateImageMetadataMetrics.metrics:
         initial_psf_positive_footprint_count: ct
@@ -55,4 +56,4 @@ tasks:
         numAvailStars: psf_available_star_count
         numGoodStars: psf_good_star_count
       python: |
-        from lsst.analysis.tools.atools import MetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool

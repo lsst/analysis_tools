@@ -6,13 +6,31 @@ tasks:
     config:
       connections.inputName: isr_metadata
       connections.outputName: isrAmpOffsetMetadata
-      atools.isrAmpOffsetMetadataMetric: MetadataMetricTool
+      atools.isrAmpOffsetMetadataMetric: TaskMetadataMetricTool
       atools.isrAmpOffsetMetadataMetric.parameterizedBand: false
       atools.isrAmpOffsetMetadataMetric.taskName: isr
       atools.isrAmpOffsetMetadataMetric.metrics:
-        # Format is "metric name in the metadata": units
+        # Format is "metric name in metadata: unit"
         AMPOFFSET_PEDESTALS: adu
       atools.isrAmpOffsetMetadataMetric.subTaskNames:
+        # Format is "metric name in metadata: subtask that produced it"
         AMPOFFSET_PEDESTALS: ampOffset
       python: |
-        from lsst.analysis.tools.atools import MetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
+  analyzeAmpInterfaceOffsetMetadata:
+    class: lsst.analysis.tools.tasks.DatasetMetadataAnalysisTask
+    config:
+      connections.inputName: postISRCCD
+      connections.outputName: ampOffset_metadata  # Will be appended with "_metrics"
+      connections.storageClass: Exposure
+      inputDimensions: ["instrument", "exposure", "detector"]
+      atools.isrAmpInterfaceOffsetMetadataMetric: DatasetMetadataMetricTool
+      atools.isrAmpInterfaceOffsetMetadataMetric.parameterizedBand: false
+      atools.isrAmpInterfaceOffsetMetadataMetric.metrics:
+        # Format is "metric name in metadata: unit"
+        "LSST ISR AMPOFFSET INTERFACEOFFSET": adu
+      atools.isrAmpInterfaceOffsetMetadataMetric.metricsStoredAsDict:
+        # Format is "metric name in metadata: bool"
+        "LSST ISR AMPOFFSET INTERFACEOFFSET": true
+      python: |
+        from lsst.analysis.tools.atools import DatasetMetadataMetricTool

@@ -20,9 +20,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("MetadataAnalysisConfig", "MetadataAnalysisTask")
+__all__ = (
+    "MetadataAnalysisConfig",
+    "DatasetMetadataAnalysisTask",
+    "TaskMetadataAnalysisTask",
+)
 
-import lsst.pex.config
+from lsst.pex.config import ListField
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -30,53 +34,79 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class MetadataAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions={"instrument", "exposure", "detector"},
-    defaultTemplates={"taskName": "isr"},
+    dimensions={},
+    defaultTemplates={"inputName": "", "outputName": "", "datasetType": "", "storageClass": ""},
 ):
-    data = connectionTypes.Input(
-        doc="Task metadata to load.",
-        name="{taskName}_metadata",
-        storageClass="TaskMetadata",
-        deferLoad=True,
-        dimensions={"instrument", "exposure", "detector"},
-    )
-
     def __init__(self, *, config=None):
-        """Customize the connections for a specific task's metadata.
+        """Customize the connections for a specific task's or dataset's
+        metadata.
 
         Parameters
         ----------
-        config : `MetadataMetricConfig`
-            A config for `MetadataMetricTask` or one of its subclasses.
+        config : `MetadataAnalysisConfig`
+            A config for analyzing task or dataset metadata with this
+            connection.
         """
+        # The following must come before super().__init__ so the input
+        # dimensions are propagated into the output metric bundle by
+        # the base class __init__
+        self.dimensions = frozenset(config.inputDimensions)
         super().__init__(config=config)
-        if config and config.metadataDimensions != self.data.dimensions:
-            self.dimensions.clear()
-            self.dimensions.update(config.metadataDimensions)
-            self.data = connectionTypes.Input(
-                name=self.data.name,
-                doc=self.data.doc,
-                storageClass=self.data.storageClass,
-                deferLoad=self.data.deferLoad,
-                dimensions=frozenset(config.metadataDimensions),
-            )
+
+        self.data = connectionTypes.Input(
+            doc="Input dataset to extract metadata from.",
+            name=config.connections.inputName,
+            storageClass=config.connections.storageClass,
+            deferLoad=True,
+            dimensions=self.dimensions,
+        )
 
 
 class MetadataAnalysisConfig(
     AnalysisBaseConfig,
     pipelineConnections=MetadataAnalysisConnections,
 ):
-    metadataDimensions = lsst.pex.config.ListField(
+    inputDimensions = ListField(
         # Sort to ensure default order is consistent between runs
         default=sorted(MetadataAnalysisConnections.dimensions),
         dtype=str,
-        doc="Override for the dimensions of the input data.",
+        doc="The dimensions of the input dataset.",
     )
 
 
-class MetadataAnalysisTask(AnalysisPipelineTask):
+class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
     ConfigClass = MetadataAnalysisConfig
-    _DefaultName = "metadataAnalysis"
+    _DefaultName = "datasetMetadataAnalysis"
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        dataId = butlerQC.quantum.dataId
+        inputs = butlerQC.get(inputRefs)
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+        data = inputs["data"].get()
+
+        # Collect all the metrics that are configured to run.
+        metadata = {}
+        for name in self.config.atools.fieldNames:
+            atool = getattr(self.config.atools, name)
+            if hasattr(atool, "metrics"):
+                for metric in atool.metrics:
+                    if atool.metricsStoredAsDict is not None and atool.metricsStoredAsDict.get(metric):
+                        metadata[metric] = data.metadata.get_dict(metric)
+                    else:
+                        metadata[metric] = data.metadata.get(metric)
+                    if not metadata[metric]:
+                        raise NoWorkFound(
+                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}. If "
+                            "you're sure the name is correct, check the `metricsStoredAsDict` config field."
+                        )
+
+        outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)
+        butlerQC.put(outputs, outputRefs)
+
+
+class TaskMetadataAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = MetadataAnalysisConfig
+    _DefaultName = "taskMetadataAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         dataId = butlerQC.quantum.dataId

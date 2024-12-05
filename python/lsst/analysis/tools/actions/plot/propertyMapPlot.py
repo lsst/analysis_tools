@@ -677,7 +677,10 @@ class PropertyMapSurveyWidePlot(PlotAction):
             f"Operation: {plotInfo['operation']}, "
             f"Coadd: {plotInfo['coaddName']}"
         )
-        geomText = f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., " f"NSIDE: {plotInfo['nside']}"
+        geomText = (
+            f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., "
+            + f"NSIDE: {plotInfo['nside']}, projection: {plotInfo['projection']}"
+        )
         infoText = f"\n{dataIdText}{mapText}"
 
         titleBoxTopLeftCorner = (0.045, 0.89)
@@ -811,16 +814,16 @@ class PropertyMapSurveyWidePlot(PlotAction):
                 .replace("E2", "e2")
             )
 
-            sp = skyproj.GnomonicSkyproj(
-                ax=ax,
-                extent=None,
-                rcparams=rcparams,
-            )
+            sp = getattr(skyproj, f"{plotConfig.projection}Skyproj")(ax=ax, rcparams=rcparams, **plotConfig.projectionKwargs)
+            if plotConfig.drawTissotIndicatrices:
+                sp.tissot_indicatrices()
             # Work around skyproj bug that will fail to zoom on empty map.
             if mapData.n_valid == 0:
+                if plotConfig.autozoom:
+                    _LOG.warning("No valid pixels found in the map. Auto zooming is disabled.")
                 sp.draw_hspmap(mapData, zoom=False)
             else:
-                sp.draw_hspmap(mapData, zoom=True)
+                sp.draw_hspmap(mapData, zoom=plotConfig.autozoom)
             sp.ax.set_xlabel("RA")
             sp.ax.set_ylabel("Dec")
 
@@ -837,6 +840,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
             addTextToColorbar(cbar, cbarText, color="#265D40", fontsize=16, orientation=cbarOrientation)
 
             # Add extra info to plotInfo.
+            plotInfo["projection"] = plotConfig.projection
             plotInfo["nside"] = mapData.nside_sparse
             plotInfo["valid_area"] = mapData.get_valid_area()
 

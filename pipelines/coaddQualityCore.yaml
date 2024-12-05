@@ -127,6 +127,13 @@ tasks:
     class: lsst.analysis.tools.tasks.PropertyMapSurveyWideAnalysisTask
     config:
       connections.outputName: propertyMapSurveyWide
+      projection: McBryde
+      projectionKwargs:
+        # lon_0 should be something close to the center
+        # (if it’s a sub-survey) or 0 (if it’s the full sky)
+        lon_0: 0
+      autozoom: true
+      drawTissotIndicatrices: false
       colorbarKwargs:
         location: top
         cmap: viridis

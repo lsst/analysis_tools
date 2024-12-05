@@ -28,7 +28,7 @@ __all__ = [
 from typing import Any, Mapping, Union
 
 from lsst.daf.butler import DataCoordinate
-from lsst.pex.config import DictField
+from lsst.pex.config import ChoiceField, DictField, Field
 from lsst.pipe.base import (
     InputQuantizedConnection,
     OutputQuantizedConnection,
@@ -93,6 +93,46 @@ class PropertyMapSurveyWideAnalysisConnections(
 class PropertyMapSurveyWideAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=PropertyMapSurveyWideAnalysisConnections
 ):
+    # Note: Gnomonic projection is excluded here because `GnomonicSkyproj` must
+    # have the central lon/lat set (defaults to 0/0) which makes it useful for
+    # plotting individual tracts but not for survey-wide maps.
+    projection = ChoiceField[str](
+        doc="The projection to use for plotting the map. "
+        "See https://skyproj.readthedocs.io/en/latest/projections.html",
+        default="McBryde",
+        allowed={
+            proj: proj
+            for proj in (
+                "McBryde",
+                "Mollweide",
+                "Cylindrical",
+                "Laea",
+                "Hammer",
+                "EqualEarth",
+                "ObliqueMollweide",
+                "Albers",
+            )
+        },
+    )
+
+    projectionKwargs = DictField(
+        keytype=str,
+        itemtype=float,
+        doc="Keyword arguments to use in the projection call, e.g. lon_0 and lat_0 .",
+        default={},
+    )
+
+    autozoom = Field[bool](
+        doc="Automatically zooms in on the RA/Dec range of the map to make better use of its resolution; "
+        "otherwise, the map is displayed within the full-sky domain.",
+        default=True,
+    )
+
+    drawTissotIndicatrices = Field[bool](
+        doc="Visualize distortions by drawing Tissot indicatrices on the map",
+        default=False,
+    )
+
     colorbarKwargs = DictField(
         keytype=str,
         itemtype=str,

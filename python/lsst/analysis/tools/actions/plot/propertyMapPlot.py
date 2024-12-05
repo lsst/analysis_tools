@@ -814,7 +814,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
                 .replace("E2", "e2")
             )
 
-            sp = getattr(skyproj, f"{plotConfig.projection}Skyproj")(ax=ax, rcparams=rcparams, **plotConfig.projectionKwargs)
+            sp = getattr(skyproj, f"{plotConfig.projection}Skyproj")(ax=ax, **plotConfig.projectionKwargs)
             if plotConfig.drawTissotIndicatrices:
                 sp.tissot_indicatrices()
             # Work around skyproj bug that will fail to zoom on empty map.

@@ -128,11 +128,6 @@ class PropertyMapSurveyWideAnalysisConfig(
         default=True,
     )
 
-    drawTissotIndicatrices = Field[bool](
-        doc="Visualize distortions by drawing Tissot indicatrices on the map",
-        default=False,
-    )
-
     colorbarKwargs = DictField(
         keytype=str,
         itemtype=str,

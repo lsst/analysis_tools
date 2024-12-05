@@ -133,7 +133,6 @@ tasks:
         # (if it’s a sub-survey) or 0 (if it’s the full sky)
         lon_0: 0
       autozoom: true
-      drawTissotIndicatrices: false
       colorbarKwargs:
         location: top
         cmap: viridis

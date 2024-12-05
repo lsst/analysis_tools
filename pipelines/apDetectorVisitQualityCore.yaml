@@ -80,18 +80,19 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import DiffimMetadataMetricTool
   associationCore:
-    class: lsst.analysis.tools.tasks.MetadataAnalysisTask
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.taskName: diaPipe
-      connections.outputName: diaPipe_metadata
-      metadataDimensions: ["instrument", "visit", "detector"]
-      atools.diaPipeMetadataMetrics: MetadataMetricTool
+      connections.inputName: diaPipe_metadata
+      connections.outputName: diaPipe_metadata  # Should be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.diaPipeMetadataMetrics: TaskMetadataMetricTool
       atools.diaPipeMetadataMetrics.taskName: diaPipe
       atools.diaPipeMetadataMetrics.metrics:
         numTotalSolarSystemObjects: ct
         numAssociatedSsObjects: ct
       python: |
-        from lsst.analysis.tools.atools import MetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
   diffimTaskPlots:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:

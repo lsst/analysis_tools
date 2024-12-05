@@ -37,6 +37,7 @@ from healsparse.healSparseMap import HealSparseMap
 from lsst.analysis.tools.tasks.propertyMapAnalysis import PropertyMapSurveyWideAnalysisConfig
 from lsst.analysis.tools.tasks.propertyMapTractAnalysis import PropertyMapTractAnalysisConfig
 from lsst.skymap.tractInfo import ExplicitTractInfo
+from matplotlib import rc_context
 from matplotlib.figure import Figure
 from matplotlib.legend_handler import HandlerTuple
 
@@ -372,7 +373,7 @@ class PropertyMapPlot(PlotAction):
         # zoomed-in maps.
         histColors = ["#265D40", "#8B0000", "#00008B"]
 
-        with plt.rc_context(rcparams):
+        with rc_context(rcparams):
             for mapName, mapDataHandle in data.items():
                 mapData = mapDataHandle.get()
                 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 16))
@@ -753,7 +754,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
         mapName = data["data"].ref.datasetType.name
         mapData = data["data"].get()
 
-        with plt.rc_context(rcparams):
+        with rc_context(rcparams):
             # The figsize should be decided based on the survey footprint.
             fig, ax = plt.subplots(1, 1, figsize=(19, 7))
             # TODO: DM-47962 replaces the slow plt code above with the lines

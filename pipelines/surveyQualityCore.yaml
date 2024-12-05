@@ -1,0 +1,33 @@
+description: |
+  Tier1 plots and metrics to assess survey-wide quality
+tasks:
+  plotPropertyMapSurveyWide:
+    class: lsst.analysis.tools.tasks.PropertyMapSurveyWideAnalysisTask
+    config:
+      connections.outputName: propertyMapSurveyWide
+      projection: McBryde
+      projectionKwargs:
+        # lon_0 should be something close to the center
+        # (if it’s a sub-survey) or 0 (if it’s the full sky)
+        lon_0: 0
+      autozoom: true
+      colorbarKwargs:
+        location: top
+        cmap: viridis
+      # The entries in the 'atools' namespace must exactly match the dataset type.
+      atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_e1_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_dcr_e2_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_min: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_max: HealSparsePropertyMapTool
+      atools.deepCoadd_epoch_consolidated_map_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_exposure_time_consolidated_map_sum: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_e1_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_e2_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_psf_size_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_sky_background_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      atools.deepCoadd_sky_noise_consolidated_map_weighted_mean: HealSparsePropertyMapTool
+      python: |
+        from lsst.analysis.tools.atools import HealSparsePropertyMapTool

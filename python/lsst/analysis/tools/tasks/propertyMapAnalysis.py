@@ -35,7 +35,6 @@ from lsst.pipe.base import (
     QuantumContext,
     connectionTypes,
 )
-from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -45,20 +44,6 @@ class PropertyMapSurveyWideAnalysisConnections(
     dimensions=("skymap", "band"),
     defaultTemplates={"outputName": "propertyMapSurvey"},
 ):
-    healSparsePropertyMapsConfig = connectionTypes.Input(
-        doc="Configuration parameters for HealSparseInputMapTask in pipe_tasks.",
-        name="healSparsePropertyMaps_config",
-        storageClass="Config",
-        dimensions=(),
-    )
-
-    skymap = connectionTypes.Input(
-        doc="The skymap which the data has been mapped onto.",
-        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
-        storageClass="SkyMap",
-        dimensions=("skymap",),
-    )
-
     def __init__(self, *, config=None):
         super().__init__(config=config)
 
@@ -199,8 +184,6 @@ class PropertyMapSurveyWideAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         dataId = butlerQC.quantum.dataId
 
-        data = {k: v for k, v in inputs.items() if k not in {"skymap", "healSparsePropertyMapsConfig"}}
-
-        plotInfo = self.parsePlotInfo(inputs, dataId, list(data.keys()))
-        outputs = self.run(data=data, plotConfig=self.config, plotInfo=plotInfo)
+        plotInfo = self.parsePlotInfo(inputs, dataId, list(inputs.keys()))
+        outputs = self.run(data=inputs, plotConfig=self.config, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

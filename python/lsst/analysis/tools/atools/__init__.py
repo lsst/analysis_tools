@@ -21,6 +21,7 @@ from .genericMetricAction import *
 from .genericPlotAction import *
 from .genericPrep import *
 from .genericProduce import *
+from .healSparsePropertyMap import *
 from .limitingMagnitudeMetric import *
 from .magDiff import *
 from .metadataMetrics import *

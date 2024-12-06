@@ -381,13 +381,12 @@ class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
 
         # The entries in the 'atools' namespace must exactly match the dataset
         # type.
-        config.atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
-        config.atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
+        config.atools.deepCoadd_exposure_time_consolidated_map_sum = HealSparsePropertyMapTool()
+        config.atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
+        config.atools.goodSeeingCoadd_dcr_dra_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
 
         # Generate a list of dataset type names.
-        names = []
-        for mapName in config.atools.fieldNames:
-            names.append(mapName)
+        names = [name for name in config.atools.fieldNames]
 
         # Mock up corresponding HealSparseMaps and register them with the
         # butler.

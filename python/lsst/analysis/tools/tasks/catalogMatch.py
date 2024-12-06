@@ -121,6 +121,11 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
         },
     )
 
+    idColumn = pexConfig.Field[str](
+        doc="Unique ID column for the target catalog.",
+        default="objectId",
+    )
+
     extraColumns = pexConfig.ListField[str](
         doc="Other catalog columns to persist to downstream tasks",
         default=["x", "y", "patch", "ebv"],
@@ -332,6 +337,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         columns = (
             [
+                self.config.idColumn,
                 self.config.targetRaColumn,
                 self.config.targetDecColumn,
             ]

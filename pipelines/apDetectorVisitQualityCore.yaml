@@ -91,6 +91,21 @@ tasks:
       atools.diaPipeMetadataMetrics.metrics:
         numTotalSolarSystemObjects: ct
         numAssociatedSsObjects: ct
+      atools.diaPipeTimingMetrics: TaskMetadataMetricTool
+      atools.diaPipeTimingMetrics.taskName: diaPipe
+      atools.diaPipeTimingMetrics.metrics:
+        visit_midpoint: s
+        produce_end_timestamp: s
+        produce_start_timestamp: s
+        alert_timing_since_shutter_close: s
+        total_alerts: ct
+      atools.diaPipeTimingMetrics.subTaskNames:
+        # Format is "metric name in metadata: subtask that produced it"
+        visit_midpoint: alertPackager
+        produce_end_timestamp: alertPackager
+        produce_start_timestamp: alertPackager
+        alert_timing_since_shutter_close: alertPackager
+        total_alerts: alertPackager
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   diffimTaskPlots:

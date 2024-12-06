@@ -156,6 +156,7 @@ class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
     def setDefaults(self):
+        self.idColumn = "sourceId"
         self.matchesRefCat = True
         self.filterNames = []
         self.extraPerBandColumns = []
@@ -212,7 +213,8 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
 
         # No bands needed for visit tables
         # but we do need them later for the matching
-        columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()
+        columns = [self.config.idColumn, "coord_ra", "coord_dec", "detector"]
+        columns.extend(self.config.extraColumns)
         for selectorAction in [
             self.config.selectorActions,
             self.config.sourceSelectorActions,

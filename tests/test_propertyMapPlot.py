@@ -27,7 +27,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
+from lsst.analysis.tools.atools.healSparsePropertyMap import HealSparsePropertyMapTool
 from lsst.analysis.tools.atools.propertyMap import PropertyMapTool
+from lsst.analysis.tools.tasks.propertyMapAnalysis import (
+    PropertyMapSurveyWideAnalysisConfig,
+    PropertyMapSurveyWideAnalysisTask,
+)
 from lsst.analysis.tools.tasks.propertyMapTractAnalysis import (
     PropertyMapConfig,
     PropertyMapTractAnalysisConfig,
@@ -342,6 +347,92 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
             )
 
         self.assertTrue(len(errors) == 0, msg="\n" + "\n".join(errors))
+
+
+class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
+    """PropertyMapTractAnalysisTask test case.
+
+    Notes
+    -----
+    This is a basic functionality test to verify the internal workings of the
+    task.
+    """
+
+    def setUp(self):
+        # Create a temporary directory to test in.
+        self.testDir = makeTestTempDir(ROOT)
+
+        # Create a butler in the test directory.
+        Butler.makeRepo(self.testDir)
+        butler = Butler(self.testDir, run="testrun")
+
+        # Make a dummy dataId.
+        dataId = {"band": "i", "skymap": "hsc_rings_v1", "tract": 1915}
+        dataId = DataCoordinate.standardize(dataId, universe=butler.dimensions)
+
+        # Configure the maps to be plotted.
+        config = PropertyMapSurveyWideAnalysisConfig()
+
+        # Set configurations sent to skyproj.
+        config.autozoom = True
+        config.projection = "Mollweide"
+        config.projectionKwargs = {"celestial": True, "gridlines": True, "lon_0": 0}
+        config.colorbarKwargs = {"location": "top", "cmap": "viridis"}
+
+        # The entries in the 'atools' namespace must exactly match the dataset
+        # type.
+        config.atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
+        config.atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
+
+        # Generate a list of dataset type names.
+        names = []
+        for mapName in config.atools.fieldNames:
+            names.append(mapName)
+
+        # Mock up corresponding HealSparseMaps and register them with the
+        # butler.
+        inputs = {}
+        for name, value in zip(names, np.linspace(1, 10, len(names))):
+            hspMap = hsp.HealSparseMap.make_empty(nside_coverage=32, nside_sparse=4096, dtype=np.float32)
+            hspMap[0:10000] = value
+            hspMap[100000:110000] = value + 1
+            hspMap[500000:510000] = value + 2
+            datasetType = DatasetType(name, [], "HealSparseMap", universe=butler.dimensions)
+            butler.registry.registerDatasetType(datasetType)
+            dataRef = butler.put(hspMap, datasetType)
+            # Keys in inputs are designed to reflect the task's connection
+            # names.
+            inputs[name] = DeferredDatasetHandle(butler=butler, ref=dataRef, parameters=None)
+
+        # Initialize the task and set class attributes for subsequent use.
+        task = PropertyMapSurveyWideAnalysisTask()
+        self.config = config
+        self.plotInfo = task.parsePlotInfo(inputs, dataId, list(inputs.keys()))
+        self.data = inputs
+
+        for tool in self.config.atools:
+            tool.finalize()
+
+    def tearDown(self):
+        del self.data
+        del self.config
+        del self.plotInfo
+        removeTestTempDir(self.testDir)
+        del self.testDir
+
+    def test_PropertyMapSurveyWideAnalysisTask(self):
+        plt.rcParams.update(plt.rcParamsDefault)
+        for tool in self.config.atools:
+            # Run the task via butler using the tool.
+            result = tool(data=self.data, plotConfig=self.config, plotInfo=self.plotInfo)
+            key = tool.process.buildActions.data.mapKey + "_PropertyMapSurveyWidePlot"
+            fig = result[key]
+
+            # Check that the output is a matplotlib figure.
+            self.assertTrue(isinstance(fig, plt.Figure), msg=f"Figure {key} is not a matplotlib figure.")
+
+            # Assert the number of axes in the figure. At least not empty.
+            self.assertEqual(len(fig.axes), 3)
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):

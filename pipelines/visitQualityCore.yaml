@@ -4,6 +4,7 @@ tasks:
   analyzeSourceTableCore:
     class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
     config:
+      connections.inputName: sourceTable_visit
       connections.outputName: sourceTableCore
       atools.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
       atools.skyFluxVisitStatisticMetric.applyContext: VisitContext

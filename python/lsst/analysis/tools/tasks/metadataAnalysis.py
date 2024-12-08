@@ -90,14 +90,19 @@ class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
             atool = getattr(self.config.atools, name)
             if hasattr(atool, "metrics"):
                 for metric in atool.metrics:
-                    if atool.metricsStoredAsDict is not None and atool.metricsStoredAsDict.get(metric):
-                        metadata[metric] = data.metadata.get_dict(metric)
+                    # Check if the metric uses base key prefixes.
+                    if atool.metricsPrefixedWithBaseKeys.get(metric):
+                        # Find all keys prefixed with the base key and collect
+                        # them in a dictionary.
+                        metadata[metric] = {k: v for k, v in data.metadata.items() if k.startswith(metric)}
                     else:
+                        # Retrieve the metric directly if it's not prefixed.
                         metadata[metric] = data.metadata.get(metric)
+                    # Check if the retrieved metadata is empty.
                     if not metadata[metric]:
                         raise NoWorkFound(
-                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}. If "
-                            "you're sure the name is correct, check the `metricsStoredAsDict` config field."
+                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}, "
+                            f"or it is not one of {data.metadata.getOrderedNames()}."
                         )
 
         outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)

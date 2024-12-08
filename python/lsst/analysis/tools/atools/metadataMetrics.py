@@ -64,8 +64,10 @@ class MetadataMetricTool(AnalysisTool):
 class DatasetMetadataMetricTool(MetadataMetricTool):
     """Tool designed to extract values from metadata of data products"""
 
-    metricsStoredAsDict = DictField[str, bool](
-        doc="Whether metrics are stored as a dictionary using `set_dict()`.",
+    metricsPrefixedWithBaseKeys = DictField[str, bool](
+        doc="Whether metrics are prefixed with base keys. For each key (a metric name or base key), "
+        "the corresponding boolean value specifies if the metric should be extracted using the base "
+        "key as a prefix.",
         default=None,
         optional=True,
     )

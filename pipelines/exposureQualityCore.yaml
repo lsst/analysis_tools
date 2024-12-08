@@ -29,7 +29,7 @@ tasks:
       atools.isrAmpInterfaceOffsetMetadataMetric.metrics:
         # Format is "metric name in metadata: unit"
         "LSST ISR AMPOFFSET INTERFACEOFFSET": adu
-      atools.isrAmpInterfaceOffsetMetadataMetric.metricsStoredAsDict:
+      atools.isrAmpInterfaceOffsetMetadataMetric.metricsPrefixedWithBaseKeys:
         # Format is "metric name in metadata: bool"
         "LSST ISR AMPOFFSET INTERFACEOFFSET": true
       python: |

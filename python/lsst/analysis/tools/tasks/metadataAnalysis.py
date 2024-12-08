@@ -26,6 +26,8 @@ __all__ = (
     "TaskMetadataAnalysisTask",
 )
 
+import json
+
 from lsst.pex.config import ListField
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
@@ -90,14 +92,14 @@ class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
             atool = getattr(self.config.atools, name)
             if hasattr(atool, "metrics"):
                 for metric in atool.metrics:
-                    if atool.metricsStoredAsDict is not None and atool.metricsStoredAsDict.get(metric):
-                        metadata[metric] = data.metadata.get_dict(metric)
+                    if atool.metricsSerializedWithJSON is not None:
+                        metadata[metric] = json.loads(data.metadata.get(metric))
                     else:
                         metadata[metric] = data.metadata.get(metric)
                     if not metadata[metric]:
                         raise NoWorkFound(
-                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}. If "
-                            "you're sure the name is correct, check the `metricsStoredAsDict` config field."
+                            f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}, "
+                            f"or it is not one of {data.metadata.getOrderedNames()}."
                         )
 
         outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)

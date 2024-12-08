@@ -64,11 +64,10 @@ class MetadataMetricTool(AnalysisTool):
 class DatasetMetadataMetricTool(MetadataMetricTool):
     """Tool designed to extract values from metadata of data products"""
 
-    metricsSerializedWithJSON = DictField[str, bool](
-        doc="Whether metrics are serialized with JSON using `json.dumps()`. "
-        "For each key (a metric name), the corresponding boolean value specifies "
-        "whether the metric is serialized with JSON. If True, the value will be "
-        "deserialized using `json.loads()`. ",
+    metricsPrefixedWithBaseKeys = DictField[str, bool](
+        doc="Whether metrics are prefixed with base keys. For each key (a metric name or base key), "
+        "the corresponding boolean value specifies if the metric should be extracted using the base "
+        "key as a prefix.",
         default=None,
         optional=True,
     )

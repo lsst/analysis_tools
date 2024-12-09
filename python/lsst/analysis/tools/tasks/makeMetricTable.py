@@ -185,7 +185,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
         for name, metrics in metricBundles[0].items():
             for metric in metrics:
                 fullName = f"{name}_{metric.metric_name}"
-                metricValue = metric.quantity
+                metricValue = metric.quantity.value
                 metricsDict[fullName] = [metricValue]
 
         # Check if any additional columns are needed; add to dict if needed.
@@ -201,7 +201,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
             for name, metrics in metricBundle.items():
                 for metric in metrics:
                     fullName = f"{name}_{metric.metric_name}"
-                    metricValue = metric.quantity
+                    metricValue = metric.quantity.value
                     # Check if the metric already exists in the output
                     if fullName in metricsDict.keys():
                         metricsDict[fullName].append(metricValue)

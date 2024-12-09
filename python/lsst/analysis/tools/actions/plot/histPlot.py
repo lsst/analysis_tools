@@ -274,7 +274,7 @@ class HistPlot(PlotAction):
 
         # set up figure
         fig = make_figure(dpi=300)
-        hist_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[3, 1])
+        hist_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[2.9, 1.1])
         axs, ncols, nrows = self._makeAxes(hist_fig)
 
         # loop over each panel; plot histograms
@@ -289,7 +289,7 @@ class HistPlot(PlotAction):
             if nth_panel == 0 and nrows * ncols - len(self.panels) > 0:
                 nth_col -= 1
             # Set font size for legend based on number of panels being plotted.
-            legend_font_size = max(4, int(8 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
+            legend_font_size = max(4, int(7 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
             nums, meds, mads, stats_dict = self._makePanel(
                 data,
                 panel,
@@ -608,12 +608,16 @@ class HistPlot(PlotAction):
         legend_labels = (
             ([""] * (len(handles) + 1))
             + [stats_dict["statLabels"][0]]
-            + [f"{x:.3g}" for x in stats_dict["stat1"]]
+            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat1"]]
             + [stats_dict["statLabels"][1]]
-            + [f"{x:.3g}" for x in stats_dict["stat2"]]
+            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat2"]]
             + [stats_dict["statLabels"][2]]
-            + [f"{x:.3g}" for x in stats_dict["stat3"]]
+            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat3"]]
         )
+        # Replace "e+0" with "e" and "e-0" with "e-" to save space.
+        legend_labels = [label.replace("e+0", "e") for label in legend_labels]
+        legend_labels = [label.replace("e-0", "e-") for label in legend_labels]
+
         # Set the y anchor for the legend such that it roughly lines up with
         # the panels.
         yAnchor = max(0, yAnchor0 - 0.01) + nth_col * (0.008 + len(nums) * 0.005) * legend_font_size

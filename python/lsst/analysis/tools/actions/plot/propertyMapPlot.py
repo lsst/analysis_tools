@@ -434,25 +434,31 @@ class PropertyMapPlot(PlotAction):
                 )
 
                 nBinsHist = plotConfig.properties[propertyName].nBinsHist
-                fullExtent = None
+
+                ctr_lon = tractInfo.ctr_coord.getRa().asDegrees()
+                ctr_lat = tractInfo.ctr_coord.getDec().asDegrees()
+                box = tractInfo.getOuterSkyPolygon().getBoundingBox()
+                width = box.getWidth().asDegrees()
+                height = box.getHeight().asDegrees()
+                fullExtent = [
+                    ctr_lon - width / 2.0,
+                    ctr_lon + width / 2.0,
+                    ctr_lat - height / 2.0,
+                    ctr_lat + height / 2.0,
+                ]
+
                 zoomIdx = []
-                for ax, zoom, zoomFactor, histColor in zip(
-                    [ax1, ax3, ax4], [True, False, False], [None, *zoomFactors], histColors
-                ):
+                for ax, zoomFactor, histColor in zip([ax1, ax3, ax4], [1.0, *zoomFactors], histColors):
                     extent = getZoomedExtent(fullExtent, zoomFactor)
+
                     sp = skyproj.GnomonicSkyproj(
                         ax=ax,
-                        lon_0=tractInfo.ctr_coord.getRa().asDegrees(),
-                        lat_0=tractInfo.ctr_coord.getDec().asDegrees(),
+                        lon_0=ctr_lon,
+                        lat_0=ctr_lat,
                         extent=extent,
-                        rcparams=rcparams,
                     )
-                    # Work around skyproj bug that will fail to zoom on empty
-                    # map.
-                    if mapData.n_valid == 0:
-                        sp.draw_hspmap(mapData, zoom=False)
-                    else:
-                        sp.draw_hspmap(mapData, zoom=zoom)
+                    sp.draw_hspmap(mapData, zoom=False)
+
                     sp.ax.set_xlabel("RA")
                     sp.ax.set_ylabel("Dec")
                     cbar = sp.draw_colorbar(location="right", fraction=0.15, aspect=colorBarAspect, pad=0)
@@ -461,12 +467,10 @@ class PropertyMapPlot(PlotAction):
                         "Full Tract" if zoomFactor is None else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
                     )
                     addTextToColorbar(cbar, cbarText, color=histColor)
-                    if zoomFactor is None:
-                        # Save the skyproj object of the full-tract plot.
-                        # Will be used in drawing zoom rectangles etc.
+                    if zoomFactor == 1.0:
+                        # Store the "full tract" map so that we can overplot
+                        # the zoom rectangles.
                         spf = sp
-                        # Get the extent of the full tract.
-                        fullExtent = spf.get_extent()
                     else:
                         # Create a rectangle for the zoomed-in region.
                         x0, x1, y0, y1 = extent

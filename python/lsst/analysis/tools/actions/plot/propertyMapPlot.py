@@ -419,16 +419,16 @@ class PropertyMapPlot(PlotAction):
                         propertyName.replace("_", " ")
                         .replace("psf", "PSF")
                         .replace("dcr", "DCR")
-                        .replace("dra", "delta-RA")
-                        .replace("ddec", "delta-Dec")
+                        .replace("dra", r"$\Delta$RA")
+                        .replace("ddec", r"$\Delta$Dec")
                     )
                 plotInfo["property"] = (
                     propertyName.replace("_", " ")
                     .title()  # Capitalize and handle edge cases below.
                     .replace("Psf", "PSF")
                     .replace("Dcr", "DCR")
-                    .replace("Dra", "delta-RA")
-                    .replace("Ddec", "delta-Dec")
+                    .replace("Dra", r"$\Delta$RA")
+                    .replace("Ddec", r"$\Delta$Dec")
                     .replace("E1", "e1")
                     .replace("E2", "e2")
                 )
@@ -691,7 +691,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
         titleBoxTopLeftCorner = (0.045, 0.89)
         title = fig.text(
             *titleBoxTopLeftCorner,
-            f'{plotInfo["plotName"]}: {plotInfo["property"]}',
+            f'{plotInfo["plotName"]} of {plotInfo["property"]}',
             fontsize=19,
             transform=fig.transFigure,
             ha="left",
@@ -805,16 +805,16 @@ class PropertyMapSurveyWidePlot(PlotAction):
                     propertyName.replace("_", " ")
                     .replace("psf", "PSF")
                     .replace("dcr", "DCR")
-                    .replace("dra", "delta-RA")
-                    .replace("ddec", "delta-Dec")
+                    .replace("dra", r"$\Delta$RA")
+                    .replace("ddec", r"$\Delta$Dec")
                 )
             plotInfo["property"] = (
                 propertyName.replace("_", " ")
                 .title()  # Capitalize and handle edge cases below.
                 .replace("Psf", "PSF")
                 .replace("Dcr", "DCR")
-                .replace("Dra", "delta-RA")
-                .replace("Ddec", "delta-Dec")
+                .replace("Dra", r"$\Delta$RA")
+                .replace("Ddec", r"$\Delta$Dec")
                 .replace("E1", "e1")
                 .replace("E2", "e2")
             )

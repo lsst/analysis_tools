@@ -5,12 +5,14 @@ tasks:
     class: lsst.analysis.tools.tasks.PropertyMapSurveyWideAnalysisTask
     config:
       connections.outputName: propertyMapSurveyWide
+      autozoom: true
       projection: McBryde
       projectionKwargs:
+        celestial: true
+        gridlines: true
         # lon_0 should be something close to the center
         # (if it’s a sub-survey) or 0 (if it’s the full sky)
         lon_0: 0
-      autozoom: true
       colorbarKwargs:
         location: top
         cmap: viridis

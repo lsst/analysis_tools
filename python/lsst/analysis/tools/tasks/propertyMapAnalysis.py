@@ -103,7 +103,8 @@ class PropertyMapSurveyWideAnalysisConfig(
     projectionKwargs = DictField(
         keytype=str,
         itemtype=float,
-        doc="Keyword arguments to use in the projection call, e.g. lon_0 and lat_0 .",
+        doc="Keyword arguments to use in the projection call, e.g. lon_0. "
+        "See https://skyproj.readthedocs.io/en/latest/projections.html",
         default={},
     )
 

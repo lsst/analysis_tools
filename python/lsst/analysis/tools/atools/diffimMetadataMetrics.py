@@ -22,12 +22,18 @@ from __future__ import annotations
 
 __all__ = ("DiffimMetadataMetricTool",)
 
+from deprecated.sphinx import deprecated
 from lsst.pex.config import DictField
 
 from ..actions.scalar import ValueAction
 from ..interfaces import AnalysisTool
 
 
+@deprecated(
+    reason=("This tool is superceded by TaskMetadataMetricTool, which should be used instead."),
+    version="v29.0",
+    category=FutureWarning,
+)
 class DiffimMetadataMetricTool(AnalysisTool):
     """This tool is designed to extract values from diffim task metadata"""
 

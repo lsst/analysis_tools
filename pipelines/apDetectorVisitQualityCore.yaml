@@ -55,21 +55,16 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
   diffimTaskCore:
-    class: lsst.analysis.tools.tasks.DiffimDetectorVisitMetricsAnalysisTask
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.outputName: diffimMetadata
-
-      atools.diffimMetadataMetric: DiffimMetadataMetricTool
+      connections.inputName: subtractImages_metadata
+      connections.outputName: diffimMetadata  # Should be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.diffimMetadataMetric: TaskMetadataMetricTool
+      atools.diffimMetadataMetric.taskName: subtractImages
       atools.diffimMetadataMetric.metrics:
         # Format is "metric name in the metadata": units
-        nUnmergedDiaSources: ct
-        nMergedDiaSources: ct
-        nGoodPixels: ct
-        nBadPixels: ct
-        nPixelsDetectedPositive: ct
-        nPixelsDetectedNegative: ct
-        nBadPixelsDetectedPositive: ct
-        nBadPixelsDetectedNegative: ct
         sciencePsfSize: pixel
         templatePsfSize: pixel
         scaleScienceVarianceFactor: ''
@@ -77,8 +72,33 @@ tasks:
         spatialConditionNum: ''
         spatialKernelSum: ''
         templateCoveragePercent: percent
+      atools.diffimMetadataMetric.subTaskNames:
+        # Format is "metric name in metadata: subtask that produced it"
+        spatialConditionNum: makeKernel
+        spatialKernelSum: makeKernel
       python: |
-        from lsst.analysis.tools.atools import DiffimMetadataMetricTool
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
+  detectionTaskCore:
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
+    config:
+      connections.inputName: detectAndMeasure_metadata
+      connections.outputName: detectAndMeasure_metadata  # Should be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.diffimMetadataMetric: TaskMetadataMetricTool
+      atools.diffimMetadataMetric.taskName: detectAndMeasure
+      atools.diffimMetadataMetric.metrics:
+        # Format is "metric name in the metadata": units
+        nGoodPixels: ct
+        nBadPixels: ct
+        nPixelsDetectedPositive: ct
+        nPixelsDetectedNegative: ct
+        nBadPixelsDetectedPositive: ct
+        nBadPixelsDetectedNegative: ct
+        nUnmergedDiaSources: ct
+        nMergedDiaSources: ct
+      python: |
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
   associationCore:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
@@ -209,6 +229,7 @@ subsets:
       - analyzeAssocDiaSrcCore
       - analyzeTrailedDiaSrcCore
       - diffimTaskCore
+      - detectionTaskCore
       - associationCore
       - diffimTaskPlots
       - initialPviCore

@@ -24,6 +24,7 @@ __all__ = ("DiffimDetectorVisitMetricsAnalysisConfig", "DiffimDetectorVisitMetri
 
 import lsst.pex.config
 import pandas as pd
+from deprecated.sphinx import deprecated
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -57,6 +58,11 @@ class DiffimDetectorVisitMetricsAnalysisConfig(
     )
 
 
+@deprecated(
+    reason=("TaskMetadataAnalysisTask should be used instead."),
+    version="v29.0",
+    category=FutureWarning,
+)
 class DiffimDetectorVisitMetricsAnalysisTask(AnalysisPipelineTask):
     ConfigClass = DiffimDetectorVisitMetricsAnalysisConfig
     _DefaultName = "DiffimDetectorVisitMetricsAnalysis"
@@ -73,9 +79,8 @@ class DiffimDetectorVisitMetricsAnalysisTask(AnalysisPipelineTask):
         subtractTaskName = inputRefs.metadataSubtract.datasetType.name
         subtractTaskName = subtractTaskName[: subtractTaskName.find("_")]
         metadata |= inputs["metadataSubtract"].metadata[subtractTaskName].to_dict()
-        kernelSubtaskLabel = subtractTaskName + ":" + self.config.kernelSubtaskName
-        metadata |= inputs["metadataSubtract"].metadata[kernelSubtaskLabel].to_dict()
         inputs.pop("metadataSubtract")
+        self.taskName = subtractTaskName
         # Some metadata entries might have different lengths or simply floats.
         # Pass the dict in a list to tell Pandas that this is one row in the
         # dataframe.

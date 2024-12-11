@@ -177,8 +177,9 @@ class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
         skymap = inputs["skymap"]
         dataId = butlerQC.quantum.dataId
         tractInfo = skymap[dataId["tract"]]
+        mapKeys = [key for key in inputs if key != "skymap"]
 
-        plotInfo = self.parsePlotInfo(inputs, dataId, list(inputs.keys()))
+        plotInfo = self.parsePlotInfo(inputs, dataId, mapKeys)
         outputs = self.run(data=inputs, tractInfo=tractInfo, plotConfig=self.config, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
 

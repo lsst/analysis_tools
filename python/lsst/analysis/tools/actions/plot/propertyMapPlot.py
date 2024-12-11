@@ -26,7 +26,7 @@ __all__ = (
 )
 
 import logging
-from typing import Iterable, Mapping, Union
+from typing import Mapping, Union
 
 import lsst.pex.config as pexConfig
 import matplotlib.patheffects as mpl_path_effects

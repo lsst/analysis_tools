@@ -30,7 +30,7 @@ from typing import cast
 from healsparse.healSparseMap import HealSparseMap
 from lsst.pex.config import Field
 
-from ..actions.plot.propertyMapPlot import SurveyWidePropertyMapPlot, PerTractPropertyMapPlot
+from ..actions.plot.propertyMapPlot import PerTractPropertyMapPlot, SurveyWidePropertyMapPlot
 from ..interfaces import AnalysisAction, AnalysisTool, KeyedData, KeyedDataSchema
 
 

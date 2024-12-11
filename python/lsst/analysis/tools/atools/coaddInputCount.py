@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount",)
+__all__ = ("CoaddInputCount", "CoaddQualityCheck",)
 
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.skyPlot import SkyPlot
@@ -85,4 +85,48 @@ class CoaddInputCount(AnalysisTool):
             "median": "{band}_inputCount_median",
             "mean": "{band}_inputCount_mean",
             "sigmaMad": "{band}_inputCount_sigmaMad",
+        }
+
+
+class CoaddQualityCheck(AnalysisTool):
+    """skyPlot and associated metrics indicating the number
+    of exposures that have gone into creating a coadd.
+    """
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.patches = LoadVector()
+        self.process.buildActions.patches.vectorKey = "Patch"
+
+        self.process.buildActions.bands = LoadVector()
+        self.process.buildActions.bands.vectorKey = "Band"
+
+        self.process.buildActions.stats = LoadVector()
+        self.process.buildActions.stats.vectorKey = "Stat"
+
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "stats"
+
+        # self.process.calculateActions.mean = MeanAction()
+        # self.process.calculateActions.mean.vectorKey = "z"
+
+        # self.process.calculateActions.sigmaMad = SigmaMadAction()
+        # self.process.calculateActions.sigmaMad.vectorKey = "z"
+
+        # # SkyPlot of number of contributing exposures across coadd:
+        # self.produce.plot = SkyPlot()
+        # self.produce.plot.plotTypes = ["any"]
+        # self.produce.plot.plotName = "{band}_inputCount"
+        # self.produce.plot.xAxisLabel = "R.A. (degrees)"
+        # self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        # self.produce.plot.zAxisLabel = "Input Count"
+        # self.produce.plot.plotOutlines = True
+        # self.produce.plot.showExtremeOutliers = False
+        # self.produce.plot.colorbarRange = MinMax()
+
+        # Summary metrics for the whole coadd.
+        self.produce.metric.units = {"median": "ct"}
+        self.produce.metric.newNames = {
+            "median": "nImage_template_median",
         }

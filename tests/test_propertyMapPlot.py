@@ -27,16 +27,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
-from lsst.analysis.tools.atools.healSparsePropertyMap import HealSparsePropertyMapTool
-from lsst.analysis.tools.atools.propertyMap import PropertyMapTool
+from lsst.analysis.tools.atools.healSparsePropertyMap import PerTractPropertyMapTool, SurveyWidePropertyMapTool
 from lsst.analysis.tools.tasks.propertyMapAnalysis import (
-    PropertyMapSurveyWideAnalysisConfig,
-    PropertyMapSurveyWideAnalysisTask,
-)
-from lsst.analysis.tools.tasks.propertyMapTractAnalysis import (
-    PropertyMapConfig,
-    PropertyMapTractAnalysisConfig,
-    PropertyMapTractAnalysisTask,
+    PerTractPropertyMapAnalysisConfig,
+    PerTractPropertyMapAnalysisTask,
+    SurveyWidePropertyMapAnalysisConfig,
+    SurveyWidePropertyMapAnalysisTask,
 )
 from lsst.daf.butler import Butler, DataCoordinate, DatasetType, DeferredDatasetHandle
 from lsst.daf.butler.tests.utils import makeTestTempDir, removeTestTempDir
@@ -50,8 +46,8 @@ matplotlib.use("Agg")
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
-class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
-    """PropertyMapTractAnalysisTask test case.
+class PerTractPropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
+    """PerTractPropertyMapAnalysisTask test case.
 
     Notes
     -----
@@ -60,6 +56,7 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
     designed to catch foundational issues like syntax errors or logical
     inconsistencies in the way the plots are generated.
     """
+
 
     def setUp(self):
         # Create a temporary directory to test in.
@@ -74,7 +71,80 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
         dataId = DataCoordinate.standardize(dataId, universe=butler.dimensions)
 
         # Configure the maps to be plotted.
-        config = PropertyMapTractAnalysisConfig()
+        config = PerTractPropertyMapAnalysisConfig()
+
+        # Set configurations sent to skyproj.
+        config.projectionKwargs = {"celestial": True, "gridlines": True}
+        config.colorbarKwargs = {"location": "top", "cmap": "viridis"}
+
+        # The entries in the 'atools' namespace must exactly match the dataset
+        # type.
+        config.atools.deepCoadd_exposure_time_map_sum = PerTractPropertyMapTool()
+        config.atools.deepCoadd_psf_maglim_map_weighted_mean = PerTractPropertyMapTool()
+        config.atools.goodSeeingCoadd_dcr_dra_map_weighted_mean = PerTractPropertyMapTool()
+
+        # Generate a list of dataset type names.
+        names = [name for name in config.atools.fieldNames]
+
+        # Mock up corresponding HealSparseMaps and register them with the
+        # butler.
+        inputs = {}
+        for name, value in zip(names, np.linspace(1, 10, len(names))):
+            hspMap = hsp.HealSparseMap.make_empty(nside_coverage=32, nside_sparse=4096, dtype=np.float32)
+            hspMap[0:10000] = value
+            hspMap[100000:110000] = value + 1
+            hspMap[500000:510000] = value + 2
+            datasetType = DatasetType(name, [], "HealSparseMap", universe=butler.dimensions)
+            butler.registry.registerDatasetType(datasetType)
+            dataRef = butler.put(hspMap, datasetType)
+            # Keys in inputs are designed to reflect the task's connection
+            # names.
+            inputs[name] = DeferredDatasetHandle(butler=butler, ref=dataRef, parameters=None)
+
+        # Mock up the skymap and tractInfo.
+        skyMapConfig = DiscreteSkyMap.ConfigClass()
+        coords = [  # From the PS1 Medium-Deep fields.
+            (10.6750, 41.2667),  # M31
+            (36.2074, -04.5833),  # XMM-LSS
+        ]
+        skyMapConfig.raList = [c[0] for c in coords]
+        skyMapConfig.decList = [c[1] for c in coords]
+        skyMapConfig.radiusList = [2] * len(coords)
+        skyMapConfig.validate()
+        skymap = DiscreteSkyMap(config=skyMapConfig)
+        self.tractInfo = skymap.generateTract(0)
+
+        # Initialize the task and set class attributes for subsequent use.
+        task = PerTractPropertyMapAnalysisTask()
+        self.config = config
+        self.plotInfo = task.parsePlotInfo(inputs, dataId, list(inputs.keys()))
+        self.data = inputs
+
+        for tool in self.config.atools:
+            tool.finalize()
+
+    def tearDown(self):
+        del self.data
+        del self.config
+        del self.plotInfo
+        removeTestTempDir(self.testDir)
+        del self.testDir
+
+
+    def NOsetUp(self):
+        # Create a temporary directory to test in.
+        self.testDir = makeTestTempDir(ROOT)
+
+        # Create a butler in the test directory.
+        Butler.makeRepo(self.testDir)
+        butler = Butler(self.testDir, run="testrun")
+
+        # Make a dummy dataId.
+        dataId = {"band": "i", "skymap": "hsc_rings_v1", "tract": 1915}
+        dataId = DataCoordinate.standardize(dataId, universe=butler.dimensions)
+
+        # Configure the maps to be plotted.
+        config = PerTractPropertyMapAnalysisConfig()
         config.zoomFactors = [3, 6]
 
         # Set configurations for the first property.
@@ -135,25 +205,42 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
         self.tractInfo = skymap.generateTract(0)
 
         # Initialize the task and set class attributes for subsequent use.
-        task = PropertyMapTractAnalysisTask()
+        task = PerTractPropertyMapAnalysisTask()
         self.plotConfig = config
         self.plotInfo = task.parsePlotInfo(mapsDict, dataId, list(mapsDict.keys()))
         self.data = {"maps": mapsDict}
-        self.atool = PropertyMapTool()
+        self.atool = PerTractPropertyMapTool()
         self.atool.produce.plot.plotName = "test"
         self.atool.finalize()
 
-    def tearDown(self):
-        del self.propertyNameLookup
-        del self.atool
-        del self.data
-        del self.tractInfo
-        del self.plotConfig
-        del self.plotInfo
-        removeTestTempDir(self.testDir)
-        del self.testDir
+    # def NOtearDown(self):
+    #     del self.propertyNameLookup
+    #     del self.atool
+    #     del self.data
+    #     del self.tractInfo
+    #     del self.plotConfig
+    #     del self.plotInfo
+    #     removeTestTempDir(self.testDir)
+    #     del self.testDir
 
-    def test_PropertyMapTractAnalysisTask(self):
+    def test_PerTractPropertyMapAnalysisTask(self):
+        plt.rcParams.update(plt.rcParamsDefault)
+        for tool in self.config.atools:
+            # Run the task via butler using the tool.
+            result = tool(data=self.data, tractInfo=self.tractInfo, plotConfig=self.config, plotInfo=self.plotInfo)
+            key = tool.process.buildActions.data.mapKey + "_PerTractPropertyMapPlot"
+
+            # Check that the key is in the result.
+            self.assertIn(key, result)
+
+            # Check that the output is a matplotlib figure.
+            fig = result[key]
+            self.assertTrue(isinstance(fig, plt.Figure), msg=f"Figure {key} is not a matplotlib figure.")
+
+            # Assert the number of axes in the figure. At least not empty.
+            self.assertEqual(len(fig.axes), 10)
+
+    def no_test_PerTractPropertyMapAnalysisTask(self):
         plt.rcParams.update(plt.rcParamsDefault)
         result = self.atool(
             data=self.data,
@@ -349,8 +436,8 @@ class PropertyMapTractAnalysisTaskTestCase(lsst.utils.tests.TestCase):
         self.assertTrue(len(errors) == 0, msg="\n" + "\n".join(errors))
 
 
-class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
-    """PropertyMapTractAnalysisTask test case.
+class SurveyWidePropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
+    """PerTractPropertyMapAnalysisTask test case.
 
     Notes
     -----
@@ -371,7 +458,7 @@ class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
         dataId = DataCoordinate.standardize(dataId, universe=butler.dimensions)
 
         # Configure the maps to be plotted.
-        config = PropertyMapSurveyWideAnalysisConfig()
+        config = SurveyWidePropertyMapAnalysisConfig()
 
         # Set configurations sent to skyproj.
         config.autozoom = True
@@ -381,9 +468,9 @@ class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
 
         # The entries in the 'atools' namespace must exactly match the dataset
         # type.
-        config.atools.deepCoadd_exposure_time_consolidated_map_sum = HealSparsePropertyMapTool()
-        config.atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
-        config.atools.goodSeeingCoadd_dcr_dra_consolidated_map_weighted_mean = HealSparsePropertyMapTool()
+        config.atools.deepCoadd_exposure_time_consolidated_map_sum = SurveyWidePropertyMapTool()
+        config.atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean = SurveyWidePropertyMapTool()
+        config.atools.goodSeeingCoadd_dcr_dra_consolidated_map_weighted_mean = SurveyWidePropertyMapTool()
 
         # Generate a list of dataset type names.
         names = [name for name in config.atools.fieldNames]
@@ -404,7 +491,7 @@ class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
             inputs[name] = DeferredDatasetHandle(butler=butler, ref=dataRef, parameters=None)
 
         # Initialize the task and set class attributes for subsequent use.
-        task = PropertyMapSurveyWideAnalysisTask()
+        task = SurveyWidePropertyMapAnalysisTask()
         self.config = config
         self.plotInfo = task.parsePlotInfo(inputs, dataId, list(inputs.keys()))
         self.data = inputs
@@ -419,15 +506,18 @@ class PropertyMapSurveyWideAnalysisTaskTestCase(lsst.utils.tests.TestCase):
         removeTestTempDir(self.testDir)
         del self.testDir
 
-    def test_PropertyMapSurveyWideAnalysisTask(self):
+    def test_SurveyWidePropertyMapAnalysisTask(self):
         plt.rcParams.update(plt.rcParamsDefault)
         for tool in self.config.atools:
             # Run the task via butler using the tool.
             result = tool(data=self.data, plotConfig=self.config, plotInfo=self.plotInfo)
-            key = tool.process.buildActions.data.mapKey + "_PropertyMapSurveyWidePlot"
-            fig = result[key]
+            key = tool.process.buildActions.data.mapKey + "_SurveyWidePropertyMapPlot"
+
+            # Check that the key is in the result.
+            self.assertIn(key, result)
 
             # Check that the output is a matplotlib figure.
+            fig = result[key]
             self.assertTrue(isinstance(fig, plt.Figure), msg=f"Figure {key} is not a matplotlib figure.")
 
             # Assert the number of axes in the figure. At least not empty.

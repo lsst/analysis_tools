@@ -20,13 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount",)
+__all__ = ("CoaddInputCount", "CoaddQualityCheck",)
 
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
-from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector
+from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector, UniqueAction
 from ..interfaces import AnalysisTool
+
+from lsst.pex.config import ListField
 
 
 class CoaddInputCount(AnalysisTool):
@@ -86,3 +88,37 @@ class CoaddInputCount(AnalysisTool):
             "mean": "{band}_inputCount_mean",
             "sigmaMad": "{band}_inputCount_sigmaMad",
         }
+
+
+class CoaddQualityCheck(AnalysisTool):
+    """TODO: Describe this thing please.
+    """
+
+    threshold_list = ListField(
+        default=[1, 3, 5, 12],
+        dtype=int,
+        doc="The n_image pixel value thresholds.",
+    )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
+
+        self.process.buildActions.bands = LoadVector()
+        self.process.buildActions.bands.vectorKey = "band"
+
+        for threshold in self.threshold_list:
+            self.process.buildActions.tract_thresh = LoadVector()
+            self.process.buildActions.tract_thresh.vectorKey = f"depth_above_threshold_{threshold}"
+    
+            self.process.calculateActions.median = MedianAction()
+            self.process.calculateActions.median.vectorKey = f"depth_above_threshold_{threshold}"
+
+            self.produce.metric.units = {"median": "ct"}
+            self.produce.metric.newNames = {
+                "median": f"nImage_threshold_{threshold}_median",
+            }
+
+        self.process.calculateActions.setPatch = UniqueAction(vectorKey="patch")

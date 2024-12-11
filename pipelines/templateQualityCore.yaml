@@ -1,0 +1,12 @@
+description: |
+  Tier1 plots and metrics to assess template quality.
+tasks:
+  analyzeCoaddDepthCore: 
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryAnalysisTask
+  coaddDepthMetricTract:
+    class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
+    config:
+      atools.coaddQualityCheck: CoaddQualityCheck
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *

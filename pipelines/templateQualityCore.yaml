@@ -1,0 +1,129 @@
+description: |
+  Tier1 plots and metrics to assess template quality
+tasks:
+  analyzeCoaddNImageCore:
+    class: lsst.analysis.tools.tasks.NImageCoaddSummaryAnalysisTask
+    config:
+      connections.outputName: templateTableCore
+  # analyzeObjectTableCore:
+  #   class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+  #   config:
+  #     connections.outputName: objectTableCore
+  #     atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiffScatter  #  shapes.py
+  #     atools.e1Diff: E1DiffScatter  #  shapes.py
+  #     atools.e2Diff: E2DiffScatter  #  shapes.py
+  #     atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
+  #     atools.skyFluxStatisticMetric.applyContext: CoaddContext
+  #     atools.parentDeblenderMetrics: ParentDeblenderMetrics
+  #     atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
+  #     atools.blendMetrics: BlendMetrics
+  #     atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
+  #     atools.wPerpPSFP: WPerpPSF
+  #     atools.wPerpCModel: WPerpCModel
+  #     atools.xPerpPSFP: XPerpPSF
+  #     atools.xPerpCModel: XPerpCModel
+  #     atools.yPerpPSF: YPerpPSF
+  #     atools.yPerpCModel: YPerpCModel
+  #     atools.skyObjectSky: SkyObjectSkyPlot
+  #     atools.skyObjectFlux: SkyObjectHistPlot
+  #     atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
+  #     atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
+  #     atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
+  #     atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
+  #     atools.shapeSizeDetRadiusVsCmodelMag.size_y: "shape_slot"
+  #     atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.xLims: (17, 29)
+  #     atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.yLims: (-4, 3)
+  #     atools.shapeSizeDetRadiusVsCmodelMag.applyContext: CoaddContext
+  #     atools.shapeSizeDetRadiusVsPsfMag: SizeMagnitudePlot
+  #     atools.shapeSizeDetRadiusVsPsfMag.size_type: "determinantRadius"
+  #     atools.shapeSizeDetRadiusVsPsfMag.mag_x: "psf_err"
+  #     atools.shapeSizeDetRadiusVsPsfMag.size_y: "shape_slot"
+  #     atools.shapeSizeDetRadiusVsPsfMag.applyContext: CoaddContext
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag: SizeMagnitudePlot
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.size_type: "singleColumnSize"
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.mag_x: "bulge_err"
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.size_y: "bulge"
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.xLims: (17, 29)
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.yLims: (-4, 3)
+  #     atools.cModelBulgeSizeVsCmodelBulgeMag.applyContext: CoaddContext
+  #     atools.cModelDiskSizeVsCmodelDiskMag: SizeMagnitudePlot
+  #     atools.cModelDiskSizeVsCmodelDiskMag.size_type: "singleColumnSize"
+  #     atools.cModelDiskSizeVsCmodelDiskMag.mag_x: "disk_err"
+  #     atools.cModelDiskSizeVsCmodelDiskMag.size_y: "disk"
+  #     atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
+  #     atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
+  #     atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+  #     atools.coaddInputCount: CoaddInputCount
+  #     atools.coaddPatchCount: CountPatches  #  counts.py
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  #       from lsst.analysis.tools.contexts import *
+  # analyzeObjectTableSurveyCore:
+  #   class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
+  #   config:
+  #     connections.outputName: objectTableSurvey
+  #     atools.rhoStatistics: RhoStatistics
+  #     bands: ["i"]
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  #       from lsst.analysis.tools.contexts import *
+  #       from lsst.analysis.tools.actions.plot import *
+  # catalogMatchTract: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
+  # refCatObjectTract:
+  #   class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
+  #   config:
+  #     atools.astromDiffRAScatterPlot: TargetRefCatDeltaRAScatterPlot
+  #     atools.astromDiffDecScatterPlot: TargetRefCatDeltaDecScatterPlot
+  #     atools.astromDiffRASkyPlot: TargetRefCatDeltaRASkyPlot
+  #     atools.astromDiffDecSkyPlot: TargetRefCatDeltaDecSkyPlot
+  #     atools.astromDiffMetrics: TargetRefCatDeltaMetrics
+  #     atools.astromDiffMetrics.applyContext: CoaddContext
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  #       from lsst.analysis.tools.contexts import *
+
+  # # Perform photometric comparison to the reference catalog
+  # photometricCatalogMatch: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask
+  # photometricRefCatObjectTract:
+  #   class: lsst.analysis.tools.tasks.refCatObjectPhotometricAnalysis.RefCatObjectPhotometricAnalysisTask
+  #   config:
+  #     atools.targetRefCatDeltaPsfScatterPlot: TargetRefCatDeltaPsfScatterPlot
+  #     atools.targetRefCatDeltaCModelScatterPlot: TargetRefCatDeltaCModelScatterPlot
+  #     atools.targetRefCatDeltaPsfSkyPlot: TargetRefCatDeltaPsfSkyPlot
+  #     atools.targetRefCatDeltaCModelSkyPlot: TargetRefCatDeltaCModelSkyPlot
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  # plotPropertyMapTract:
+  #   class: lsst.analysis.tools.tasks.PropertyMapTractAnalysisTask
+  #   config:
+  #     connections.outputName: propertyMapTract
+  #     atools.HealSparseMap: PropertyMapTool
+  #     zoomFactors: [2, 8]
+  #     python: |
+  #       from lsst.analysis.tools.atools import *
+  #       config.properties["dcr_ddec"] = PropertyMapConfig
+  #       config.properties["dcr_ddec"].operations = ["weighted_mean"]
+  #       config.properties["dcr_dra"] = PropertyMapConfig
+  #       config.properties["dcr_dra"].operations = ["weighted_mean"]
+  #       config.properties["dcr_e1"] = PropertyMapConfig
+  #       config.properties["dcr_e1"].operations = ["weighted_mean"]
+  #       config.properties["dcr_e2"] = PropertyMapConfig
+  #       config.properties["dcr_e2"].operations = ["weighted_mean"]
+  #       config.properties["epoch"] = PropertyMapConfig
+  #       config.properties["epoch"].operations = ["min", "max", "mean"]
+  #       config.properties["exposure_time"] = PropertyMapConfig
+  #       config.properties["exposure_time"].coaddName = "deep"
+  #       config.properties["exposure_time"].operations = ["sum"]
+  #       config.properties["exposure_time"].nBinsHist = 35
+  #       config.properties["psf_e1"] = PropertyMapConfig
+  #       config.properties["psf_e1"].operations = ["weighted_mean"]
+  #       config.properties["psf_e2"] = PropertyMapConfig
+  #       config.properties["psf_e2"].operations = ["weighted_mean"]
+  #       config.properties["psf_maglim"] = PropertyMapConfig
+  #       config.properties["psf_maglim"].operations = ["weighted_mean"]
+  #       config.properties["psf_size"] = PropertyMapConfig
+  #       config.properties["psf_size"].operations = ["weighted_mean"]
+  #       config.properties["sky_background"] = PropertyMapConfig
+  #       config.properties["sky_background"].operations = ["weighted_mean"]
+  #       config.properties["sky_noise"] = PropertyMapConfig
+  #       config.properties["sky_noise"].operations = ["weighted_mean"]

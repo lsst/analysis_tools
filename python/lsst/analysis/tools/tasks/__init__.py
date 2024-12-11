@@ -20,6 +20,7 @@ from .makeMetricTable import *
 from .metadataAnalysis import *
 from .metadataExposureDetectorAnalysis import *
 from .metricAnalysis import *
+from .nImageCoaddSummaryAnalysis import *
 from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .photometricCatalogMatch import *

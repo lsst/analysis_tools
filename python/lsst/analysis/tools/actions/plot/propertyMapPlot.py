@@ -571,7 +571,7 @@ class PerTractPropertyMapPlot(PlotAction):
                 )
 
             # Set labels and legend.
-            xlabel = plotInfo["property"]
+            xlabel = plotInfo["property"].replace(" Map", "")
             if plotInfo["unit"] not in ["dimensionless", "N/A"]:
                 xlabel += f" [{plotInfo['unit']}]"
             ax2.set_xlabel(xlabel)

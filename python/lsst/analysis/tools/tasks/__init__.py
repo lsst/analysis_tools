@@ -24,7 +24,6 @@ from .objectTableSurveyAnalysis import *
 from .objectTableTractAnalysis import *
 from .photometricCatalogMatch import *
 from .propertyMapAnalysis import *
-from .propertyMapTractAnalysis import *
 from .refCatObjectAnalysis import *
 from .refCatObjectPhotometricAnalysis import *
 from .refCatSourceAnalysis import *

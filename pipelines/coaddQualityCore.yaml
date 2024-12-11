@@ -90,36 +90,30 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
   plotPropertyMapTract:
-    class: lsst.analysis.tools.tasks.PropertyMapTractAnalysisTask
+    class: lsst.analysis.tools.tasks.PerTractPropertyMapAnalysisTask
     config:
       connections.outputName: propertyMapTract
-      atools.HealSparseMap: PropertyMapTool
       zoomFactors: [2, 8]
+      projectionKwargs:
+        celestial: true
+        gridlines: true
+      colorbarKwargs:
+        cmap: viridis
+      # The entries in the 'atools' namespace must exactly match the dataset types.
+      atools.deepCoadd_dcr_ddec_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_dcr_dra_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_dcr_e1_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_dcr_e2_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_epoch_map_min: PerTractPropertyMapTool
+      atools.deepCoadd_epoch_map_max: PerTractPropertyMapTool
+      atools.deepCoadd_epoch_map_mean: PerTractPropertyMapTool
+      atools.deepCoadd_exposure_time_map_sum: PerTractPropertyMapTool
+      atools.deepCoadd_exposure_time_map_sum.nBinsHist: 35
+      atools.deepCoadd_psf_e1_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_psf_e2_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_psf_maglim_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_psf_size_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_sky_background_map_weighted_mean: PerTractPropertyMapTool
+      atools.deepCoadd_sky_noise_map_weighted_mean: PerTractPropertyMapTool
       python: |
-        from lsst.analysis.tools.atools import *
-        config.properties["dcr_ddec"] = PropertyMapConfig
-        config.properties["dcr_ddec"].operations = ["weighted_mean"]
-        config.properties["dcr_dra"] = PropertyMapConfig
-        config.properties["dcr_dra"].operations = ["weighted_mean"]
-        config.properties["dcr_e1"] = PropertyMapConfig
-        config.properties["dcr_e1"].operations = ["weighted_mean"]
-        config.properties["dcr_e2"] = PropertyMapConfig
-        config.properties["dcr_e2"].operations = ["weighted_mean"]
-        config.properties["epoch"] = PropertyMapConfig
-        config.properties["epoch"].operations = ["min", "max", "mean"]
-        config.properties["exposure_time"] = PropertyMapConfig
-        config.properties["exposure_time"].coaddName = "deep"
-        config.properties["exposure_time"].operations = ["sum"]
-        config.properties["exposure_time"].nBinsHist = 35
-        config.properties["psf_e1"] = PropertyMapConfig
-        config.properties["psf_e1"].operations = ["weighted_mean"]
-        config.properties["psf_e2"] = PropertyMapConfig
-        config.properties["psf_e2"].operations = ["weighted_mean"]
-        config.properties["psf_maglim"] = PropertyMapConfig
-        config.properties["psf_maglim"].operations = ["weighted_mean"]
-        config.properties["psf_size"] = PropertyMapConfig
-        config.properties["psf_size"].operations = ["weighted_mean"]
-        config.properties["sky_background"] = PropertyMapConfig
-        config.properties["sky_background"].operations = ["weighted_mean"]
-        config.properties["sky_noise"] = PropertyMapConfig
-        config.properties["sky_noise"].operations = ["weighted_mean"]
+        from lsst.analysis.tools.atools import PerTractPropertyMapTool

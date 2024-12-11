@@ -21,25 +21,170 @@
 from __future__ import annotations
 
 __all__ = [
-    "PropertyMapSurveyWideAnalysisConfig",
-    "PropertyMapSurveyWideAnalysisTask",
+    "SurveyWidePropertyMapAnalysisConfig",
+    "SurveyWidePropertyMapAnalysisTask",
+    "PerTractPropertyMapAnalysisConfig",
+    "PerTractPropertyMapAnalysisTask",
 ]
 
 from typing import Any, Mapping, Union
 
 from lsst.daf.butler import DataCoordinate
-from lsst.pex.config import ChoiceField, DictField, Field
+from lsst.pex.config import ChoiceField, DictField, Field, ListField
 from lsst.pipe.base import (
     InputQuantizedConnection,
     OutputQuantizedConnection,
     QuantumContext,
     connectionTypes,
 )
+from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 
-class PropertyMapSurveyWideAnalysisConnections(
+class PerTractPropertyMapAnalysisConnections(
+    AnalysisBaseConnections,
+    dimensions=("skymap", "band", "tract"),
+    defaultTemplates={"outputName": "propertyMapTract"},
+):
+    skymap = connectionTypes.Input(
+        doc="The skymap that covers the tract that the data is from.",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
+        storageClass="SkyMap",
+        dimensions=("skymap",),
+    )
+
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+
+        operationNameLookup = {
+            "min": "Minimum",
+            "max": "Maximum",
+            "mean": "Mean",
+            "weighted_mean": "Weighted mean",
+            "sum": "Sum",
+        }
+
+        # Making connections for the maps that are configured to run.
+        for name in config.atools.fieldNames:
+            propertyName, operationName = name.split("_map_")
+            coaddName, propertyName = propertyName.split("Coadd_")
+            propertyName = propertyName.replace("_", " ")
+            operationLongName = operationNameLookup[operationName]
+            setattr(
+                self,
+                name,
+                connectionTypes.Input(
+                    doc=f"{operationLongName}-value map of {propertyName} for {coaddName} coadd",
+                    name=name,
+                    storageClass="HealSparseMap",
+                    dimensions=("skymap", "band", "tract"),
+                    multiple=False,
+                    deferLoad=True,
+                ),
+            )
+
+
+class PerTractPropertyMapAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=PerTractPropertyMapAnalysisConnections
+):
+    projectionKwargs = DictField(
+        keytype=str,
+        itemtype=float,
+        doc="Keyword arguments to use in the GnomonicSkyproj call, e.g. n_grid_lon. "
+        "See https://skyproj.readthedocs.io/en/latest/modules.html#skyproj.skyproj.GnomonicSkyproj",
+        default={},
+        dictCheck=lambda d: all([k not in ["ax", "lon_0", "lat_0", "extent"] for k in d]),
+    )
+    # TODO: The `dictCheck` user callback function only validates the initial
+    # default, not subsequent configurations. Use `keyCheck` after DM-48074.
+    # keyCheck=lambda k: k not in ["ax", "lon_0", "lat_0", "extent"]
+
+    zoomFactors = ListField(
+        dtype=float,
+        doc="Two-element list of zoom factors to use when plotting the maps.",
+        default=[2, 8],
+    )
+
+    colorbarKwargs = DictField(
+        keytype=str,
+        itemtype=str,
+        doc="Keyword arguments to pass to the colorbar.",
+        default={"cmap": "viridis"},
+        dictCheck=lambda d: all([k not in ["orientation", "location"] for k in d]),
+    )
+
+
+class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = PerTractPropertyMapAnalysisConfig
+    _DefaultName = "perTractPropertyMapAnalysisTask"
+
+    def parsePlotInfo(
+        self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionNames: list[str]
+    ) -> Mapping[str, Union[Mapping[str, str], str, int]]:
+        """Parse the inputs and dataId to get the information needed to add to
+        the figure.
+
+        Parameters
+        ----------
+        inputs: `dict`
+            The inputs to the task
+        dataId: `~lsst.daf.butler.DataCoordinate`
+            The dataId that the task is being run on.
+        connectionNames: `list` [`str`]
+            Name of the input connections to use for determining table names.
+
+        Returns
+        -------
+        plotInfo : `dict`
+            A dictionary containing the information needed to add to the
+            figure.
+
+        Notes
+        -----
+        We customized this method to fit our needs, because our analyses are
+        not 1-1 with datasettypes. We analyze multiple connections/datasettypes
+        at once, thus the table names are not the same for all connections.
+        """
+
+        # Initialize the plot info dictionary.
+        plotInfo = {
+            # To be filled in later.
+            "tableNames": {},
+            # They all share the same run, so just grab the first one.
+            "run": inputs[connectionNames[0]].ref.run,
+        }
+
+        # For each connection, separately store the table name.
+        for connectionName in connectionNames:
+            tableName = inputs[connectionName].ref.datasetType.name
+            plotInfo["tableNames"][connectionName] = tableName
+
+        # Add the dataId information, same for all connections.
+        self._populatePlotInfoWithDataId(plotInfo, dataId)
+
+        return plotInfo
+
+    def runQuantum(
+        self,
+        butlerQC: QuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        # Docstring inherited.
+
+        inputs = butlerQC.get(inputRefs)
+        skymap = inputs["skymap"]
+        dataId = butlerQC.quantum.dataId
+        tractInfo = skymap[dataId["tract"]]
+        mapKeys = [key for key in inputs if key != "skymap"]
+
+        plotInfo = self.parsePlotInfo(inputs, dataId, mapKeys)
+        outputs = self.run(data=inputs, tractInfo=tractInfo, plotConfig=self.config, plotInfo=plotInfo)
+        butlerQC.put(outputs, outputRefs)
+
+
+class SurveyWidePropertyMapAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "band"),
     defaultTemplates={"outputName": "propertyMapSurvey"},
@@ -75,8 +220,8 @@ class PropertyMapSurveyWideAnalysisConnections(
             )
 
 
-class PropertyMapSurveyWideAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=PropertyMapSurveyWideAnalysisConnections
+class SurveyWidePropertyMapAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=SurveyWidePropertyMapAnalysisConnections
 ):
     # Note: Gnomonic projection is excluded here because `GnomonicSkyproj` must
     # have the central lon/lat set (defaults to 0/0) which makes it useful for
@@ -106,7 +251,11 @@ class PropertyMapSurveyWideAnalysisConfig(
         doc="Keyword arguments to use in the projection call, e.g. lon_0. "
         "See https://skyproj.readthedocs.io/en/latest/projections.html",
         default={},
+        dictCheck=lambda d: all([k not in ["ax"] for k in d]),
     )
+    # TODO: The `dictCheck` user callback function only validates the initial
+    # default, not subsequent configurations. Use `keyCheck` after DM-48074.
+    # keyCheck=lambda k: k not in ["ax"]
 
     autozoom = Field[bool](
         doc="Automatically zooms in on the RA/Dec range of the map to make better use of its resolution; "
@@ -124,9 +273,9 @@ class PropertyMapSurveyWideAnalysisConfig(
     # like "aspect": 20, rather than just strings.
 
 
-class PropertyMapSurveyWideAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = PropertyMapSurveyWideAnalysisConfig
-    _DefaultName = "propertyMapSurveyAnalysisTask"
+class SurveyWidePropertyMapAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = SurveyWidePropertyMapAnalysisConfig
+    _DefaultName = "surveyWidePropertyMapAnalysisTask"
 
     def parsePlotInfo(
         self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionNames: list[str]

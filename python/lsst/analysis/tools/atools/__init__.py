@@ -28,7 +28,6 @@ from .metadataMetrics import *
 from .numericalValidity import *
 from .photometricRepeatability import *
 from .photometry import *
-from .propertyMap import *
 from .refCatMatchPlots import *
 from .seeingMetric import *
 from .shapes import *

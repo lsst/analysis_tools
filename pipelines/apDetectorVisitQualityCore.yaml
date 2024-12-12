@@ -58,8 +58,9 @@ tasks:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: subtractImages_metadata
-      connections.outputName: diffimMetadata  # Should be appended with "_metrics"
+      connections.outputName: diffimMetadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diffimMetadataMetric: TaskMetadataMetricTool
       atools.diffimMetadataMetric.taskName: subtractImages
@@ -82,8 +83,9 @@ tasks:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: detectAndMeasure_metadata
-      connections.outputName: detectAndMeasure_metadata  # Should be appended with "_metrics"
+      connections.outputName: detectAndMeasure_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diffimMetadataMetric: TaskMetadataMetricTool
       atools.diffimMetadataMetric.taskName: detectAndMeasure
@@ -105,6 +107,7 @@ tasks:
       connections.inputName: diaPipe_metadata
       connections.outputName: diaPipe_metadata  # Should be appended with "_metrics"
       connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diaPipeMetadataMetrics: TaskMetadataMetricTool
       atools.diaPipeMetadataMetrics.taskName: diaPipe

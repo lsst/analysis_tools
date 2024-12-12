@@ -158,11 +158,11 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
 
-  analyzeFlatDetCore:
-    class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTaskByFilter
+  analyzeFlatDetMergeCore:
+    class: lsst.analysis.tools.tasks.VerifyCalibDetectorTaskByFilter
     config:
-      connections.outputName: cpFlatDetCore
-      connections.data: verifyFlatDetResults
+      connections.outputName: cpFlatDetMergeCore
+      connections.data: verifyFlatDetMergeResults
 
       atools.flatTestsByDate: CalibAmpScatterTool
       atools.flatTestsByDate.prep.panelKey: amplifier
@@ -315,7 +315,8 @@ subsets:
       - analyzeDarkDetCore
   flatMetricsCore:
     subset:
-      - analyzeFlatDetCore
+      - analyzeFlatCore
+      - analyzeFlatDetMergeCore
   defectMetricsCore:
     subset:
       - analyzeDefectCore

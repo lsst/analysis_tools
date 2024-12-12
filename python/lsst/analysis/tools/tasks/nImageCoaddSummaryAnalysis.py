@@ -30,6 +30,7 @@ __all__ = (
 
 from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as cT
+from lsst.pipe.base import Struct
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -37,7 +38,7 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class NImageCoaddSummaryAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "band", "skymap"),
-    defaultTemplates={"inputName": "goodSeeingCoadd_nImage", "outputName": "nImagePatch"},
+    defaultTemplates={"inputName": "goodSeeingCoadd_nImage", "outputName": "nImageTable"},
 ):
     data = cT.Input(
         doc="Number of input images per pixel summary statistics to load from the butler",
@@ -46,6 +47,13 @@ class NImageCoaddSummaryAnalysisConnections(
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),
         deferLoad=True,
+    )
+
+    statTable = cT.Output(
+        doc="Table with n_image stats",
+        name="{outputName}_tract",
+        storageClass="ArrowAstropy",
+        dimensions=("tract", "skymap"),
     )
 
 
@@ -60,7 +68,7 @@ class NImageCoaddSummaryAnalysisTask(AnalysisPipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
         outputs = self.run(inputs)
-        # butler put stuff goes here
+        butlerQC.put(outputs, outputRefs)
     
     def run(self, inputs):
         bands = []
@@ -68,8 +76,8 @@ class NImageCoaddSummaryAnalysisTask(AnalysisPipelineTask):
         stats = []
         for n_image_handle in inputs["data"]:
             data_id = n_image_handle.dataId
-            band = data_id.band
-            patch = data_id.patch
+            band = str(data_id.band.name)
+            patch = int(data_id.patch.id)
 
             bands.append(band)
             patches.append(patch)
@@ -78,8 +86,8 @@ class NImageCoaddSummaryAnalysisTask(AnalysisPipelineTask):
             stats.append(stat)
 
         t = Table(data=[patches, bands, stats], names=["Patch", "Band", "Stat"])
-
-        return t
+        
+        return Struct(statTable=t)
         
         # inputs["num_initial_bgs"] = len(inputs["calexpBackgrounds"][0].get())
         # delta_skyCorr_hist = self.run(**{k: v for k, v in inputs.items() if k != "calexpBackgrounds"})

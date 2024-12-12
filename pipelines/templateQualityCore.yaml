@@ -1,86 +1,17 @@
 description: |
   Tier1 plots and metrics to assess template quality
 tasks:
-  analyzeCoaddNImageCore:
+  analyzeCoaddNImageCore: 
     class: lsst.analysis.tools.tasks.NImageCoaddSummaryAnalysisTask
+    # config:
+    #   connections.outputName: templateTableCore
+  nImageMetricTract:
+    class: lsst.analysis.tools.tasks.NImageTableTractAnalysisTask
     config:
-      connections.outputName: templateTableCore
-  # analyzeObjectTableCore:
-  #   class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
-  #   config:
-  #     connections.outputName: objectTableCore
-  #     atools.shapeSizeFractionalDiff: ShapeSizeFractionalDiffScatter  #  shapes.py
-  #     atools.e1Diff: E1DiffScatter  #  shapes.py
-  #     atools.e2Diff: E2DiffScatter  #  shapes.py
-  #     atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
-  #     atools.skyFluxStatisticMetric.applyContext: CoaddContext
-  #     atools.parentDeblenderMetrics: ParentDeblenderMetrics
-  #     atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
-  #     atools.blendMetrics: BlendMetrics
-  #     atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
-  #     atools.wPerpPSFP: WPerpPSF
-  #     atools.wPerpCModel: WPerpCModel
-  #     atools.xPerpPSFP: XPerpPSF
-  #     atools.xPerpCModel: XPerpCModel
-  #     atools.yPerpPSF: YPerpPSF
-  #     atools.yPerpCModel: YPerpCModel
-  #     atools.skyObjectSky: SkyObjectSkyPlot
-  #     atools.skyObjectFlux: SkyObjectHistPlot
-  #     atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
-  #     atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
-  #     atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
-  #     atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
-  #     atools.shapeSizeDetRadiusVsCmodelMag.size_y: "shape_slot"
-  #     atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.xLims: (17, 29)
-  #     atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.yLims: (-4, 3)
-  #     atools.shapeSizeDetRadiusVsCmodelMag.applyContext: CoaddContext
-  #     atools.shapeSizeDetRadiusVsPsfMag: SizeMagnitudePlot
-  #     atools.shapeSizeDetRadiusVsPsfMag.size_type: "determinantRadius"
-  #     atools.shapeSizeDetRadiusVsPsfMag.mag_x: "psf_err"
-  #     atools.shapeSizeDetRadiusVsPsfMag.size_y: "shape_slot"
-  #     atools.shapeSizeDetRadiusVsPsfMag.applyContext: CoaddContext
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag: SizeMagnitudePlot
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.size_type: "singleColumnSize"
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.mag_x: "bulge_err"
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.size_y: "bulge"
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.xLims: (17, 29)
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.yLims: (-4, 3)
-  #     atools.cModelBulgeSizeVsCmodelBulgeMag.applyContext: CoaddContext
-  #     atools.cModelDiskSizeVsCmodelDiskMag: SizeMagnitudePlot
-  #     atools.cModelDiskSizeVsCmodelDiskMag.size_type: "singleColumnSize"
-  #     atools.cModelDiskSizeVsCmodelDiskMag.mag_x: "disk_err"
-  #     atools.cModelDiskSizeVsCmodelDiskMag.size_y: "disk"
-  #     atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
-  #     atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
-  #     atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
-  #     atools.coaddInputCount: CoaddInputCount
-  #     atools.coaddPatchCount: CountPatches  #  counts.py
-  #     python: |
-  #       from lsst.analysis.tools.atools import *
-  #       from lsst.analysis.tools.contexts import *
-  # analyzeObjectTableSurveyCore:
-  #   class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
-  #   config:
-  #     connections.outputName: objectTableSurvey
-  #     atools.rhoStatistics: RhoStatistics
-  #     bands: ["i"]
-  #     python: |
-  #       from lsst.analysis.tools.atools import *
-  #       from lsst.analysis.tools.contexts import *
-  #       from lsst.analysis.tools.actions.plot import *
-  # catalogMatchTract: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
-  # refCatObjectTract:
-  #   class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
-  #   config:
-  #     atools.astromDiffRAScatterPlot: TargetRefCatDeltaRAScatterPlot
-  #     atools.astromDiffDecScatterPlot: TargetRefCatDeltaDecScatterPlot
-  #     atools.astromDiffRASkyPlot: TargetRefCatDeltaRASkyPlot
-  #     atools.astromDiffDecSkyPlot: TargetRefCatDeltaDecSkyPlot
-  #     atools.astromDiffMetrics: TargetRefCatDeltaMetrics
-  #     atools.astromDiffMetrics.applyContext: CoaddContext
-  #     python: |
-  #       from lsst.analysis.tools.atools import *
-  #       from lsst.analysis.tools.contexts import *
+      atools.coaddQualityCheck: CoaddQualityCheck
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
 
   # # Perform photometric comparison to the reference catalog
   # photometricCatalogMatch: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask

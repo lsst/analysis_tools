@@ -64,6 +64,7 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: "objectTableCore_metrics"
+      connections.outputTableName: "objectTableCore_metricsTable"
       inputDataDimensions: ["skymap", "tract"]
       outputTableDimensions: ["skymap"]
       dataIdFieldsToIncludeAsColumns: ["tract"]
@@ -81,6 +82,7 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: objectTable_tract_gaia_dr3_20230707_match_astrom_metrics
+      connections.outputTableName: objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable
       inputDataDimensions: ["skymap", "tract"]
       outputTableDimensions: ["skymap"]
       dataIdFieldsToIncludeAsColumns: ["tract"]
@@ -100,6 +102,7 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: "matchedVisitCore_metrics"
+      connections.outputTableName: "matchedVisitCore_metricsTable"
       inputDataDimensions: ["instrument", "skymap", "tract"]
       outputTableDimensions: ["skymap"]
       dataIdFieldsToIncludeAsColumns: ["tract"]

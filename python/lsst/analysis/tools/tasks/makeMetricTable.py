@@ -36,7 +36,7 @@ from lsst.skymap import BaseSkyMap
 class MakeMetricTableConnections(
     pipeBase.PipelineTaskConnections,
     dimensions=(),
-    defaultTemplates={"metricBundleName": ""},
+    defaultTemplates={"metricBundleName": "", "outputTableName": ""},
 ):
     data = ct.Input(
         doc="Metric bundle to read from the butler",
@@ -55,8 +55,8 @@ class MakeMetricTableConnections(
     )
 
     metricTable = ct.Output(
-        doc="A summary table of all metrics by tract.",
-        name="{metricBundleName}Table",
+        doc="Table containing metrics, one row per input metric bundle",
+        name="{outputTableName}",
         storageClass="ArrowAstropy",
         dimensions=(),
     )

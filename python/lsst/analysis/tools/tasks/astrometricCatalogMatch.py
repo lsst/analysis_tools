@@ -155,6 +155,7 @@ class AstrometricCatalogMatchVisitConfig(
 
     def setDefaults(self):
         self.matchesRefCat = True
+        self.idColumn = "sourceId"
         # sourceSelectorActions.sourceSelector is StarSelector
         self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"
@@ -180,7 +181,8 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
 
         inputs = butlerQC.get(inputRefs)
 
-        columns = ["coord_ra", "coord_dec", "detector"] + self.config.extraColumns.list()
+        columns = [self.config.idColumn, "coord_ra", "coord_dec", "detector"]
+        columns.extend(self.config.extraColumns)
         for selectorAction in [
             self.config.selectorActions,
             self.config.sourceSelectorActions,

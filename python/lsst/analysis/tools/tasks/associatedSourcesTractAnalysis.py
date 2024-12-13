@@ -164,7 +164,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         """Concatenate source catalogs and join on associated object index."""
 
         # Keep only sources with associations
-        sourceCatalogStack = vstack(sourceCatalogs)
+        sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
         dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
 
         if astrometricCorrectionCatalogs is not None:
@@ -197,6 +197,11 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         visitTable : `pd.DataFrame`
             Table containing the MJDs of the visits.
         """
+        if visitTable.index.name is None:
+            # The expected index may or may not be set, depending on whether
+            # the table was written originally as a DataFrame or something else
+            # Parquet-friendly.
+            visitTable.set_index("visitId", inplace=True)
         for band in np.unique(dataJoined["band"]):
             bandInd = dataJoined["band"] == band
             bandSources = dataJoined[bandInd]

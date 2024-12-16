@@ -137,6 +137,7 @@ class ConsolidateResourceUsageTask(PipelineTask):
                             "memory",
                             "init_time",
                             "run_time",
+                            "walltime",
                             "integrated_runtime",
                         ]
                     ]
@@ -245,6 +246,10 @@ class GatherResourceUsageConfig(PipelineTaskConfig, pipelineConnections=GatherRe
         doc=("Whether to extract the CPU time duration for actually " "executing the task."),
         default=True,
     )
+    walltime = Field[bool](
+        doc=("Whether to extract the walltime duration for actually " "executing the task."),
+        default=True,
+    )
     method_times = ListField[str](
         doc=(
             "Names of @lsst.utils.timer.timeMethod-decorated methods for "
@@ -284,6 +289,7 @@ class GatherResourceUsageTask(PipelineTask):
     - ``init_time``: the time spent in task construction;
     - ``run_time``: the time spent executing the task's runQuantum
       method.
+    - ``walltime`` : the total elapsed real time time spent executing the task.
     - ``{method}``: the time spent in a particular task or subtask
       method decorated with `lsst.utils.timer.timeMethod`.
 
@@ -343,7 +349,7 @@ class GatherResourceUsageTask(PipelineTask):
             d: np.zeros(n_rows, dtype=_dtype_from_field_spec(universe.dimensions[d].primaryKey))
             for d in dimensions.names
         }
-        for attr_name in ("memory", "prep_time", "init_time", "run_time"):
+        for attr_name in ("memory", "prep_time", "init_time", "run_time", "walltime"):
             if getattr(self.config, attr_name):
                 columns[attr_name] = np.zeros(n_rows, dtype=float)
         for method_name in self.config.method_times:
@@ -375,6 +381,8 @@ class GatherResourceUsageTask(PipelineTask):
                 for key, value in self._extract_quantum_timing(quantum_metadata).items():
                     columns[key][index] = value
             for key, value in self._extract_method_timing(metadata, handle).items():
+                columns[key][index] = value
+            for key, value in self._extract_walltime(metadata, handle).items():
                 columns[key][index] = value
         return Struct(output_table=pd.DataFrame(columns, copy=False))
 
@@ -493,6 +501,45 @@ class GatherResourceUsageTask(PipelineTask):
                 pass
             else:
                 result[f"{task_label}.{method_name}"] = method_end_time - method_start_time
+        return result
+
+    def _extract_walltime(self, metadata, handle):
+        """Extract total walltime for standard PipelineTask quantum-execution
+        steps from metadata.
+
+        Parameters
+        ----------
+        metadata : `lsst.pipe.base.TaskMetadata`
+            The nested metadata associated with the label "quantum" inside a
+            PipelineTask's metadata.
+        handle : `lsst.daf.butler.DeferredDatasetHandle`
+            Butler handle for the metadata dataset; used infer the prefix used
+            for method names within the metadata.
+
+        Returns
+        -------
+        walltime : `dict` [ `str`, `float` ]
+            Full task walltime in bytes, for all methods enabled in configuration.
+        """
+        if self.config.input_task_label is not None:
+            task_label = self.config.input_task_label
+        else:
+            task_label = handle.ref.datasetType.name[: -len("_metadata")]
+        result = {}
+        for method_name in self.config.method_times:
+            terms = [task_label] + list(method_name.split("."))
+            metadata_method_name = ":".join(terms[:-1]) + "." + terms[-1]
+            try:
+                start_time = metadata[f"{metadata_method_name}StartUtc"]
+                end_time = metadata[f"{metadata_method_name}EndUtc"]
+            except KeyError:
+                # A method missing from the metadata is not a problem;
+                # it's reasonable for configuration or even runtime
+                # logic to result in a method not being called.  When
+                # that happens, we just let the times stay zero.
+                pass
+            else:
+                result[f"{task_label}.{method_name}"] = end_time - start_time
         return result
 
 

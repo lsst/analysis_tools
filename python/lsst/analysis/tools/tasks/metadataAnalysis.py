@@ -26,7 +26,7 @@ __all__ = (
     "TaskMetadataAnalysisTask",
 )
 
-from lsst.pex.config import ListField
+from lsst.pex.config import Field, ListField
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -71,6 +71,11 @@ class MetadataAnalysisConfig(
         default=sorted(MetadataAnalysisConnections.dimensions),
         dtype=str,
         doc="The dimensions of the input dataset.",
+    )
+    raiseNoWorkFoundOnEmptyMetadata = Field(
+        dtype=bool,
+        default=False,
+        doc="Raise a NoWorkFound error if none of the configured metrics are in the task metadata.",
     )
 
 
@@ -118,9 +123,32 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         plotInfo = self.parsePlotInfo(inputs, dataId)
         metadata = inputs["data"].get().to_dict()
+        taskName = inputRefs.data.datasetType.name
+        taskName = taskName[: taskName.find("_")]
         if not metadata:
-            taskName = inputRefs.data.datasetType.name
-            taskName = taskName[: taskName.find("_")]
             raise NoWorkFound(f"No metadata entries for {taskName}.")
+        if self.config.raiseNoWorkFoundOnEmptyMetadata:
+            self.validateMetrics(metadata, taskName)
         outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
+
+    def validateMetrics(self, metadata, taskName):
+        """Raise NoWorkFound if there are no metrics in the task metadata.
+
+        Parameters
+        ----------
+        metadata : `dict`
+            The task metadata converted to a dict.
+        taskName : `str`
+            The name of the task to extract metadata from
+
+        Raises
+        ------
+        NoWorkFound
+            If none of the metrics are in the metadata.
+        """
+        for fieldName in self.config.atools.fieldNames:
+            for key in getattr(self.config.atools, fieldName).metrics.keys():
+                if key in metadata[taskName].keys():
+                    return
+        raise NoWorkFound(f"None of the specified metrics were found in the {taskName} metadata")

@@ -39,6 +39,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from astropy.time import Time
 from lsst.daf.butler import Butler, DatasetRef, DatasetType
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import (
@@ -137,6 +138,7 @@ class ConsolidateResourceUsageTask(PipelineTask):
                             "memory",
                             "init_time",
                             "run_time",
+                            "wall_time",
                             "integrated_runtime",
                         ]
                     ]
@@ -153,9 +155,17 @@ class ConsolidateResourceUsageTask(PipelineTask):
         runtime = pd.pivot_table(
             full_quantiles, values="run_time", columns=["percentile_name"], index=["task"]
         ).add_prefix("runtime_s_")
+        walltime = pd.pivot_table(
+            full_quantiles, values="wall_time", columns=["percentile_name"], index=["task"]
+        ).add_prefix("walltime_s_")
         memrun = pd.merge(
-            memoryGB.reset_index(),
-            runtime.reset_index(),
+            pd.merge(
+                memoryGB.reset_index(),
+                runtime.reset_index(),
+                left_on="task",
+                right_on="task",
+            ),
+            walltime.reset_index(),
             left_on="task",
             right_on="task",
         )
@@ -165,7 +175,6 @@ class ConsolidateResourceUsageTask(PipelineTask):
             .sort_values("task"),
             memrun,
         )
-
         return Struct(output_table=memrun)
 
 
@@ -238,11 +247,15 @@ class GatherResourceUsageConfig(PipelineTaskConfig, pipelineConnections=GatherRe
         default=False,
     )
     init_time = Field[bool](
-        doc=("Whether to extract the CPU time duration for actually " "constructing the task."),
+        doc=("Whether to extract the CPU time duration for actually constructing the task."),
         default=True,
     )
     run_time = Field[bool](
-        doc=("Whether to extract the CPU time duration for actually " "executing the task."),
+        doc=("Whether to extract the CPU time duration for actually executing the task."),
+        default=True,
+    )
+    wall_time = Field[bool](
+        doc=("Whether to extract the wall_time duration for actually executing the task."),
         default=True,
     )
     method_times = ListField[str](
@@ -284,6 +297,8 @@ class GatherResourceUsageTask(PipelineTask):
     - ``init_time``: the time spent in task construction;
     - ``run_time``: the time spent executing the task's runQuantum
       method.
+    - ``wall_time`` : the total elapsed real time spent executing, preparing
+      and completing the task.
     - ``{method}``: the time spent in a particular task or subtask
       method decorated with `lsst.utils.timer.timeMethod`.
 
@@ -343,7 +358,7 @@ class GatherResourceUsageTask(PipelineTask):
             d: np.zeros(n_rows, dtype=_dtype_from_field_spec(universe.dimensions[d].primaryKey))
             for d in dimensions.names
         }
-        for attr_name in ("memory", "prep_time", "init_time", "run_time"):
+        for attr_name in ("memory", "prep_time", "init_time", "run_time", "wall_time"):
             if getattr(self.config, attr_name):
                 columns[attr_name] = np.zeros(n_rows, dtype=float)
         for method_name in self.config.method_times:
@@ -446,7 +461,8 @@ class GatherResourceUsageTask(PipelineTask):
             quantum_metadata.get("startCpuTime", end_time),
             end_time,
         ]
-        return {
+
+        quantum_timing = {
             attr_name: end - begin
             for attr_name, begin, end in zip(
                 ["prep_time", "init_time", "run_time"],
@@ -455,6 +471,12 @@ class GatherResourceUsageTask(PipelineTask):
             )
             if getattr(self.config, attr_name)
         }
+        if self.config.wall_time:
+            start_wall_time = Time(quantum_metadata["startUtc"].split("+")[0])
+            end_wall_time = Time(quantum_metadata["endUtc"].split("+")[0])
+            quantum_timing["wall_time"] = (end_wall_time - start_wall_time).sec
+
+        return quantum_timing
 
     def _extract_method_timing(self, metadata, handle):
         """Extract timing for standard PipelineTask quantum-execution steps

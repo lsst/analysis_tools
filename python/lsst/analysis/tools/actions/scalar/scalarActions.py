@@ -40,6 +40,7 @@ __all__ = (
     "IqrHistAction",
     "DivideScalar",
     "RmsAction",
+    "PatchBandNumber",
 )
 
 import logging
@@ -455,3 +456,23 @@ class DivideScalar(ScalarAction):
                 return value
         else:
             return scalarA / scalarB
+
+class PatchBandNumber(ScalarAction):
+    """Select values with the given patch and tract"""
+    
+    patchNum = Field[int](doc="The patch number to match", default=0)
+    patchKey = Field[str](doc="The key for the patch numbers", default="patch")
+    band = Field[str](doc="The band to match", default="g")
+    bandKey = Field[str](doc="The key for the band information", default="band")
+    vectorKey = Field[str](doc="The vector key to return the value from")
+    
+    def getInputSchema(self) -> KeyedDataSchema:
+       yield self.patchKey, Vector
+       yield self.bandKey, Vector
+    
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+       mask = (data[self.patchKey] == self.patchNum) & (data[self.bandKey] == self.band)
+       num = data[self.vectorKey][mask]
+    
+       return num
+       

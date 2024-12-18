@@ -28,6 +28,8 @@ from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAct
 from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector
 from ..interfaces import AnalysisTool
 
+from lsst.pex.config import ListField
+
 
 class CoaddInputCount(AnalysisTool):
     """skyPlot and associated metrics indicating the number
@@ -93,40 +95,31 @@ class CoaddQualityCheck(AnalysisTool):
     of exposures that have gone into creating a coadd.
     """
 
+    threshold_list = ListField(
+        default=[1, 3, 5, 12],
+        dtype=int,
+        doc="The n_image pixel value thresholds.",
+    )
+
     def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.patches = LoadVector()
-        self.process.buildActions.patches.vectorKey = "Patch"
+        self.process.buildActions.patches.vectorKey = "patch"
 
         self.process.buildActions.bands = LoadVector()
-        self.process.buildActions.bands.vectorKey = "Band"
+        self.process.buildActions.bands.vectorKey = "band"
 
-        self.process.buildActions.stats = LoadVector()
-        self.process.buildActions.stats.vectorKey = "Stat"
+        for threshold in self.threshold_list:
+            self.process.buildActions.tract_thresh = LoadVector()
+            self.process.buildActions.tract_thresh.vectorKey = f"above_thresh_{threshold}"
+    
+            self.process.calculateActions.median = MedianAction()
+            self.process.calculateActions.median.vectorKey = f"above_thresh_{threshold}"
 
-        self.process.calculateActions.median = MedianAction()
-        self.process.calculateActions.median.vectorKey = "stats"
+            self.produce.metric.units = {"median": "ct"}
+            self.produce.metric.newNames = {
+                "median": f"nImage_threshold_{threshold}_median",
+            }
 
-        # self.process.calculateActions.mean = MeanAction()
-        # self.process.calculateActions.mean.vectorKey = "z"
-
-        # self.process.calculateActions.sigmaMad = SigmaMadAction()
-        # self.process.calculateActions.sigmaMad.vectorKey = "z"
-
-        # # SkyPlot of number of contributing exposures across coadd:
-        # self.produce.plot = SkyPlot()
-        # self.produce.plot.plotTypes = ["any"]
-        # self.produce.plot.plotName = "{band}_inputCount"
-        # self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        # self.produce.plot.yAxisLabel = "Dec. (degrees)"
-        # self.produce.plot.zAxisLabel = "Input Count"
-        # self.produce.plot.plotOutlines = True
-        # self.produce.plot.showExtremeOutliers = False
-        # self.produce.plot.colorbarRange = MinMax()
-
-        # Summary metrics for the whole coadd.
-        self.produce.metric.units = {"median": "ct"}
-        self.produce.metric.newNames = {
-            "median": "nImage_template_median",
-        }
+        self.process.calculateActions.setPatches = uniqueAction(self.vectorKey="patches")

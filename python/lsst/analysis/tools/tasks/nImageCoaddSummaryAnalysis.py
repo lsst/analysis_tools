@@ -27,7 +27,7 @@ __all__ = (
     "NImageCoaddSummaryAnalysisConfig",
     "NImageCoaddSummaryAnalysisTask",
 )
-
+from lsst.pex.config import ListField
 from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as cT
 from lsst.pipe.base import Struct
@@ -58,7 +58,11 @@ class NImageCoaddSummaryAnalysisConnections(
 
 
 class NImageCoaddSummaryAnalysisConfig(AnalysisBaseConfig, pipelineConnections=NImageCoaddSummaryAnalysisConnections):
-    pass
+    threshold_list = ListField(
+        default=[1, 3, 5, 12],
+        dtype=int,
+        doc="The n_image pixel value thresholds.",
+    )
 
 
 class NImageCoaddSummaryAnalysisTask(AnalysisPipelineTask):
@@ -71,39 +75,33 @@ class NImageCoaddSummaryAnalysisTask(AnalysisPipelineTask):
         butlerQC.put(outputs, outputRefs)
     
     def run(self, inputs):
+        t = Table()
         bands = []
         patches = []
+        medians = []
+        stdevs = []
         stats = []
         for n_image_handle in inputs["data"]:
+            n_image = n_image_handle.get()
             data_id = n_image_handle.dataId
             band = str(data_id.band.name)
             patch = int(data_id.patch.id)
+            median = np.nanmedian(n_image.array)
+            stdev = np.nanstd(n_image.array)
 
             bands.append(band)
             patches.append(patch)
-            n_image = n_image_handle.get()
-            stat = np.sum(n_image.array > 3)/(n_image.getHeight()*n_image.getWidth())*100
-            stats.append(stat)
+            medians.append(median)
+            stdevs.append(stdev)
 
-        t = Table(data=[patches, bands, stats], names=["Patch", "Band", "Stat"])
-        
+            band_patch_stats = []
+            for threshold in self.config.threshold_list:
+                stat = np.sum(n_image.array > threshold)/(n_image.getHeight()*n_image.getWidth())*100
+                band_patch_stats.append(stat)
+
+            stats.append(band_patch_stats)
+
+        data = [patches, bands, medians, stdevs] + list(zip(*stats))
+        names = ["patch", "band", "medians", "stdevs"] + [f"above_thresh_{threshold}" for threshold in self.config.threshold_list]
+        t = Table(data=data, names=names)
         return Struct(statTable=t)
-        
-        # inputs["num_initial_bgs"] = len(inputs["calexpBackgrounds"][0].get())
-        # delta_skyCorr_hist = self.run(**{k: v for k, v in inputs.items() if k != "calexpBackgrounds"})
-        # butlerQC.put(delta_skyCorr_hist, outputRefs.delta_skyCorr_hist)
-
-    # def runQuantum(
-    #     self,
-    #     butlerQC: QuantumContext,
-    #     inputRefs: InputQuantizedConnection,
-    #     outputRefs: OutputQuantizedConnection,
-    # ) -> None:
-    #     # Docstring inherited.
-
-    #     inputs = butlerQC.get(inputRefs)
-
-    #     summary = inputs["data"].__dict__
-
-    #     outputs = self.run(data=summary)
-    #     butlerQC.put(outputs, outputRefs)

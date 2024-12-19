@@ -17,6 +17,7 @@ from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
 from .injectedObjectAnalysis import *
 from .makeMetricTable import *
+from .makeTractPostageStamp import *
 from .metadataAnalysis import *
 from .metadataExposureDetectorAnalysis import *
 from .metricAnalysis import *

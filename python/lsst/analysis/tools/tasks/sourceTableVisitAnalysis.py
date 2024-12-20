@@ -34,7 +34,7 @@ class SourceTableVisitAnalysisConnections(
 ):
     data = ct.Input(
         doc="Visit based source table to load from the butler",
-        name="sourceTable_visit",
+        name="{inputName}",
         storageClass="ArrowAstropy",
         dimensions=("visit", "band"),
         deferLoad=True,

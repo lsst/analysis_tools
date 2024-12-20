@@ -232,25 +232,14 @@ tasks:
     class: lsst.analysis.tools.tasks.VerifyCalibAnalysisTask
     config:
       connections.outputName: cpDefectCore
-      connections.data: verifyDefectResults
+      connections.data: verifyDefectsResults
 
-      # TODO: DM-43880 Sort out defects
-      atools.defectsHotPixels: CalibStatisticFocalPlanePlot
-      atools.defectsHotPixels.produce.plot.addHistogram: true
-      atools.defectsHotPixels.produce.plot.zAxisLabel: "Number of Hot Pixels"
-      atools.defectsHotPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_HOT
-      atools.defectsHotPixels.unit: "---"
+      atools.defectsPixels: CalibStatisticFocalPlanePlot
+      atools.defectsPixels.produce.plot.addHistogram: false
+      # here set name of column from the verify table
+      atools.defectsPixels.quantityKey: DEFECTS_DEFECT_PIXELS
+      atools.defectsPixels.unit: pix
 
-      # atools.defectsColdPixels: CalibStatisticFocalPlanePlot
-      # atools.defectsColdPixels.produce.plot.addHistogram: true
-      # atools.defectsColdPixels.produce.plot.zAxisLabel: "Number of Cold Pixels"
-      # atools.defectsColdPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_COLD
-      # atools.defectsColdPixels.unit: "---"
-      # atools.defectsBadColumns: CalibStatisticFocalPlanePlot
-      # atools.defectsBadColumns.produce.plot.addHistogram: true
-      # atools.defectsBadColumns.produce.plot.zAxisLabel: "Number of Hot Pixels"
-      # atools.defectsBadColumns.quantityKey: DEFECTS_DEFECTS_DIST_N_BAD_COLUMNS
-      # atools.defectsBadColumns.unit: "---"
       python: |
         from lsst.analysis.tools.atools import *
 

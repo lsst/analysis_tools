@@ -27,7 +27,7 @@ __all__ = (
 )
 
 from lsst.pex.config import Field, ListField
-from lsst.pipe.base import NoWorkFound, connectionTypes
+from lsst.pipe.base import UpstreamFailureNoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -105,7 +105,7 @@ class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
                         metadata[metric] = data.metadata.get(metric)
                     # Check if the retrieved metadata is empty.
                     if not metadata[metric]:
-                        raise NoWorkFound(
+                        raise UpstreamFailureNoWorkFound(
                             f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}, "
                             f"or it is not one of {data.metadata.getOrderedNames()}."
                         )
@@ -126,7 +126,7 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         taskName = inputRefs.data.datasetType.name
         taskName = taskName[: taskName.find("_")]
         if not metadata:
-            raise NoWorkFound(f"No metadata entries for {taskName}.")
+            raise UpstreamFailureNoWorkFound(f"No metadata entries for {taskName}.")
         if self.config.raiseNoWorkFoundOnEmptyMetadata:
             self.validateMetrics(metadata, taskName)
         outputs = self.run(data=metadata, plotInfo=plotInfo)
@@ -151,4 +151,6 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
             for key in getattr(self.config.atools, fieldName).metrics.keys():
                 if key in metadata[taskName].keys():
                     return
-        raise NoWorkFound(f"None of the specified metrics were found in the {taskName} metadata")
+        raise UpstreamFailureNoWorkFound(
+            f"None of the specified metrics were found in the {taskName} metadata"
+        )

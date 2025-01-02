@@ -13,6 +13,7 @@ tasks:
       connections.outputName: calibrateImage_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
       inputDimensions: ["instrument", "visit", "detector"]
+      raiseNoWorkFoundOnIncompleteMetadata: true
       atools.calibrateImageMetadataMetrics: TaskMetadataMetricTool
       atools.calibrateImageMetadataMetrics.taskName: calibrateImage
       atools.calibrateImageMetadataMetrics.metrics:

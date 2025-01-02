@@ -77,6 +77,11 @@ class MetadataAnalysisConfig(
         default=False,
         doc="Raise a NoWorkFound error if none of the configured metrics are in the task metadata.",
     )
+    raiseNoWorkFoundOnIncompleteMetadata = Field(
+        dtype=bool,
+        default=False,
+        doc="Raise NoWorkFound if any of the configured metrics are not in the task metadata.",
+    )
 
 
 class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
@@ -127,13 +132,14 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         taskName = taskName[: taskName.find("_")]
         if not metadata:
             raise UpstreamFailureNoWorkFound(f"No metadata entries for {taskName}.")
-        if self.config.raiseNoWorkFoundOnEmptyMetadata:
+        if self.config.raiseNoWorkFoundOnEmptyMetadata or self.config.raiseNoWorkFoundOnIncompleteMetadata:
             self.validateMetrics(metadata, taskName)
         outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
 
     def validateMetrics(self, metadata, taskName):
-        """Raise NoWorkFound if there are no metrics in the task metadata.
+        """Raise NoWorkFound if there are insufficent metrics in the task
+        metadata.
 
         Parameters
         ----------
@@ -150,7 +156,13 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         for fieldName in self.config.atools.fieldNames:
             for key in getattr(self.config.atools, fieldName).metrics.keys():
                 if key in metadata[taskName].keys():
-                    return
+                    if self.config.raiseNoWorkFoundOnEmptyMetadata:
+                        return
+                else:
+                    if self.config.raiseNoWorkFoundOnIncompleteMetadata:
+                        raise UpstreamFailureNoWorkFound(
+                            f"Metric {key!r} was not found in {taskName} metadata"
+                        )
         raise UpstreamFailureNoWorkFound(
             f"None of the specified metrics were found in the {taskName} metadata"
         )

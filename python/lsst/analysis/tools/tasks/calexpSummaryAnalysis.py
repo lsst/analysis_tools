@@ -25,7 +25,12 @@ __all__ = (
     "CalexpSummaryAnalysisTask",
 )
 
-from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
+from lsst.pipe.base import (
+    InputQuantizedConnection,
+    OutputQuantizedConnection,
+    QuantumContext,
+    UpstreamFailureNoWorkFound,
+)
 from lsst.pipe.base import connectionTypes as cT
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -63,7 +68,8 @@ class CalexpSummaryAnalysisTask(AnalysisPipelineTask):
 
         inputs = butlerQC.get(inputRefs)
 
-        summary = inputs["data"].__dict__
-
-        outputs = self.run(data=summary)
+        summary = inputs["data"]
+        if summary is None:
+            raise UpstreamFailureNoWorkFound("No summary stats attached to calexp.")
+        outputs = self.run(data=summary.__dict__)
         butlerQC.put(outputs, outputRefs)

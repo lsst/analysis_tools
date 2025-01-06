@@ -215,15 +215,15 @@ class CalcRhoStatistics(KeyedDataAction):
 
         calcSizeResidual = FractionalDifference(
             actionA=CalcMomentSize(
-                colXx=self.colXx,
-                colYy=self.colYy,
-                colXy=self.colXy,
-                sizeType=self.sizeType,
-            ),
-            actionB=CalcMomentSize(
                 colXx=self.colPsfXx,
                 colYy=self.colPsfYy,
                 colXy=self.colPsfXy,
+                sizeType=self.sizeType,
+            ),
+            actionB=CalcMomentSize(
+                colXx=self.colXx,
+                colYy=self.colYy,
+                colXy=self.colXy,
                 sizeType=self.sizeType,
             ),
         )
@@ -248,7 +248,7 @@ class CalcRhoStatistics(KeyedDataAction):
         eRes = calcEDiff(data, **kwargs)
         eRes /= responsitivity  # type: ignore
         e1Res, e2Res = np.real(eRes), np.imag(eRes)
-        sizeRes = calcSizeResidual(data, **kwargs)
+        sizeRes = -1 * calcSizeResidual(data, **kwargs)  # sign flip residual to T_psf - T_model
 
         # Scale the sizeRes by ellipticities
         e1SizeRes = e1 * sizeRes

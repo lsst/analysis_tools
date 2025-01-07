@@ -28,3 +28,4 @@ pytest_session.txt
 .vscode
 
 .DS_Store
+python/*.dist-info/

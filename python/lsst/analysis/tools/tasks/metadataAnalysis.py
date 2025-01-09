@@ -27,7 +27,7 @@ __all__ = (
 )
 
 from lsst.pex.config import Field, ListField
-from lsst.pipe.base import NoWorkFound, connectionTypes
+from lsst.pipe.base import UpstreamFailureNoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -77,10 +77,22 @@ class MetadataAnalysisConfig(
         default=False,
         doc="Raise a NoWorkFound error if none of the configured metrics are in the task metadata.",
     )
+    raiseNoWorkFoundOnIncompleteMetadata = Field(
+        dtype=bool,
+        default=False,
+        doc="Raise NoWorkFound if any of the configured metrics are not in the task metadata.",
+    )
+
+
+class DatasetMetadataAnalysisConfig(MetadataAnalysisConfig):
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.raiseNoWorkFoundOnIncompleteMetadata = True
 
 
 class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = MetadataAnalysisConfig
+    ConfigClass = DatasetMetadataAnalysisConfig
     _DefaultName = "datasetMetadataAnalysis"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
@@ -104,11 +116,16 @@ class DatasetMetadataAnalysisTask(AnalysisPipelineTask):
                         # Retrieve the metric directly if it's not prefixed.
                         metadata[metric] = data.metadata.get(metric)
                     # Check if the retrieved metadata is empty.
-                    if not metadata[metric]:
-                        raise NoWorkFound(
+                    if not metadata[metric] and self.config.raiseNoWorkFoundOnIncompleteMetadata:
+                        raise UpstreamFailureNoWorkFound(
                             f"Metadata entry '{metric}' is empty for {inputRefs.data.datasetType.name}, "
                             f"or it is not one of {data.metadata.getOrderedNames()}."
                         )
+                if self.config.raiseNoWorkFoundOnEmptyMetadata and not any(v for v in metadata.values()):
+                    raise UpstreamFailureNoWorkFound(
+                        "All configured metadata entries are missing from "
+                        f"{inputRefs.data.datasetType.name}."
+                    )
 
         outputs = self.run(data={"metadata_metrics": metadata}, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
@@ -126,14 +143,15 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         taskName = inputRefs.data.datasetType.name
         taskName = taskName[: taskName.find("_")]
         if not metadata:
-            raise NoWorkFound(f"No metadata entries for {taskName}.")
-        if self.config.raiseNoWorkFoundOnEmptyMetadata:
+            raise UpstreamFailureNoWorkFound(f"No metadata entries for {taskName}.")
+        if self.config.raiseNoWorkFoundOnEmptyMetadata or self.config.raiseNoWorkFoundOnIncompleteMetadata:
             self.validateMetrics(metadata, taskName)
         outputs = self.run(data=metadata, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)
 
     def validateMetrics(self, metadata, taskName):
-        """Raise NoWorkFound if there are no metrics in the task metadata.
+        """Raise NoWorkFound if there are insufficent metrics in the task
+        metadata.
 
         Parameters
         ----------
@@ -150,5 +168,13 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
         for fieldName in self.config.atools.fieldNames:
             for key in getattr(self.config.atools, fieldName).metrics.keys():
                 if key in metadata[taskName].keys():
-                    return
-        raise NoWorkFound(f"None of the specified metrics were found in the {taskName} metadata")
+                    if self.config.raiseNoWorkFoundOnEmptyMetadata:
+                        return
+                else:
+                    if self.config.raiseNoWorkFoundOnIncompleteMetadata:
+                        raise UpstreamFailureNoWorkFound(
+                            f"Metric {key!r} was not found in {taskName} metadata"
+                        )
+        raise UpstreamFailureNoWorkFound(
+            f"None of the specified metrics were found in the {taskName} metadata"
+        )

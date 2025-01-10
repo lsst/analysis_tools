@@ -27,6 +27,7 @@ __all__ = (
 
 import lsst.pipe.base as pipeBase
 import numpy as np
+from astropy import units as u
 from astropy.table import Table
 from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
@@ -36,7 +37,7 @@ from lsst.skymap import BaseSkyMap
 class MakeMetricTableConnections(
     pipeBase.PipelineTaskConnections,
     dimensions=(),
-    defaultTemplates={"metricBundleName": ""},
+    defaultTemplates={"metricBundleName": "", "outputTableName": ""},
 ):
     data = ct.Input(
         doc="Metric bundle to read from the butler",
@@ -55,8 +56,8 @@ class MakeMetricTableConnections(
     )
 
     metricTable = ct.Output(
-        doc="A summary table of all metrics by tract.",
-        name="{metricBundleName}Table",
+        doc="Table containing metrics, one row per input metric bundle",
+        name="{outputTableName}",
         storageClass="ArrowAstropy",
         dimensions=(),
     )
@@ -171,8 +172,10 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
         if len(metricBundles) == 0:
             raise pipeBase.NoWorkFound("metricBundles list is empty")
 
-        # Make an initial dict of the columns needed
         metricsDict = {}
+        metricUnits = {}
+
+        # Add requested info from the first dataId to the metrics dict.
         for key, value in dataIdInfo[0].items():
             metricsDict[key] = [value]
 
@@ -181,12 +184,34 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
             corners = self.getTractCorners(skymap, dataIdInfo[0]["tract"])
             metricsDict["corners"] = [corners]
 
-        # Add the metrics from the first bundle to the dict
+        # Add the metrics and units from the first bundle to the dicts
         for name, metrics in metricBundles[0].items():
+            percentUnitUsed = False
             for metric in metrics:
                 fullName = f"{name}_{metric.metric_name}"
-                metricValue = metric.quantity
-                metricsDict[fullName] = [metricValue]
+                metricsDict[fullName] = [metric.quantity.value]
+                # "Dimensionless" and percent units not allowed in Tables:
+                if metric.quantity.unit is u.dimensionless_unscaled:
+                    continue
+                elif metric.quantity.unit is u.pct:
+                    percentUnitUsed = True
+                    self.log.debug(
+                        "Unable to propagate astropy percent unit for metric %s "
+                        "in bundle %s to astropy table.",
+                        metric.metric_name,
+                        name,
+                    )
+                    continue
+                else:
+                    metricUnits[fullName] = metric.quantity.unit
+            if percentUnitUsed:
+                self.log.warn(
+                    "One or more metrics in the %s metric bundle uses the percent unit, "
+                    "which is not supported in astropy Tables. "
+                    "The value(s) have been propagated without the percent unit. "
+                    "Use --log-level debug to list all affected metrics.",
+                    name,
+                )
 
         # Check if any additional columns are needed; add to dict if needed.
         for i, metricBundle in enumerate(metricBundles[1:]):
@@ -201,13 +226,17 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
             for name, metrics in metricBundle.items():
                 for metric in metrics:
                     fullName = f"{name}_{metric.metric_name}"
-                    metricValue = metric.quantity
                     # Check if the metric already exists in the output
                     if fullName in metricsDict.keys():
-                        metricsDict[fullName].append(metricValue)
+                        metricsDict[fullName].append(metric.quantity.value)
                     else:
                         values = [np.nan] * (len(metricsDict[metricNames[0]]) - 1)
-                        values.append(metricValue)
+                        values.append(metric.quantity.value)
+                        if (
+                            metric.quantity.unit is not u.dimensionless_unscaled
+                            and metric.quantity.unit is not u.pct
+                        ):
+                            metricUnits[fullName] = metric.quantity.unit
                         metricsDict[fullName] = values
                     metricNames.append(fullName)
 
@@ -217,7 +246,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                 if metricName not in metricNames:
                     metricsDict[metricName].append(np.nan)
 
-        metricTableStruct = pipeBase.Struct(metricTable=Table(metricsDict))
+        metricTableStruct = pipeBase.Struct(metricTable=Table(metricsDict, units=metricUnits))
         return metricTableStruct
 
     def getTractCorners(self, skymap, tract):

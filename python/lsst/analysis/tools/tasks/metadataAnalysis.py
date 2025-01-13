@@ -171,15 +171,22 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
             If none of the metrics are in the metadata.
         """
         for fieldName in self.config.atools.fieldNames:
-            for key in getattr(self.config.atools, fieldName).metrics.keys():
+            atool = getattr(self.config.atools, fieldName)
+            subTaskNames = getattr(atool, "subTaskNames", None) or {}
+            for key in atool.metrics.keys():
                 if key in metadata[taskName].keys():
                     if self.config.raiseNoWorkFoundOnEmptyMetadata:
                         return
+                elif subtaskName := subTaskNames.get(key):
+                    if key in metadata[f"{taskName}:{subtaskName}"]:
+                        if self.config.raiseNoWorkFoundOnEmptyMetadata:
+                            return
                 else:
                     if self.config.raiseNoWorkFoundOnIncompleteMetadata:
                         raise UpstreamFailureNoWorkFound(
                             f"Metric {key!r} was not found in {taskName} metadata"
                         )
-        raise UpstreamFailureNoWorkFound(
-            f"None of the specified metrics were found in the {taskName} metadata"
-        )
+        if self.config.raiseNoWorkFoundOnEmptyMetadata:
+            raise UpstreamFailureNoWorkFound(
+                f"None of the specified metrics were found in the {taskName} metadata"
+            )

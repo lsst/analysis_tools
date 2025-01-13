@@ -83,6 +83,11 @@ class MetadataAnalysisConfig(
         doc="Raise NoWorkFound if any of the configured metrics are not in the task metadata.",
     )
 
+    def validate(self):
+        super().validate()
+        if self.raiseNoWorkFoundOnEmptyMetadata and self.raiseNoWorkFoundOnIncompleteMetadata:
+            raise ValueError("At most one 'raiseNoWorkFound' option may be True at a time.")
+
 
 class DatasetMetadataAnalysisConfig(MetadataAnalysisConfig):
 

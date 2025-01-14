@@ -651,6 +651,8 @@ class TargetRefCatDeltaColorMetrics(AnalysisTool):
     target and reference catalog coordinates.
     """
 
+    parameterizedBand: bool = False
+
     AB2 = Field[float](
         doc=(
             "Separation in milliarcseconds used to calculate the ABF1 metric. ABF1 is the percentage of"

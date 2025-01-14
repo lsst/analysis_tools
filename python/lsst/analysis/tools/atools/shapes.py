@@ -512,8 +512,6 @@ class EBase(AnalysisTool):
 
         self.prep.selectors.starSelector = StarSelector()
 
-        self.produce.plot.plotTypes = ["stars"]
-
         def visitContext(self):
             self.parameterizedBand = False
             self.prep.selectors.flagSelector = VisitPlotFlagSelector()
@@ -540,6 +538,7 @@ class EScatter(EBase):
         self.process.calculateActions.sigmaMad.vectorKey = "yStars"
 
         self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.xAxisLabel = "PSF Magnitude (Mag)"
         self.produce.plot.magLabel = "PSF Magnitude (Mag)"
 
@@ -602,6 +601,7 @@ class ESky(EBase):
         self.process.buildActions.yStars.vectorKey = "coord_dec"
 
         self.produce.plot = SkyPlot()
+        self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.xAxisLabel = "R.A. (degrees)"
         self.produce.plot.yAxisLabel = "Dec. (degrees)"
 

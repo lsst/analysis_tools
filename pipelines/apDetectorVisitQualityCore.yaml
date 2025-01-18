@@ -70,6 +70,10 @@ tasks:
         templatePsfSize: pixel
         scaleScienceVarianceFactor: ''
         scaleTemplateVarianceFactor: ''
+        differenceFootprintRatioMean: ''
+        differenceFootprintRatioStdev: ''
+        differenceFootprintSkyRatioMean: ''
+        differenceFootprintSkyRatioStdev: ''
         spatialConditionNum: ''
         spatialKernelSum: ''
         templateCoveragePercent: percent

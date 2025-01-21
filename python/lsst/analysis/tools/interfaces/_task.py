@@ -37,7 +37,7 @@ import datetime
 import logging
 import warnings
 import weakref
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
@@ -45,7 +45,7 @@ import matplotlib.pyplot as plt
 from lsst.verify import Measurement
 
 if TYPE_CHECKING:
-    from lsst.daf.butler import DeferredDatasetHandle
+    from lsst.daf.butler import DatasetRef, DeferredDatasetHandle
     from lsst.pipe.base import QuantumContext
 
 from lsst.daf.butler import DataCoordinate
@@ -202,6 +202,47 @@ class AnalysisBaseConnections(
                 multiple=multiple,
             )
             setattr(self, name, outConnection)
+
+    def adjustQuantum(
+        self,
+        inputs: dict[str, tuple[ct.BaseInput, Collection[DatasetRef]]],
+        outputs: dict[str, tuple[ct.Output, Collection[DatasetRef]]],
+        label: str,
+        data_id: DataCoordinate,
+    ) -> tuple[
+        Mapping[str, tuple[ct.BaseInput, Collection[DatasetRef]]],
+        Mapping[str, tuple[ct.Output, Collection[DatasetRef]]],
+    ]:
+        # If the task does not have band in its dimensions but an output
+        # connection does, only keep the output refs that are consistent with
+        # the producing AnalysisTool's 'bands' attribute.
+        if "band" in data_id.dimensions.names:
+            # Nothing to do, since the task dimensions already have band; just
+            # delegate to super.  Note that we use the data ID dimensions since
+            # self.dimensions is not an (expanded) DimensionGroup.
+            return super().adjustQuantum(inputs, outputs, label, data_id)
+        adjusted_outputs: dict[str, tuple[ct.Output, list[DatasetRef]]] = {}
+        for name, (connection, old_refs) in outputs.items():
+            # We also don't want to rely on connection.dimensions; the
+            # dimensions in the refs are expanded and hence safer.
+            new_refs: list[DatasetRef] | None = None
+            for old_ref in old_refs:
+                if new_refs is None:
+                    if "band" in old_ref.datasetType.dimensions:
+                        new_refs = []
+                    else:
+                        # If this ref doesn't have 'band' none of the others
+                        # for this connection will either; move on to the next.
+                        break
+                if old_ref.dataId["band"] in self.config.bands:
+                    new_refs.append(old_ref)
+            if new_refs is not None:
+                adjusted_outputs[name] = (connection, new_refs)
+        # Update the original outputs so we can pass them to super.
+        outputs.update(adjusted_outputs)
+        super().adjustQuantum(inputs, outputs, label, data_id)
+        # Return only the connections we modified.
+        return {}, adjusted_outputs
 
 
 def _timestampValidator(value: str) -> bool:

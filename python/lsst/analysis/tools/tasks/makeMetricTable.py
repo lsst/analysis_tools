@@ -33,6 +33,8 @@ from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
+from ..utils import getTractCorners
+
 
 class MakeMetricTableConnections(
     pipeBase.PipelineTaskConnections,
@@ -181,7 +183,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
 
         # Add tract corners if inputs are at the tract-level
         if "tract" in self.config.inputDataDimensions:
-            corners = self.getTractCorners(skymap, dataIdInfo[0]["tract"])
+            corners = getTractCorners(skymap, dataIdInfo[0]["tract"])
             metricsDict["corners"] = [corners]
 
         # Add the metrics and units from the first bundle to the dicts
@@ -219,7 +221,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                 metricsDict[key].append(value)
 
             if "tract" in self.config.inputDataDimensions:
-                corners = self.getTractCorners(skymap, dataIdInfo[0]["tract"])
+                corners = getTractCorners(skymap, dataIdInfo[0]["tract"])
                 metricsDict["corners"].append(corners)
 
             metricNames = list(metricsDict)
@@ -248,35 +250,3 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
 
         metricTableStruct = pipeBase.Struct(metricTable=Table(metricsDict, units=metricUnits))
         return metricTableStruct
-
-    def getTractCorners(self, skymap, tract):
-        """Calculate the corners of a tract, given  skymap.
-
-        Parameters
-        ----------
-        skymap : `lsst.skymap`
-        tract : `int`
-
-        Returns
-        -------
-        corners : `list` of `tuples` of `float`
-
-        Notes
-        -----
-        Corners are returned in degrees and wrapped in ra.
-        """
-        # Find the tract corners
-        tractCorners = skymap[tract].getVertexList()
-        corners = [(corner.getRa().asDegrees(), corner.getDec().asDegrees()) for corner in tractCorners]
-        minRa = np.min([corner[0] for corner in corners])
-        maxRa = np.max([corner[0] for corner in corners])
-        # If the tract needs wrapping in ra, wrap it
-        if maxRa - minRa > 10:
-            x = maxRa
-            maxRa = 360 + minRa
-            minRa = x
-            minDec = np.min([corner[1] for corner in corners])
-            maxDec = np.max([corner[1] for corner in corners])
-            corners = [(minRa, minDec), (maxRa, minDec), (maxRa, maxDec), (minRa, maxDec)]
-
-        return corners

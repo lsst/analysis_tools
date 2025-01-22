@@ -21,12 +21,12 @@
 from __future__ import annotations
 
 __all__ = (
-    "PropertyMapPlot",
-    "PropertyMapSurveyWidePlot",
+    "PerTractPropertyMapPlot",
+    "SurveyWidePropertyMapPlot",
 )
 
 import logging
-from typing import Iterable, Mapping, Union
+from typing import Mapping, Union
 
 import lsst.pex.config as pexConfig
 import matplotlib.patheffects as mpl_path_effects
@@ -34,8 +34,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
 from healsparse.healSparseMap import HealSparseMap
-from lsst.analysis.tools.tasks.propertyMapAnalysis import PropertyMapSurveyWideAnalysisConfig
-from lsst.analysis.tools.tasks.propertyMapTractAnalysis import PropertyMapTractAnalysisConfig
+from lsst.analysis.tools.tasks.propertyMapAnalysis import (
+    PerTractPropertyMapAnalysisConfig,
+    SurveyWidePropertyMapAnalysisConfig,
+)
 from lsst.skymap.tractInfo import ExplicitTractInfo
 from matplotlib import rc_context
 from matplotlib.figure import Figure
@@ -63,17 +65,15 @@ def getZoomedExtent(fullExtent, n):
         * ``"lat_max"``
             Maximum latitude of the original extent (`float`).
 
-    n : `float`, optional
+    n : `float`
         Zoom factor; for instance, n=2 means zooming in 2 times at the
-        center. If None, the function returns None.
+        center. Must be positive.
 
     Returns
     -------
     `tuple` [`float`]
         New extent as (new_lon_min, new_lon_max, new_lat_min, new_lat_max).
     """
-    if n is None:
-        return None
     lon_min, lon_max, lat_min, lat_max = fullExtent
     lon_center, lat_center = (lon_min + lon_max) / 2, (lat_min + lat_max) / 2
     half_lon = (lon_max - lon_min) * np.cos(np.radians(lat_center)) / (2 * n)
@@ -190,14 +190,14 @@ class CustomHandler(HandlerTuple):
         return artists
 
 
-class PropertyMapPlot(PlotAction):
+class PerTractPropertyMapPlot(PlotAction):
     plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
 
     def __call__(
         self,
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
-        plotConfig: PropertyMapTractAnalysisConfig,
+        plotConfig: PerTractPropertyMapAnalysisConfig,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
         **kwargs,
     ) -> Mapping[str, Figure]:
@@ -208,7 +208,7 @@ class PropertyMapPlot(PlotAction):
         self,
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
-        plotConfig: PropertyMapTractAnalysisConfig,
+        plotConfig: PerTractPropertyMapAnalysisConfig,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
     ) -> None:
         """Validate the input data."""
@@ -216,10 +216,11 @@ class PropertyMapPlot(PlotAction):
         if not isinstance(tractInfo, ExplicitTractInfo):
             raise TypeError(f"Input `tractInfo` type must be {ExplicitTractInfo} not {type(tractInfo)}.")
 
-        if not isinstance(plotConfig, PropertyMapTractAnalysisConfig):
+        if not isinstance(plotConfig, PerTractPropertyMapAnalysisConfig):
             raise TypeError(
                 "`plotConfig` must be a "
-                "`lsst.analysis.tools.tasks.propertyMapTractAnalysis.PropertyMapTractAnalysisConfig`."
+                "`lsst.analysis.tools.tasks.propertyMapAnalysis.PerTractPropertyMapAnalysisConfig`. "
+                f"Got {type(plotConfig)}."
             )
 
         if not isinstance(plotInfo, dict):
@@ -234,11 +235,11 @@ class PropertyMapPlot(PlotAction):
                 "`zoomFactors` must be a two-element `lsst.pex.config.listField.List` of floats > 1."
             )
 
-        for prop, propConfig in plotConfig.properties.items():
-            if not isinstance(propConfig.nBinsHist, int) or propConfig.nBinsHist <= 0:
+        for atool in plotConfig.atools:
+            if not isinstance(atool.nBinsHist, int) or atool.nBinsHist <= 0:
                 raise ValueError(
-                    f"`nBinsHist` for property `{prop}` must be a positive integer, not "
-                    f"{propConfig.nBinsHist}."
+                    f"`nBinsHist` for property `{atool.process.buildActions.data.mapKey}` must be a positive "
+                    f"integer. Got {atool.nBinsHist}."
                 )
 
         # Identify any invalid entries in `data`.
@@ -259,7 +260,7 @@ class PropertyMapPlot(PlotAction):
         self,
         fig: Figure,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
-        mapName: Mapping[str, str],
+        toolName: str,
     ) -> Figure:
         """Add useful information to the plot.
 
@@ -269,8 +270,8 @@ class PropertyMapPlot(PlotAction):
             The figure to add the information to.
         plotInfo : `dict`
             A dictionary of the plot information.
-        mapName : `str`
-            The name of the map being plotted.
+        toolName : `str`
+            The name of the tool used to generate the plot.
 
         Returns
         -------
@@ -279,7 +280,7 @@ class PropertyMapPlot(PlotAction):
         """
 
         run = plotInfo["run"]
-        tableType = f"\nTable: {plotInfo['tableNames'][mapName]}"
+        tableType = f"\nTable: {plotInfo['tableNames'][toolName]}"
 
         dataIdText = f"Tract: {plotInfo['tract']}, Band: {plotInfo['band']}"
         propertyDescription = plotInfo["description"]
@@ -293,13 +294,16 @@ class PropertyMapPlot(PlotAction):
             f"Operation: {plotInfo['operation']}, "
             f"Coadd: {plotInfo['coaddName']}"
         )
-        geomText = f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., " f"NSIDE: {plotInfo['nside']}"
+        geomText = (
+            f", Valid area: {plotInfo['valid_area']:.2f} sq. deg., "
+            + f"NSIDE: {plotInfo['nside']}, projection: {plotInfo['projection']}"
+        )
         infoText = f"\n{dataIdText}{mapText}"
 
         fig.text(
             0.04,
             0.965,
-            f'{plotInfo["plotName"]}: {plotInfo["property"]}',
+            f'{plotInfo["plotName"]} of {plotInfo["property"]}',
             fontsize=19,
             transform=fig.transFigure,
             ha="left",
@@ -323,7 +327,7 @@ class PropertyMapPlot(PlotAction):
         self,
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
-        plotConfig: PropertyMapTractAnalysisConfig,
+        plotConfig: PerTractPropertyMapAnalysisConfig,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
     ) -> Mapping[str, Figure]:
         """Make the survey property map plot.
@@ -335,19 +339,19 @@ class PropertyMapPlot(PlotAction):
         tractInfo: `~lsst.skymap.tractInfo.ExplicitTractInfo`
             The tract info object.
         plotConfig :
-            `~lsst.analysis.tools.tasks.propertyMapTractAnalysis.
-            PropertyMapTractAnalysisConfig`
+            `~lsst.analysis.tools.tasks.perTractPropertyMapAnalysis.
+            PerTractPropertyMapAnalysisConfig`
             The configuration for the plot.
         plotInfo : `dict`
             A dictionary of information about the data being plotted.
 
         Returns
         -------
-        figDict : `dict` [`~matplotlib.figure.Figure`]
-            The resulting figures.
+        fig : `~matplotlib.figure.Figure`
+            The resulting figure.
         """
 
-        # 'plotName' defaults to the attribute specified in
+        # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
         # it will override this default.
@@ -355,8 +359,6 @@ class PropertyMapPlot(PlotAction):
             # Set the plot name using 'produce.plot.plotName' from
             # PropertyMapTool's instance.
             plotInfo["plotName"] = self.plotName
-
-        figDict: dict[str, Figure] = {}
 
         # Plotting customization.
         colorbarTickLabelSize = 14
@@ -373,251 +375,247 @@ class PropertyMapPlot(PlotAction):
         # zoomed-in maps.
         histColors = ["#265D40", "#8B0000", "#00008B"]
 
+        toolName = data["data"].ref.datasetType.name
+        mapName = toolName.replace("_map_", "_")
+        mapData = data["data"].get()
+
         with rc_context(rcparams):
-            for mapName, mapDataHandle in data.items():
-                mapData = mapDataHandle.get()
-                fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 16))
+            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 16))
 
-                # Reduce whitespace but leave some room at the top for
-                # plotInfo.
-                plt.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
+            # Reduce whitespace but leave some room at the top for plotInfo.
+            plt.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
 
-                # Get the values for the valid pixels of the full tract.
-                values = mapData[mapData.valid_pixels]
-                goodValues = np.isfinite(values)
-                values = values[goodValues]  # As a precaution.
+            # Get the values for the valid pixels of the full tract.
+            values = mapData[mapData.valid_pixels]
+            goodValues = np.isfinite(values)
+            values = values[goodValues]  # As a precaution.
 
-                # Make a concise human-readable label for the plot.
-                plotInfo["unit"] = "N/A"  # Unless overridden.
-                if hasattr(mapData, "metadata") and all(
-                    key in mapData.metadata for key in ["DESCRIPTION", "OPERATION", "UNIT"]
-                ):
-                    hasMetadata = True
-                    metadata = mapData.metadata
-                    plotInfo["description"] = metadata["DESCRIPTION"]
-                    plotInfo["operation"] = metadata["OPERATION"]
-                    if metadata["UNIT"]:
-                        plotInfo["unit"] = metadata["UNIT"]
-                    elif metadata["UNIT"] == "":
-                        plotInfo["unit"] = "dimensionless"
-                else:
-                    hasMetadata = False
-                    plotInfo["operation"] = getLongestSuffixMatch(
-                        mapName, ["min", "max", "mean", "weighted_mean", "sum"]
-                    ).replace("_", " ")
-                plotInfo["coaddName"] = mapName.split("Coadd_")[0]
-                plotInfo["operation"] = (
-                    plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
-                )
-                propertyName = mapName[
-                    len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])
-                ].strip("_")
-                if not hasMetadata:
-                    # Infer the property description from the map name (all
-                    # lower case), and properly handle formatting.
-                    plotInfo["description"] = (
-                        propertyName.replace("_", " ")
-                        .replace("psf", "PSF")
-                        .replace("dcr", "DCR")
-                        .replace("dra", r"$\Delta$RA")
-                        .replace("ddec", r"$\Delta$Dec")
-                    )
-                plotInfo["property"] = (
+            # Make a concise human-readable label for the plot.
+            plotInfo["unit"] = "N/A"  # Unless overridden.
+            if hasattr(mapData, "metadata") and all(
+                key in mapData.metadata for key in ["DESCRIPTION", "OPERATION", "UNIT"]
+            ):
+                hasMetadata = True
+                metadata = mapData.metadata
+                plotInfo["description"] = metadata["DESCRIPTION"]
+                plotInfo["operation"] = metadata["OPERATION"]
+                if metadata["UNIT"]:
+                    plotInfo["unit"] = metadata["UNIT"]
+                elif metadata["UNIT"] == "":
+                    plotInfo["unit"] = "dimensionless"
+            else:
+                hasMetadata = False
+                plotInfo["operation"] = getLongestSuffixMatch(
+                    mapName, ["min", "max", "mean", "weighted_mean", "sum"]
+                ).replace("_", " ")
+            plotInfo["coaddName"] = mapName.split("Coadd_")[0]
+            plotInfo["operation"] = plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
+            propertyName = mapName[len(f"{plotInfo['coaddName']}Coadd_") : -len(plotInfo["operation"])].strip(
+                "_"
+            )
+            if not hasMetadata:
+                # Infer the property description from the map name (all
+                # lower case), and properly handle formatting.
+                plotInfo["description"] = (
                     propertyName.replace("_", " ")
-                    .title()  # Capitalize and handle edge cases below.
-                    .replace("Psf", "PSF")
-                    .replace("Dcr", "DCR")
-                    .replace("Dra", r"$\Delta$RA")
-                    .replace("Ddec", r"$\Delta$Dec")
-                    .replace("E1", "e1")
-                    .replace("E2", "e2")
+                    .replace("psf", "PSF")
+                    .replace("dcr", "DCR")
+                    .replace("dra", r"$\Delta$RA")
+                    .replace("ddec", r"$\Delta$Dec")
                 )
+            plotInfo["property"] = (
+                propertyName.replace("_", " ")
+                .title()  # Capitalize and handle edge cases below.
+                .replace("Psf", "PSF")
+                .replace("Dcr", "DCR")
+                .replace("Dra", r"$\Delta$RA")
+                .replace("Ddec", r"$\Delta$Dec")
+                .replace("E1", "e1")
+                .replace("E2", "e2")
+            )
 
-                nBinsHist = plotConfig.properties[propertyName].nBinsHist
+            atool = getattr(plotConfig.atools, toolName)
+            nBinsHist = atool.nBinsHist
 
-                ctr_lon = tractInfo.ctr_coord.getRa().asDegrees()
-                ctr_lat = tractInfo.ctr_coord.getDec().asDegrees()
-                box = tractInfo.getOuterSkyPolygon().getBoundingBox()
-                width = box.getWidth().asDegrees()
-                height = box.getHeight().asDegrees()
-                fullExtent = [
-                    ctr_lon - width / 2.0,
-                    ctr_lon + width / 2.0,
-                    ctr_lat - height / 2.0,
-                    ctr_lat + height / 2.0,
-                ]
+            # Use the full tract bounding box to set the default extent.
+            ctr_lon = tractInfo.ctr_coord.getRa().asDegrees()
+            ctr_lat = tractInfo.ctr_coord.getDec().asDegrees()
+            box = tractInfo.getOuterSkyPolygon().getBoundingBox()
+            width = box.getWidth().asDegrees()
+            height = box.getHeight().asDegrees()
+            fullExtent = [
+                ctr_lon - width / 2.0,
+                ctr_lon + width / 2.0,
+                ctr_lat - height / 2.0,
+                ctr_lat + height / 2.0,
+            ]
 
-                zoomIdx = []
-                for ax, zoomFactor, histColor in zip([ax1, ax3, ax4], [1.0, *zoomFactors], histColors):
-                    extent = getZoomedExtent(fullExtent, zoomFactor)
+            zoomIdx = []
+            for ax, zoomFactor, histColor in zip([ax1, ax3, ax4], [1.0, *zoomFactors], histColors):
+                extent = getZoomedExtent(fullExtent, zoomFactor)
 
-                    sp = skyproj.GnomonicSkyproj(
-                        ax=ax,
-                        lon_0=ctr_lon,
-                        lat_0=ctr_lat,
-                        extent=extent,
-                    )
-                    sp.draw_hspmap(mapData, zoom=False)
+                sp = skyproj.GnomonicSkyproj(
+                    ax=ax,
+                    lon_0=ctr_lon,
+                    lat_0=ctr_lat,
+                    extent=extent,
+                    **plotConfig.projectionKwargs,
+                )
+                sp.draw_hspmap(mapData, zoom=False)
 
-                    sp.ax.set_xlabel("RA")
-                    sp.ax.set_ylabel("Dec")
-                    cbar = sp.draw_colorbar(location="right", fraction=0.15, aspect=colorBarAspect, pad=0)
-                    cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-                    cbarText = (
-                        "Full Tract" if zoomFactor is None else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
-                    )
-                    addTextToColorbar(cbar, cbarText, color=histColor)
-                    if zoomFactor == 1.0:
-                        # Store the "full tract" map so that we can overplot
-                        # the zoom rectangles.
-                        spf = sp
-                    else:
-                        # Create a rectangle for the zoomed-in region.
-                        x0, x1, y0, y1 = extent
-                        for c, ls, lw in zip(["white", histColor], ["solid", "dashed"], [3.5, 1.5]):
-                            spf.draw_polygon(
-                                [x0, x0, x1, x1],
-                                [y0, y1, y1, y0],
-                                facecolor="none",
-                                edgecolor=c,
-                                linestyle=ls,
-                                linewidth=lw,
-                                alpha=0.8,
-                            )
-                        zoomText = spf.ax.text(
-                            (x0 + x1) / 2,
-                            y0,
-                            f"{self.prettyPrintFloat(zoomFactor)}x",
-                            color=histColor,
-                            fontsize=14,
-                            fontweight="bold",
+                sp.ax.set_xlabel("RA")
+                sp.ax.set_ylabel("Dec")
+                cbar = sp.draw_colorbar(
+                    **{
+                        "location": "right",
+                        "aspect": colorBarAspect,
+                        "fraction": 0.15,
+                        "pad": 0,
+                        **plotConfig.colorbarKwargs,
+                    }
+                )
+                cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
+                cbarText = "Full Tract" if zoomFactor == 1.0 else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                addTextToColorbar(cbar, cbarText, color=histColor)
+                if zoomFactor == 1.0:
+                    # Store the "full tract" map so that we can overplot
+                    # the zoom rectangles.
+                    spf = sp
+                else:
+                    # Create a rectangle for the zoomed-in region.
+                    x0, x1, y0, y1 = extent
+                    for c, ls, lw in zip(["white", histColor], ["solid", "dashed"], [3.5, 1.5]):
+                        spf.draw_polygon(
+                            [x0, x0, x1, x1],
+                            [y0, y1, y1, y0],
+                            facecolor="none",
+                            edgecolor=c,
+                            linestyle=ls,
+                            linewidth=lw,
                             alpha=0.8,
-                            ha="center",
-                            va="bottom",
                         )
-                        # Add a distinct outline around the text for better
-                        # visibility in various backgrounds.
-                        zoomText.set_path_effects(
-                            [
-                                mpl_path_effects.Stroke(linewidth=4, foreground="white", alpha=0.8),
-                                mpl_path_effects.Normal(),
-                            ]
-                        )
-                        # Get the indices of pixels in the zoomed-in region.
-                        pos = mapData.valid_pixels_pos()
-                        # Reversed axes consideration.
-                        xmin, xmax = sorted([x0, x1])
-                        idx = (pos[0] > xmin) & (pos[0] < xmax) & (pos[1] > y0) & (pos[1] < y1)
-                        zoomIdx.append(idx[goodValues])
-
-                # Calculate weights for each bin to ensure that the peak of the
-                # histogram reaches 1.
-                weights = np.ones_like(values) / np.histogram(values, bins=nBinsHist)[0].max()
-
-                # Compute full-tract histogram and get its bins.
-                # NOTE: `exposure_time` histograms are quantized and look more
-                # bar-like, so they look better with fewer bins.
-                bins = ax2.hist(
-                    values,
-                    bins=nBinsHist,
-                    label="Full Tract",
-                    color=histColors[0],
-                    weights=weights,
-                    alpha=0.7,
-                )[1]
-
-                # Align the histogram (top right panel) with the skyproj plots.
-                pos1 = spf.ax.get_position()  # Top left.
-                pos4 = sp.ax.get_position()  # Bottom right.
-                cbarWidth = cbar.ax.get_position().height / colorBarAspect
-                # NOTE: cbarWidth != cbar.ax.get_position().width
-                ax2.set_position([pos4.x0, pos1.y0, pos4.width + cbarWidth, pos1.height])
-
-                # Overplot the histograms for the zoomed-in plots.
-                for zoomFactor, zidx, color, linestyle, hatch in zip(
-                    zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
-                ):
-                    weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
-                    histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
-                    histValues = ax2.hist(
-                        values[zidx],
-                        bins=bins,
-                        label=histLabel,
-                        color=color,
-                        weights=weights,
-                        histtype="step",
-                        linewidth=2,
-                        linestyle=linestyle,
-                        alpha=0.6,
-                    )[0]
-                    # Fill the area under the step.
-                    ax2.fill_between(
-                        bins[:-1],
-                        histValues,
-                        step="post",
-                        color=color,
-                        alpha=0.2,
-                        hatch=hatch,
-                        label="hidden",
+                    zoomText = spf.ax.text(
+                        (x0 + x1) / 2,
+                        y0,
+                        f"{self.prettyPrintFloat(zoomFactor)}x",
+                        color=histColor,
+                        fontsize=14,
+                        fontweight="bold",
+                        alpha=0.8,
+                        ha="center",
+                        va="bottom",
                     )
+                    # Add a distinct outline around the text for better
+                    # visibility in various backgrounds.
+                    zoomText.set_path_effects(
+                        [
+                            mpl_path_effects.Stroke(linewidth=4, foreground="white", alpha=0.8),
+                            mpl_path_effects.Normal(),
+                        ]
+                    )
+                    # Get the indices of pixels in the zoomed-in region.
+                    pos = mapData.valid_pixels_pos()
+                    # Reversed axes consideration.
+                    xmin, xmax = sorted([x0, x1])
+                    idx = (pos[0] > xmin) & (pos[0] < xmax) & (pos[1] > y0) & (pos[1] < y1)
+                    zoomIdx.append(idx[goodValues])
 
-                # Set labels and legend.
-                xlabel = plotInfo["property"]
-                if plotInfo["unit"] not in ["dimensionless", "N/A"]:
-                    xlabel += f" [{plotInfo['unit']}]"
-                ax2.set_xlabel(xlabel)
-                ax2.set_ylabel("Normalized Count")
+            # Calculate weights for each bin to ensure that the peak of the
+            # histogram reaches 1.
+            weights = np.ones_like(values) / np.histogram(values, bins=nBinsHist)[0].max()
 
-                # Get handles and labels from the axis.
-                handles, labels = ax2.get_legend_handles_labels()
+            # Compute full-tract histogram and get its bins.
+            # NOTE: `exposure_time` histograms are quantized and look more
+            # bar-like, so they look better with fewer bins.
+            bins = ax2.hist(
+                values,
+                bins=nBinsHist,
+                label="Full Tract",
+                color=histColors[0],
+                weights=weights,
+                alpha=0.7,
+            )[1]
 
-                # Add a legend with custom handler that combines the handle
-                # pairs for the zoomed-in cases.
-                handles = [handles[0], (handles[1], handles[2]), (handles[3], handles[4])]
-                while "hidden" in labels:
-                    labels.remove("hidden")
-                legend = ax2.legend(
-                    handles,
-                    labels,
-                    handler_map={tuple: CustomHandler()},
-                    loc="best",
-                    frameon=False,
-                    fontsize=15,
+            # Align the histogram (top right panel) with the skyproj plots.
+            pos1 = spf.ax.get_position()  # Top left.
+            pos4 = sp.ax.get_position()  # Bottom right.
+            cbarWidth = cbar.ax.get_position().height / colorBarAspect
+            # NOTE: cbarWidth != cbar.ax.get_position().width
+            ax2.set_position([pos4.x0, pos1.y0, pos4.width + cbarWidth, pos1.height])
+
+            # Overplot the histograms for the zoomed-in plots.
+            for zoomFactor, zidx, color, linestyle, hatch in zip(
+                zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
+            ):
+                weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
+                histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                histValues = ax2.hist(
+                    values[zidx],
+                    bins=bins,
+                    label=histLabel,
+                    color=color,
+                    weights=weights,
+                    histtype="step",
+                    linewidth=2,
+                    linestyle=linestyle,
+                    alpha=0.6,
+                )[0]
+                # Fill the area under the step.
+                ax2.fill_between(
+                    bins[:-1],
+                    histValues,
+                    step="post",
+                    color=color,
+                    alpha=0.2,
+                    hatch=hatch,
+                    label="hidden",
                 )
 
-                for line, text in zip(handles, legend.get_texts()):
-                    if isinstance(line, tuple):
-                        # Use the first handle to get the color.
-                        line = line[0]
-                    color = line.get_edgecolor() if line.get_facecolor()[-1] == 0 else line.get_facecolor()
-                    text.set_color(color)
+            # Set labels and legend.
+            xlabel = plotInfo["property"]
+            if plotInfo["unit"] not in ["dimensionless", "N/A"]:
+                xlabel += f" [{plotInfo['unit']}]"
+            ax2.set_xlabel(xlabel)
+            ax2.set_ylabel("Normalized Count")
 
-                # Add extra info to plotInfo.
-                plotInfo["nside"] = mapData.nside_sparse
-                plotInfo["valid_area"] = mapData.get_valid_area()
+            # Get handles and labels from the axis.
+            handles, labels = ax2.get_legend_handles_labels()
 
-                # Add useful information to the plot.
-                figDict[mapName] = self.addPlotInfo(fig, plotInfo, mapName)
+            # Add a legend with custom handler that combines the handle
+            # pairs for the zoomed-in cases.
+            handles = [handles[0], (handles[1], handles[2]), (handles[3], handles[4])]
+            while "hidden" in labels:
+                labels.remove("hidden")
+            legend = ax2.legend(
+                handles,
+                labels,
+                handler_map={tuple: CustomHandler()},
+                loc="best",
+                frameon=False,
+                fontsize=15,
+            )
 
-                _LOG.info(
-                    f"Made property map plot for dataset type {mapName}, tract: {plotInfo['tract']}, "
-                    f"band: '{plotInfo['band']}'."
-                )
+            for line, text in zip(handles, legend.get_texts()):
+                if isinstance(line, tuple):
+                    # Use the first handle to get the color.
+                    line = line[0]
+                color = line.get_edgecolor() if line.get_facecolor()[-1] == 0 else line.get_facecolor()
+                text.set_color(color)
 
-        return figDict
+            # Add extra info to plotInfo.
+            plotInfo["projection"] = "Gnomonic"
+            plotInfo["nside"] = mapData.nside_sparse
+            plotInfo["valid_area"] = mapData.get_valid_area()
 
-    def getOutputNames(self, config=None) -> Iterable[str]:
-        # Docstring inherited.
+            # Add useful information to the plot.
+            self.addPlotInfo(fig, plotInfo, toolName)
 
-        # Names needed for making corresponding output connections for the maps
-        # that are configured for this task.
-        outputNames: tuple[str] = ()
-        for propertyName in config.properties:
-            coaddName = config.properties[propertyName].coaddName
-            for operationName in config.properties[propertyName].operations:
-                outputNames += (f"{coaddName}Coadd_{propertyName}_{operationName}",)
+            _LOG.info(
+                f"Made per-tract property map plot for dataset type '{toolName}', "
+                f"tract: {plotInfo['tract']}, band: '{plotInfo['band']}'."
+            )
 
-        return outputNames
+        return fig
 
     @staticmethod
     def prettyPrintFloat(n):
@@ -626,19 +624,13 @@ class PropertyMapPlot(PlotAction):
         return str(n)
 
 
-class PropertyMapSurveyWidePlot(PlotAction):
+class SurveyWidePropertyMapPlot(PlotAction):
     plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
-
-    nBinsHist = pexConfig.Field(
-        dtype=int,
-        doc="Number of bins to use for the histogram.",
-        default=35,
-    )
 
     def __call__(
         self,
         data: KeyedData,
-        plotConfig: PropertyMapSurveyWideAnalysisConfig,
+        plotConfig: SurveyWidePropertyMapAnalysisConfig,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
         **kwargs,
     ) -> Mapping[str, Figure]:
@@ -648,7 +640,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
         self,
         fig: Figure,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
-        mapName: Mapping[str, str],
+        toolName: str,
     ) -> Figure:
         """Add useful information to the plot.
 
@@ -658,8 +650,8 @@ class PropertyMapSurveyWidePlot(PlotAction):
             The figure to add the information to.
         plotInfo : `dict`
             A dictionary of the plot information.
-        mapName : `str`
-            The name of the map being plotted.
+        toolName : `str`
+            The name of the tool used to generate the plot.
 
         Returns
         -------
@@ -668,7 +660,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
         """
 
         run = plotInfo["run"]
-        tableType = f"\nTable: {plotInfo['tableNames'][mapName]}"
+        tableType = f"\nTable: {plotInfo['tableNames'][toolName]}"
 
         dataIdText = f"Band: {plotInfo['band']}"
         propertyDescription = plotInfo["description"]
@@ -715,7 +707,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotConfig: PropertyMapSurveyWideAnalysisConfig,
+        plotConfig: SurveyWidePropertyMapAnalysisConfig,
         plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
     ) -> Figure:
         """Make the survey property map plot.
@@ -726,7 +718,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
             The HealSparseMap to plot the points from.
         plotConfig :
             `~lsst.analysis.tools.tasks.propertyMapSurveyAnalysis.
-            PropertyMapSurveyWideAnalysisConfig`
+            SurveyWidePropertyMapAnalysisConfig`
             The configuration for the plot.
         plotInfo : `dict`
             A dictionary of information about the data being plotted.
@@ -737,13 +729,13 @@ class PropertyMapSurveyWidePlot(PlotAction):
             The resulting figure.
         """
 
-        # 'plotName' defaults to the attribute specified in
+        # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.healSparsePropertyMap.
-        # HealSparsePropertyMapTool`, it will override this default.
+        # SurveyWidePropertyMapTool`, it will override this default.
         if self.plotName:
             # Set the plot name using 'produce.plot.plotName' from
-            # HealSparsePropertyMapTool's instance.
+            # SurveyWidePropertyMapTool's instance.
             plotInfo["plotName"] = self.plotName
 
         # Plotting customization.
@@ -755,7 +747,8 @@ class PropertyMapSurveyWidePlot(PlotAction):
             "ytick.labelsize": 13,
         }
 
-        mapName = data["data"].ref.datasetType.name
+        toolName = data["data"].ref.datasetType.name
+        mapName = toolName.replace("_consolidated_map_", "_")
         mapData = data["data"].get()
 
         with rc_context(rcparams):
@@ -796,7 +789,7 @@ class PropertyMapSurveyWidePlot(PlotAction):
             plotInfo["coaddName"] = mapName.split("Coadd_")[0]
             plotInfo["operation"] = plotInfo["operation"].replace("minimum", "min").replace("maximum", "max")
             propertyName = mapName[
-                len(f"{plotInfo['coaddName']}Coadd_") : -len(f"consolidated_map_{plotInfo['operation']}")
+                len(f"{plotInfo['coaddName']}Coadd_") : -len(f"{plotInfo['operation']}")
             ].strip("_")
             if not hasMetadata:
                 # Infer the property description from the map name (all
@@ -848,10 +841,11 @@ class PropertyMapSurveyWidePlot(PlotAction):
             plotInfo["valid_area"] = mapData.get_valid_area()
 
             # Add useful information to the plot.
-            self.addPlotInfo(fig, plotInfo, mapName)
+            self.addPlotInfo(fig, plotInfo, toolName)
 
         _LOG.info(
-            f"Made survey-wide property map plot for dataset type {mapName}, " f"band: '{plotInfo['band']}'."
+            f"Made survey-wide property map plot for dataset type '{toolName}', "
+            f"band: '{plotInfo['band']}'."
         )
 
         return fig

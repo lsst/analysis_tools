@@ -20,14 +20,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("HealSparsePropertyMapTool",)
+__all__ = (
+    "PerTractPropertyMapTool",
+    "SurveyWidePropertyMapTool",
+)
 
 from typing import cast
 
 from healsparse.healSparseMap import HealSparseMap
 from lsst.pex.config import Field
 
-from ..actions.plot.propertyMapPlot import PropertyMapSurveyWidePlot
+from ..actions.plot.propertyMapPlot import PerTractPropertyMapPlot, SurveyWidePropertyMapPlot
 from ..interfaces import AnalysisAction, AnalysisTool, KeyedData, KeyedDataSchema
 
 
@@ -43,8 +46,27 @@ class LoadHealSparseMap(AnalysisAction):
         return cast(HealSparseMap, data[self.mapKey])
 
 
-class HealSparsePropertyMapTool(AnalysisTool):
-    """An `AnalysisTool` for plotting property maps."""
+class PerTractPropertyMapTool(AnalysisTool):
+    """An `AnalysisTool` for plotting per-tract property maps."""
+
+    # Do not iterate over multiple bands in a parameterized manner.
+    parameterizedBand: bool = False
+
+    nBinsHist = Field(
+        dtype=int,
+        doc="Number of bins to use for the histogram.",
+        default=100,
+    )
+
+    def finalize(self):
+        self.process.buildActions.data = LoadHealSparseMap()
+        self.process.buildActions.data.mapKey = self._name.split(".")[1]
+        self.produce.plot = PerTractPropertyMapPlot()
+        self.produce.plot.plotName = "Per-Tract HealSparse Property Map"
+
+
+class SurveyWidePropertyMapTool(AnalysisTool):
+    """An `AnalysisTool` for plotting survey-wide property maps."""
 
     # Do not iterate over multiple bands in a parameterized manner.
     parameterizedBand: bool = False
@@ -52,5 +74,5 @@ class HealSparsePropertyMapTool(AnalysisTool):
     def finalize(self):
         self.process.buildActions.data = LoadHealSparseMap()
         self.process.buildActions.data.mapKey = self._name.split(".")[1]
-        self.produce.plot = PropertyMapSurveyWidePlot()
+        self.produce.plot = SurveyWidePropertyMapPlot()
         self.produce.plot.plotName = "Survey-Wide HealSparse Property Map"

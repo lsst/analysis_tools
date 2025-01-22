@@ -460,6 +460,13 @@ class ScatterPlotWithTwoHists(PlotAction):
             # plot lone median point if there's not enough data to measure more
             n_xs = len(xs)
             if n_xs == 0 or not np.isfinite(sigMadYs):
+                '''The problem is that the final sigMadYs of this loop is used to define the
+                range of the y-axis. If the first toPlotList contains y-values, but the last
+                one doesn't, then sigMadYs=NaN will be taken forward from this for loop to
+                define the y-range. I'm wondering whether sigMadYs should be replaced with
+                the previous value should this conditional be triggered, so that a meaningful
+                value is passed to define the y-range.
+                '''
                 continue
             elif n_xs < 10:
                 xs = [nanMedian(xs)]

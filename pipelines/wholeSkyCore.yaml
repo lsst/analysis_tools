@@ -41,24 +41,6 @@ parameters:
     "astromDiffMetrics_{band}_AA1_tot_coadd",
     "astromDiffMetrics_{band}_AA1_sigmaMad_tot_coadd",
   ]
-  matchedVisitCoreKeysWithBand: [
-    "stellarAstrometricRepeatability1_{band}_AM1",
-    "stellarAstrometricRepeatability1_{band}_AF1",
-    "stellarAstrometricRepeatability1_{band}_AD1",
-    "stellarAstrometricRepeatability2_{band}_AM2",
-    "stellarAstrometricRepeatability2_{band}_AF2",
-    "stellarAstrometricRepeatability2_{band}_AD2",
-    "stellarAstrometricRepeatability3_{band}_AM3",
-    "stellarAstrometricRepeatability3_{band}_AF3",
-    "stellarAstrometricRepeatability3_{band}_AD3",
-    "stellarAstrometricSelfRepeatabilityDec_{band}_dmL2AstroErr_Dec",
-    "stellarAstrometricSelfRepeatabilityRA_{band}_dmL2AstroErr_RA",
-    "stellarPhotometricRepeatability_{band}_stellarPhotRepeatStdev",
-    "stellarPhotometricRepeatability_{band}_stellarPhotRepeatOutlierFraction",
-    "stellarPhotometricResiduals_{band}_photResidTractSigmaMad",
-    "stellarPhotometricResiduals_{band}_photResidTractStdev",
-    "stellarPhotometricResiduals_{band}_photResidTractMedian",
-  ]
 tasks:
   makeMetricTableObjectTableCore:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
@@ -99,8 +81,4 @@ tasks:
     config:
       connections.inputName: "matchedVisitCore_metricsTable"
       connections.outputName: "matchedVisitCore_wholeSky"
-      atools.wholeSkyMetric: WholeSkyPlotTool
-      atools.wholeSkyMetric.plotKeys: []
-      atools.wholeSkyMetric.keysWithBand: parameters.matchedVisitCoreKeysWithBand
-      python: |
-        from lsst.analysis.tools.atools import *
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCoreWholeSkyPlot.py

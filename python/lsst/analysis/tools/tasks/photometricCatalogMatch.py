@@ -156,12 +156,14 @@ class PhotometricCatalogMatchVisitConfig(
     PhotometricCatalogMatchConfig, pipelineConnections=PhotometricCatalogMatchVisitConnections
 ):
     def setDefaults(self):
+        super().setDefaults()
         self.idColumn = "sourceId"
         self.matchesRefCat = True
         self.filterNames = []
         self.extraPerBandColumns = []
         self.patchColumn = ""
         self.selectorBands = []
+        self.extraColumns = ["x", "y", "ap09Flux", "ap09FluxErr"]
         self.selectorActions.flagSelector = VisitPlotFlagSelector
         self.sourceSelectorActions.sourceSelector = StarSelector()
         self.sourceSelectorActions.sourceSelector.vectorKey = "extendedness"

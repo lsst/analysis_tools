@@ -4,49 +4,25 @@ tasks:
   analyzeSourceTableCore:
     class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
     config:
+      file: $ANALYSIS_TOOLS_DIR/config/sourceTableCore.py
       connections.inputName: sourceTable_visit
       connections.outputName: sourceTableCore
-      atools.skyFluxVisitStatisticMetric: SkyFluxStatisticMetric
-      atools.skyFluxVisitStatisticMetric.applyContext: VisitContext
-      atools.skySourceSky: SkySourceSkyPlot
-      atools.skySourceFlux: SkySourceHistPlot
-      atools.relativeSizeResidualPlot: RelativeSizeResidualPlot
-      python: |
-        from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *
   catalogMatchVisit:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
   astrometricRefCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
     config:
-      atools.astromDiffRASkyVisitPlot: TargetRefCatDeltaRASkyVisitPlot
-      atools.astromDiffDecSkyVisitPlot: TargetRefCatDeltaDecSkyVisitPlot
-      atools.astromDiffRAScatterVisitPlot: TargetRefCatDeltaRAScatterVisitPlot
-      atools.astromDiffDecScatterVisitPlot: TargetRefCatDeltaDecScatterVisitPlot
-      atools.astromDiffMetrics: TargetRefCatDeltaMetrics
-      atools.astromDiffMetrics.applyContext: VisitContext
-      python: |
-        from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *
+      file: $ANALYSIS_TOOLS_DIR/config/refCatSourceAstrometricCore.py
   photometricMatchVisit:
     class: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchVisitTask
-    config:
-      extraColumns: ["x", "y", "ap09Flux", "ap09FluxErr"]
   photometricRefCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourcePhotometricAnalysis.RefCatSourcePhotometricAnalysisTask
     config:
-      atools.photomDiffPsfSkyVisitPlot: TargetRefCatDeltaPsfSkyVisitPlot
-      atools.photomDiffAp09SkyVisitPlot: TargetRefCatDeltaAp09SkyVisitPlot
-      atools.photoDiffPsfScatterVisitPlot: TargetRefCatDeltaPsfScatterVisitPlot
-      atools.photoDiffCModelScatterVisitPlot: TargetRefCatDeltaAp09ScatterVisitPlot
-      python: from lsst.analysis.tools.atools import *
+      file: $ANALYSIS_TOOLS_DIR/config/refCatSourcePhotometricCore.py
   objectEpochTable:
     class: lsst.analysis.tools.tasks.ObjectEpochTableTask
   sourceObjectMatch:
     class: lsst.analysis.tools.tasks.SourceObjectTableAnalysisTask
-    config:
-      atools.astromColorDiffMetrics: TargetRefCatDeltaColorMetrics
-      python: from lsst.analysis.tools.atools import *
   calexpSummary:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:

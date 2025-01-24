@@ -280,6 +280,12 @@ class SourceObjectTableAnalysisConfig(
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
 
+    def setDefaults(self):
+        super().setDefaults()
+        from ..atools import TargetRefCatDeltaColorMetrics
+
+        self.atools.astromColorDiffMetrics = TargetRefCatDeltaColorMetrics
+
 
 class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
     ConfigClass = SourceObjectTableAnalysisConfig

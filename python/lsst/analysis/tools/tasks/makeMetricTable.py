@@ -93,19 +93,19 @@ class MakeMetricTableConfig(
 ):
     inputDataDimensions = ListField[str](
         doc="Dimensions of the input data.",
-        default=(),
+        default=("skymap", "tract"),
         optional=False,
     )
     outputTableDimensions = ListField[str](
         doc="Dimensions of the output data.",
-        default=(),
+        default=("skymap",),
         optional=False,
     )
     dataIdFieldsToIncludeAsColumns = ListField[str](
         doc="DataId fields to include as columns in the table. "
         "These are added in addition to the Metric names. "
         "At least one field must be specified.",
-        default=None,
+        default=("tract",),
         optional=False,
     )
 

@@ -118,6 +118,16 @@ tasks:
       atools.diaPipeMetadataMetrics.metrics:
         numTotalSolarSystemObjects: ct
         numAssociatedSsObjects: ct
+      python: |
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
+  associationTiming:
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
+    config:
+      connections.inputName: diaPipe_metadata
+      connections.outputName: diaPipeTiming_metadata  # Should be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnEmptyMetadata: true
+      inputDimensions: ["instrument", "visit", "detector"]
       atools.diaPipeTimingMetrics: TaskMetadataMetricTool
       atools.diaPipeTimingMetrics.taskName: diaPipe
       atools.diaPipeTimingMetrics.metrics:
@@ -238,6 +248,7 @@ subsets:
       - diffimTaskCore
       - detectionTaskCore
       - associationCore
+      - associationTiming
       - diffimTaskPlots
       - initialPviCore
     description: >

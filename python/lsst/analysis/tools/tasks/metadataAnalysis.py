@@ -178,6 +178,10 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
                     if self.config.raiseNoWorkFoundOnEmptyMetadata:
                         return
                 elif subtaskName := subTaskNames.get(key):
+                    if f"{taskName}:{subtaskName}" not in metadata:
+                        raise UpstreamFailureNoWorkFound(
+                            f"Subtask {subtaskName!r} was not found in {taskName} metadata"
+                        )
                     if key in metadata[f"{taskName}:{subtaskName}"]:
                         if self.config.raiseNoWorkFoundOnEmptyMetadata:
                             return

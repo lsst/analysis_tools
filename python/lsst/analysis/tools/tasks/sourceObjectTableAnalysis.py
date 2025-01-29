@@ -315,6 +315,11 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         visit : `int`
             Identifier of the isolatedSources' visit.
         """
+        if visitTable.index.name is None:
+            # The expected index may or may not be set, depending on whether
+            # the table was written originally as a DataFrame or something else
+            # Parquet-friendly.
+            visitTable.set_index("visitId", inplace=True)
         sourceMjd = visitTable.loc[visit]["expMidptMJD"]
 
         # Get target date from reference catalog

@@ -105,6 +105,22 @@ tasks:
         nMergedDiaSources: ct
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
+  loadDiaCatalogsCore:
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
+    config:
+      connections.inputName: loadDiaCatalogs_metadata
+      connections.outputName: loadDiaCatalogs_metadata  # Should be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnEmptyMetadata: true
+      inputDimensions: ["instrument", "group", "detector"]
+      atools.diaPipeMetadataMetrics: TaskMetadataMetricTool
+      atools.diaPipeMetadataMetrics.taskName: loadDiaCatalogs
+      atools.diaPipeMetadataMetrics.metrics:
+        loadDiaObjectsDuration: s
+        loadDiaSourcesDuration: s
+        loadDiaForcedSourcesDuration: s
+      python: |
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
   associationCore:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
@@ -118,6 +134,7 @@ tasks:
       atools.diaPipeMetadataMetrics.metrics:
         numTotalSolarSystemObjects: ct
         numAssociatedSsObjects: ct
+        writeToApdbDuration: s
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   associationTiming:
@@ -250,6 +267,7 @@ subsets:
       - diffimTaskCore
       - detectionTaskCore
       - associationCore
+      - loadDiaCatalogsCore
       - associationTiming
       - diffimTaskPlots
       - initialPviCore

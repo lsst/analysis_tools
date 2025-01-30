@@ -121,6 +121,8 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   associationTiming:
+    # This tool must only contain metrics from alertPackager, since that subtask
+    # is optional and this tool will raise NoWorkFound if it is missing.
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: diaPipe_metadata

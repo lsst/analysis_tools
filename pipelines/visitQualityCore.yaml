@@ -15,6 +15,12 @@ tasks:
       connections.outputName: preSourceTableCore
   catalogMatchVisit:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
+  catalogMatchPreVisit:
+    class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
+    config:
+      connections.catalog: "preSourceTable_visit"
+      connections.targetCatalog: "preSourceTable_visit"
+      connections.visitSummaryTable: "visitSummary"
   astrometricRefCatSourceVisit:
     class: lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask
     config:

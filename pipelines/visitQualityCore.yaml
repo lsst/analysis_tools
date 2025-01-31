@@ -7,6 +7,12 @@ tasks:
       file: $ANALYSIS_TOOLS_DIR/config/sourceTableCore.py
       connections.inputName: sourceTable_visit
       connections.outputName: sourceTableCore
+  analyzePreSourceTableCore:
+    class: lsst.analysis.tools.tasks.SourceTableVisitAnalysisTask
+    config:
+      file: $ANALYSIS_TOOLS_DIR/config/sourceTableCore.py
+      connections.inputName: preSourceTable_visit
+      connections.outputName: preSourceTableCore
   catalogMatchVisit:
     class: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchVisitTask
   astrometricRefCatSourceVisit:

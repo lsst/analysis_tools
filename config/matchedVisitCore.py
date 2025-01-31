@@ -1,16 +1,14 @@
 # Configuration for standard instances of
 # lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
-#
-# This configuration includes the "Minimal" configuration and adds to it.
-
-import os
 
 from lsst.analysis.tools.atools import *
 
-config.load(os.path.join(os.path.dirname(__file__), "matchedVisitMinimal.py"))
+config.atools.stellarAstrometricSelfRepeatabilityRA = AstrometricRepeatability
+config.atools.stellarAstrometricSelfRepeatabilityRA.coordinate = "RA"
 config.atools.stellarAstrometricSelfRepeatabilityRA.level = 2
+config.atools.stellarAstrometricSelfRepeatabilityDec = AstrometricRepeatability
+config.atools.stellarAstrometricSelfRepeatabilityDec.coordinate = "Dec"
 config.atools.stellarAstrometricSelfRepeatabilityDec.level = 2
-
 config.atools.stellarPhotometricRepeatability = StellarPhotometricRepeatability
 config.atools.stellarPhotometricResiduals = StellarPhotometricResidualsFocalPlane
 config.atools.stellarPhotometricRepeatabilityCalib = StellarPhotometricRepeatability

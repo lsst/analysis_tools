@@ -14,7 +14,7 @@ tasks:
   analyzeMatchedPreVisitCore:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
-      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitMinimal.py
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCore.py
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
       # Proper motion catalogs are not available for `preSourceTables`

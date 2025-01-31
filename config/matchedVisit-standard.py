@@ -3,9 +3,12 @@
 
 from lsst.analysis.tools.atools import *
 
+config.atools.stellarAstrometricSelfRepeatabilityRA = AstrometricRepeatability
+config.atools.stellarAstrometricSelfRepeatabilityRA.coordinate = "RA"
 config.atools.stellarAstrometricSelfRepeatabilityRA.level = 2
+config.atools.stellarAstrometricSelfRepeatabilityDec = AstrometricRepeatability
+config.atools.stellarAstrometricSelfRepeatabilityDec.coordinate = "Dec"
 config.atools.stellarAstrometricSelfRepeatabilityDec.level = 2
-
 config.atools.stellarPhotometricRepeatability = StellarPhotometricRepeatability
 config.atools.stellarPhotometricResiduals = StellarPhotometricResidualsFocalPlane
 config.atools.stellarPhotometricRepeatabilityCalib = StellarPhotometricRepeatability

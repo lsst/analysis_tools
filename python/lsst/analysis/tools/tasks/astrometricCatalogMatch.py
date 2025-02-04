@@ -202,7 +202,15 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         )
 
         visitSummaryTable = inputs.pop("visitSummaryTable")
-        loadedRefCat = self._loadRefCat(loaderTask, visitSummaryTable)
+        loadedRefCat, badDetectors = self._loadRefCat(loaderTask, visitSummaryTable)
+        for badDetector in badDetectors:
+            mask = table["detector"] != badDetector
+            self.log.info(
+                "Trimming %d sources from detector %s with incomplete or missing astrometry.",
+                len(table) - sum(mask),
+                badDetector,
+            )
+            table = table[mask]
         outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)
@@ -214,16 +222,26 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         ----------
         visitSummaryTable : `lsst.afw.table.ExposureCatalog`
             The table of visit information
+
+        Returns
+        -------
+        refCat : `astropy.table.Table`
+            Reference catalog.
+        badDetectors : `list` [ `int` ]
+            IDs of detectors with invalid visit summaries (should be skipped).
         """
         # Get convex hull around the detectors, then get its center and radius
         corners = []
+        badDetectors = []
         for visSum in visitSummaryTable:
             for ra, dec in zip(visSum["raCorners"], visSum["decCorners"]):
-                # If the coordinates are nan then don't keep going
-                # because it crashes later
+                # If the coordinates are nan skip this detector.
                 if not np.isfinite(ra) or not np.isfinite(dec):
-                    raise pipeBase.NoWorkFound("Visit summary corners not finite")
+                    badDetectors.append(visSum.getId())
+                    break
                 corners.append(lsst.geom.SpherePoint(ra, dec, units=lsst.geom.degrees).getVector())
+        if not corners:
+            raise pipeBase.NoWorkFound("No visit summary corners were finite.")
         visitBoundingCircle = lsst.sphgeom.ConvexPolygon.convexHull(corners).getBoundingCircle()
         center = lsst.geom.SpherePoint(visitBoundingCircle.getCenter())
         radius = visitBoundingCircle.getOpeningAngle()
@@ -239,4 +257,4 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         filterName = self.config.referenceCatalogLoader.refObjLoader.anyFilterMapsToThis
         loadedRefCat = loaderTask.getSkyCircleCatalog(center, radius, filterName, epoch=epoch)
 
-        return Table(loadedRefCat)
+        return Table(loadedRefCat), badDetectors

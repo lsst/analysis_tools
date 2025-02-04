@@ -39,7 +39,7 @@ from lsst.resources import ResourcePath, ResourcePathExpression
 from . import SasquatchDispatcher
 
 if TYPE_CHECKING:
-    from lsst.daf.butler import Config, DatasetType, LookupKey
+    from lsst.daf.butler import Config, DatasetProvenance, DatasetType, LookupKey
     from lsst.daf.butler.registry.interfaces import DatasetIdRef, DatastoreRegistryBridgeManager
 
 
@@ -151,7 +151,9 @@ class SasquatchDatastore(GenericBaseDatastore):
     def bridge(self) -> DatastoreRegistryBridge:
         return self._bridge
 
-    def put(self, inMemoryDataset: Any, ref: DatasetRef) -> None:
+    def put(
+        self, inMemoryDataset: Any, ref: DatasetRef, *, provenance: DatasetProvenance | None = None
+    ) -> None:
         if self.constraints.isAcceptable(ref):
             self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
         else:

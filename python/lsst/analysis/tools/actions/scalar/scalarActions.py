@@ -83,7 +83,7 @@ class MedianAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
-        med = nanMedian(values) if values.size else np.NaN
+        med = nanMedian(values) if values.size else np.nan
 
         return med
 
@@ -94,7 +94,7 @@ class MeanAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         values = _dataToArray(data[self.vectorKey.format(**kwargs)])[mask]
-        mean = nanMean(values) if values.size else np.NaN
+        mean = nanMean(values) if values.size else np.nan
 
         return mean
 

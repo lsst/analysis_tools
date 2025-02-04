@@ -40,7 +40,6 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
 from lsst.daf.butler import Butler, DataCoordinate, DatasetType, DeferredDatasetHandle
 from lsst.daf.butler.tests.utils import makeTestTempDir, removeTestTempDir
 from lsst.skymap.discreteSkyMap import DiscreteSkyMap
-from mpl_toolkits import axisartist
 
 # No display needed.
 matplotlib.use("Agg")
@@ -162,7 +161,8 @@ class PerTractPropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
             self.assertTrue(isinstance(fig, plt.Figure), msg=f"Figure {key} is not a matplotlib figure.")
 
             # Assert the number of axes in the figure. At least not empty.
-            self.assertEqual(len(fig.axes), 10)
+            # Varies between 7 and 10 based on skyproj version.
+            self.assertGreaterEqual(len(fig.axes), 7, f"Got axes: {fig.axes}")
 
             # Verify some configuration parameters.
             binsCount = atool.nBinsHist
@@ -273,13 +273,10 @@ class PerTractPropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
 
         # Check the total number of each axis type.
         totalSkyAxes = sum(isinstance(ax, skyproj.skyaxes.SkyAxes) for ax in axes)
-        totalAxisArtistAxes = sum(isinstance(ax, axisartist.axislines.Axes) for ax in axes)
         totalColorbarAxes = sum(isinstance(ax, plt.Axes) and ax.get_label() == "<colorbar>" for ax in axes)
 
         if totalSkyAxes != 3:
             errors.append(f"Expected 3 SkyAxes but got {totalSkyAxes}.")
-        if totalAxisArtistAxes != 3:
-            errors.append(f"Expected 3 AxisArtist Axes but got {totalAxisArtistAxes}.")
         if totalColorbarAxes != 3:
             errors.append(f"Expected 3 colorbar Axes but got {totalColorbarAxes}.")
 
@@ -442,7 +439,9 @@ class SurveyWidePropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
             self.assertTrue(isinstance(fig, plt.Figure), msg=f"Figure {key} is not a matplotlib figure.")
 
             # Assert the number of axes in the figure. At least not empty.
-            self.assertEqual(len(fig.axes), 3)
+            # There should be at least 2 axes.
+            # Some versions of skyproj have an additional axis.
+            self.assertGreaterEqual(len(fig.axes), 2, f"Got axes: {fig.axes}")
 
 
 class MemoryTester(lsst.utils.tests.MemoryTestCase):

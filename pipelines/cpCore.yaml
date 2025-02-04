@@ -238,7 +238,7 @@ tasks:
       atools.defectsPixels.produce.plot.addHistogram: false
       # here set name of column from the verify table
       atools.defectsPixels.quantityKey: DEFECTS_DEFECT_PIXELS
-      atools.defectsPixels.unit: "pix"
+      atools.defectsPixels.unit: pix
 
       python: |
         from lsst.analysis.tools.atools import *

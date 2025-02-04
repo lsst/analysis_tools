@@ -324,6 +324,7 @@ class SkyPlot(PlotAction):
             finite = np.isfinite(xs) & np.isfinite(ys)
             xs = xs[finite]
             ys = ys[finite]
+            colorVals = colorVals[finite]
             n_xs = len(xs)
             # colorVal column is unusable so zero it out
             # This should be obvious on the plot

@@ -26,6 +26,7 @@ __all__ = (
 )
 
 
+from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -33,26 +34,74 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class MetricAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("skymap",),
-    defaultTemplates={"metricBundleName": "objectTableCore_metrics"},
+    dimensions=(),
+    defaultTemplates={"metricTableName": ""},
 ):
+
     data = ct.Input(
-        doc="A summary table of all metrics by tract.",
-        name="{metricBundleName}Table",
+        doc="A table containing metrics.",
+        name="{metricTableName}",
         storageClass="ArrowAstropy",
-        dimensions=("skymap",),
         deferLoad=True,
+        dimensions=(),
+    )
+
+    def __init__(self, *, config=None):
+
+        self.dimensions.update(frozenset(sorted(config.outputDataDimensions)))
+        super().__init__(config=config)
+        self.data = ct.Input(
+            doc=self.data.doc,
+            name=self.data.name,
+            storageClass=self.data.storageClass,
+            deferLoad=self.data.deferLoad,
+            dimensions=frozenset(sorted(config.inputDataDimensions)),
+        )
+
+
+class MetricAnalysisConfig(
+    AnalysisBaseConfig,
+    pipelineConnections=MetricAnalysisConnections,
+):
+    inputDataDimensions = ListField[str](
+        doc="Dimensions of the input data table.",
+        default=(),
+        optional=False,
+    )
+    outputDataDimensions = ListField[str](
+        doc="Dimensions of the outputs.",
+        default=(),
+        optional=False,
     )
 
 
-class MetricAnalysisConfig(AnalysisBaseConfig, pipelineConnections=MetricAnalysisConnections):
-    pass
-
-
 class MetricAnalysisTask(AnalysisPipelineTask):
-    """Turn metric bundles which are per tract into a
-    summary metric table.
+    """Take a metric table and run an analysis tool on the
+    data it contains. This could include creating a plot
+    the metrics and/or calculating summary values of those
+    metrics, such as means, medians, etc. The analysis
+    is outlined within the analysis tool.
     """
 
     ConfigClass = MetricAnalysisConfig
     _DefaultName = "metricAnalysis"
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        # Doctstring inherited
+
+        inputs = butlerQC.get(inputRefs)
+        dataId = butlerQC.quantum.dataId
+        plotInfo = self.parsePlotInfo(inputs, dataId)
+
+        data = self.loadData(inputs.pop("data"))
+
+        # TODO: "bands" kwarg is a workaround for DM-47941.
+        outputs = self.run(
+            data=data,
+            plotInfo=plotInfo,
+            bands=dataId["band"],
+            band=dataId["band"],
+            **inputs,
+        )
+
+        butlerQC.put(outputs, outputRefs)

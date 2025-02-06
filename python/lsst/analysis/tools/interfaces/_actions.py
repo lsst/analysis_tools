@@ -23,6 +23,7 @@ from __future__ import annotations
 
 __all__ = (
     "AnalysisAction",
+    "HealSparseMapAction",
     "KeyedDataAction",
     "VectorAction",
     "ScalarAction",
@@ -43,6 +44,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterable
 
 import lsst.pex.config as pexConfig
+from healsparse.healSparseMap import HealSparseMap
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 
 from ..contexts import ContextApplier
@@ -137,6 +139,16 @@ class AnalysisAction(ConfigurableAction):
             "this may be expected",
             RuntimeWarning,
         )
+
+
+class HealSparseMapAction(AnalysisAction):
+    """A `HealSparseMapAction` is an `AnalysisAction` that returns a
+    `HealSparseMap` when called.
+    """
+
+    @abstractmethod
+    def __call__(self, data: KeyedData, **kwargs) -> HealSparseMap:
+        raise NotImplementedError("This is not implemented on the base class")
 
 
 class KeyedDataAction(AnalysisAction):

@@ -25,25 +25,11 @@ __all__ = (
     "SurveyWidePropertyMapTool",
 )
 
-from typing import cast
-
-from healsparse.healSparseMap import HealSparseMap
 from lsst.pex.config import Field
 
+from ..actions.healSparseMap.healSparseMapActions import LoadHealSparseMap
 from ..actions.plot.propertyMapPlot import PerTractPropertyMapPlot, SurveyWidePropertyMapPlot
-from ..interfaces import AnalysisAction, AnalysisTool, KeyedData, KeyedDataSchema
-
-
-class LoadHealSparseMap(AnalysisAction):
-    """Load and return a HealSparseMap from KeyedData."""
-
-    mapKey = Field[str](doc="Key of map which should be loaded.")
-
-    def getInputSchema(self) -> KeyedDataSchema:
-        return ((self.mapKey, HealSparseMap),)
-
-    def __call__(self, data: KeyedData, **kwargs) -> HealSparseMap:
-        return cast(HealSparseMap, data[self.mapKey])
+from ..interfaces import AnalysisTool
 
 
 class PerTractPropertyMapTool(AnalysisTool):

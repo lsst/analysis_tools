@@ -72,3 +72,10 @@ Do atools only work on a per detector/patch/tract/visit basis?
 --------------------------------------------------------------
 
 You can write an atool that rolls up the data from a bunch of smaller parts.
+
+Some tasks are configured directly in pipeline YAML, but others reference files in the `config` directory.  Why?
+----------------------------------------------------------------------------------------------------------------
+
+If multiple very similar configurations of an analysis task are run multiple times in a pipeline (for example, we want to run visit-level analysis both before and after our final calibration steps, with only the input connections changing), we put the common configuration for those tasks in the ``config`` directory and use the ``config: file:`` directive to apply those in the pipeline YAML file.
+
+When this sort of duplication is not a concern, the configuration for an analysis task should go directly in a pipeline YAML file to make it easier to read.

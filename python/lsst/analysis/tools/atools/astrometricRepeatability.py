@@ -253,10 +253,16 @@ class AstrometricRelativeRepeatability(AnalysisTool):
         self.produce.plot.panels["panel_sep"] = HistPanel()
         self.produce.plot.panels["panel_sep"].hists = dict(separationResiduals="Source separations")
         self.produce.plot.panels["panel_sep"].label = "Separation Distances (marcsec)"
+        self.produce.plot.panels["panel_sep"].lowerRange = 0
+        self.produce.plot.panels["panel_sep"].upperRange = 80
+        self.produce.plot.panels["panel_sep"].rangeType = "fixed"
 
         self.produce.plot.panels["panel_rms"] = HistPanel()
         self.produce.plot.panels["panel_rms"].hists = dict(rmsDistances="Object RMS")
         self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (marcsec)"
+        self.produce.plot.panels["panel_rms"].lowerRange = 0
+        self.produce.plot.panels["panel_rms"].upperRange = 80
+        self.produce.plot.panels["panel_rms"].rangeType = "fixed"
         # TODO: DM-39163 add reference lines for ADx, AMx, and AFx.
 
     def finalize(self):

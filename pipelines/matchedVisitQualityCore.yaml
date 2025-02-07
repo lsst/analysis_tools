@@ -4,95 +4,18 @@ tasks:
   analyzeMatchedVisitCore:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCore.py
       connections.outputName: matchedVisitCore
-      atools.stellarPhotometricRepeatability: StellarPhotometricRepeatability
-      atools.stellarPhotometricResiduals: StellarPhotometricResidualsFocalPlane
-      atools.stellarPhotometricRepeatabilityCalib: StellarPhotometricRepeatability
-      atools.stellarPhotometricRepeatabilityCalib.fluxType: 'calibFlux'
-      atools.stellarPhotometricResidualsCalib: StellarPhotometricResidualsFocalPlane
-      atools.stellarPhotometricResidualsCalib.fluxType: 'calibFlux'
-      atools.stellarAstrometricResidualsRA: StellarAstrometricResidualsRAFocalPlanePlot
-      atools.stellarAstrometricResidualsDec: StellarAstrometricResidualsDecFocalPlanePlot
-      atools.stellarAstrometricResidualStdDevRA: StellarAstrometricResidualStdDevRAFocalPlanePlot
-      atools.stellarAstrometricResidualStdDevDec: StellarAstrometricResidualStdDevDecFocalPlanePlot
-      atools.stellarAstrometricRepeatability1: AstrometricRelativeRepeatability
-      atools.stellarAstrometricRepeatability1.xValue: 1
-      atools.stellarAstrometricRepeatability1.process.calculateActions.rms.annulus: 5
-      atools.stellarAstrometricRepeatability2: AstrometricRelativeRepeatability
-      atools.stellarAstrometricRepeatability2.xValue: 2
-      atools.stellarAstrometricRepeatability2.process.calculateActions.rms.annulus: 20
-      atools.stellarAstrometricRepeatability3: AstrometricRelativeRepeatability
-      atools.stellarAstrometricRepeatability3.xValue: 3
-      atools.stellarAstrometricRepeatability3.process.calculateActions.rms.annulus: 200
-      atools.stellarAstrometricRepeatability3.process.calculateActions.rms.threshAD: 30
-      atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
-      atools.stellarAstrometricSelfRepeatabilityRA.level: 2
-      atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
-      atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability
-      atools.stellarAstrometricSelfRepeatabilityDec.level: 2
-      atools.stellarAstrometricSelfRepeatabilityDec.coordinate: 'Dec'
-      python: |
-        from lsst.analysis.tools.atools import *
   analyzeMatchedVisitExtended:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitExtended.py
       connections.outputName: matchedVisitExtended
-      atools.modelPhotRepStarSn5to10: StellarPhotometricRepeatability
-      atools.modelPhotRepStarSn5to10.fluxType: gaussianFlux
-      atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
-      atools.modelPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
-      atools.modelPhotRepStarSn5to10.produce.plot: NoPlot
-
-      atools.modelPhotRepStarSn10to20: StellarPhotometricRepeatability
-      atools.modelPhotRepStarSn10to20.fluxType: gaussianFlux
-      atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
-      atools.modelPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
-      atools.modelPhotRepStarSn10to20.produce.plot: NoPlot
-
-      atools.modelPhotRepStarSn20to40: StellarPhotometricRepeatability
-      atools.modelPhotRepStarSn20to40.fluxType: gaussianFlux
-      atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
-      atools.modelPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
-      atools.modelPhotRepStarSn20to40.produce.plot: NoPlot
-
-      atools.modelPhotRepStarSn40to80: StellarPhotometricRepeatability
-      atools.modelPhotRepStarSn40to80.fluxType: gaussianFlux
-      atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
-      atools.modelPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
-      atools.modelPhotRepStarSn40to80.produce.plot: NoPlot
-
-      atools.psfPhotRepStarSn5to10: StellarPhotometricRepeatability
-      atools.psfPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 5
-      atools.psfPhotRepStarSn5to10.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 10
-      atools.psfPhotRepStarSn5to10.produce.plot: NoPlot
-
-      atools.psfPhotRepStarSn10to20: StellarPhotometricRepeatability
-      atools.psfPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 10
-      atools.psfPhotRepStarSn10to20.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 20
-      atools.psfPhotRepStarSn10to20.produce.plot: NoPlot
-
-      atools.psfPhotRepStarSn20to40: StellarPhotometricRepeatability
-      atools.psfPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 20
-      atools.psfPhotRepStarSn20to40.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 40
-      atools.psfPhotRepStarSn20to40.produce.plot: NoPlot
-
-      atools.psfPhotRepStarSn40to80: StellarPhotometricRepeatability
-      atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum: 40
-      atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum: 80
-      atools.psfPhotRepStarSn40to80.produce.plot: NoPlot
-      python: |
-        from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.interfaces import *
   analyzeMatchedPreVisitCore:
     class: lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask
     config:
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCore.py
       connections.sourceCatalogs: preSourceTable_visit
       connections.outputName: matchedPreVisitCore
       # Proper motion catalogs are not available for `preSourceTables`
       applyAstrometricCorrections: false
-      atools.stellarAstrometricSelfRepeatabilityRA: AstrometricRepeatability
-      atools.stellarAstrometricSelfRepeatabilityRA.coordinate: 'RA'
-      atools.stellarAstrometricSelfRepeatabilityDec: AstrometricRepeatability
-      atools.stellarAstrometricSelfRepeatabilityDec.coordinate: 'Dec'
-      python: |
-        from lsst.analysis.tools.atools import *

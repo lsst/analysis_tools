@@ -41,35 +41,12 @@ parameters:
     "astromDiffMetrics_{band}_AA1_tot_coadd",
     "astromDiffMetrics_{band}_AA1_sigmaMad_tot_coadd",
   ]
-  matchedVisitCoreKeysWithBand: [
-    "stellarAstrometricRepeatability1_{band}_AM1",
-    "stellarAstrometricRepeatability1_{band}_AF1",
-    "stellarAstrometricRepeatability1_{band}_AD1",
-    "stellarAstrometricRepeatability2_{band}_AM2",
-    "stellarAstrometricRepeatability2_{band}_AF2",
-    "stellarAstrometricRepeatability2_{band}_AD2",
-    "stellarAstrometricRepeatability3_{band}_AM3",
-    "stellarAstrometricRepeatability3_{band}_AF3",
-    "stellarAstrometricRepeatability3_{band}_AD3",
-    "stellarAstrometricSelfRepeatabilityDec_{band}_dmL2AstroErr_Dec",
-    "stellarAstrometricSelfRepeatabilityRA_{band}_dmL2AstroErr_RA",
-    "stellarPhotometricRepeatability_{band}_stellarPhotRepeatStdev",
-    "stellarPhotometricRepeatability_{band}_stellarPhotRepeatOutlierFraction",
-    "stellarPhotometricResiduals_{band}_photResidTractSigmaMad",
-    "stellarPhotometricResiduals_{band}_photResidTractStdev",
-    "stellarPhotometricResiduals_{band}_photResidTractMedian",
-  ]
 tasks:
   makeMetricTableObjectTableCore:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
       connections.metricBundleName: "objectTableCore_metrics"
       connections.outputTableName: "objectTableCore_metricsTable"
-      inputDataDimensions: ["skymap", "tract"]
-      outputTableDimensions: ["skymap"]
-      dataIdFieldsToIncludeAsColumns: ["tract"]
-      python: |
-        from lsst.analysis.tools.atools import *
   objectTableCoreWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
@@ -83,11 +60,6 @@ tasks:
     config:
       connections.metricBundleName: objectTable_tract_gaia_dr3_20230707_match_astrom_metrics
       connections.outputTableName: objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable
-      inputDataDimensions: ["skymap", "tract"]
-      outputTableDimensions: ["skymap"]
-      dataIdFieldsToIncludeAsColumns: ["tract"]
-      python: |
-        from lsst.analysis.tools.atools import *
   objectTableCoreRefCatMatchWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
@@ -104,17 +76,9 @@ tasks:
       connections.metricBundleName: "matchedVisitCore_metrics"
       connections.outputTableName: "matchedVisitCore_metricsTable"
       inputDataDimensions: ["instrument", "skymap", "tract"]
-      outputTableDimensions: ["skymap"]
-      dataIdFieldsToIncludeAsColumns: ["tract"]
-      python: |
-        from lsst.analysis.tools.atools import *
   matchedVisitCoreWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
       connections.inputName: "matchedVisitCore_metricsTable"
       connections.outputName: "matchedVisitCore_wholeSky"
-      atools.wholeSkyMetric: WholeSkyPlotTool
-      atools.wholeSkyMetric.plotKeys: []
-      atools.wholeSkyMetric.keysWithBand: parameters.matchedVisitCoreKeysWithBand
-      python: |
-        from lsst.analysis.tools.atools import *
+      file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCoreWholeSkyPlot.py

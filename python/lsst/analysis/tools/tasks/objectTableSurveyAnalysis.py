@@ -38,7 +38,9 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class ObjectTableSurveyAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap",),
+    # TODO[DM-47320]: this template is not used. It should be deprecated. {
     defaultTemplates={"input": "deepCoadd"},
+    # } END TODO.
 ):
     skymap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",

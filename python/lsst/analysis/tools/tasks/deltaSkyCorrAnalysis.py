@@ -60,7 +60,7 @@ class DeltaSkyCorrHistConnections(PipelineTaskConnections, dimensions=("instrume
         deferLoad=True,
     )
     calexpBackgrounds = Input(
-        name="calexpBackground",
+        name="initial_pvi_background",
         storageClass="Background",
         doc="Initial per-detector background models associated with the calibrated exposure.",
         multiple=True,
@@ -68,7 +68,7 @@ class DeltaSkyCorrHistConnections(PipelineTaskConnections, dimensions=("instrume
         deferLoad=True,
     )
     photoCalib = Input(
-        name="calexp.photoCalib",
+        name="initial_pvi.photoCalib",
         storageClass="PhotoCalib",
         doc="Photometric calibration associated with the calibrated exposure.",
         multiple=True,

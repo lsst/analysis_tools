@@ -114,6 +114,7 @@ class FluxesDefaultConfig(Config):
     disk_err = ConfigField[FluxConfig](doc="Disk model magnitude with errors")
     psf_err = ConfigField[FluxConfig](doc="PSF model magnitude with errors")
     ref_matched = ConfigField[FluxConfig](doc="Reference catalog magnitude")
+    sersic_err = ConfigField[FluxConfig](doc="Sersic total magnitude with errors")
 
 
 class ObjectSelector(ThresholdSelector):
@@ -284,6 +285,12 @@ class MagnitudeTool(ObjectClassTool):
             key_flux_error=None,
             name_flux="Reference",
             name_flux_short="ref",
+        ),
+        sersic_err=FluxConfig(
+            key_flux="{band}_sersicFlux",
+            key_flux_error="{band}_sersicFluxErr",
+            name_flux="Sersic",
+            name_flux_short="sersic",
         ),
     )
 

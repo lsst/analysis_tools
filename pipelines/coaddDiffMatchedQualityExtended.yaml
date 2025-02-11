@@ -106,6 +106,55 @@ tasks:
       atools.matchedRefPositionDecChi.produce.plot.yLims: lims_pos_chi
       atools.matchedRefPositionDecChi.compute_chi: true
 
+      atools.matchedRefSersicColorDiff: MatchedRefCoaddDiffColorTool
+      atools.matchedRefSersicColorDiff.mag_y1: sersic_err
+      atools.matchedRefSersicColorDiff.mag_y2: sersic_err
+      atools.matchedRefSersicColorDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefSersicColorDiff.produce.plot.yLims: lims_color_diff
+
+      atools.matchedRefSersicColorChi: MatchedRefCoaddDiffColorTool
+      atools.matchedRefSersicColorChi.compute_chi: true
+      atools.matchedRefSersicColorChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefSersicColorChi.produce.plot.yLims: lims_mag_chi
+
+      atools.matchedRefSersicMagDiff: MatchedRefCoaddDiffMagTool
+      atools.matchedRefSersicMagDiff.mag_y: sersic_err
+      atools.matchedRefSersicMagDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefSersicMagDiff.produce.plot.yLims: lims_mag_diff
+
+      atools.matchedRefSersicMagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefSersicMagChi.mag_y: sersic_err
+      atools.matchedRefSersicMagChi.compute_chi: true
+      atools.matchedRefSersicMagChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefSersicMagChi.produce.plot.yLims: lims_mag_chi
+
+      atools.matchedRefPositionSersicRaDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionSersicRaDiff.coord_meas: sersic_ra
+      atools.matchedRefPositionSersicRaDiff.coord_ref: refcat_ra
+      atools.matchedRefPositionSersicRaDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionSersicRaDiff.produce.plot.yLims: lims_pos_diff
+
+      atools.matchedRefPositionSersicRaChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionSersicRaChi.coord_meas: sersic_ra
+      atools.matchedRefPositionSersicRaChi.coord_ref: refcat_ra
+      atools.matchedRefPositionSersicRaChi.coord_ref_cos: refcat_dec
+      atools.matchedRefPositionSersicRaChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionSersicRaChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionSersicRaChi.compute_chi: true
+
+      atools.matchedRefPositionSersicDecDiff: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionSersicDecDiff.coord_meas: sersic_dec
+      atools.matchedRefPositionSersicDecDiff.coord_ref: refcat_dec
+      atools.matchedRefPositionSersicDecDiff.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionSersicDecDiff.produce.plot.yLims: lims_pos_diff
+
+      atools.matchedRefPositionSersicDecChi: MatchedRefCoaddDiffPositionTool
+      atools.matchedRefPositionSersicDecChi.coord_meas: sersic_dec
+      atools.matchedRefPositionSersicDecChi.coord_ref: refcat_dec
+      atools.matchedRefPositionSersicDecChi.produce.plot.xLims: lims_mag_x
+      atools.matchedRefPositionSersicDecChi.produce.plot.yLims: lims_pos_chi
+      atools.matchedRefPositionSersicDecChi.compute_chi: true
+
       python: |
         from lsst.analysis.tools.atools.genericBuild import MagnitudeTool
         from lsst.analysis.tools.atools.diffMatched import (

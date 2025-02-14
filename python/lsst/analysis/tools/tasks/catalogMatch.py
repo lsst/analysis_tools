@@ -248,15 +248,20 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             # allows different units. Need to configure match
             # radius, either in this task or a subtask.
 
+            targetRas = np.asarray(targetCatalog[self.config.targetRaColumn])
+            targetDecs = np.asarray(targetCatalog[self.config.targetDecColumn])
+            targetMask = np.isfinite(targetRas) & np.isfinite(targetDecs)
+
             # Get rid of entries in the refCat with non-finite RA/Dec values.
-            refRas = refCatalog[self.config.refRaColumn]
-            refDecs = refCatalog[self.config.refDecColumn]
-            refRaDecFiniteMask = np.isfinite(refRas) & np.isfinite(refDecs)
-            refCatalog = refCatalog[refRaDecFiniteMask]
-            with Matcher(refCatalog[self.config.refRaColumn], refCatalog[self.config.refDecColumn]) as m:
+            refRas = np.asarray(refCatalog[self.config.refRaColumn])
+            refDecs = np.asarray(refCatalog[self.config.refDecColumn])
+            refMask = np.isfinite(refRas) & np.isfinite(refDecs)
+
+            refCatalog = refCatalog[refMask]
+            with Matcher(refRas[refMask], refDecs[refMask]) as m:
                 idx, refMatchIndices, targetMatchIndices, dists = m.query_radius(
-                    targetCatalog[self.config.targetRaColumn],
-                    targetCatalog[self.config.targetDecColumn],
+                    targetRas[targetMask],
+                    targetDecs[targetMask],
                     self.config.matchRadius / 3600.0,
                     return_indices=True,
                 )

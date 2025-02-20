@@ -600,7 +600,7 @@ class SasquatchDispatcher:
                         log.error("Measurement %s does not contain the key 'value'", measurement)
                         resultsTrimmed = True
                         continue
-                record[name] = value
+                record[f"{bundle.metricNamePrefix}{name}"] = value
 
             metricRecordList.append({"value": record})
         return metricRecords, resultsTrimmed

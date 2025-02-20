@@ -111,7 +111,8 @@ tasks:
   plotPropertyMapTract:
     class: lsst.analysis.tools.tasks.PerTractPropertyMapAnalysisTask
     config:
-      connections.outputName: propertyMapTract
+      connections.outputName: propertyMapTract_deepCoadd
+      connections.prefix: deepCoadd_
       zoomFactors: [2, 8]
       projectionKwargs:
         celestial: true
@@ -119,21 +120,22 @@ tasks:
         min_lon_ticklabel_delta: 0.12
       colorbarKwargs:
         cmap: viridis
-      # The entries in the 'atools' namespace must exactly match the dataset types.
-      atools.deepCoadd_dcr_ddec_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_dcr_dra_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_dcr_e1_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_dcr_e2_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_epoch_map_min: PerTractPropertyMapTool
-      atools.deepCoadd_epoch_map_max: PerTractPropertyMapTool
-      atools.deepCoadd_epoch_map_mean: PerTractPropertyMapTool
-      atools.deepCoadd_exposure_time_map_sum: PerTractPropertyMapTool
-      atools.deepCoadd_exposure_time_map_sum.nBinsHist: 35
-      atools.deepCoadd_psf_e1_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_psf_e2_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_psf_maglim_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_psf_size_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_sky_background_map_weighted_mean: PerTractPropertyMapTool
-      atools.deepCoadd_sky_noise_map_weighted_mean: PerTractPropertyMapTool
+      # The entries in the 'atools' namespace should differ from the input
+      # dataset types only by 'connections.prefix'.
+      atools.dcr_ddec_map_weighted_mean: PerTractPropertyMapTool
+      atools.dcr_dra_map_weighted_mean: PerTractPropertyMapTool
+      atools.dcr_e1_map_weighted_mean: PerTractPropertyMapTool
+      atools.dcr_e2_map_weighted_mean: PerTractPropertyMapTool
+      atools.epoch_map_min: PerTractPropertyMapTool
+      atools.epoch_map_max: PerTractPropertyMapTool
+      atools.epoch_map_mean: PerTractPropertyMapTool
+      atools.exposure_time_map_sum: PerTractPropertyMapTool
+      atools.exposure_time_map_sum.nBinsHist: 35
+      atools.psf_e1_map_weighted_mean: PerTractPropertyMapTool
+      atools.psf_e2_map_weighted_mean: PerTractPropertyMapTool
+      atools.psf_maglim_map_weighted_mean: PerTractPropertyMapTool
+      atools.psf_size_map_weighted_mean: PerTractPropertyMapTool
+      atools.sky_background_map_weighted_mean: PerTractPropertyMapTool
+      atools.sky_noise_map_weighted_mean: PerTractPropertyMapTool
       python: |
         from lsst.analysis.tools.atools import PerTractPropertyMapTool

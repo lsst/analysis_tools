@@ -4,7 +4,8 @@ tasks:
   plotPropertyMapSurvey:
     class: lsst.analysis.tools.tasks.SurveyWidePropertyMapAnalysisTask
     config:
-      connections.outputName: propertyMapSurvey
+      connections.outputName: propertyMapSurvey_deepCoadd
+      connections.prefix: deepCoadd_
       autozoom: true
       projection: McBryde
       projectionKwargs:
@@ -16,20 +17,21 @@ tasks:
       colorbarKwargs:
         location: top
         cmap: viridis
-      # The entries in the 'atools' namespace must exactly match the dataset types.
-      atools.deepCoadd_dcr_ddec_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_dcr_dra_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_dcr_e1_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_dcr_e2_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_epoch_consolidated_map_min: SurveyWidePropertyMapTool
-      atools.deepCoadd_epoch_consolidated_map_max: SurveyWidePropertyMapTool
-      atools.deepCoadd_epoch_consolidated_map_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_exposure_time_consolidated_map_sum: SurveyWidePropertyMapTool
-      atools.deepCoadd_psf_e1_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_psf_e2_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_psf_maglim_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_psf_size_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_sky_background_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
-      atools.deepCoadd_sky_noise_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      # The entries in the 'atools' namespace should differ from the input
+      # dataset types only by 'connections.prefix'.
+      atools.dcr_ddec_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.dcr_dra_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.dcr_e1_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.dcr_e2_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.epoch_consolidated_map_min: SurveyWidePropertyMapTool
+      atools.epoch_consolidated_map_max: SurveyWidePropertyMapTool
+      atools.epoch_consolidated_map_mean: SurveyWidePropertyMapTool
+      atools.exposure_time_consolidated_map_sum: SurveyWidePropertyMapTool
+      atools.psf_e1_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.psf_e2_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.psf_maglim_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.psf_size_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.sky_background_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
+      atools.sky_noise_consolidated_map_weighted_mean: SurveyWidePropertyMapTool
       python: |
         from lsst.analysis.tools.atools import SurveyWidePropertyMapTool

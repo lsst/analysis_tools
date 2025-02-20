@@ -13,3 +13,4 @@ config.atools.skyFluxVisitStatisticMetric.applyContext = VisitContext
 config.atools.skySourceSky = SkySourceSkyPlot
 config.atools.skySourceFlux = SkySourceHistPlot
 config.atools.relativeSizeResidualPlot = RelativeSizeResidualPlot
+config.addOutputNamePrefix = True

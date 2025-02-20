@@ -315,8 +315,8 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         check=_timestampValidator,
     )
     addOutputNamePrefix = Field[bool](
-        doc="If this is true the connections class output name will be prefixed"
-        "to the analysis 'atools' name if the value is dispatched to sasquatch.",
+        doc="If True, the connections class output name will be prefixed "
+        "to the analysis 'atools' name when the value is dispatched to sasquatch.",
         default=False,
     )
 

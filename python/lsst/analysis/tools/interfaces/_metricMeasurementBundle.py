@@ -45,6 +45,7 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
         self.reference_package: str | None = kwargs.pop("reference_package", None)
         self.timestamp_version: str | None = kwargs.pop("timestamp_version", None)
         self.dataset_identifier: str | None = kwargs.pop("dataset_identifier", None)
+        self.metricNamePrefix: str = kwargs.pop("metricNamePrefix", "")
         super().__init__(*args, **kwargs)
 
     def json(self) -> str:
@@ -57,6 +58,8 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
             result["__timestamp_version"] = self.timestamp_version
         if self.dataset_identifier is not None:
             result["__dataset_identifier"] = self.dataset_identifier
+        result["__metricNamePrefix"] = self.metricNamePrefix
+
         return json.dumps(result)
 
     @classmethod
@@ -65,6 +68,7 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
         inst.dataset_identifier = data.pop("__dataset_identifier", None)
         inst.timestamp_version = data.pop("__timestamp_version", None)
         inst.reference_package = data.pop("__reference_package", None)
+        inst.metricNamePrefix = data.pop("__metricNamePrefix", "")
 
         for key, value in data.items():
             inst[key] = [Measurement.deserialize(**element) for element in value]

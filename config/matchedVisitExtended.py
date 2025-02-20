@@ -51,3 +51,5 @@ config.atools.psfPhotRepStarSn40to80 = StellarPhotometricRepeatability
 config.atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.minimum = 40
 config.atools.psfPhotRepStarSn40to80.process.filterActions.perGroupStdevFiltered.selectors.sn.maximum = 80
 config.atools.psfPhotRepStarSn40to80.produce.plot = NoPlot
+
+config.addOutputNamePrefix = True

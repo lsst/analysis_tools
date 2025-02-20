@@ -14,3 +14,4 @@ config.atools.astromDiffRAScatterVisitPlot = TargetRefCatDeltaRAScatterVisitPlot
 config.atools.astromDiffDecScatterVisitPlot = TargetRefCatDeltaDecScatterVisitPlot
 config.atools.astromDiffMetrics = TargetRefCatDeltaMetrics
 config.atools.astromDiffMetrics.applyContext = VisitContext
+config.addOutputNamePrefix = True

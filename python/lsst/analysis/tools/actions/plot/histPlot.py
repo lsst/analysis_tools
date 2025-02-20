@@ -340,7 +340,7 @@ class HistPlot(PlotAction):
             ncols = 2
         nrows = int(np.ceil(num_panels / ncols))
 
-        gs = GridSpec(nrows, ncols, left=0.12, right=0.99, bottom=0.1, top=0.88, wspace=0.31, hspace=0.45)
+        gs = GridSpec(nrows, ncols, left=0.12, right=0.88, bottom=0.1, top=0.88, wspace=0.41, hspace=0.45)
 
         axs = []
         counter = 0
@@ -626,7 +626,7 @@ class HistPlot(PlotAction):
             legend_handles,
             legend_labels,
             loc="lower left",
-            bbox_to_anchor=(0.0, yAnchor),
+            bbox_to_anchor=(-0.25, yAnchor),
             ncol=4,
             handletextpad=-0.25,
             fontsize=legend_font_size,

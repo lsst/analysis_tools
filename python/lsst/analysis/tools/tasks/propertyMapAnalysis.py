@@ -45,7 +45,13 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class PerTractPropertyMapAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "band", "tract"),
-    defaultTemplates={"outputName": "propertyMapTract"},
+    defaultTemplates={
+        "outputName": "propertyMapTract",
+        # The configured atool names are expected to not have anything
+        # involving the coadd type as a prefix, and this prefix is added to the
+        # auto-generated input connections.
+        "prefix": "deepCoadd_",
+    },
 ):
     skymap = connectionTypes.Input(
         doc="The skymap that covers the tract that the data is from.",
@@ -68,15 +74,14 @@ class PerTractPropertyMapAnalysisConnections(
         # Making connections for the maps that are configured to run.
         for name in config.atools.fieldNames:
             propertyName, operationName = name.split("_map_")
-            coaddName, propertyName = propertyName.split("Coadd_")
             propertyName = propertyName.replace("_", " ")
             operationLongName = operationNameLookup[operationName]
             setattr(
                 self,
                 name,
                 connectionTypes.Input(
-                    doc=f"{operationLongName}-value map of {propertyName} for {coaddName} coadd",
-                    name=name,
+                    doc=f"{operationLongName}-value map of {propertyName} for {config.connections.prefix}.",
+                    name=config.connections.prefix + name,
                     storageClass="HealSparseMap",
                     dimensions=("skymap", "band", "tract"),
                     multiple=False,
@@ -187,7 +192,13 @@ class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
 class SurveyWidePropertyMapAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "band"),
-    defaultTemplates={"outputName": "propertyMapSurvey"},
+    defaultTemplates={
+        "outputName": "propertyMapSurvey",
+        # The configured atool names are expected to not have anything
+        # involving the coadd type as a prefix, and this prefix is added to the
+        # auto-generated input connections.
+        "prefix": "deepCoadd_",
+    },
 ):
     def __init__(self, *, config=None):
         super().__init__(config=config)
@@ -203,15 +214,17 @@ class SurveyWidePropertyMapAnalysisConnections(
         # Making connections for the maps that are configured to run.
         for name in config.atools.fieldNames:
             propertyName, operationName = name.split("_consolidated_map_")
-            coaddName, propertyName = propertyName.split("Coadd_")
             propertyName = propertyName.replace("_", " ")
             operationLongName = operationNameLookup[operationName]
             setattr(
                 self,
                 name,
                 connectionTypes.Input(
-                    doc=f"{operationLongName}-value consolidated map of {propertyName} for {coaddName} coadd",
-                    name=name,
+                    doc=(
+                        f"{operationLongName}-value consolidated map of {propertyName} "
+                        f"for {config.connections.prefix}."
+                    ),
+                    name=config.connections.prefix + name,
                     storageClass="HealSparseMap",
                     dimensions=("skymap", "band"),
                     multiple=False,

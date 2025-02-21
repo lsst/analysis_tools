@@ -314,6 +314,11 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
         default="run_timestamp",
         check=_timestampValidator,
     )
+    addOutputNamePrefix = Field[bool](
+        doc="If True, the connections class output name will be prefixed "
+        "to the analysis 'atools' name when the value is dispatched to sasquatch.",
+        default=False,
+    )
 
     def applyConfigOverrides(
         self,
@@ -408,10 +413,12 @@ class AnalysisPipelineTask(PipelineTask):
             for warning in ():
                 warnings.filterwarnings("error", warning, RuntimeWarning)
             results = Struct()
+            prefixName = f"{self.config.connections.outputName}_" if self.config.addOutputNamePrefix else ""
             results.metrics = MetricMeasurementBundle(
                 dataset_identifier=self.config.dataset_identifier,
                 reference_package=self.config.reference_package,
                 timestamp_version=self.config.timestamp_version,
+                metricNamePrefix=prefixName,
             )
             # copy plot info to be sure each action sees its own copy
             plotInfo = kwargs.get("plotInfo")

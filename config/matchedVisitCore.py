@@ -29,3 +29,4 @@ config.atools.stellarAstrometricRepeatability3 = AstrometricRelativeRepeatabilit
 config.atools.stellarAstrometricRepeatability3.xValue = 3
 config.atools.stellarAstrometricRepeatability3.process.calculateActions.rms.annulus = 200
 config.atools.stellarAstrometricRepeatability3.process.calculateActions.rms.threshAD = 30
+config.addOutputNamePrefix = True

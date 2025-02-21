@@ -24,3 +24,4 @@ config.atools.wholeSkyMetric.keysWithBand = [
     "stellarPhotometricResiduals_{band}_photResidTractStdev",
     "stellarPhotometricResiduals_{band}_photResidTractMedian",
 ]
+config.addOutputNamePrefix = True

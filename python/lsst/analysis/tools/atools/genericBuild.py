@@ -112,8 +112,12 @@ class FluxesDefaultConfig(Config):
     bulge_err = ConfigField[FluxConfig](doc="Bulge model magnitude with errors")
     cmodel_err = ConfigField[FluxConfig](doc="CModel total magnitude with errors")
     disk_err = ConfigField[FluxConfig](doc="Disk model magnitude with errors")
+    gaap1p0_err = ConfigField[FluxConfig](doc="Gaap 1.0 arcsec aperture magnitude with errors")
+    gaap3p0_err = ConfigField[FluxConfig](doc="Gaap 3.0 arcsec aperture magnitude with errors")
+    kron_err = ConfigField[FluxConfig](doc="Kron aperture magnitude with errors")
     psf_err = ConfigField[FluxConfig](doc="PSF model magnitude with errors")
     ref_matched = ConfigField[FluxConfig](doc="Reference catalog magnitude")
+    sersic_err = ConfigField[FluxConfig](doc="Sersic total magnitude with errors")
 
 
 class ObjectSelector(ThresholdSelector):
@@ -273,6 +277,24 @@ class MagnitudeTool(ObjectClassTool):
             name_flux="CModel Disk",
             name_flux_short="disk_cModel",
         ),
+        gaap1p0_err=FluxConfig(
+            key_flux="{band}_gaap1p0Flux",
+            key_flux_error="{band}_gaap1p0FluxErr",
+            name_flux='GAaP 1.0"',
+            name_flux_short="gaap_1p0",
+        ),
+        gaap3p0_err=FluxConfig(
+            key_flux="{band}_gaap3p0Flux",
+            key_flux_error="{band}_gaap3p0FluxErr",
+            name_flux='GAaP 3.0"',
+            name_flux_short="gaap_3p0",
+        ),
+        kron_err=FluxConfig(
+            key_flux="{band}_kronFlux",
+            key_flux_error="{band}_kronFluxErr",
+            name_flux="Kron",
+            name_flux_short="kron",
+        ),
         psf_err=FluxConfig(
             key_flux="{band}_psfFlux",
             key_flux_error="{band}_psfFluxErr",
@@ -284,6 +306,12 @@ class MagnitudeTool(ObjectClassTool):
             key_flux_error=None,
             name_flux="Reference",
             name_flux_short="ref",
+        ),
+        sersic_err=FluxConfig(
+            key_flux="{band}_sersicFlux",
+            key_flux_error="{band}_sersicFluxErr",
+            name_flux="Sersic",
+            name_flux_short="sersic",
         ),
     )
 

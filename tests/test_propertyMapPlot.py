@@ -76,7 +76,7 @@ class PerTractPropertyMapAnalysisTaskTestCase(lsst.utils.tests.TestCase):
 
         # Set configurations sent to skyproj.
         config.projectionKwargs = {"celestial": True, "gridlines": True}
-        config.colorbarKwargs = {"location": "top", "cmap": "viridis"}
+        config.colorbarKwargs = {"cmap": "viridis"}
 
         # The entries in the 'atools' namespace must exactly match the dataset
         # types.

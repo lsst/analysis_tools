@@ -30,7 +30,6 @@ from typing import Mapping, Union
 
 import lsst.pex.config as pexConfig
 import matplotlib.patheffects as mpl_path_effects
-import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
 from healsparse.healSparseMap import HealSparseMap
@@ -39,6 +38,7 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
     SurveyWidePropertyMapAnalysisConfig,
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
+from lsst.utils.plotting import make_figure
 from matplotlib import rc_context
 from matplotlib.figure import Figure
 from matplotlib.legend_handler import HandlerTuple
@@ -380,10 +380,14 @@ class PerTractPropertyMapPlot(PlotAction):
         mapData = data["data"].get()
 
         with rc_context(rcparams):
-            fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 16))
+            fig = make_figure(figsize=(16, 16))
+            ax1 = fig.add_subplot(221)
+            ax2 = fig.add_subplot(222)
+            ax3 = fig.add_subplot(223)
+            ax4 = fig.add_subplot(224)
 
             # Reduce whitespace but leave some room at the top for plotInfo.
-            plt.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
+            fig.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
 
             # Get the values for the valid pixels of the full tract.
             values = mapData[mapData.valid_pixels]
@@ -753,12 +757,8 @@ class SurveyWidePropertyMapPlot(PlotAction):
 
         with rc_context(rcparams):
             # The figsize should be decided based on the survey footprint.
-            fig, ax = plt.subplots(1, 1, figsize=(19, 7))
-            # TODO: DM-47962 replaces the slow plt code above with the lines
-            # below once the new SkyProj version is in the stack.
-            # from lsst.utils.plotting import make_figure
-            # fig = make_figure(dpi=300)
-            # ax = fig.add_subplot(111)
+            fig = make_figure(figsize=(19, 7))
+            ax = fig.add_subplot(111)
 
             # Leave some room at the top for plotInfo.
             fig.subplots_adjust(left=0.072, right=0.945, top=0.55)

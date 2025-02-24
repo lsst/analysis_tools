@@ -567,7 +567,7 @@ class SasquatchDispatcher:
         for metric, measurements in bundle.items():
             # Create a list which will contain the records for each measurement
             # associated with metric.
-            metricRecordList = metricRecords.setdefault(metric, list())
+            metricRecordList = metricRecords.setdefault(f"{bundle.metricNamePrefix}{metric}", list())
 
             record: dict[str, Any] = meta.copy()
 
@@ -600,7 +600,7 @@ class SasquatchDispatcher:
                         log.error("Measurement %s does not contain the key 'value'", measurement)
                         resultsTrimmed = True
                         continue
-                record[f"{bundle.metricNamePrefix}{name}"] = value
+                record[name] = value
 
             metricRecordList.append({"value": record})
         return metricRecords, resultsTrimmed

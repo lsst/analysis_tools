@@ -72,6 +72,9 @@ class StellarPhotometricRepeatability(AnalysisTool):
 
         # Apply per-source selection criteria
         self.prep.selectors.bandSelector = BandSelector()
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = self.fluxType
+        self.prep.selectors.snSelector.threshold = 200
 
         # Compute per-group quantities
         self.process.buildActions.perGroupSn = PerGroupStatistic()

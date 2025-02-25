@@ -92,7 +92,7 @@ class PhotometricCatalogMatchTask(CatalogMatchTask):
         if bands[0].startswith("lsst") or "sim" in bands[0] or "smeared" in bands[0]:
             bands = self.config.filterNames
         elif bands[0].startswith("monster"):
-            # for the_monster_20240904 the reference catalog filter name is
+            # for the_monster_* the reference catalog filter name is
             # "monster_{system}_{band}" the last character is the band
             bands = [band[-1] for band in bands]
 

@@ -23,8 +23,8 @@ parameters:
     "skyFluxStatisticMetric_{band}_sigmaMADSky",
   ]
   objectTableCorePlotKeys: [
-    "wPerpPSFP_wPerp_psfFlux_median",
-    "wPerpPSFP_wPerp_psfFlux_sigmaMAD",
+    "wPerpPSF_wPerp_psfFlux_median",
+    "wPerpPSF_wPerp_psfFlux_sigmaMAD",
     "yPerpPSF_yPerp_psfFlux_median",
     "yPerpPSF_yPerp_psfFlux_sigmaMAD",
     "skippedDeblenderMetrics_numSkippedPeaks",

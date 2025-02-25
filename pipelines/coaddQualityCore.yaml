@@ -14,9 +14,9 @@ tasks:
       atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
       atools.blendMetrics: BlendMetrics
       atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
-      atools.wPerpPSFP: WPerpPSF
+      atools.wPerpPSF: WPerpPSF
       atools.wPerpCModel: WPerpCModel
-      atools.xPerpPSFP: XPerpPSF
+      atools.xPerpPSF: XPerpPSF
       atools.xPerpCModel: XPerpCModel
       atools.yPerpPSF: YPerpPSF
       atools.yPerpCModel: YPerpCModel

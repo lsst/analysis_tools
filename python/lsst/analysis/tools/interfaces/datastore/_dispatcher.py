@@ -567,7 +567,7 @@ class SasquatchDispatcher:
         for metric, measurements in bundle.items():
             # Create a list which will contain the records for each measurement
             # associated with metric.
-            metricRecordList = metricRecords.setdefault(metric, list())
+            metricRecordList = metricRecords.setdefault(f"{bundle.metricNamePrefix}{metric}", list())
 
             record: dict[str, Any] = meta.copy()
 

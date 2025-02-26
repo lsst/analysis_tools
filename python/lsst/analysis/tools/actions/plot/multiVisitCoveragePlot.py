@@ -280,8 +280,9 @@ class MultiVisitCoveragePlot(PlotAction):
             The persisted config used in the calibration task for the given
             collection. Used to introspect threshold values used in the run.
         makeWarpConfig : `lsst.pex.config.Config`, optional
-            The persisted config used in the makeWarp task for the given
-            collection. Used to introspect threshold values used in the run.
+            The persisted config used in the makeDirectWarp (or makeWarp) task
+            for the given collection. Used to introspect threshold values used
+            in the run.
 
         Returns
         -------

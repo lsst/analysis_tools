@@ -49,7 +49,7 @@ class CcdVisitTableAnalysisConnections(
     )
     makeWarpConfig = cT.Input(
         doc="Collection based makeWarp task config to load from the butler.",
-        name="makeWarp_config",
+        name="makeDirectWarp_config",
         storageClass="Config",
         dimensions=(),
     )
@@ -75,10 +75,10 @@ class CcdVisitTableAnalysisConnections(
 
 class CcdVisitTableAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CcdVisitTableAnalysisConnections):
     introspectMakeWarpConfig = Field[bool](
-        doc="Whether to introspect the makeWarp_config dataset to obtain the actual "
+        doc="Whether to introspect the dataset referred to in makeWarpConfig connection to obtain the actual "
         "maxEllipResidual and maxScalesSizeScatter thresholds in this run?  Set to "
-        "True only if makeWarp has been run on given collection.  When False, a default "
-        "set of threshold values (meant to reflect current stack defaults) will be set "
+        "True only if makeDirectWarp (or makeWarp in older versions) has been run on given collection. "
+        "When False, a default set of threshold values (meant to reflect current stack defaults) will be set "
         "for reference.",
         default=False,
     )

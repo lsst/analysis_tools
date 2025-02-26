@@ -865,7 +865,10 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
 
     mag_y = pexConfig.Field[str](
         default="cmodel_err",
-        doc="Flux (magnitude) pexConfig.Field to difference against ref",
+        doc="Flux (magnitude) pexConfig.Field to difference against the x-axis values",
+    )
+    measure_y_minus_x = pexConfig.Field[bool](
+        default=True, doc="Whether to plot the y-axis magnitude minus the x-axis; otherwise x-y if False."
     )
 
     def finalize(self):
@@ -879,10 +882,11 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
             name_short_y = self.config_mag_y.name_flux_short
 
             prefix_action = "flux" if self.compute_chi else "mag"
-            action_diff = SubtractVector(
-                actionA=getattr(self.process.buildActions, f"{prefix_action}_{self.mag_x}"),
-                actionB=getattr(self.process.buildActions, f"{prefix_action}_{self.mag_y}"),
+            actionA, actionB = (
+                getattr(self.process.buildActions, f"{prefix_action}_{mag}")
+                for mag in ((self.mag_y, self.mag_x) if self.measure_y_minus_x else (self.mag_x, self.mag_y))
             )
+            action_diff = SubtractVector(actionA=actionA, actionB=actionB)
 
             if self.compute_chi:
                 key_err = f"flux_err_{self.mag_y}"
@@ -899,7 +903,8 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
                     actionB=ConstantValue(value=1000.0),
                 )
             if not self.produce.plot.yAxisLabel:
-                label = f"{self.config_mag_y.name_flux} - {self.config_mag_x.name_flux}"
+                label_x, label_y = (mag.name_flux for mag in (self.config_mag_x, self.config_mag_y))
+                label = f"{label_y} - {label_x}" if self.measure_y_minus_x else f"{label_x} - {label_y}"
                 self.produce.plot.yAxisLabel = (
                     f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
                 )

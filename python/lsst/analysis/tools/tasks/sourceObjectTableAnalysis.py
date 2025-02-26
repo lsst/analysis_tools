@@ -337,8 +337,8 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
 
         with Matcher(isolatedSources["coord_ra"], isolatedSources["coord_dec"]) as m:
             idx, i1, i2, d = m.query_radius(
-                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["ra"]],
-                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["dec"]],
+                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["ra"]].to_numpy(),
+                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["dec"]].to_numpy(),
                 self.config.correctionsMatchingRadius / 3600,
                 return_indices=True,
             )

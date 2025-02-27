@@ -94,11 +94,8 @@ class PerTractPropertyMapAnalysisConfig(
         doc="Keyword arguments to use in the GnomonicSkyproj call, e.g. n_grid_lon. "
         "See https://skyproj.readthedocs.io/en/latest/modules.html#skyproj.skyproj.GnomonicSkyproj",
         default={},
-        dictCheck=lambda d: all([k not in ["ax", "lon_0", "lat_0", "extent"] for k in d]),
+        keyCheck=lambda k: k not in ["ax", "lon_0", "lat_0", "extent"],
     )
-    # TODO: The `dictCheck` user callback function only validates the initial
-    # default, not subsequent configurations. Use `keyCheck` after DM-48074.
-    # keyCheck=lambda k: k not in ["ax", "lon_0", "lat_0", "extent"]
 
     zoomFactors = ListField(
         dtype=float,
@@ -111,7 +108,7 @@ class PerTractPropertyMapAnalysisConfig(
         itemtype=str,
         doc="Keyword arguments to pass to the colorbar.",
         default={"cmap": "viridis"},
-        dictCheck=lambda d: all([k not in ["orientation", "location"] for k in d]),
+        keyCheck=lambda k: k not in ["orientation", "location"],
     )
 
 
@@ -251,11 +248,8 @@ class SurveyWidePropertyMapAnalysisConfig(
         doc="Keyword arguments to use in the projection call, e.g. lon_0. "
         "See https://skyproj.readthedocs.io/en/latest/projections.html",
         default={},
-        dictCheck=lambda d: all([k not in ["ax"] for k in d]),
+        keyCheck=lambda k: k not in ["ax"],
     )
-    # TODO: The `dictCheck` user callback function only validates the initial
-    # default, not subsequent configurations. Use `keyCheck` after DM-48074.
-    # keyCheck=lambda k: k not in ["ax"]
 
     autozoom = Field[bool](
         doc="Automatically zooms in on the RA/Dec range of the map to make better use of its resolution; "

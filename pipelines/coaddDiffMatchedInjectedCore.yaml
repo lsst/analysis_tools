@@ -1,7 +1,7 @@
 description: |
   Matched difference (measured vs reference) plots/metrics
 tasks:
-  analyze_matched_injected:
+  diff_matched_analysis:
     class: lsst.analysis.tools.tasks.DiffMatchedAnalysisTask
     config:
       connections.inputName: matched_injected_deepCoadd_catalog_tract_injected_objectTable_tract

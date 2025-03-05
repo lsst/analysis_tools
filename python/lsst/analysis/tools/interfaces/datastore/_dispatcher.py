@@ -41,6 +41,8 @@ from lsst.daf.butler import DatasetRef
 from lsst.resources import ResourcePath
 from lsst.utils.packages import getEnvironmentPackages
 
+from ...utils import http_client
+
 if TYPE_CHECKING:
     from .. import MetricMeasurementBundle
 
@@ -199,13 +201,15 @@ class SasquatchDispatcher:
         """Get Sasquatch kafka cluster ID."""
 
         headers = {"content-type": "application/json"}
-        r = requests.get(f"{self.url}/v3/clusters", headers=headers)
 
-        if r.status_code == requests.codes.ok:
+        with http_client() as session:
+            r = session.get(f"{self.url}/v3/clusters", headers=headers)
             cluster_id = r.json()["data"][0]["cluster_id"]
-
             self._cluster_id = str(cluster_id)
-        else:
+
+        try:
+            r.raise_for_status()
+        except requests.HTTPError:
             log.error("Could not retrieve the cluster id for the specified url")
             raise SasquatchDispatchFailure("Could not retrieve the cluster id for the specified url")
 
@@ -233,19 +237,25 @@ class SasquatchDispatcher:
             "replication_factor": REPLICATION_FACTOR,
         }
 
-        r = requests.post(
-            f"{self.url}/v3/clusters/{self.clusterId}/topics", json=topic_config, headers=headers
-        )
-
-        if r.status_code == requests.codes.created:
+        with http_client() as session:
+            r = session.post(
+                f"{self.url}/v3/clusters/{self.clusterId}/topics", json=topic_config, headers=headers
+            )
+        try:
+            r.raise_for_status()
             log.debug("Created topic %s.%s", self.namespace, topic_name)
             return True
-        elif r.status_code == requests.codes.bad_request:
-            log.debug("Topic %s.%s already exists.", self.namespace, topic_name)
-            return True
-        else:
-            log.error("Uknown error occured creating kafka topic %s %s", r.status_code, r.json())
-            return False
+        except requests.HTTPError as e:
+            if e.response.status_code == requests.codes.bad_request:
+                log.debug("Topic %s.%s already exists.", self.namespace, topic_name)
+                return True
+            else:
+                log.error(
+                    "Unknown error occured creating kafka topic %s %s",
+                    e.response.status_code,
+                    e.response.reason,
+                )
+                return False
 
     def _generateAvroSchema(self, metric: str, record: MutableMapping[str, Any]) -> tuple[str, bool]:
         """Infer the Avro schema from the record payload.
@@ -680,30 +690,35 @@ class SasquatchDispatcher:
         partialUpload = False
         uploadFailed = []
 
-        for metric, record in metricRecords.items():
-            # create the kafka topic if it does not already exist
-            if not self._create_topic(metric):
-                log.error("Topic not created, skipping dispatch of %s", metric)
-                continue
-            recordValue = record[0]["value"]
-            # Generate schemas for each record
-            data["value_schema"], schemaTrimmed = self._generateAvroSchema(metric, recordValue)
-            data["records"] = record
+        with http_client() as session:
+            for metric, record in metricRecords.items():
+                # create the kafka topic if it does not already exist
+                if not self._create_topic(metric):
+                    log.error("Topic not created, skipping dispatch of %s", metric)
+                    continue
+                recordValue = record[0]["value"]
+                # Generate schemas for each record
+                data["value_schema"], schemaTrimmed = self._generateAvroSchema(metric, recordValue)
+                data["records"] = record
 
-            if schemaTrimmed:
-                partialUpload = True
+                if schemaTrimmed:
+                    partialUpload = True
 
-            r = requests.post(f"{self.url}/topics/{self.namespace}.{metric}", json=data, headers=headers)
+                r = session.post(f"{self.url}/topics/{self.namespace}.{metric}", json=data, headers=headers)
 
-            if r.status_code == requests.codes.ok:
-                log.debug("Succesfully sent data for metric %s", metric)
-                uploadFailed.append(False)
-            else:
-                log.error(
-                    "There was a problem submitting the metric %s: %s, %s", metric, r.status_code, r.json()
-                )
-                uploadFailed.append(True)
-                partialUpload = True
+                try:
+                    r.raise_for_status()
+                    log.debug("Succesfully sent data for metric %s", metric)
+                    uploadFailed.append(False)
+                except requests.HTTPError as e:
+                    log.error(
+                        "There was a problem submitting the metric %s: %s, %s",
+                        metric,
+                        e.response.status_code,
+                        e.response.reason,
+                    )
+                    uploadFailed.append(True)
+                    partialUpload = True
 
         # There may be no metrics to try to upload, and thus the uploadFailed
         # list may be empty, check before issuing failure

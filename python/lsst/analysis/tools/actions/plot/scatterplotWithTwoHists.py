@@ -197,6 +197,8 @@ class ScatterPlotWithTwoHists(PlotAction):
     suffix_y = Field[str](doc="Suffix for all y-axis action inputs", optional=True, default="")
     suffix_stat = Field[str](doc="Suffix for all binned statistic action inputs", optional=True, default="")
 
+    publicationStyle = Field[bool](doc="Slimmed down publication style plot?", default=False)
+
     _stats = ("median", "sigmaMad", "count", "approxMag")
     _datatypes = {
         "galaxies": DataTypeDefaults(
@@ -229,20 +231,21 @@ class ScatterPlotWithTwoHists(PlotAction):
         base: list[tuple[str, type[Vector] | ScalarType]] = []
         for name_datatype in self.plotTypes:
             config_datatype = self._datatypes[name_datatype]
-            base.append((f"x{config_datatype.suffix_xy}{self.suffix_x}", Vector))
-            base.append((f"y{config_datatype.suffix_xy}{self.suffix_y}", Vector))
-            base.append((f"{name_datatype}HighSNMask{self.suffix_stat}", Vector))
-            base.append((f"{name_datatype}LowSNMask{self.suffix_stat}", Vector))
-            # statistics
-            for name in self._stats:
-                base.append(
-                    (f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar)
-                )
-                base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar))
-            base.append((f"{name_datatype}LowSNThreshold{self.suffix_stat}", Scalar))
-            base.append((f"{name_datatype}HighSNThreshold{self.suffix_stat}", Scalar))
+            if not self.publicationStyle:
+                base.append((f"x{config_datatype.suffix_xy}{self.suffix_x}", Vector))
+                base.append((f"y{config_datatype.suffix_xy}{self.suffix_y}", Vector))
+                base.append((f"{name_datatype}HighSNMask{self.suffix_stat}", Vector))
+                base.append((f"{name_datatype}LowSNMask{self.suffix_stat}", Vector))
+                # statistics
+                for name in self._stats:
+                    base.append(
+                        (f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar)
+                    )
+                    base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar))
+                base.append((f"{name_datatype}LowSNThreshold{self.suffix_stat}", Scalar))
+                base.append((f"{name_datatype}HighSNThreshold{self.suffix_stat}", Scalar))
 
-        if self.addSummaryPlot:
+        if self.addSummaryPlot and not self.publicationStyle:
             base.append(("patch", Vector))
 
         return base
@@ -362,21 +365,23 @@ class ScatterPlotWithTwoHists(PlotAction):
         if ax is None:
             noDataFig = Figure()
             noDataFig.text(0.3, 0.5, "No data to plot after selectors applied")
-            noDataFig = addPlotInfo(noDataFig, plotInfo)
+            if not self.publicationStyle:
+                noDataFig = addPlotInfo(noDataFig, plotInfo)
             return noDataFig
 
         self._makeTopHistogram(data, fig, gs, ax, **kwargs)
         self._makeSideHistogram(data, fig, gs, ax, imhist, **kwargs)
         # Needs info from run quantum
         skymap = kwargs.get("skymap", None)
-        if self.addSummaryPlot and skymap is not None:
+        if self.addSummaryPlot and skymap is not None and not self.publicationStyle:
             sumStats = generateSummaryStats(data, skymap, plotInfo)
             label = self.yAxisLabel
             fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         fig.canvas.draw()
         fig.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
-        fig = addPlotInfo(fig, plotInfo)
+        if not self.publicationStyle:
+            fig = addPlotInfo(fig, plotInfo)
         return fig
 
     def _scatterPlot(
@@ -402,32 +407,48 @@ class ScatterPlotWithTwoHists(PlotAction):
             config_datatype = self._datatypes[name_datatype]
             highArgs = {}
             lowArgs = {}
-            for name in self._stats:
-                highArgs[name] = cast(
-                    Scalar,
-                    data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
-                )
-                lowArgs[name] = cast(
-                    Scalar,
-                    data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
-                )
-            highStats = _StatsContainer(**highArgs)
-            lowStats = _StatsContainer(**lowArgs)
+            if not self.publicationStyle:
+                for name in self._stats:
+                    highArgs[name] = cast(
+                        Scalar,
+                        data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
+                    )
+                    lowArgs[name] = cast(
+                        Scalar,
+                        data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
+                    )
+                highStats = _StatsContainer(**highArgs)
+                lowStats = _StatsContainer(**lowArgs)
 
-            toPlotList.append(
-                (
-                    data[f"x{config_datatype.suffix_xy}{suf_x}"],
-                    data[f"y{config_datatype.suffix_xy}{suf_y}"],
-                    data[f"{name_datatype}HighSNMask{suf_stat}"],
-                    data[f"{name_datatype}LowSNMask{suf_stat}"],
-                    data[f"{name_datatype}HighSNThreshold{suf_stat}"],
-                    data[f"{name_datatype}LowSNThreshold{suf_stat}"],
-                    config_datatype.color,
-                    config_datatype.colormap,
-                    highStats,
-                    lowStats,
+                toPlotList.append(
+                    (
+                        data[f"x{config_datatype.suffix_xy}{suf_x}"],
+                        data[f"y{config_datatype.suffix_xy}{suf_y}"],
+                        data[f"{name_datatype}HighSNMask{suf_stat}"],
+                        data[f"{name_datatype}LowSNMask{suf_stat}"],
+                        data[f"{name_datatype}HighSNThreshold{suf_stat}"],
+                        data[f"{name_datatype}LowSNThreshold{suf_stat}"],
+                        config_datatype.color,
+                        config_datatype.colormap,
+                        highStats,
+                        lowStats,
+                    )
                 )
-            )
+            else:
+                toPlotList.append(
+                    (
+                        data[f"x{config_datatype.suffix_xy}{suf_x}"],
+                        data[f"y{config_datatype.suffix_xy}{suf_y}"],
+                        [],
+                        [],
+                        [],
+                        [],
+                        config_datatype.color,
+                        config_datatype.colormap,
+                        [],
+                        [],
+                    )
+                )
 
         xLims = self.xLims if self.xLims is not None else [np.inf, -np.inf]
 
@@ -577,85 +598,87 @@ class ScatterPlotWithTwoHists(PlotAction):
                 inside = threeSigMadPath.contains_points(np.array([xs, ys]).T)
                 ax.plot(xs[~inside], ys[~inside], ".", ms=3, alpha=0.3, mfc=color, mec=color, zorder=-1)
 
-                # Add some stats text
-                xPos = 0.65 - 0.4 * j
-                bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
-                statText = f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
-                highStatsStr = (
-                    f"Median: {highStats.median:0.4g}    "
-                    + r"$\sigma_{MAD}$: "
-                    + f"{highStats.sigmaMad:0.4g}    "
-                    + r"N$_{points}$: "
-                    + f"{highStats.count}"
-                )
-                statText += highStatsStr
-                fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
+                if not self.publicationStyle:
+                    # Add some stats text
+                    xPos = 0.65 - 0.4 * j
+                    bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
+                    statText = f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
+                    highStatsStr = (
+                        f"Median: {highStats.median:0.4g}    "
+                        + r"$\sigma_{MAD}$: "
+                        + f"{highStats.sigmaMad:0.4g}    "
+                        + r"N$_{points}$: "
+                        + f"{highStats.count}"
+                    )
+                    statText += highStatsStr
+                    fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
-                bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
-                statText = f"S/N > {lowThresh:0.4g} Stats ({self.magLabel} < {lowStats.approxMag:0.4g})\n"
-                lowStatsStr = (
-                    f"Median: {lowStats.median:0.4g}    "
-                    + r"$\sigma_{MAD}$: "
-                    + f"{lowStats.sigmaMad:0.4g}    "
-                    + r"N$_{points}$: "
-                    + f"{lowStats.count}"
-                )
-                statText += lowStatsStr
-                fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
+                    bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
+                    statText = f"S/N > {lowThresh:0.4g} Stats ({self.magLabel} < {lowStats.approxMag:0.4g})\n"
+                    lowStatsStr = (
+                        f"Median: {lowStats.median:0.4g}    "
+                        + r"$\sigma_{MAD}$: "
+                        + f"{lowStats.sigmaMad:0.4g}    "
+                        + r"N$_{points}$: "
+                        + f"{lowStats.count}"
+                    )
+                    statText += lowStatsStr
+                    fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
                     histIm = ax.hexbin(xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3)
 
-                # If there are not many sources being used for the
-                # statistics then plot them individually as just
-                # plotting a line makes the statistics look wrong
-                # as the magnitude estimation is iffy for low
-                # numbers of sources.
-                if np.sum(highSn) < 100 and np.sum(highSn) > 0:
-                    ax.plot(
-                        cast(Vector, xs[highSn]),
-                        cast(Vector, ys[highSn]),
-                        marker="x",
-                        ms=4,
-                        mec="w",
-                        mew=2,
-                        ls="none",
-                    )
-                    (highSnLine,) = ax.plot(
-                        cast(Vector, xs[highSn]),
-                        cast(Vector, ys[highSn]),
-                        color=color,
-                        marker="x",
-                        ms=4,
-                        ls="none",
-                        label="High SN",
-                    )
-                    linesForLegend.append(highSnLine)
-                else:
-                    ax.axvline(highStats.approxMag, color=color, ls="--")
+                if not self.publicationStyle:
+                    # If there are not many sources being used for the
+                    # statistics then plot them individually as just
+                    # plotting a line makes the statistics look wrong
+                    # as the magnitude estimation is iffy for low
+                    # numbers of sources.
+                    if np.sum(highSn) < 100 and np.sum(highSn) > 0:
+                        ax.plot(
+                            cast(Vector, xs[highSn]),
+                            cast(Vector, ys[highSn]),
+                            marker="x",
+                            ms=4,
+                            mec="w",
+                            mew=2,
+                            ls="none",
+                        )
+                        (highSnLine,) = ax.plot(
+                            cast(Vector, xs[highSn]),
+                            cast(Vector, ys[highSn]),
+                            color=color,
+                            marker="x",
+                            ms=4,
+                            ls="none",
+                            label="High SN",
+                        )
+                        linesForLegend.append(highSnLine)
+                    else:
+                        ax.axvline(highStats.approxMag, color=color, ls="--")
 
-                if np.sum(lowSn) < 100 and np.sum(lowSn) > 0:
-                    ax.plot(
-                        cast(Vector, xs[lowSn]),
-                        cast(Vector, ys[lowSn]),
-                        marker="+",
-                        ms=4,
-                        mec="w",
-                        mew=2,
-                        ls="none",
-                    )
-                    (lowSnLine,) = ax.plot(
-                        cast(Vector, xs[lowSn]),
-                        cast(Vector, ys[lowSn]),
-                        color=color,
-                        marker="+",
-                        ms=4,
-                        ls="none",
-                        label="Low SN",
-                    )
-                    linesForLegend.append(lowSnLine)
-                else:
-                    ax.axvline(lowStats.approxMag, color=color, ls=":")
+                    if np.sum(lowSn) < 100 and np.sum(lowSn) > 0:
+                        ax.plot(
+                            cast(Vector, xs[lowSn]),
+                            cast(Vector, ys[lowSn]),
+                            marker="+",
+                            ms=4,
+                            mec="w",
+                            mew=2,
+                            ls="none",
+                        )
+                        (lowSnLine,) = ax.plot(
+                            cast(Vector, xs[lowSn]),
+                            cast(Vector, ys[lowSn]),
+                            color=color,
+                            marker="+",
+                            ms=4,
+                            ls="none",
+                            label="Low SN",
+                        )
+                        linesForLegend.append(lowSnLine)
+                    else:
+                        ax.axvline(lowStats.approxMag, color=color, ls=":")
 
             else:
                 ax.plot(xs, ys, ".", ms=5, alpha=0.3, mfc=color, mec=color, zorder=-1)
@@ -835,18 +858,19 @@ class ScatterPlotWithTwoHists(PlotAction):
                 color=config_datatype.color,
                 **kwargs_hist,
             )
-            sideHist.hist(
-                vector[cast(Vector, data[f"{key}HighSNMask{self.suffix_stat}"])],
-                color=config_datatype.color,
-                linestyle="--",
-                **kwargs_hist,
-            )
-            sideHist.hist(
-                vector[cast(Vector, data[f"{key}LowSNMask{self.suffix_stat}"])],
-                color=config_datatype.color,
-                **kwargs_hist,
-                linestyle=":",
-            )
+            if not self.publicationStyle:
+                sideHist.hist(
+                    vector[cast(Vector, data[f"{key}HighSNMask{self.suffix_stat}"])],
+                    color=config_datatype.color,
+                    linestyle="--",
+                    **kwargs_hist,
+                )
+                sideHist.hist(
+                    vector[cast(Vector, data[f"{key}LowSNMask{self.suffix_stat}"])],
+                    color=config_datatype.color,
+                    **kwargs_hist,
+                    linestyle=":",
+                )
 
         # Add a horizontal reference line at 0 to the side histogram
         sideHist.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)

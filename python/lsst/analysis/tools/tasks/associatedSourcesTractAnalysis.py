@@ -28,6 +28,7 @@ import lsst.pex.config as pexConfig
 import numpy as np
 import pandas as pd
 from astropy.table import Table, join, vstack
+from lsst.daf.butler import DatasetProvenance
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.geom import Box2D
 from lsst.pipe.base import NoWorkFound
@@ -162,6 +163,12 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         visitTable=None,
     ):
         """Concatenate source catalogs and join on associated object index."""
+
+        # Strip any provenance from tables before merging to prevent
+        # warnings from conflicts being issued by astropy.utils.merge.
+        for srcCat in sourceCatalogs:
+            DatasetProvenance.strip_provenance_from_flat_dict(srcCat.meta)
+        DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
 
         # Keep only sources with associations
         sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")

@@ -30,7 +30,7 @@ class DiaSourceTest(lsst.utils.tests.TestCase):
     and a plot is generated without falling over."""
 
     def setUp(self):
-        testFile = "tests/assocDiaSrc_test.ecsv"
+        testFile = "tests/data/assocDiaSrc_test.ecsv"
         self.data = Table.read(testFile)
 
     def test_metrics(self):
@@ -38,9 +38,9 @@ class DiaSourceTest(lsst.utils.tests.TestCase):
         NumDiaSources = diaAtool.NumGoodDiaSourcesMetrics()
         NumDiaSources.finalize()
         DiaSourceCount = NumDiaSources(self.data)
-        self.assertEqual(DiaSourceCount["numAllDiaSources"].quantity.value, 558)
-        self.assertEqual(DiaSourceCount["numGoodDiaSources"].quantity.value, 547)
-        self.assertEqual(DiaSourceCount["ratioGoodToAllDiaSources"].quantity.value, 547 / 558)
+        self.assertEqual(DiaSourceCount["numAllDiaSources"].quantity.value, 2994)
+        self.assertEqual(DiaSourceCount["numGoodDiaSources"].quantity.value, 2938)
+        self.assertEqual(DiaSourceCount["ratioGoodToAllDiaSources"].quantity.value, 2938 / 2994)
 
 
 if __name__ == "__main__":

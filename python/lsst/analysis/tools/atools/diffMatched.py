@@ -91,6 +91,24 @@ from .genericPlotAction import StructPlotAction
 from .genericProduce import MagnitudeScatterPlot
 
 
+def _set_field_config(config: pexConfig.Config | pexConfig.ConfigMeta, name: str, value):
+    """Set the value of a Config Field or ConfigMeta default value.
+
+    Parameters
+    ----------
+    config
+        A Config instance or metaclass.
+    name
+        The name of the attribute to set.
+    value
+        The value to set it to.
+    """
+    if isinstance(config, pexConfig.ConfigMeta):
+        getattr(config, name).default = value
+    else:
+        setattr(config, name, value)
+
+
 class MatchedRefCoaddTool(ObjectClassTool):
     """Base tool for matched-to-reference metrics/plots on coadds.
 
@@ -233,15 +251,14 @@ class MatchedRefCoaddTool(ObjectClassTool):
         -----
         Any kwargs set to None will not change the relevant config fields.
         """
-
         if context is not None:
-            self.context = context
+            _set_field_config(self, name="context", value=context)
         if use_any is not None:
-            self.use_any = use_any
+            _set_field_config(self, name="use_any", value=use_any)
         if use_galaxies is not None:
-            self.use_galaxies = use_galaxies
+            _set_field_config(self, name="use_galaxies", value=use_galaxies)
         if use_stars is not None:
-            self.use_stars = use_stars
+            _set_field_config(self, name="use_stars", value=use_stars)
 
         # This allows the method to work automatically on class defaults
         kwargs = {"self": self} if inspect.isclass(self) else {}
@@ -655,7 +672,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
         bands_color: dict[str, str] | list[str] | None = None,
     ):
         if key_flux_meas is not None:
-            self.mag_target = key_flux_meas
+            _set_field_config(self, name="mag_target", value=key_flux_meas)
 
     def setDefaults(self):
         MagnitudeTool.setDefaults(self)
@@ -814,10 +831,10 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):
         bands_color: dict[str, str] | list[str] | None = None,
     ):
         if key_flux_meas is not None:
-            self.mag_y1 = key_flux_meas
+            _set_field_config(self, name="mag_y1", value=key_flux_meas)
         if bands_color is not None:
             if isinstance(bands_color, dict):
-                self.bands = bands_color
+                _set_field_config(self, name="bands", value=bands_color)
             else:
                 bands_new = {}
                 bands_old = self.bands.default if inspect.isclass(self) else self.bands
@@ -829,7 +846,7 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):
                             f" is not in {bands_old=}."
                         )
                     bands_new[band] = ",".join(band for band in colors.split(",") if band in bands_color)
-                self.bands = bands_new
+                _set_field_config(self, name="bands", value=bands_new)
 
     def setDefaults(self):
         super().setDefaults()
@@ -925,7 +942,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            self.mag_y = key_flux_meas
+            _set_field_config(self, name="mag_y", value=key_flux_meas)
 
     def setDefaults(self):
         super().setDefaults()
@@ -1052,7 +1069,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            self.mag_sn = key_flux_meas
+            _set_field_config(self, name="mag_sn", value=key_flux_meas)
 
     def setDefaults(self):
         super().setDefaults()
@@ -1169,7 +1186,7 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffPlot):
         bands_color: dict[str, str] | None = None,
     ):
         if key_flux_meas is not None:
-            self.mag_sn = key_flux_meas
+            _set_field_config(self, name="mag_sn", value=key_flux_meas)
 
     def setDefaults(self):
         super().setDefaults()

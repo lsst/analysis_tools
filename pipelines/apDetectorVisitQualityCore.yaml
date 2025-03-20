@@ -60,7 +60,7 @@ tasks:
       connections.inputName: subtractImages_metadata
       connections.outputName: diffimMetadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
-      raiseNoWorkFoundOnEmptyMetadata: true
+      raiseNoWorkFoundOnIncompleteMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diffimMetadataMetric: TaskMetadataMetricTool
       atools.diffimMetadataMetric.taskName: subtractImages
@@ -89,7 +89,7 @@ tasks:
       connections.inputName: detectAndMeasure_metadata
       connections.outputName: detectAndMeasure_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
-      raiseNoWorkFoundOnEmptyMetadata: true
+      raiseNoWorkFoundOnIncompleteMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diffimMetadataMetric: TaskMetadataMetricTool
       atools.diffimMetadataMetric.taskName: detectAndMeasure

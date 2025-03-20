@@ -37,8 +37,7 @@ tasks:
       atools.matchedRefCModelColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelColorDiff.produce.plot.yLims: lims_color_diff
 
-      atools.matchedRefCModelColorChi: MatchedRefCoaddDiffColorTool
-      atools.matchedRefCModelColorChi.compute_chi: true
+      atools.matchedRefCModelColorChi: MatchedRefCoaddChiColorTool
       atools.matchedRefCModelColorChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelColorChi.produce.plot.yLims: lims_mag_chi
 
@@ -46,8 +45,7 @@ tasks:
       atools.matchedRefCModelMagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelMagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefCModelMagChi: MatchedRefCoaddDiffMagTool
-      atools.matchedRefCModelMagChi.compute_chi: true
+      atools.matchedRefCModelMagChi: MatchedRefCoaddChiMagTool
       atools.matchedRefCModelMagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelMagChi.produce.plot.yLims: lims_mag_chi
 
@@ -108,12 +106,11 @@ tasks:
 
       atools.matchedRefKronColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefKronColorDiff.mag_y1: kron_err
-      atools.matchedRefKronColorDiff.mag_y2: kron_err
       atools.matchedRefKronColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefKronColorDiff.produce.plot.yLims: lims_color_diff
 
-      atools.matchedRefKronColorChi: MatchedRefCoaddDiffColorTool
-      atools.matchedRefKronColorChi.compute_chi: true
+      atools.matchedRefKronColorChi: MatchedRefCoaddChiColorTool
+      atools.matchedRefKronColorChi.mag_y1: kron_err
       atools.matchedRefKronColorChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefKronColorChi.produce.plot.yLims: lims_mag_chi
 
@@ -122,20 +119,18 @@ tasks:
       atools.matchedRefKronMagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefKronMagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefKronMagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefKronMagChi: MatchedRefCoaddChiMagTool
       atools.matchedRefKronMagChi.mag_y: kron_err
-      atools.matchedRefKronMagChi.compute_chi: true
       atools.matchedRefKronMagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefKronMagChi.produce.plot.yLims: lims_mag_chi
 
       atools.matchedRefGaap1p0ColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefGaap1p0ColorDiff.mag_y1: gaap1p0_err
-      atools.matchedRefGaap1p0ColorDiff.mag_y2: gaap1p0_err
       atools.matchedRefGaap1p0ColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap1p0ColorDiff.produce.plot.yLims: lims_color_diff
 
-      atools.matchedRefGaap1p0ColorChi: MatchedRefCoaddDiffColorTool
-      atools.matchedRefGaap1p0ColorChi.compute_chi: true
+      atools.matchedRefGaap1p0ColorChi: MatchedRefCoaddChiColorTool
+      atools.matchedRefGaap1p0ColorChi.mag_y1: gaap1p0_err
       atools.matchedRefGaap1p0ColorChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap1p0ColorChi.produce.plot.yLims: lims_mag_chi
 
@@ -144,20 +139,18 @@ tasks:
       atools.matchedRefGaap1p0MagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap1p0MagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefGaap1p0MagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefGaap1p0MagChi: MatchedRefCoaddChiMagTool
       atools.matchedRefGaap1p0MagChi.mag_y: gaap1p0_err
-      atools.matchedRefGaap1p0MagChi.compute_chi: true
       atools.matchedRefGaap1p0MagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap1p0MagChi.produce.plot.yLims: lims_mag_chi
 
       atools.matchedRefGaap3p0ColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefGaap3p0ColorDiff.mag_y1: gaap3p0_err
-      atools.matchedRefGaap3p0ColorDiff.mag_y2: gaap3p0_err
       atools.matchedRefGaap3p0ColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap3p0ColorDiff.produce.plot.yLims: lims_color_diff
 
-      atools.matchedRefGaap3p0ColorChi: MatchedRefCoaddDiffColorTool
-      atools.matchedRefGaap3p0ColorChi.compute_chi: true
+      atools.matchedRefGaap3p0ColorChi: MatchedRefCoaddChiColorTool
+      atools.matchedRefGaap3p0ColorChi.mag_y1: gaap3p0_err
       atools.matchedRefGaap3p0ColorChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap3p0ColorChi.produce.plot.yLims: lims_mag_chi
 
@@ -166,20 +159,18 @@ tasks:
       atools.matchedRefGaap3p0MagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap3p0MagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefGaap3p0MagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefGaap3p0MagChi: MatchedRefCoaddChiMagTool
       atools.matchedRefGaap3p0MagChi.mag_y: gaap3p0_err
-      atools.matchedRefGaap3p0MagChi.compute_chi: true
       atools.matchedRefGaap3p0MagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap3p0MagChi.produce.plot.yLims: lims_mag_chi
 
       atools.matchedRefSersicColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefSersicColorDiff.mag_y1: sersic_err
-      atools.matchedRefSersicColorDiff.mag_y2: sersic_err
       atools.matchedRefSersicColorDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefSersicColorDiff.produce.plot.yLims: lims_color_diff
 
-      atools.matchedRefSersicColorChi: MatchedRefCoaddDiffColorTool
-      atools.matchedRefSersicColorChi.compute_chi: true
+      atools.matchedRefSersicColorChi: MatchedRefCoaddChiColorTool
+      atools.matchedRefSersicColorChi.mag_y1: sersic_err
       atools.matchedRefSersicColorChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefSersicColorChi.produce.plot.yLims: lims_mag_chi
 
@@ -188,9 +179,8 @@ tasks:
       atools.matchedRefSersicMagDiff.produce.plot.xLims: lims_mag_x
       atools.matchedRefSersicMagDiff.produce.plot.yLims: lims_mag_diff
 
-      atools.matchedRefSersicMagChi: MatchedRefCoaddDiffMagTool
+      atools.matchedRefSersicMagChi: MatchedRefCoaddChiMagTool
       atools.matchedRefSersicMagChi.mag_y: sersic_err
-      atools.matchedRefSersicMagChi.compute_chi: true
       atools.matchedRefSersicMagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefSersicMagChi.produce.plot.yLims: lims_mag_chi
 
@@ -224,9 +214,11 @@ tasks:
       python: |
         from lsst.analysis.tools.atools.genericBuild import MagnitudeTool
         from lsst.analysis.tools.atools.diffMatched import (
+          MatchedRefCoaddChiColorTool,
           MatchedRefCoaddDiffColorTool,
           MatchedRefCoaddDiffDistanceTool,
           MatchedRefCoaddCompurityTool,
+          MatchedRefCoaddChiMagTool,
           MatchedRefCoaddDiffMagTool,
           MatchedRefCoaddDiffPositionTool,
         )

@@ -22,10 +22,17 @@
 __all__ = (
     "getTractCorners",
     "getPatchCorners",
+    "http_client",
 )
 
+from collections.abc import Generator
+from contextlib import contextmanager
+
 import numpy as np
+import requests
 from lsst.geom import Box2D
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 
 def getTractCorners(skymap, tractId):
@@ -109,3 +116,56 @@ def _wrapRa(corners):
         corners = [(minRa, minDec), (maxRa, minDec), (maxRa, maxDec), (minRa, maxDec)]
 
     return corners
+
+
+@contextmanager
+def http_client() -> Generator[requests.Session]:
+    """Creates a requests session with a custom transport to support
+    automatic retries with backoff for dealing with transient server-side
+    issues.
+
+    Notes
+    -----
+    The goal of the adapter defined here is to avoid premature client abends
+    when transient server or infrastructure issues prevent good-faith attempts
+    at accessing APIs. To the extent that we want to balance "eventually
+    successful" HTTP requests with the desire to vacate the compute resources
+    our process is occupying, these retries should not overstay their welcome.
+
+    The "POST" HTTP verb is not usually part of the allowed methods for retries
+    because unlike "PUT", "POST" is not considered idempotent by default. It is
+    partially for this reason that a custom Retry adapter is needed, because
+    by default "POST" requests would not be retried for status.
+
+    The backoff_factor is an exponential factor used to calculate how long to
+    sleep between the third and subsequent tries, in seconds. The first retry
+    is immediate and the total backoff won't exceed backoff_max, which defaults
+    to 120 seconds.
+    """
+
+    retriable_statuses = [
+        requests.codes.too_many_requests,
+        requests.codes.server_error,
+        requests.codes.bad_gateway,
+        requests.codes.service_unavailable,
+        requests.codes.gateway_timeout,
+    ]
+    session = requests.Session()
+    retry_strategy = Retry(
+        total=None,  # use specific conditional constraints
+        connect=3,  # network or tcp errors
+        read=0,  # request sent, response is bad
+        status=5,  # retries based on bad response status (see retriable_statuses)
+        redirect=3,  # default value, follow 3 redirects
+        other=0,  # edge cases and weird stuff
+        backoff_factor=0.1,  # sleep == {factor} * 2^(previous tries)
+        status_forcelist=retriable_statuses,
+        raise_on_status=True,
+        allowed_methods={"GET", "HEAD", "POST", "PUT"},
+    )
+    session.mount("http://", HTTPAdapter(max_retries=retry_strategy))
+    session.mount("https://", HTTPAdapter(max_retries=retry_strategy))
+    try:
+        yield session
+    finally:
+        session.close()

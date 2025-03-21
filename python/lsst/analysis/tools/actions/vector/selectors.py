@@ -370,6 +370,7 @@ class SkyObjectSelector(FlagSelector):
     def setDefaults(self):
         self.selectWhenFalse = [
             "{band}_pixelFlags_edge",
+            "{band}_pixelFlags_nodata",
         ]
         self.selectWhenTrue = ["sky_object"]
 
@@ -392,6 +393,7 @@ class SkySourceSelector(FlagSelector):
     def setDefaults(self):
         self.selectWhenFalse = [
             "pixelFlags_edge",
+            "pixelFlags_nodata",
         ]
         self.selectWhenTrue = ["sky_source"]
 
@@ -418,6 +420,7 @@ class GoodDiaSourceSelector(FlagSelector):
             "pixelFlags_saturatedCenter",
             "pixelFlags_interpolatedCenter",
             "pixelFlags_edge",
+            "pixelFlags_nodata",
         ]
 
 

@@ -31,7 +31,7 @@ class DiaSourceTableTractTest(lsst.utils.tests.TestCase):
     and a plot is generated without falling over."""
 
     def setUp(self):
-        testFile = "tests/diaSourceTable_tract_test.ecsv"
+        testFile = "tests/data/diaSourceTable_tract_test.ecsv"
         self.data = Table.read(testFile)
 
     def test_metrics(self):
@@ -39,17 +39,17 @@ class DiaSourceTableTractTest(lsst.utils.tests.TestCase):
         NumDiaSources = diaAtool.NumDiaSourcesMetric()
         NumDiaSources.finalize()
         goodDiaSourceCount = NumDiaSources(self.data)
-        self.assertEqual(goodDiaSourceCount["numDiaSources"].quantity.value, 344)
+        self.assertEqual(goodDiaSourceCount["numDiaSources"].quantity.value, 2938)
 
         NumStreakDiaSources = diaAtool.NumStreakDiaSourcesMetric()
         NumStreakDiaSources.finalize()
         streakDiaSourceCount = NumStreakDiaSources(self.data)
-        self.assertEqual(streakDiaSourceCount["numStreakDiaSources"].quantity.value, 3)
+        self.assertEqual(streakDiaSourceCount["numStreakDiaSources"].quantity.value, 8)
 
         NumStreakCenterDiaSources = diaAtool.NumStreakCenterDiaSourcesMetric()
         NumStreakCenterDiaSources.finalize()
         streakCenterDiaSourceCount = NumStreakCenterDiaSources(self.data)
-        self.assertEqual(streakCenterDiaSourceCount["numStreakCenterDiaSources"].quantity.value, 1)
+        self.assertEqual(streakCenterDiaSourceCount["numStreakCenterDiaSources"].quantity.value, 7)
 
     def test_plot(self):
         """Test that a plot is created from the test data."""

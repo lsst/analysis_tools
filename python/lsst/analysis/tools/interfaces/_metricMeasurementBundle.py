@@ -23,10 +23,24 @@ from __future__ import annotations
 __all__ = ("MetricMeasurementBundle",)
 
 import json
+import numbers
 from collections import UserDict
 from typing import Any
 
 from lsst.verify import Measurement
+
+
+class JSONFloatSafeEncoder(json.JSONEncoder):
+    """JSON encoder that can handle both 32 and 64 bit numpy floats by
+    explicit casting. Without this cast, numpy 32-bit floats will throw a
+    serialization error.
+    """
+
+    def default(self, o):
+        if isinstance(o, numbers.Real):
+            return float(o)
+        else:
+            return super().default(o)
 
 
 class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
@@ -60,7 +74,9 @@ class MetricMeasurementBundle(UserDict[str, list[Measurement]]):
             result["__dataset_identifier"] = self.dataset_identifier
         result["__metricNamePrefix"] = self.metricNamePrefix
 
-        return json.dumps(result)
+        encoder = JSONFloatSafeEncoder()
+
+        return encoder.encode(result)
 
     @classmethod
     def parse_obj(cls: type[MetricMeasurementBundle], data: dict[str, Any]) -> MetricMeasurementBundle:

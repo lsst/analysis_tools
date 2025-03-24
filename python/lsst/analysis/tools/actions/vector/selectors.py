@@ -368,6 +368,7 @@ class SkyObjectSelector(FlagSelector):
         return cast(Vector, result)
 
     def setDefaults(self):
+        super().setDefaults()
         self.selectWhenFalse = [
             "{band}_pixelFlags_edge",
             "{band}_pixelFlags_nodata",
@@ -391,6 +392,7 @@ class SkySourceSelector(FlagSelector):
         return result
 
     def setDefaults(self):
+        super().setDefaults()
         self.selectWhenFalse = [
             "pixelFlags_edge",
             "pixelFlags_nodata",
@@ -414,6 +416,7 @@ class GoodDiaSourceSelector(FlagSelector):
         return result
 
     def setDefaults(self):
+        super().setDefaults()
         # These default flag names are correct for AP data products
         self.selectWhenFalse = [
             "pixelFlags_bad",

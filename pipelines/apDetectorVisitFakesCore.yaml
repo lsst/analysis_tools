@@ -46,6 +46,46 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
         from lsst.analysis.tools.atools import FractionFoundFakesDiaMagMetric
+  analyzeAssocDiaFakesDetectorVisitCore:
+    class: lsst.analysis.tools.tasks.AssocDiaFakesDetectorVisitAnalysisTask
+    config:
+      atools.numFoundFakesDiaAllMetric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaAllMetric.snrMin: 0
+      # atools.numFoundFakesDiaAllMetric.snrMax: NO MAXIMUM: all the fakes
+      # Bins of SNR
+      atools.numFoundFakesDiaSNR0t3Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR0t3Metric.snrMin: 0
+      atools.numFoundFakesDiaSNR0t3Metric.snrMax: 3
+      atools.numFoundFakesDiaSNR3t6Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR3t6Metric.snrMin: 3
+      atools.numFoundFakesDiaSNR3t6Metric.snrMax: 6
+      atools.numFoundFakesDiaSNR6t8Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR6t8Metric.snrMin: 6
+      atools.numFoundFakesDiaSNR6t8Metric.snrMax: 8
+      atools.numFoundFakesDiaSNR8t10Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR8t10Metric.snrMin: 8
+      atools.numFoundFakesDiaSNR8t10Metric.snrMax: 10
+      atools.numFoundFakesDiaSNR10t20Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR10t20Metric.snrMin: 10
+      atools.numFoundFakesDiaSNR10t20Metric.snrMax: 20
+      # From 6 to infinity
+      atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      # Completeness as function of magnitude
+      atools.numFoundFakesDiaMag20t22Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag20t22Metric.magMin: 20
+      atools.numFoundFakesDiaMag20t22Metric.magMax: 22
+      atools.numFoundFakesDiaMag22t24Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag22t24Metric.magMin: 22
+      atools.numFoundFakesDiaMag22t24Metric.magMax: 24
+      atools.numFoundFakesDiaMag24t26Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag24t26Metric.magMin: 24
+      atools.numFoundFakesDiaMag24t26Metric.magMax: 26
+      connections.data: "fakes_{coaddName}Diff_matchAssocDiaSrc"
+      connections.outputName: assocDiaFakesDetectorVisitCore
+      python: |
+        from lsst.analysis.tools.atools import FractionFoundFakesAssocDiaSnrMetric
+        from lsst.analysis.tools.atools import FractionFoundFakesAssocDiaMagMetric
   analyzeDiaFakesVisitCore:
     class: lsst.analysis.tools.tasks.DiaFakesVisitAnalysisTask
     config:
@@ -86,3 +126,43 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
         from lsst.analysis.tools.atools import FractionFoundFakesDiaMagMetric
+  analyzeAssocDiaFakesVisitCore:
+    class: lsst.analysis.tools.tasks.AssocDiaFakesVisitAnalysisTask
+    config:
+      atools.numFoundFakesDiaAllMetric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaAllMetric.snrMin: 0
+      # atools.numFoundFakesDiaAllMetric.snrMax: NO MAXIMUM: all the fakes
+      # Bins of SNR
+      atools.numFoundFakesDiaSNR0t3Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR0t3Metric.snrMin: 0
+      atools.numFoundFakesDiaSNR0t3Metric.snrMax: 3
+      atools.numFoundFakesDiaSNR3t6Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR3t6Metric.snrMin: 3
+      atools.numFoundFakesDiaSNR3t6Metric.snrMax: 6
+      atools.numFoundFakesDiaSNR6t8Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR6t8Metric.snrMin: 6
+      atools.numFoundFakesDiaSNR6t8Metric.snrMax: 8
+      atools.numFoundFakesDiaSNR8t10Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR8t10Metric.snrMin: 8
+      atools.numFoundFakesDiaSNR8t10Metric.snrMax: 10
+      atools.numFoundFakesDiaSNR10t20Metric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR10t20Metric.snrMin: 10
+      atools.numFoundFakesDiaSNR10t20Metric.snrMax: 20
+      # From 6 to infinity
+      atools.numFoundFakesDiaSNR6tInfMetric: FractionFoundFakesAssocDiaSnrMetric
+      atools.numFoundFakesDiaSNR6tInfMetric.snrMin: 6
+      # Completeness as function of magnitude
+      atools.numFoundFakesDiaMag20t22Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag20t22Metric.magMin: 20
+      atools.numFoundFakesDiaMag20t22Metric.magMax: 22
+      atools.numFoundFakesDiaMag22t24Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag22t24Metric.magMin: 22
+      atools.numFoundFakesDiaMag22t24Metric.magMax: 24
+      atools.numFoundFakesDiaMag24t26Metric: FractionFoundFakesAssocDiaMagMetric
+      atools.numFoundFakesDiaMag24t26Metric.magMin: 24
+      atools.numFoundFakesDiaMag24t26Metric.magMax: 26
+      connections.data: "fakes_{coaddName}Diff_matchAssocDiaSourceTable"
+      connections.outputName: assocDiaFakesVisitCore
+      python: |
+        from lsst.analysis.tools.atools import FractionFoundFakesAssocDiaSnrMetric
+        from lsst.analysis.tools.atools import FractionFoundFakesAssocDiaMagMetric

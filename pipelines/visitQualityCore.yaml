@@ -31,8 +31,6 @@ tasks:
     class: lsst.analysis.tools.tasks.refCatSourcePhotometricAnalysis.RefCatSourcePhotometricAnalysisTask
     config:
       file: $ANALYSIS_TOOLS_DIR/config/refCatSourcePhotometricCore.py
-  objectEpochTable:
-    class: lsst.analysis.tools.tasks.ObjectEpochTableTask
   sourceObjectMatch:
     class: lsst.analysis.tools.tasks.SourceObjectTableAnalysisTask
   calexpSummary:

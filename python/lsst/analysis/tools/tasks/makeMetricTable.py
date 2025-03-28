@@ -221,7 +221,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                 metricsDict[key].append(value)
 
             if "tract" in self.config.inputDataDimensions:
-                corners = getTractCorners(skymap, dataIdInfo[0]["tract"])
+                corners = getTractCorners(skymap, dataIdInfo[i + 1]["tract"])
                 metricsDict["corners"].append(corners)
 
             metricNames = list(metricsDict)

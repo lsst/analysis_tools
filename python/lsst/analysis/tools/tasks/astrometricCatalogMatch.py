@@ -31,7 +31,6 @@ import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
-from astropy.time import Time
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
@@ -247,8 +246,7 @@ class AstrometricCatalogMatchVisitTask(AstrometricCatalogMatchTask):
         radius = visitBoundingCircle.getOpeningAngle()
 
         # Get the observation date of the visit
-        obsDate = visSum.getVisitInfo().getDate()
-        epoch = Time(obsDate.toPython())
+        epoch = visSum.getVisitInfo().getDate().toAstropy()
 
         # Load the reference catalog in the skyCircle of the detectors, then
         # convert the coordinates to degrees and convert the catalog to a

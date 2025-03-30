@@ -311,7 +311,10 @@ class MultiVisitCoveragePlot(PlotAction):
         if len(notFoundKeys) > 0:
             raise RuntimeError(f"Requested column(s) {notFoundKeys} is(are) not in the data table.")
 
-        maxMeanDistanceArcsec = calibrateConfig.astrometry.maxMeanDistanceArcsec  # type: ignore
+        if calibrateConfig is None:
+            maxMeanDistanceArcsec = 0.0
+        else:
+            maxMeanDistanceArcsec = calibrateConfig.astrometry.maxMeanDistanceArcsec  # type: ignore
 
         if makeWarpConfig is None:
             maxEllipResidual = 0.007

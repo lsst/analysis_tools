@@ -237,15 +237,15 @@ tasks:
       atools.defectsPixels: CalibStatisticFocalPlanePlot
       atools.defectsPixels.produce.plot.addHistogram: false
       # here set name of column from the verify table
-      atools.defectsPixels.quantityKey: DEFECTS_DEFECT_PIXELS_FRAC
-      atools.defectsPixels.unit: "% of amp"
+      atools.defectsPixels.quantityKey: DEFECTS_DEFECT_PIXELS
+      atools.defectsPixels.unit: "pix"
 
       # TODO: DM-43880 Sort out defects
-      atools.defectsHotPixels: CalibStatisticFocalPlanePlot
-      atools.defectsHotPixels.produce.plot.addHistogram: true
-      atools.defectsHotPixels.produce.plot.zAxisLabel: "Number of Hot Pixels"
-      atools.defectsHotPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_HOT
-      atools.defectsHotPixels.unit: "---"
+      # atools.defectsHotPixels: CalibStatisticFocalPlanePlot
+      # atools.defectsHotPixels.produce.plot.addHistogram: true
+      # atools.defectsHotPixels.produce.plot.zAxisLabel: "Number of Hot Pixels"
+      # atools.defectsHotPixels.quantityKey: DEFECTS_DEFECTS_DIST_N_HOT
+      # atools.defectsHotPixels.unit: "---"
 
       # atools.defectsColdPixels: CalibStatisticFocalPlanePlot
       # atools.defectsColdPixels.produce.plot.addHistogram: true

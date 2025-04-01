@@ -26,7 +26,6 @@ import lsst.geom
 import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
-from astropy.time import Time
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
 from ..actions.vector import StarSelector, VisitPlotFlagSelector
@@ -270,8 +269,7 @@ class PhotometricCatalogMatchVisitTask(PhotometricCatalogMatchTask):
         radius = visitBoundingCircle.getOpeningAngle()
 
         # Get the observation date of the visit
-        obsDate = visSum.getVisitInfo().getDate()
-        epoch = Time(obsDate.toPython())
+        epoch = visSum.getVisitInfo().getDate().toAstropy()
 
         # Load the reference catalog in the skyCircle of the detectors, then
         # convert the coordinates to degrees and convert the catalog to a

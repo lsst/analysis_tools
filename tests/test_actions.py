@@ -487,6 +487,8 @@ class TestVectorSelectors(unittest.TestCase):
             "xy_flag": [7],
             "i_pixelFlags_edge": [13],
             "r_pixelFlags_edge": [15],
+            "i_pixelFlags_nodata": [14],
+            "r_pixelFlags_nodata": [16],
             "sky_object": [13, 15, 17],
         }
 
@@ -615,7 +617,7 @@ class TestVectorSelectors(unittest.TestCase):
     def testSkyObjectSelector(self):
         # Test default
         selector = SkyObjectSelector()
-        keys = ["{band}_pixelFlags_edge", "sky_object"]
+        keys = ["{band}_pixelFlags_edge", "{band}_pixelFlags_nodata", "sky_object"]
         self._checkSchema(selector, keys)
         result = selector(self.data)
         truth = np.zeros(self.size, dtype=bool)

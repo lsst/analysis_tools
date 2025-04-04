@@ -4,3 +4,5 @@ numpy >= 1.17
 git+https://github.com/lsst/pex_config@main#egg=lsst-pex-config
 git+https://github.com/lsst/pipe_base@main#egg=lsst-pipe-base
 healsparse
+requests >= 2.3.0
+urllib3 >= 2.3.0

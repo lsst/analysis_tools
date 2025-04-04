@@ -19,11 +19,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from unittest.mock import MagicMock, patch
 
 import lsst.skymap as skyMap
 import lsst.utils.tests
 import numpy as np
-from lsst.analysis.tools.utils import getPatchCorners, getTractCorners
+from lsst.analysis.tools.utils import getPatchCorners, getTractCorners, http_client
+from urllib3.response import HTTPResponse
 
 
 class TestTractPatchUtils(lsst.utils.tests.TestCase):
@@ -85,6 +87,52 @@ class TestTractPatchUtils(lsst.utils.tests.TestCase):
         for i, (tractId, patchId) in enumerate(zip(self.tractIds, self.patchIds)):
             tractInfo = self.skyMap.generateTract(tractId)
             np.testing.assert_array_almost_equal(getPatchCorners(tractInfo, patchId), self.patchCorners[i])
+
+
+class TestHttpSessionAdapters(lsst.utils.tests.TestCase):
+    """Tests the HTTP retry adapter.
+
+    For common server-side HTTP failure scenarios, test the implementation of
+    a retry adapter to ensure that retry scenarios are being applied,
+    especially those that are non-standard or application-specific such as
+    for HTTP POST, which is not retried by default.
+    """
+
+    def setUp(self):
+        """For each test, create a set of HTTP status codes the client should
+        encounter. These include server-side failures (5xx) and client rate
+        limiting (429) before an eventual success (200).
+        """
+        responses = []
+        self.patcher = patch("urllib3.connectionpool.HTTPConnectionPool._get_conn")
+        self.mock = self.patcher.start()
+        self.mock_url = "http://mock/api/resource/1"
+        for code in [500, 503, 429, 200]:
+            _response = MagicMock(spec=HTTPResponse())
+            _response.status = code
+            _response.connection = MagicMock()
+            _response.headers = {}
+            responses.append(_response)
+        self.mock.return_value.getresponse.side_effect = responses
+
+    def tearDown(self):
+        """After each test, reset the patched mock object state."""
+        self.patcher.stop()
+        self.mock = None
+
+    def testRetryServerErrorOnGet(self):
+        """A GET request that fails before succeeding"""
+        with http_client() as session:
+            r = session.get(self.mock_url)
+            assert r.ok
+            assert len(r.raw.retries.history) == 3
+
+    def testRetryServerErrorOnPost(self):
+        """A POST request that fails before succeeding"""
+        with http_client() as session:
+            r = session.post(self.mock_url)
+            assert r.ok
+            assert len(r.raw.retries.history) == 3
 
 
 if __name__ == "__main__":

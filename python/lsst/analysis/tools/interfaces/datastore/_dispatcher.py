@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID, uuid4
 
+import numpy as np
 import requests
 from lsst.daf.butler import DatasetRef
 from lsst.resources import ResourcePath
@@ -311,7 +312,7 @@ class SasquatchDispatcher:
             Return a mapping that represents an entry in an avro schema.
         """
         match value:
-            case float() | None:
+            case float() | np.float32() | None:
                 return {"type": "float", "default": 0.0}
             case str():
                 return {"type": "string", "default": ""}
@@ -591,6 +592,9 @@ class SasquatchDispatcher:
                             )
                             resultsTrimmed = True
                             continue
+                        # JSON will not serialize np.float32, must cast.
+                        if isinstance(value, np.float32):
+                            value = float(value)
                         pass
                     case {"value": _}:
                         log.error("Measurement %s does not contain the key 'metric'", measurement)

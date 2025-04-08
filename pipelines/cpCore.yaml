@@ -9,7 +9,7 @@ tasks:
 
       atools.biasReadNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.biasReadNoisePerAmp.produce.plot.addHistogram: true
-      atools.biasReadNoisePerAmp.quantityKey: BIAS_READ_NOISE
+      atools.biasReadNoisePerAmp.quantityKey: BIAS_READ_NOISE_ADU
       atools.biasReadNoisePerAmp.unit: ADU
 
       atools.biasMeanPerAmp: CalibStatisticFocalPlanePlot
@@ -79,7 +79,7 @@ tasks:
       connections.data: verifyDarkResults
       atools.darkReadNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.darkReadNoisePerAmp.produce.plot.addHistogram: true
-      atools.darkReadNoisePerAmp.quantityKey: DARK_READ_NOISE
+      atools.darkReadNoisePerAmp.quantityKey: DARK_READ_NOISE_ADU
       atools.darkReadNoisePerAmp.unit: ADU
 
       atools.darkMeanPerAmp: CalibStatisticFocalPlanePlot

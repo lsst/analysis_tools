@@ -200,8 +200,8 @@ class SkyCoadd(BasePsfResidualCoadd):
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
 
 
 class SkyVisit(BasePsfResidualVisit):
@@ -221,8 +221,8 @@ class SkyVisit(BasePsfResidualVisit):
         self.produce.plot = SkyPlot()
 
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
 
         self.produce.plot.plotOutlines = False
 
@@ -539,8 +539,8 @@ class EScatter(EBase):
 
         self.produce.plot = ScatterPlotWithTwoHists()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.xAxisLabel = "PSF Magnitude (Mag)"
-        self.produce.plot.magLabel = "PSF Magnitude (Mag)"
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.plot.magLabel = "PSF Magnitude (mag)"
 
         self.produce.metric.units = {"median": "pix", "sigmaMad": "pix"}
 
@@ -602,8 +602,8 @@ class ESky(EBase):
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
 
 
 class E1SkyVisit(ESky):

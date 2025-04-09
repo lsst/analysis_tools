@@ -54,8 +54,8 @@ class WholeSkyPlotTool(AnalysisTool):
         itemCheck=lambda x: "{band}" in x,
         listCheck=lambda x: len(set(x)) == len(x),
     )
-    xAxisLabel = Field[str](doc="Label for the x axis.", default="RA (degrees)")
-    yAxisLabel = Field[str](doc="Label for the y axis.", default="Dec (degrees)")
+    xAxisLabel = Field[str](doc="Label for the x axis.", default="RA (deg)")
+    yAxisLabel = Field[str](doc="Label for the y axis.", default="Dec (deg)")
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])

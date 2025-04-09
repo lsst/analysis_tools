@@ -72,8 +72,8 @@ class CoaddInputCount(AnalysisTool):
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["any"]
         self.produce.plot.plotName = "{band}_inputCount"
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
         self.produce.plot.zAxisLabel = "Input Count"
         self.produce.plot.plotOutlines = True
         self.produce.plot.showExtremeOutliers = False

@@ -117,8 +117,8 @@ class StellarAstrometricResidualsRASkyPlot(StellarAstrometricResidualsBase):
 
         self.produce.plotTypes = ["any"]
         self.produce.plotName = "ra_residuals"
-        self.produce.xAxisLabel = "R.A. (degrees)"
-        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.xAxisLabel = "R.A. (deg)"
+        self.produce.yAxisLabel = "Dec. (deg)"
         self.produce.zAxisLabel = "RAcos(Dec) - RAcos(Dec)$_{mean}$"
 
 
@@ -139,8 +139,8 @@ class StellarAstrometricResidualsDecSkyPlot(StellarAstrometricResidualsBase):
 
         self.produce.plotTypes = ["any"]
         self.produce.plotName = "ra_residuals"
-        self.produce.xAxisLabel = "R.A. (degrees)"
-        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.xAxisLabel = "R.A. (deg)"
+        self.produce.yAxisLabel = "Dec. (deg)"
         self.produce.zAxisLabel = "RAcos(Dec) - RAcos(Dec)$_{mean}$"
 
 
@@ -156,7 +156,7 @@ class StellarAstrometricResidualsRAFocalPlanePlot(StellarAstrometricResidualsBas
         self.process.buildActions.residual.buildAction.buildAction = RAcosDec()
 
         self.produce = FocalPlanePlot()
-        self.produce.zAxisLabel = "RAcos(Dec) - RAcos(Dec)$_{mean}$ (mArcsec)"
+        self.produce.zAxisLabel = "RAcos(Dec) - RAcos(Dec)$_{mean}$ (mas)"
 
 
 class StellarAstrometricResidualStdDevRAFocalPlanePlot(StellarAstrometricResidualsBase):
@@ -172,7 +172,7 @@ class StellarAstrometricResidualStdDevRAFocalPlanePlot(StellarAstrometricResidua
 
         self.produce = FocalPlanePlot()
         self.produce.statistic = "std"
-        self.produce.zAxisLabel = "Std(RAcos(Dec) - RAcos(Dec)$_{mean}$) (mArcsec)"
+        self.produce.zAxisLabel = "Std(RAcos(Dec) - RAcos(Dec)$_{mean}$) (mas)"
 
 
 class StellarAstrometricResidualsDecFocalPlanePlot(StellarAstrometricResidualsBase):
@@ -187,7 +187,7 @@ class StellarAstrometricResidualsDecFocalPlanePlot(StellarAstrometricResidualsBa
         self.process.buildActions.residual.buildAction.buildAction.vectorKey = "coord_dec"
 
         self.produce = FocalPlanePlot()
-        self.produce.zAxisLabel = "Dec - Dec$_{mean}$ (mArcsec)"
+        self.produce.zAxisLabel = "Dec - Dec$_{mean}$ (mas)"
 
 
 class StellarAstrometricResidualStdDevDecFocalPlanePlot(StellarAstrometricResidualsBase):
@@ -203,7 +203,7 @@ class StellarAstrometricResidualStdDevDecFocalPlanePlot(StellarAstrometricResidu
 
         self.produce = FocalPlanePlot()
         self.produce.statistic = "std"
-        self.produce.zAxisLabel = "Std(Dec - Dec$_{mean}$) (mArcsec)"
+        self.produce.zAxisLabel = "Std(Dec - Dec$_{mean}$) (mas)"
 
 
 class AstrometricRelativeRepeatability(AnalysisTool):
@@ -252,14 +252,14 @@ class AstrometricRelativeRepeatability(AnalysisTool):
 
         self.produce.plot.panels["panel_sep"] = HistPanel()
         self.produce.plot.panels["panel_sep"].hists = dict(separationResiduals="Source separations")
-        self.produce.plot.panels["panel_sep"].label = "Separation Distances (marcsec)"
+        self.produce.plot.panels["panel_sep"].label = "Separation Distances (mas)"
         self.produce.plot.panels["panel_sep"].lowerRange = 0
         self.produce.plot.panels["panel_sep"].upperRange = 80
         self.produce.plot.panels["panel_sep"].rangeType = "fixed"
 
         self.produce.plot.panels["panel_rms"] = HistPanel()
         self.produce.plot.panels["panel_rms"].hists = dict(rmsDistances="Object RMS")
-        self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (marcsec)"
+        self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (mas)"
         self.produce.plot.panels["panel_rms"].lowerRange = 0
         self.produce.plot.panels["panel_rms"].upperRange = 80
         self.produce.plot.panels["panel_rms"].rangeType = "fixed"
@@ -322,7 +322,7 @@ class AstrometricRepeatability(AnalysisTool):
 
         self.produce.plot.panels["panel_rms"] = HistPanel()
         self.produce.plot.panels["panel_rms"].hists = dict(perGroupStdFiltered="Per-Object RMS")
-        self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (marcsec)"
+        self.produce.plot.panels["panel_rms"].label = "Per-Object RMS (mas)"
 
     def finalize(self):
         super().finalize()

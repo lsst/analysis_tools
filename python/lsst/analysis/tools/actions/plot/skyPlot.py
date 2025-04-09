@@ -27,11 +27,9 @@ from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
-import seaborn as sns
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.utils.plotting import divergent_cmap, galaxies_cmap, make_figure, set_rubin_plotstyle, stars_cmap
-from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 

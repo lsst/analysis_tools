@@ -31,7 +31,14 @@ import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
-from lsst.utils.plotting import galaxies_cmap, galaxies_color, make_figure, stars_cmap, stars_color, set_rubin_plotstyle
+from lsst.utils.plotting import (
+    galaxies_cmap,
+    galaxies_color,
+    make_figure,
+    set_rubin_plotstyle,
+    stars_cmap,
+    stars_color,
+)
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
@@ -44,7 +51,7 @@ from ...math import nanMedian, nanSigmaMad
 from ..keyedData.summaryStatistics import SummaryStatisticAction
 from ..scalar import MedianAction
 from ..vector import ConvertFluxToMag, SnSelector
-from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats, mkColormap
+from .plotUtils import addPlotInfo, addSummaryPlot, generateSummaryStats
 
 
 class ScatterPlotStatsAction(KeyedDataAction):

@@ -38,7 +38,7 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
     SurveyWidePropertyMapAnalysisConfig,
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
-from lsst.utils.plotting import make_figure
+from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib import rc_context
 from matplotlib.figure import Figure
 from matplotlib.legend_handler import HandlerTuple
@@ -351,6 +351,7 @@ class PerTractPropertyMapPlot(PlotAction):
             The resulting figure.
         """
 
+        set_rubin_plotstyle()
         # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
@@ -374,6 +375,8 @@ class PerTractPropertyMapPlot(PlotAction):
         # Muted green for the full map, and muted red and blue for the two
         # zoomed-in maps.
         histColors = ["#265D40", "#8B0000", "#00008B"]
+        if plotConfig.publicationStyle:
+            histColors = ["#440154", "#31688e", "#35b779"]
 
         toolName = data["data"].ref.datasetType.name
         mapName = toolName.replace("_map_", "_")
@@ -465,7 +468,17 @@ class PerTractPropertyMapPlot(PlotAction):
                     extent=extent,
                     **plotConfig.projectionKwargs,
                 )
-                sp.draw_hspmap(mapData, zoom=False)
+                if "cmap" not in plotConfig.colorbarKwargs.keys() or plotConfig.publicationStyle:
+                    plotKwargs = {"cmap": "viridis"}
+                else:
+                    plotKwargs = {}
+                for key in plotConfig.colorbarKwargs.keys():
+                    if key != "cmap" and not plotConfig.publicationStyle:
+                        plotKwargs[key] = plotConfig.colorbarKwargs[key]
+                if "cmap" not in plotKwargs.keys():
+                    plotKwargs["cmap"] = "viridis"
+
+                sp.draw_hspmap(mapData, zoom=False, cmap=plotKwargs["cmap"])
 
                 sp.ax.set_xlabel("RA")
                 sp.ax.set_ylabel("Dec")
@@ -475,7 +488,7 @@ class PerTractPropertyMapPlot(PlotAction):
                         "aspect": colorBarAspect,
                         "fraction": 0.15,
                         "pad": 0,
-                        **plotConfig.colorbarKwargs,
+                        **plotKwargs,
                     }
                 )
                 cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
@@ -611,8 +624,9 @@ class PerTractPropertyMapPlot(PlotAction):
             plotInfo["nside"] = mapData.nside_sparse
             plotInfo["valid_area"] = mapData.get_valid_area()
 
-            # Add useful information to the plot.
-            self.addPlotInfo(fig, plotInfo, toolName)
+            if not plotConfig.publicationStyle:
+                # Add useful information to the plot.
+                self.addPlotInfo(fig, plotInfo, toolName)
 
             _LOG.info(
                 f"Made per-tract property map plot for dataset type '{toolName}', "
@@ -733,6 +747,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
             The resulting figure.
         """
 
+        set_rubin_plotstyle()
         # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.healSparsePropertyMap.

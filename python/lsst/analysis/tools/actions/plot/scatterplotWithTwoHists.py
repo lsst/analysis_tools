@@ -26,11 +26,12 @@ __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.colors
+import matplotlib.patheffects as pathEffects
 import numpy as np
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
-from lsst.utils.plotting import make_figure
+from lsst.utils.plotting import galaxies_cmap, galaxies_color, make_figure, stars_cmap, stars_color, set_rubin_plotstyle
 from matplotlib import gridspec
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
@@ -204,14 +205,14 @@ class ScatterPlotWithTwoHists(PlotAction):
         "galaxies": DataTypeDefaults(
             suffix_stat="Galaxies",
             suffix_xy="Galaxies",
-            color="firebrick",
-            colormap=mkColormap(["lemonchiffon", "firebrick"]),
+            color=galaxies_color(),
+            colormap=galaxies_cmap(single_color=True),
         ),
         "stars": DataTypeDefaults(
             suffix_stat="Stars",
             suffix_xy="Stars",
-            color="midnightblue",
-            colormap=mkColormap(["paleturquoise", "midnightBlue"]),
+            color=stars_color(),
+            colormap=stars_cmap(single_color=True),
         ),
         "unknown": DataTypeDefaults(
             suffix_stat="Unknown",
@@ -241,7 +242,9 @@ class ScatterPlotWithTwoHists(PlotAction):
                     base.append(
                         (f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar)
                     )
-                    base.append((f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar))
+                    base.append(
+                        (f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{self.suffix_stat}", Scalar)
+                    )
                 base.append((f"{name_datatype}LowSNThreshold{self.suffix_stat}", Scalar))
                 base.append((f"{name_datatype}HighSNThreshold{self.suffix_stat}", Scalar))
 
@@ -357,7 +360,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         if "hlineStyle" not in kwargs:
             kwargs["hlineStyle"] = (0, (1, 4))
 
-        fig = make_figure(dpi=300)
+        set_rubin_plotstyle()
+        fig = make_figure()
         gs = gridspec.GridSpec(4, 4)
 
         # add the various plot elements
@@ -411,11 +415,15 @@ class ScatterPlotWithTwoHists(PlotAction):
                 for name in self._stats:
                     highArgs[name] = cast(
                         Scalar,
-                        data[f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
+                        data[
+                            f"{{band}}_highSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)
+                        ],
                     )
                     lowArgs[name] = cast(
                         Scalar,
-                        data[f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)],
+                        data[
+                            f"{{band}}_lowSN{config_datatype.suffix_stat}_{name}{suf_stat}".format(**kwargs)
+                        ],
                     )
                 highStats = _StatsContainer(**highArgs)
                 lowStats = _StatsContainer(**lowArgs)
@@ -562,47 +570,61 @@ class ScatterPlotWithTwoHists(PlotAction):
                     threeSigMadVerts[i, :] = [xEdge, med + 3 * sigMad]
                     threeSigMadVerts[-(i + 1), :] = [xEdge, med - 3 * sigMad]
 
-                (medLine,) = ax.plot(xEdgesPlot, meds, color, label="Running Median")
+                if self.publicationStyle:
+                    linecolor = "k"
+                else:
+                    linecolor = color
+
+                (medLine,) = ax.plot(xEdgesPlot, meds, linecolor, label="Running Median")
                 linesForLegend.append(medLine)
 
                 # Make path to check which points lie within one sigma mad
                 threeSigMadPath = Path(threeSigMadVerts, codes)
 
-                # Add lines for the median +/- 3 * sigma MAD
-                (threeSigMadLine,) = ax.plot(
-                    xEdgesPlot,
-                    threeSigMadVerts[: len(xEdgesPlot), 1],
-                    color,
-                    alpha=0.4,
-                    label=r"3$\sigma_{MAD}$",
-                )
-                ax.plot(xEdgesPlot[::-1], threeSigMadVerts[len(xEdgesPlot) :, 1], color, alpha=0.4)
+                if not self.publicationStyle:
+                    # Add lines for the median +/- 3 * sigma MAD
+                    (threeSigMadLine,) = ax.plot(
+                        xEdgesPlot,
+                        threeSigMadVerts[: len(xEdgesPlot), 1],
+                        color,
+                        alpha=0.4,
+                        label=r"3$\sigma_{MAD}$",
+                    )
+                    ax.plot(xEdgesPlot[::-1], threeSigMadVerts[len(xEdgesPlot) :, 1], color, alpha=0.4)
 
                 # Add lines for the median +/- 1 * sigma MAD
                 (sigMadLine,) = ax.plot(
-                    xEdgesPlot, meds + 1.0 * sigMads, color, alpha=0.8, label=r"$\sigma_{MAD}$"
+                    xEdgesPlot,
+                    meds + 1.0 * sigMads,
+                    linecolor,
+                    alpha=0.8,
+                    label=r"$\sigma_{MAD}$",
+                    ls="dashed",
                 )
                 linesForLegend.append(sigMadLine)
-                ax.plot(xEdgesPlot, meds - 1.0 * sigMads, color, alpha=0.8)
+                ax.plot(xEdgesPlot, meds - 1.0 * sigMads, linecolor, alpha=0.8, ls="dashed")
 
-                # Add lines for the median +/- 2 * sigma MAD
-                (twoSigMadLine,) = ax.plot(
-                    xEdgesPlot, meds + 2.0 * sigMads, color, alpha=0.6, label=r"2$\sigma_{MAD}$"
-                )
-                linesForLegend.append(twoSigMadLine)
-                linesForLegend.append(threeSigMadLine)
-                ax.plot(xEdgesPlot, meds - 2.0 * sigMads, color, alpha=0.6)
+                if not self.publicationStyle:
+                    # Add lines for the median +/- 2 * sigma MAD
+                    (twoSigMadLine,) = ax.plot(
+                        xEdgesPlot, meds + 2.0 * sigMads, color, alpha=0.6, label=r"2$\sigma_{MAD}$"
+                    )
+                    linesForLegend.append(twoSigMadLine)
+                    linesForLegend.append(threeSigMadLine)
+                    ax.plot(xEdgesPlot, meds - 2.0 * sigMads, color, alpha=0.6)
 
                 # Check which points are outside 3 sigma MAD of the median
                 # and plot these as points.
                 inside = threeSigMadPath.contains_points(np.array([xs, ys]).T)
-                ax.plot(xs[~inside], ys[~inside], ".", ms=3, alpha=0.3, mfc=color, mec=color, zorder=-1)
+                ax.plot(xs[~inside], ys[~inside], ".", ms=5, alpha=0.3, mfc=color, mec="none", zorder=-1)
 
                 if not self.publicationStyle:
                     # Add some stats text
                     xPos = 0.65 - 0.4 * j
                     bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
-                    statText = f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
+                    statText = (
+                        f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
+                    )
                     highStatsStr = (
                         f"Median: {highStats.median:0.4g}    "
                         + r"$\sigma_{MAD}$: "
@@ -626,7 +648,11 @@ class ScatterPlotWithTwoHists(PlotAction):
                     fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
-                    histIm = ax.hexbin(xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3)
+                    histIm = ax.hexbin(
+                        xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3, edgecolors=None
+                    )
+                else:
+                    ax.plot(xs[inside], ys[inside], ".", ms=3, alpha=0.3, mfc=color, mec=color, zorder=-1)
 
                 if not self.publicationStyle:
                     # If there are not many sources being used for the
@@ -746,8 +772,8 @@ class ScatterPlotWithTwoHists(PlotAction):
         )
 
         # Add axes labels
-        ax.set_ylabel(self.yAxisLabel, fontsize=10, labelpad=10)
-        ax.set_xlabel(self.xAxisLabel, fontsize=10, labelpad=2)
+        ax.set_ylabel(self.yAxisLabel, labelpad=10)
+        ax.set_xlabel(self.xAxisLabel, labelpad=2)
 
         return ax, histIm
 
@@ -793,8 +819,9 @@ class ScatterPlotWithTwoHists(PlotAction):
                 label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
-        topHist.set_ylabel("Number", fontsize=8)
-        topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
+        topHist.set_ylabel("Count", fontsize=10)
+        if not self.publicationStyle:
+            topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
 
         # Side histogram
 
@@ -876,10 +903,20 @@ class ScatterPlotWithTwoHists(PlotAction):
         sideHist.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         sideHist.axes.get_yaxis().set_visible(False)
-        sideHist.set_xlabel("Number", fontsize=8)
+        sideHist.set_xlabel("Count", fontsize=10)
         if self.plot2DHist and histIm is not None:
             divider = make_axes_locatable(sideHist)
-            cax = divider.append_axes("right", size="8%", pad=0)
-            sideHist.get_figure().colorbar(
-                histIm, cax=cax, orientation="vertical", label="Number of Points Per Bin"
+            cax = divider.append_axes("right", size="25%", pad=0)
+            sideHist.get_figure().colorbar(histIm, cax=cax, orientation="vertical")
+            text = cax.text(
+                0.5,
+                0.5,
+                "Points Per Bin",
+                color="k",
+                rotation="vertical",
+                transform=cax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=10,
             )
+            text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])

@@ -27,16 +27,25 @@ from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
+import seaborn as sns
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
-from lsst.utils.plotting import make_figure
+from lsst.utils.plotting import (
+    divergent_cmap,
+    galaxies_cmap,
+    galaxies_color,
+    make_figure,
+    set_rubin_plotstyle,
+    stars_cmap,
+    stars_color,
+)
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector, VectorAction
 from ...math import nanMedian, nanSigmaMad
 from .calculateRange import Med2Mad
-from .plotUtils import addPlotInfo, generateSummaryStats, mkColormap, plotProjectionWithBinning, sortAllArrays
+from .plotUtils import addPlotInfo, generateSummaryStats, plotProjectionWithBinning, sortAllArrays
 
 
 class SkyPlot(PlotAction):
@@ -82,6 +91,16 @@ class SkyPlot(PlotAction):
     showExtremeOutliers = Field[bool](
         doc="Show the x-y positions of extreme outlier values as overlaid scatter points.",
         default=True,
+    )
+
+    publicationStyle = Field[bool](
+        doc="Make a simplified plot for publication use.",
+        default=False,
+    )
+
+    divergent = Field[bool](
+        doc="Use a divergent colormap?",
+        default=False,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -216,7 +235,8 @@ class SkyPlot(PlotAction):
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
 
-        fig = make_figure(dpi=300)
+        set_rubin_plotstyle()
+        fig = make_figure()
         ax = fig.add_subplot(111)
 
         if sumStats is None:
@@ -229,9 +249,8 @@ class SkyPlot(PlotAction):
             plotInfo = {}
 
         # Make divergent colormaps for stars, galaxes and all the points
-        blueGreen = mkColormap(["midnightblue", "lightcyan", "darkgreen"])
-        redPurple = mkColormap(["indigo", "lemonchiffon", "firebrick"])
-        orangeBlue = mkColormap(["darkOrange", "thistle", "midnightblue"])
+        starsCmap = stars_cmap()
+        galsCmap = galaxies_cmap()
 
         xCol = self.xAxisLabel
         yCol = self.yAxisLabel
@@ -246,7 +265,7 @@ class SkyPlot(PlotAction):
             [colorValsGalaxies, xsGalaxies, ysGalaxies, statGalaxies] = sortedArrs
             statGalMed, statGalMad, galStatsText = self.statsAndText(colorValsGalaxies, mask=statGalaxies)
             # Add statistics
-            bbox = dict(facecolor="lemonchiffon", alpha=0.5, edgecolor="none")
+            bbox = dict(facecolor=galaxies_color(), alpha=0.5, edgecolor="none")
             # Check if plotting stars and galaxies, if so move the
             # text box so that both can be seen. Needs to be
             # > 2 becuase not being plotted points are assigned 0
@@ -255,17 +274,22 @@ class SkyPlot(PlotAction):
             else:
                 boxLoc = 0.8
             ax.text(boxLoc, 0.91, galStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xsGalaxies, ysGalaxies, colorValsGalaxies, redPurple, "Galaxies"))
+            if self.divergent:
+                galsCmap = divergent_cmap()
+            toPlotList.append((xsGalaxies, ysGalaxies, colorValsGalaxies, galsCmap, "Galaxies"))
 
         # For stars
         if "stars" in self.plotTypes:
             sortedArrs = sortAllArrays([data["zStars"], data["xStars"], data["yStars"], data["starStatMask"]])
             [colorValsStars, xsStars, ysStars, statStars] = sortedArrs
             statStarMed, statStarMad, starStatsText = self.statsAndText(colorValsStars, mask=statStars)
-            # Add statistics
-            bbox = dict(facecolor="paleturquoise", alpha=0.5, edgecolor="none")
-            ax.text(0.8, 0.91, starStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xsStars, ysStars, colorValsStars, blueGreen, "Stars"))
+            if not self.publicationStyle:
+                # Add statistics
+                bbox = dict(facecolor=stars_color(), alpha=0.5, edgecolor="none")
+                ax.text(0.8, 0.91, starStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            if self.divergent:
+                starsCmap = divergent_cmap()
+            toPlotList.append((xsStars, ysStars, colorValsStars, starsCmap, "Stars"))
 
         # For unknowns
         if "unknown" in self.plotTypes:
@@ -276,17 +300,19 @@ class SkyPlot(PlotAction):
             statUnknownMed, statUnknownMad, unknownStatsText = self.statsAndText(
                 colorValsUnknowns, mask=statUnknowns
             )
-            bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
-            ax.text(0.8, 0.91, unknownStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            if not self.publicationStyle:
+                bbox = dict(facecolor="green", alpha=0.2, edgecolor="none")
+                ax.text(0.8, 0.91, unknownStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
             toPlotList.append((xsUnknowns, ysUnknowns, colorValsUnknowns, "viridis", "Unknown"))
 
         if "any" in self.plotTypes:
             sortedArrs = sortAllArrays([data["z"], data["x"], data["y"], data["statMask"]])
             [colorValsAny, xs, ys, statAny] = sortedArrs
             statAnyMed, statAnyMad, anyStatsText = self.statsAndText(colorValsAny, mask=statAny)
-            bbox = dict(facecolor="purple", alpha=0.2, edgecolor="none")
-            ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xs, ys, colorValsAny, orangeBlue, "All"))
+            if not self.publicationStyle:
+                bbox = dict(facecolor="#bab0ac", alpha=0.2, edgecolor="none")
+                ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
+            toPlotList.append((xs, ys, colorValsAny, "viridis", "All"))
 
         # Corner plot of patches showing summary stat in each
         if self.plotOutlines:
@@ -345,6 +371,10 @@ class SkyPlot(PlotAction):
                 if minDec == maxDec:
                     maxDec += 1e-5  # There is no reason to pick this number in particular
 
+            if self.publicationStyle:
+                showExtremeOutliers = False
+            else:
+                showExtremeOutliers = self.showExtremeOutliers
             plotOut = plotProjectionWithBinning(
                 ax,
                 xs,
@@ -359,10 +389,18 @@ class SkyPlot(PlotAction):
                 vmax=maxColorVal,
                 fixAroundZero=self.fixAroundZero,
                 isSorted=True,
-                showExtremeOutliers=self.showExtremeOutliers,
+                showExtremeOutliers=showExtremeOutliers,
             )
-            cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
-            fig.colorbar(plotOut, cax=cax, extend="both")
+            ax.set_aspect("equal")
+            if not self.publicationStyle:
+                cax = fig.add_axes([0.87 + i * 0.04, 0.11, 0.04, 0.77])
+                fig.colorbar(plotOut, cax=cax, extend="both")
+            else:
+                fig.subplots_adjust(wspace=0.0, hspace=0.0, right=0.95, bottom=0.15)
+                axBbox = ax.get_position()
+                cax = fig.add_axes([axBbox.x1, axBbox.y0, 0.04, axBbox.y1 - axBbox.y0])
+                fig.colorbar(plotOut, cax=cax)
+
             colorBarLabel = "{}: {}".format(self.zAxisLabel, label)
             text = cax.text(
                 0.5,
@@ -376,17 +414,13 @@ class SkyPlot(PlotAction):
                 fontsize=10,
             )
             text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
-            cax.tick_params(labelsize=7)
 
             if i == 0 and len(toPlotList) > 1:
                 cax.yaxis.set_ticks_position("left")
 
         ax.set_xlabel(xCol)
         ax.set_ylabel(yCol)
-        ax.tick_params(axis="x", labelrotation=25)
-        ax.tick_params(labelsize=7)
 
-        ax.set_aspect("equal")
         fig.canvas.draw()
 
         # Find some useful axis limits
@@ -400,7 +434,8 @@ class SkyPlot(PlotAction):
             ax.invert_xaxis()
 
         # Add useful information to the plot
-        fig.subplots_adjust(wspace=0.0, hspace=0.0, right=0.85)
-        fig = addPlotInfo(fig, plotInfo)
+        if not self.publicationStyle:
+            fig.subplots_adjust(wspace=0.0, hspace=0.0)
+            fig = addPlotInfo(fig, plotInfo)
 
         return fig

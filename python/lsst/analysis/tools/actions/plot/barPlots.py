@@ -29,6 +29,7 @@ from typing import Mapping
 import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import Config, ConfigDictField, DictField, Field
+from lsst.utils.plotting import set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
@@ -123,6 +124,9 @@ class BarPlot(PlotAction):
         fig = plt.figure(dpi=400)
         bar_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[3, 1])
         axs = self._makeAxes(bar_fig)
+
+        # Set the rubin style
+        set_rubin_plotsyle()
 
         # loop over each panel; plot bar graphs
         cols = self._assignColors()

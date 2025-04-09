@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
+from lsst.utils.plotting import set_rubin_plotstyle
 from matplotlib.figure import Figure
 
 from ...actions.keyedData import CalcCompletenessHistogramAction
@@ -130,6 +131,7 @@ class CompletenessHist(PlotAction):
         """
 
         # Make plot showing the fraction recovered in magnitude bins
+        set_rubin_plotstyle()
         fig, axes = plt.subplots(dpi=300, nrows=2, figsize=(8, 8))
         color_counts = "purple"
         color_wrong = "firebrick"

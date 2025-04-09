@@ -112,6 +112,8 @@ class PerTractPropertyMapAnalysisConfig(
         keyCheck=lambda k: k not in ["orientation", "location"],
     )
 
+    publicationStyle = Field[bool](doc="Make a publication-style of plot", default=False)
+
 
 class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
     ConfigClass = PerTractPropertyMapAnalysisConfig

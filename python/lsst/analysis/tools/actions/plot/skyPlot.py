@@ -27,7 +27,6 @@ from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
-import seaborn as sns
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.utils.plotting import (

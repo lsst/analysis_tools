@@ -9,28 +9,28 @@ tasks:
 
       atools.biasReadNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.biasReadNoisePerAmp.produce.plot.addHistogram: true
-      atools.biasReadNoisePerAmp.quantityKey: BIAS_READ_NOISE
+      atools.biasReadNoisePerAmp.quantityKey: BIAS_READ_NOISE_ADU
       atools.biasReadNoisePerAmp.unit: ADU
 
       atools.biasMeanPerAmp: CalibStatisticFocalPlanePlot
       atools.biasMeanPerAmp.produce.plot.addHistogram: true
       atools.biasMeanPerAmp.quantityKey: BIAS_MEAN
-      atools.biasMeanPerAmp.unit: ADU
+      atools.biasMeanPerAmp.unit: electron
 
       atools.biasNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.biasNoisePerAmp.produce.plot.addHistogram: true
       atools.biasNoisePerAmp.quantityKey: BIAS_NOISE
-      atools.biasNoisePerAmp.unit: ADU
+      atools.biasNoisePerAmp.unit: electron
 
       atools.biasCrNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.biasCrNoisePerAmp.produce.plot.addHistogram: true
       atools.biasCrNoisePerAmp.quantityKey: BIAS_CR_NOISE
-      atools.biasCrNoisePerAmp.unit: ADU
+      atools.biasCrNoisePerAmp.unit: electron
 
       atools.biasCornerMeanPerAmp: CalibStatisticFocalPlanePlot
       atools.biasCornerMeanPerAmp.produce.plot.addHistogram: true
       atools.biasCornerMeanPerAmp.quantityKey: BIAS_AMP_CORNER
-      atools.biasCornerMeanPerAmp.unit: ADU
+      atools.biasCornerMeanPerAmp.unit: electron
 
       python: |
         from lsst.analysis.tools.atools import *
@@ -46,21 +46,21 @@ tasks:
       atools.biasMeanByDate.prep.dataKey: mjd
       atools.biasMeanByDate.prep.quantityKey: BIAS_MEAN
       atools.biasMeanByDate.produce.plot.xAxisLabel: "MJD"
-      atools.biasMeanByDate.produce.plot.yAxisLabel: "Residual bias mean (ADU)"
+      atools.biasMeanByDate.produce.plot.yAxisLabel: "Residual bias mean (e-)"
 
       atools.biasStdByDate: CalibAmpScatterTool
       atools.biasStdByDate.prep.panelKey: amplifier
       atools.biasStdByDate.prep.dataKey: mjd
       atools.biasStdByDate.prep.quantityKey: BIAS_NOISE
       atools.biasStdByDate.produce.plot.xAxisLabel: "MJD"
-      atools.biasStdByDate.produce.plot.yAxisLabel: "Residual bias stdev (ADU)"
+      atools.biasStdByDate.produce.plot.yAxisLabel: "Residual bias stdev (e-)"
 
       atools.biasROCornerByDate: CalibAmpScatterTool
       atools.biasROCornerByDate.prep.panelKey: amplifier
       atools.biasROCornerByDate.prep.dataKey: mjd
       atools.biasROCornerByDate.prep.quantityKey: BIAS_AMP_CORNER
       atools.biasROCornerByDate.produce.plot.xAxisLabel: "MJD"
-      atools.biasROCornerByDate.produce.plot.yAxisLabel: "Residual bias mean at RO corner (ADU)"
+      atools.biasROCornerByDate.produce.plot.yAxisLabel: "Residual bias mean at RO corner (e-)"
 
       atools.biasTestsByDate: CalibAmpScatterTool
       atools.biasTestsByDate.prep.panelKey: amplifier
@@ -79,33 +79,33 @@ tasks:
       connections.data: verifyDarkResults
       atools.darkReadNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.darkReadNoisePerAmp.produce.plot.addHistogram: true
-      atools.darkReadNoisePerAmp.quantityKey: DARK_READ_NOISE
+      atools.darkReadNoisePerAmp.quantityKey: DARK_READ_NOISE_ADU
       atools.darkReadNoisePerAmp.unit: ADU
 
       atools.darkMeanPerAmp: CalibStatisticFocalPlanePlot
       atools.darkMeanPerAmp.produce.plot.addHistogram: true
       atools.darkMeanPerAmp.quantityKey: DARK_MEAN
-      atools.darkMeanPerAmp.unit: ADU
+      atools.darkMeanPerAmp.unit: electron
 
       atools.darkNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.darkNoisePerAmp.produce.plot.addHistogram: true
       atools.darkNoisePerAmp.quantityKey: DARK_NOISE
-      atools.darkNoisePerAmp.unit: ADU
+      atools.darkNoisePerAmp.unit: electron
 
       atools.darkCrNoisePerAmp: CalibStatisticFocalPlanePlot
       atools.darkCrNoisePerAmp.produce.plot.addHistogram: true
       atools.darkCrNoisePerAmp.quantityKey: DARK_CR_NOISE
-      atools.darkCrNoisePerAmp.unit: ADU
+      atools.darkCrNoisePerAmp.unit: electron
 
       atools.darkMedianPerAmp: CalibStatisticFocalPlanePlot
       atools.darkMedianPerAmp.produce.plot.addHistogram: true
       atools.darkMedianPerAmp.quantityKey: DARK_DARK_DIST_50.0_PCT
-      atools.darkMedianPerAmp.unit: ADU
+      atools.darkMedianPerAmp.unit: electron
 
       atools.dark95pPerAmp: CalibStatisticFocalPlanePlot
       atools.dark95pPerAmp.produce.plot.addHistogram: true
       atools.dark95pPerAmp.quantityKey: DARK_DARK_DIST_95.0_PCT
-      atools.dark95pPerAmp.unit: ADU
+      atools.dark95pPerAmp.unit: electron
       python: |
         from lsst.analysis.tools.atools import *
 
@@ -120,14 +120,14 @@ tasks:
       atools.darkMeanByDate.prep.dataKey: mjd
       atools.darkMeanByDate.prep.quantityKey: DARK_MEAN
       atools.darkMeanByDate.produce.plot.xAxisLabel: "MJD"
-      atools.darkMeanByDate.produce.plot.yAxisLabel: "Residual dark mean (ADU)"
+      atools.darkMeanByDate.produce.plot.yAxisLabel: "Residual dark mean (e-)"
 
       atools.darkStdByDate: CalibAmpScatterTool
       atools.darkStdByDate.prep.panelKey: amplifier
       atools.darkStdByDate.prep.dataKey: mjd
       atools.darkStdByDate.prep.quantityKey: DARK_NOISE
       atools.darkStdByDate.produce.plot.xAxisLabel: "MJD"
-      atools.darkStdByDate.produce.plot.yAxisLabel: "Residual dark std (ADU)"
+      atools.darkStdByDate.produce.plot.yAxisLabel: "Residual dark std (e-)"
 
       atools.darkTestsByDate: CalibAmpScatterTool
       atools.darkTestsByDate.prep.panelKey: amplifier

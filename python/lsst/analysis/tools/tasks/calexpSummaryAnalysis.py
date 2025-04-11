@@ -34,7 +34,8 @@ from lsst.pipe.base import (
 from lsst.pipe.base import connectionTypes as cT
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
+from astropy.utils.iers import conf
+conf.auto_max_age = None
 
 class CalexpSummaryAnalysisConnections(
     AnalysisBaseConnections,

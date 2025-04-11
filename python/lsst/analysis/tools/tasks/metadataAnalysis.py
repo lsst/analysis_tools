@@ -30,7 +30,8 @@ from lsst.pex.config import Field, ListField
 from lsst.pipe.base import UpstreamFailureNoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
+from astropy.utils.iers import conf
+conf.auto_max_age = None
 
 class MetadataAnalysisConnections(
     AnalysisBaseConnections,

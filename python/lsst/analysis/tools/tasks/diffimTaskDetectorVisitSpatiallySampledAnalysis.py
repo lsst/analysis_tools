@@ -32,6 +32,8 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate
 
+from astropy.utils.iers import conf
+conf.auto_max_age = None
 
 class DiffimDetectorVisitSpatiallySampledPlotsConnections(
     AnalysisBaseConnections,

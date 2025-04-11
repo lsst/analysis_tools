@@ -25,7 +25,8 @@ __all__ = ("TrailedDiaSrcDetectorVisitAnalysisConfig", "TrailedDiaSrcDetectorVis
 from lsst.pipe.base import connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
+from astropy.utils.iers import conf
+conf.auto_max_age = None
 
 class TrailedDiaSrcDetectorVisitAnalysisConnections(
     AnalysisBaseConnections,

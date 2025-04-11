@@ -670,11 +670,11 @@ class MagSelector(SelectorBase):
 class InjectedObjectSelector(SelectorBase):
     """A selector for injected objects."""
 
-    vectorKey = Field[str](doc="Key to select from data", default="ref_injection_flag")
+    vectorKey = Field[str](doc="Key to select from data", default="ref_injected_isPrimary")
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         key = self.vectorKey.format(**kwargs)
-        result = cast(Vector, data[key] == 0)
+        result = cast(Vector, data[key] == 1)
         return result
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -687,6 +687,10 @@ class InjectedClassSelector(InjectedObjectSelector):
     key_class = Field[str](
         doc="Key for the field indicating the class of the object",
         default="ref_source_type",
+    )
+    key_injection_flag = Field[str](
+        doc="Key for the field indicating that the object was not injected" " (per band)",
+        default="ref_{band}_injection_flag",
     )
     name_class = Field[str](
         doc="Name of the class of objects",
@@ -702,6 +706,8 @@ class InjectedClassSelector(InjectedObjectSelector):
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data, **kwargs)
+        if self.key_injection_flag:
+            result &= data[self.key_injection_flag.format(band=kwargs["band"])] == False  # noqa: E712
         values = data[self.key_class]
         result &= (values == self.value_compare) if self.value_is_equal else (values != self.value_compare)
         if self.plotLabelKey:
@@ -711,17 +717,22 @@ class InjectedClassSelector(InjectedObjectSelector):
     def getInputSchema(self) -> KeyedDataSchema:
         yield from super().getInputSchema()
         yield self.key_class, Vector
+        if self.key_injection_flag:
+            yield self.key_injection_flag, Vector
 
 
 class InjectedGalaxySelector(InjectedClassSelector):
-    """A selector for injected stars of a given class."""
+    """A selector for injected galaxies."""
 
     def setDefaults(self):
         self.name_class = "galaxy"
+        # Assumes not star == galaxy - if there are injected AGN or other
+        # object classes, this will need to be updated
+        self.value_is_equal = False
 
 
 class InjectedStarSelector(InjectedClassSelector):
-    """A selector for injected stars of a given class."""
+    """A selector for injected stars."""
 
     def setDefaults(self):
         self.name_class = "star"

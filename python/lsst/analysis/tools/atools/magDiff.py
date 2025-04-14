@@ -62,7 +62,7 @@ class CModelSubPsfMagMeasSkyGalaxies(AnalysisTool):
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["galaxies"]
         self.produce.plot.plotName = "CModel_sub_PSF_meas_galaxies_{band}"
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
         self.produce.plot.zAxisLabel = "CModel - PSF (mmag) (Meas)"
         self.produce.plot.plotOutlines = False

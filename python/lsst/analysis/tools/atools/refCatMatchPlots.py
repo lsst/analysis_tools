@@ -135,8 +135,8 @@ class TargetRefCatDeltaScatterAstrom(TargetRefCatDelta):
 
         self.produce = ScatterPlotWithTwoHists()
         self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        self.produce.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
         self.applyContext(CoaddContext)
         self.applyContext(RefMatchContext)
 
@@ -163,8 +163,8 @@ class TargetRefCatDeltaScatterAstromVisit(TargetRefCatDelta):
         self.produce = ScatterPlotWithTwoHists()
         self.produce.addSummaryPlot = False
         self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        self.produce.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
         self.applyContext(VisitContext)
         self.applyContext(RefMatchContext)
 
@@ -191,8 +191,8 @@ class TargetRefCatDeltaScatterPhotom(TargetRefCatDelta):
 
         self.produce = ScatterPlotWithTwoHists()
         self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        self.produce.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
         self.produce.yAxisLabel = "Output Mag - Ref Mag (mmag)"
         self.applyContext(CoaddContext)
         self.applyContext(RefMatchContext)
@@ -221,8 +221,8 @@ class TargetRefCatDeltaScatterPhotomVisit(TargetRefCatDelta):
         self.produce = ScatterPlotWithTwoHists()
         self.produce.addSummaryPlot = False
         self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        self.produce.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
         self.produce.yAxisLabel = "Output Mag - Ref Mag (mmag)"
         self.applyContext(VisitContext)
         self.applyContext(RefMatchContext)
@@ -284,7 +284,7 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDeltaScatterAstrom):
         )
         self.process.buildActions.yStars.buildAction.actionB = RAcosDec(raKey="ra_ref", decKey="dec_ref")
 
-        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (marcsec)"
+        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaRAScatterVisitPlot(TargetRefCatDeltaScatterAstromVisit):
@@ -299,7 +299,7 @@ class TargetRefCatDeltaRAScatterVisitPlot(TargetRefCatDeltaScatterAstromVisit):
         )
         self.process.buildActions.yStars.buildAction.actionB = RAcosDec(raKey="ra_ref", decKey="dec_ref")
 
-        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (marcsec)"
+        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaDecScatterVisitPlot(TargetRefCatDeltaScatterAstromVisit):
@@ -312,7 +312,7 @@ class TargetRefCatDeltaDecScatterVisitPlot(TargetRefCatDeltaScatterAstromVisit):
         self.process.buildActions.yStars.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
         self.process.buildActions.yStars.buildAction.actionB = LoadVector(vectorKey="dec_ref")
 
-        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (marcsec)"
+        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaDecScatterPlot(TargetRefCatDeltaScatterAstrom):
@@ -325,7 +325,7 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDeltaScatterAstrom):
         self.process.buildActions.yStars.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
         self.process.buildActions.yStars.buildAction.actionB = LoadVector(vectorKey="dec_ref")
 
-        self.produce.yAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (marcsec)"
+        self.produce.yAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaSkyPlot(TargetRefCatDelta):
@@ -348,8 +348,8 @@ class TargetRefCatDeltaSkyPlot(TargetRefCatDelta):
 
         self.produce = SkyPlot()
         self.produce.plotTypes = ["stars"]
-        self.produce.xAxisLabel = "R.A. (degrees)"
-        self.produce.yAxisLabel = "Dec. (degrees)"
+        self.produce.xAxisLabel = "R.A. (deg)"
+        self.produce.yAxisLabel = "Dec. (deg)"
         self.produce.plotOutlines = False
 
 
@@ -489,7 +489,7 @@ class TargetRefCatDeltaRASkyPlot(TargetRefCatDeltaSkyPlotAstrom):
         self.process.buildActions.zStars.buildAction.actionB = RAcosDec(raKey="ra_ref", decKey="dec_ref")
 
         self.produce.plotName = "astromDiffSky_RA"
-        self.produce.zAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (marcsec)"
+        self.produce.zAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaRASkyVisitPlot(TargetRefCatDeltaSkyPlotAstromVisit):
@@ -505,7 +505,7 @@ class TargetRefCatDeltaRASkyVisitPlot(TargetRefCatDeltaSkyPlotAstromVisit):
         )
         self.process.buildActions.zStars.buildAction.actionB = RAcosDec(raKey="ra_ref", decKey="dec_ref")
         self.produce.plotName = "astromDiffSky_RA"
-        self.produce.zAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (marcsec)"
+        self.produce.zAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaDecSkyVisitPlot(TargetRefCatDeltaSkyPlotAstromVisit):
@@ -520,7 +520,7 @@ class TargetRefCatDeltaDecSkyVisitPlot(TargetRefCatDeltaSkyPlotAstromVisit):
         self.process.buildActions.zStars.buildAction.actionB = LoadVector(vectorKey="dec_ref")
 
         self.produce.plotName = "astromDiffSky_Dec"
-        self.produce.zAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (marcsec)"
+        self.produce.zAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlotAstrom):
@@ -535,7 +535,7 @@ class TargetRefCatDeltaDecSkyPlot(TargetRefCatDeltaSkyPlotAstrom):
         self.process.buildActions.zStars.buildAction.actionB = LoadVector(vectorKey="dec_ref")
 
         self.produce.plotName = "astromDiffSky_Dec"
-        self.produce.zAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (marcsec)"
+        self.produce.zAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (mas)"
 
 
 class TargetRefCatDeltaMetrics(AnalysisTool):
@@ -733,7 +733,7 @@ class TargetRefCatDeltaColorMetrics(AnalysisTool):
             brightStarsDec="Separations in Dec",
             brightStarsTot="Total separations",
         )
-        self.produce.plot.panels["panel_sep"].label = "Separation Distances (marcsec)"
+        self.produce.plot.panels["panel_sep"].label = "Separation Distances (mas)"
 
         self.produce.plot.panels["panel_sep"].statsPanel = HistStatsPanel()
         self.produce.plot.panels["panel_sep"].statsPanel.statsLabels = ["N", "AB1", "ABF1 %"]

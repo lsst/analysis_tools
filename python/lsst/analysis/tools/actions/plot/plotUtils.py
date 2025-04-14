@@ -328,17 +328,42 @@ def mkColormap(colorNames):
     cmap : `matplotlib.colors.LinearSegmentedColormap`
         A colormap stepping through the supplied list of names.
     """
-    nums = np.linspace(0, 1, len(colorNames))
     blues = []
     greens = []
     reds = []
-    for num, color in zip(nums, colorNames):
-        r, g, b = colors.colorConverter.to_rgb(color)
-        blues.append((num, b, b))
-        greens.append((num, g, g))
-        reds.append((num, r, r))
+    alphas = []
 
-    colorDict = {"blue": blues, "red": reds, "green": greens}
+    if len(colorNames) == 1:
+        # Alpha is between 0 and 1 really but
+        # using 1.5 saturates out the top of the
+        # colorscale, this looks good for ComCam data
+        # but might want to be changed in the future.
+        alphaRange = [0.3, 1.0]
+        nums = np.linspace(0, 1, len(alphaRange))
+        r, g, b = colors.colorConverter.to_rgb(colorNames[0])
+        for num, alpha in zip(nums, alphaRange):
+            blues.append((num, b, b))
+            greens.append((num, g, g))
+            reds.append((num, r, r))
+            alphas.append((num, alpha, alpha))
+
+    else:
+        nums = np.linspace(0, 1, len(colorNames))
+        if len(colorNames) == 3:
+            alphaRange = [1.0, 0.3, 1.0]
+        elif len(colorNames) == 5:
+            alphaRange = [1.0, 0.7, 0.3, 0.7, 1.0]
+        else:
+            alphaRange = np.ones(len(colorNames))
+
+        for num, color, alpha in zip(nums, colorNames, alphaRange):
+            r, g, b = colors.colorConverter.to_rgb(color)
+            blues.append((num, b, b))
+            greens.append((num, g, g))
+            reds.append((num, r, r))
+            alphas.append((num, alpha, alpha))
+
+    colorDict = {"blue": blues, "red": reds, "green": greens, "alpha": alphas}
     cmap = colors.LinearSegmentedColormap("newCmap", colorDict)
     return cmap
 

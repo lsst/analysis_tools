@@ -11,6 +11,9 @@ tasks:
   analyzeAssociatedDiaSourceTable:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
     config:
+      connections.outputName: assocDiaSrcCore
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
       atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
@@ -35,9 +38,6 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
       # TODO DM-43401 to support a denominator of 0
       # atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
-      connections.outputName: assocDiaSrcCore
-      connections.coaddName: parameters.coaddName
-      connections.fakesType: parameters.fakesType
       # TODO DM-43201 fix this
       # atools.simpleSky: SimpleDiaPlot
       python: |
@@ -45,13 +45,12 @@ tasks:
   analyzeTrailedDiaSourceTable:
     class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
     config:
-      # Counts up the number of dia sources in the trailed table.
       connections.outputName: trailedDiaSrcCore
+      connections.fakesType: parameters.fakesType
+      # Counts up the number of dia sources in the trailed table.
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
       atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: id
-      connections.coaddName: parameters.coaddName
-      connections.fakesType: parameters.fakesType
       python: |
         from lsst.analysis.tools.atools import *
   analyzeImageDifferenceMetrics:
@@ -255,9 +254,9 @@ tasks:
   analyzeCalibrationMetrics:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
-      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       connections.data: initial_pvi.summaryStats
       connections.outputName: initialPviSummary
+      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
 subsets:
   promptQaMetrics:

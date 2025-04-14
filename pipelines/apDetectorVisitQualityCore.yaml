@@ -14,6 +14,7 @@ tasks:
       connections.outputName: assocDiaSrcCore
       connections.coaddName: parameters.coaddName
       connections.fakesType: parameters.fakesType
+      connections.data: "{fakesType}{coaddName}Diff_assocDiaSrc"
       atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
@@ -47,6 +48,8 @@ tasks:
     config:
       connections.outputName: trailedDiaSrcCore
       connections.fakesType: parameters.fakesType
+      connections.coaddName: parameters.coaddName
+      connections.data: "{fakesType}{coaddName}Diff_longTrailedSrc"
       # Counts up the number of dia sources in the trailed table.
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
@@ -169,6 +172,7 @@ tasks:
       connections.outputName: diffimPlots
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
+      connections.data: "{fakesType}{coaddName}Diff_spatiallySampledMetrics"
       atools.dipoleQuiver: DiffimSpatialMetricsQuiverPlot
       atools.dipoleQuiver.angleName: dipole_direction
       atools.dipoleQuiver.lengthName: dipole_separation

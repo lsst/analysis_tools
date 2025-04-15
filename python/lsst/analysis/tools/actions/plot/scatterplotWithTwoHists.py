@@ -840,14 +840,14 @@ class ScatterPlotWithTwoHists(PlotAction):
             sideHist.hist(
                 vector[cast(Vector, data[f"{key}HighSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
-                ls="--",
+                linestyle="--",
                 **kwargs_hist,
             )
             sideHist.hist(
                 vector[cast(Vector, data[f"{key}LowSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
                 **kwargs_hist,
-                ls=":",
+                linestyle=":",
             )
 
         # Add a horizontal reference line at 0 to the side histogram

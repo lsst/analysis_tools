@@ -14,7 +14,7 @@ tasks:
       connections.outputName: assocDiaSrcCore
       connections.coaddName: parameters.coaddName
       connections.fakesType: parameters.fakesType
-      connections.data: "{fakesType}{coaddName}Diff_assocDiaSrc"
+      connections.data: "{fakesType}dia_source_apdb"
       atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
@@ -49,7 +49,7 @@ tasks:
       connections.outputName: trailedDiaSrcCore
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
-      connections.data: "{fakesType}{coaddName}Diff_longTrailedSrc"
+      connections.data: "{fakesType}long_trailed_source_detector"
       # Counts up the number of dia sources in the trailed table.
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
@@ -172,7 +172,7 @@ tasks:
       connections.outputName: diffimPlots
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
-      connections.data: "{fakesType}{coaddName}Diff_spatiallySampledMetrics"
+      connections.data: "{fakesType}difference_image_metrics"
       atools.dipoleQuiver: DiffimSpatialMetricsQuiverPlot
       atools.dipoleQuiver.angleName: dipole_direction
       atools.dipoleQuiver.lengthName: dipole_separation
@@ -255,10 +255,10 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
         from lsst.analysis.tools.atools import DiffimSpatialMetricsQuiverPlot
-  analyzeCalibrationMetrics:
+  analyzePreliminarySummaryStats:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
-      connections.data: initial_pvi.summaryStats
+      connections.data: preliminary_visit_image.summaryStats
       connections.outputName: initialPviSummary
       atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
@@ -273,6 +273,6 @@ subsets:
       - analyzeLoadDiaCatalogsMetrics
       - analyzeAssociateDiaSourceTiming
       - analyzeSampledImageSubtractionMetrics
-      - analyzeCalibrationMetrics
+      - analyzePreliminarySummaryStats
     description: >
       QA metrics to run in Prompt Processing.

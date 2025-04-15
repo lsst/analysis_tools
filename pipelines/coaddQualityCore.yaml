@@ -60,6 +60,14 @@ tasks:
       atools.sersicSizeVsSersicMag.produce.plot.xLims: (17, 29)
       atools.sersicSizeVsSersicMag.produce.plot.yLims: (-4, 3)
       atools.sersicSizeVsSersicMag.applyContext: CoaddContext
+      atools.sersicIndexVsSersicMag: ColumnMagnitudeScatterPlot
+      atools.sersicIndexVsSersicMag.mag_x: "sersic_err"
+      atools.sersicIndexVsSersicMag.key_y: "sersic_index"
+      atools.sersicIndexVsSersicMag.produce.plot.yAxisLabel: "Sersic index"
+      atools.sersicIndexVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.sersicIndexVsSersicMag.produce.plot.yLims: (0.4, 6.1)
+      atools.sersicIndexVsSersicMag.produce.plot.legendLocation: "upper right"
+      atools.sersicIndexVsSersicMag.applyContext: CoaddContext
       atools.coaddInputCount: CoaddInputCount
       atools.coaddPatchCount: CountPatches  #  counts.py
       python: |

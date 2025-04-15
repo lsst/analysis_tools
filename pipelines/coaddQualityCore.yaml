@@ -49,6 +49,17 @@ tasks:
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+      atools.sersicSizeVsSersicMag: SizeMagnitudePlot
+      atools.sersicSizeVsSersicMag.config_moments.xx: "reff_x"
+      atools.sersicSizeVsSersicMag.config_moments.yy: "reff_y"
+      atools.sersicSizeVsSersicMag.config_moments.xy: "rho"
+      atools.sersicSizeVsSersicMag.is_covariance: False
+      atools.sersicSizeVsSersicMag.mag_x: "sersic_err"
+      atools.sersicSizeVsSersicMag.size_type: "determinantRadius"
+      atools.sersicSizeVsSersicMag.size_y: "sersic"
+      atools.sersicSizeVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.sersicSizeVsSersicMag.produce.plot.yLims: (-4, 3)
+      atools.sersicSizeVsSersicMag.applyContext: CoaddContext
       atools.coaddInputCount: CoaddInputCount
       atools.coaddPatchCount: CountPatches  #  counts.py
       python: |

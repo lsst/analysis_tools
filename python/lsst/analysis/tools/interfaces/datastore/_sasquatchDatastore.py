@@ -36,7 +36,7 @@ from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
 from lsst.resources import ResourcePath, ResourcePathExpression
 
-from . import SasquatchDispatcher
+from . import SasquatchDispatcher, SasquatchDispatchFailure, SasquatchDispatchPartialFailure
 
 if TYPE_CHECKING:
     from lsst.daf.butler import Config, DatasetProvenance, DatasetType, LookupKey
@@ -155,7 +155,12 @@ class SasquatchDatastore(GenericBaseDatastore):
         self, inMemoryDataset: Any, ref: DatasetRef, *, provenance: DatasetProvenance | None = None
     ) -> None:
         if self.constraints.isAcceptable(ref):
-            self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
+            try:
+                self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
+            except SasquatchDispatchFailure:
+                log.warning("Failed to dispatch metric bundle to Sasquatch.")
+            except SasquatchDispatchPartialFailure:
+                log.warning("Only some of the metrics were successfully dispatched to Sasquatch.")
         else:
             log.debug("Could not put dataset type %s with Sasquatch datastore", ref.datasetType)
             raise DatasetTypeNotSupportedError(

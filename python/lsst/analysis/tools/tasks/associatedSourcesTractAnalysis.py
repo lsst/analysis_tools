@@ -44,12 +44,13 @@ class AssociatedSourcesTractAnalysisConnections(
     dimensions=("skymap", "tract", "instrument"),
     defaultTemplates={
         "outputName": "isolated_star_presources",
-        "associatedSourcesInputName": "isolated_star_presources",
+        "associatedSourcesInputName": "isolated_star",
+        "associatedSourceIdsInputName": "isolated_star_association",
     },
 ):
     sourceCatalogs = ct.Input(
         doc="Visit based source table to load from the butler",
-        name="sourceTable_visit",
+        name="recalibrated_star",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit", "band"),
@@ -90,7 +91,7 @@ class AssociatedSourcesTractAnalysisConnections(
 
     visitTable = ct.Input(
         doc="Catalog containing visit information.",
-        name="visitTable",
+        name="visit_table",
         storageClass="DataFrame",
         dimensions=("instrument",),
     )

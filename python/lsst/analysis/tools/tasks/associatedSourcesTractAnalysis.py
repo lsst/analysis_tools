@@ -70,6 +70,7 @@ class AssociatedSourcesTractAnalysisConnections(
         storageClass="SkyMap",
         dimensions=("skymap",),
     )
+
     camera = ct.PrerequisiteInput(
         doc="Input camera to use for focal plane geometry.",
         name="camera",
@@ -77,6 +78,7 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument",),
         isCalibration=True,
     )
+
     astrometricCorrectionCatalogs = ct.Input(
         doc="Catalog containing proper motion and parallax.",
         name="gbdesAstrometricFit_starCatalog",
@@ -85,6 +87,7 @@ class AssociatedSourcesTractAnalysisConnections(
         multiple=True,
         deferLoad=True,
     )
+
     visitTable = ct.Input(
         doc="Catalog containing visit information.",
         name="visitTable",
@@ -162,7 +165,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         astrometricCorrectionCatalogs=None,
         visitTable=None,
     ):
-        """Concatenate source catalogs and join on associated object index."""
+        """Concatenate source catalogs and join on associated source IDs."""
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.

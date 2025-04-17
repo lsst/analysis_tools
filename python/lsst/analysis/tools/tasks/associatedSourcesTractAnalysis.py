@@ -44,12 +44,13 @@ class AssociatedSourcesTractAnalysisConnections(
     dimensions=("skymap", "tract", "instrument"),
     defaultTemplates={
         "outputName": "isolated_star_presources",
-        "associatedSourcesInputName": "isolated_star_presources",
+        "associatedSourcesInputName": "isolated_star",
+        "associatedSourceIdsInputName": "isolated_star_association",
     },
 ):
     sourceCatalogs = ct.Input(
         doc="Visit based source table to load from the butler",
-        name="sourceTable_visit",
+        name="recalibrated_star",
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit", "band"),
@@ -64,12 +65,21 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument", "skymap", "tract"),
     )
 
+    associatedSourceIds = ct.Input(
+        doc="Table containing unique ids for the associated sources",
+        name="{associatedSourceIdsInputName}",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=("instrument", "skymap", "tract"),
+    )
+
     skyMap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
         dimensions=("skymap",),
     )
+
     camera = ct.PrerequisiteInput(
         doc="Input camera to use for focal plane geometry.",
         name="camera",
@@ -77,6 +87,7 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument",),
         isCalibration=True,
     )
+
     astrometricCorrectionCatalogs = ct.Input(
         doc="Catalog containing proper motion and parallax.",
         name="gbdesAstrometricFit_starCatalog",
@@ -85,9 +96,10 @@ class AssociatedSourcesTractAnalysisConnections(
         multiple=True,
         deferLoad=True,
     )
+
     visitTable = ct.Input(
         doc="Catalog containing visit information.",
-        name="visitTable",
+        name="visit_table",
         storageClass="DataFrame",
         dimensions=("instrument",),
     )
@@ -149,6 +161,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             dataId["tract"],
             inputs["sourceCatalogs"],
             inputs["associatedSources"],
+            inputs["associatedSourceIds"],
             inputs["astrometricCorrectionCatalogs"],
             inputs["visitTable"],
         )
@@ -159,20 +172,31 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         tract,
         sourceCatalogs,
         associatedSources,
+        associatedSourceIds,
         astrometricCorrectionCatalogs=None,
         visitTable=None,
     ):
-        """Concatenate source catalogs and join on associated object index."""
+        """Concatenate source catalogs and join on associated source IDs."""
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
         for srcCat in sourceCatalogs:
             DatasetProvenance.strip_provenance_from_flat_dict(srcCat.meta)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
+        DatasetProvenance.strip_provenance_from_flat_dict(associatedSourceIds.meta)
+
+        # AssociatedSourceIds table doesn't contain obj_index, but the rows are
+        # sorted according to obj_index.
+        associatedSourceIds["obj_index"] = np.arange(len(associatedSourceIds))
+
+        # Join unique IDs into associatedSources table.
+        associatedSourcesJoined = join(
+            associatedSources, associatedSourceIds, keys="obj_index", join_type="inner"
+        )
 
         # Keep only sources with associations
         sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
-        dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
+        dataJoined = join(sourceCatalogStack, associatedSourcesJoined, keys="sourceId", join_type="inner")
 
         if astrometricCorrectionCatalogs is not None:
             self.applyAstrometricCorrections(dataJoined, astrometricCorrectionCatalogs, visitTable)
@@ -273,7 +297,9 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         # Load specified columns from source catalogs
         names = self.collectInputNames()
         names |= {"sourceId", "coord_ra", "coord_dec"}
-        names.remove("obj_index")
+        for item in ["obj_index", "isolated_star_id"]:
+            names.remove(item)
+
         sourceCatalogs = []
         for handle in inputs["sourceCatalogs"]:
             sourceCatalogs.append(self.loadData(handle, names))
@@ -296,6 +322,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # TODO: make key used for object index configurable
         inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
+        inputs["associatedSourceIds"] = self.loadData(inputs["associatedSourceIds"], ["isolated_star_id"])
 
         if len(inputs["associatedSources"]) == 0:
             raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")

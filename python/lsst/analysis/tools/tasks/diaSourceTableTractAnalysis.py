@@ -37,7 +37,7 @@ class DiaSourceTableTractAnalysisConnections(
     data = ct.Input(
         doc="Table of per-tract DiaSources to load from the butler",
         name="{consolidateAssocDiaSourceTableInputName}",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=(
             "skymap",

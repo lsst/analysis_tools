@@ -39,7 +39,7 @@ class DiaObjectDetectorVisitAnalysisConnections(
     data = ct.Input(
         doc="CcdVisit-based DiaObject table to load from the butler",
         name="{fakesType}{coaddName}Diff_diaObject",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("visit", "band"),
     )

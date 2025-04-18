@@ -198,7 +198,7 @@ class SourceObjectTableAnalysisConnections(
     visitTable = ct.Input(
         doc="Catalog containing visit information.",
         name="visitTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         dimensions=("instrument",),
     )
 

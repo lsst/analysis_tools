@@ -11,10 +11,10 @@ tasks:
       atools.isrAmpOffsetMetadataMetric.taskName: isr
       atools.isrAmpOffsetMetadataMetric.metrics:
         # Format is "metric name in metadata: unit"
-        AMPOFFSET_PEDESTALS: adu
+        AMPOFFSET_PEDESTAL: adu
       atools.isrAmpOffsetMetadataMetric.subTaskNames:
         # Format is "metric name in metadata: subtask that produced it"
-        AMPOFFSET_PEDESTALS: ampOffset
+        AMPOFFSET_PEDESTAL: ampOffset
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   analyzeAmpInterfaceOffsetMetadata:

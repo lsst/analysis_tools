@@ -24,11 +24,12 @@ __all__ = (
     "WholeSkyAnalysisConfig",
     "WholeSkyAnalysisTask",
 )
+from typing import Mapping
 
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, AnalysisTool
 
 
 class WholeSkyAnalysisConnections(
@@ -50,6 +51,39 @@ class WholeSkyAnalysisConnections(
         storageClass="SkyMap",
         dimensions=("skymap",),
     )
+
+    def __init__(self, *, config: AnalysisBaseConfig = None):
+        AnalysisBaseConnections.__init__(self, config=config)
+        names: Mapping[str, AnalysisTool] = {}
+        for action in config.atools:
+            if action.dynamicOutputNames:
+                outNames = action.getOutputNames(config=config)
+            else:
+                outNames = action.getOutputNames()
+            names.update({name: action for name in outNames})
+
+        for name, action in names.items():
+            name = f"{self.config.connections.outputName}_{name}"
+            # If the metric is band-specific, add band to dimensions.
+            if any(f"_{band}_" in name for band in action.bands) and "band" not in self.dimensions:
+                multiple = True
+                dimensions = self.dimensions.union({"band"})
+                for band in action.bands:
+                    if f"_{band}_" in name:
+                        name = name.replace(f"_{band}_", "_")
+                        break
+            else:
+                multiple = False
+                dimensions = self.dimensions
+
+            outConnection = ct.Output(
+                name=name,
+                storageClass="Plot",
+                doc="Dynamic connection for plotting",
+                dimensions=dimensions,
+                multiple=multiple,
+            )
+            setattr(self, name, outConnection)
 
 
 class WholeSkyAnalysisConfig(AnalysisBaseConfig, pipelineConnections=WholeSkyAnalysisConnections):

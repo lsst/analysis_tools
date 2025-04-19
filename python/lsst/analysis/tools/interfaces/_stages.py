@@ -213,6 +213,20 @@ class BaseMetricAction(MetricAction):
         # Something is wrong with the typing for DictField key iteration
         return [(key, Scalar) for key in self.units]  # type: ignore
 
+    @staticmethod
+    def _sanitizeMetadataName(metadata_name: str) -> str:
+        """Sanitize a metadata name to allow it to be pushed to Apache Avro.
+        Parameters
+        ----------
+        metadata_name : `str`
+            The metadata name to sanitize.
+        Returns
+        -------
+        sanitized_metadata_name : `str`
+            The sanitized metadata name.
+        """
+        return metadata_name.replace(" ", "_").replace("-", "_")
+
     def __call__(self, data: KeyedData, **kwargs) -> MetricResultType:
         results = {}
         for key, unit in self.units.items():
@@ -227,11 +241,12 @@ class BaseMetricAction(MetricAction):
                 for k, v in value.items():
                     if not isinstance(v, Scalar):
                         raise ValueError(f"Data for subkey {k} of key {key} is not a Scalar type")
-                    formattedSubKey = f"{formattedKey}_{k}"
+                    formattedSubKey = self._sanitizeMetadataName(f"{formattedKey}_{k}")
                     results[formattedSubKey] = Measurement(formattedSubKey, v * apu.Unit(unit), notes=notes)
             else:
                 if not isinstance(value, Scalar):
                     raise ValueError(f"Data for key {key} is not a Scalar type")
+                formattedKey = self._sanitizeMetadataName(formattedKey)
                 results[formattedKey] = Measurement(formattedKey, value * apu.Unit(unit), notes=notes)
         return results
 

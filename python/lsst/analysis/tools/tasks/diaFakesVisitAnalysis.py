@@ -40,7 +40,7 @@ class DiaFakesVisitAnalysisConnections(
     data = Input(
         doc="CcdVisit-based Matched fake to load from the butler",
         name="{fakesType}{coaddName}Diff_matchDiaSourceTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument", "visit"),
     )
@@ -63,7 +63,7 @@ class AssocDiaFakesVisitAnalysisConnections(
     data = Input(
         doc="CcdVisit-based Matched fake to load from the butler",
         name="{fakesType}{coaddName}Diff_matchAssocDiaSourceTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument", "visit"),
     )

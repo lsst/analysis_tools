@@ -8,9 +8,13 @@ parameters:
   fakesType: ''
 
 tasks:
-  analyzeAssocDiaSrcCore:
+  analyzeAssociatedDiaSourceTable:
     class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
     config:
+      connections.outputName: assocDiaSrcCore
+      connections.coaddName: parameters.coaddName
+      connections.fakesType: parameters.fakesType
+      connections.data: "{fakesType}dia_source_apdb"
       atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
@@ -35,26 +39,24 @@ tasks:
       atools.numDiaSourcesNanReliability.process.calculateActions.countingAction.vectorKey: reliability
       # TODO DM-43401 to support a denominator of 0
       # atools.diaSourcesGoodVsBadRatio: DiaSourcesGoodVsBadRatioMetric
-      connections.outputName: assocDiaSrcCore
-      connections.coaddName: parameters.coaddName
-      connections.fakesType: parameters.fakesType
       # TODO DM-43201 fix this
       # atools.simpleSky: SimpleDiaPlot
       python: |
         from lsst.analysis.tools.atools import *
-  analyzeTrailedDiaSrcCore:
+  analyzeTrailedDiaSourceTable:
     class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
     config:
-      # Counts up the number of dia sources in the trailed table.
       connections.outputName: trailedDiaSrcCore
+      connections.fakesType: parameters.fakesType
+      connections.coaddName: parameters.coaddName
+      connections.data: "{fakesType}long_trailed_source_detector"
+      # Counts up the number of dia sources in the trailed table.
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
       atools.numDiaSourcesAll.process.calculateActions.countingAction.vectorKey: id
-      connections.coaddName: parameters.coaddName
-      connections.fakesType: parameters.fakesType
       python: |
         from lsst.analysis.tools.atools import *
-  diffimTaskCore:
+  analyzeImageDifferenceMetrics:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: subtractImages_metadata
@@ -83,16 +85,16 @@ tasks:
         spatialKernelSum: makeKernel
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
-  detectionTaskCore:
+  analyzeDiaSourceDetectionMetrics:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.inputName: detectAndMeasure_metadata
-      connections.outputName: detectAndMeasure_metadata  # Will be appended with "_metrics"
+      connections.inputName: detectAndMeasureDiaSource_metadata
+      connections.outputName: detectAndMeasureDiaSource_metadata  # Will be appended with "_metrics"
       connections.storageClass: TaskMetadata
       raiseNoWorkFoundOnIncompleteMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
       atools.diffimMetadataMetric: TaskMetadataMetricTool
-      atools.diffimMetadataMetric.taskName: detectAndMeasure
+      atools.diffimMetadataMetric.taskName: detectAndMeasureDiaSource
       atools.diffimMetadataMetric.metrics:
         # Format is "metric name in the metadata": units
         nGoodPixels: ct
@@ -105,7 +107,7 @@ tasks:
         nMergedDiaSources: ct
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
-  loadDiaCatalogsCore:
+  analyzeLoadDiaCatalogsMetrics:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
       connections.inputName: loadDiaCatalogs_metadata
@@ -113,49 +115,49 @@ tasks:
       connections.storageClass: TaskMetadata
       raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "group", "detector"]
-      atools.diaPipeMetadataMetrics: TaskMetadataMetricTool
-      atools.diaPipeMetadataMetrics.taskName: loadDiaCatalogs
-      atools.diaPipeMetadataMetrics.metrics:
+      atools.associationMetadataMetrics: TaskMetadataMetricTool
+      atools.associationMetadataMetrics.taskName: loadDiaCatalogs
+      atools.associationMetadataMetrics.metrics:
         loadDiaObjectsDuration: s
         loadDiaSourcesDuration: s
         loadDiaForcedSourcesDuration: s
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
-  associationCore:
+  analyzeDiaSourceAssociationMetrics:
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.inputName: diaPipe_metadata
-      connections.outputName: diaPipe_metadata  # Should be appended with "_metrics"
+      connections.inputName: associateApdb_metadata
+      connections.outputName: associateApdb_metadata  # Should be appended with "_metrics"
       connections.storageClass: TaskMetadata
       raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
-      atools.diaPipeMetadataMetrics: TaskMetadataMetricTool
-      atools.diaPipeMetadataMetrics.taskName: diaPipe
-      atools.diaPipeMetadataMetrics.metrics:
+      atools.associationMetadataMetrics: TaskMetadataMetricTool
+      atools.associationMetadataMetrics.taskName: associateApdb
+      atools.associationMetadataMetrics.metrics:
         numTotalSolarSystemObjects: ct
         numAssociatedSsObjects: ct
         writeToApdbDuration: s
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
-  associationTiming:
+  analyzeAssociateDiaSourceTiming:
     # This tool must only contain metrics from alertPackager, since that subtask
     # is optional and this tool will raise NoWorkFound if it is missing.
     class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
     config:
-      connections.inputName: diaPipe_metadata
-      connections.outputName: diaPipeTiming_metadata  # Should be appended with "_metrics"
+      connections.inputName: associateApdb_metadata
+      connections.outputName: associationTiming_metadata  # Should be appended with "_metrics"
       connections.storageClass: TaskMetadata
       raiseNoWorkFoundOnEmptyMetadata: true
       inputDimensions: ["instrument", "visit", "detector"]
-      atools.diaPipeTimingMetrics: TaskMetadataMetricTool
-      atools.diaPipeTimingMetrics.taskName: diaPipe
-      atools.diaPipeTimingMetrics.metrics:
+      atools.associationTimingMetrics: TaskMetadataMetricTool
+      atools.associationTimingMetrics.taskName: associateApdb
+      atools.associationTimingMetrics.metrics:
         visit_midpoint: s
         produce_end_timestamp: s
         produce_start_timestamp: s
         alert_timing_since_shutter_close: s
         total_alerts: ct
-      atools.diaPipeTimingMetrics.subTaskNames:
+      atools.associationTimingMetrics.subTaskNames:
         # Format is "metric name in metadata: subtask that produced it"
         visit_midpoint: alertPackager
         produce_end_timestamp: alertPackager
@@ -164,12 +166,13 @@ tasks:
         total_alerts: alertPackager
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
-  diffimTaskPlots:
+  analyzeSampledImageSubtractionMetrics:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
       connections.outputName: diffimPlots
       connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
+      connections.data: "{fakesType}difference_image_metrics"
       atools.dipoleQuiver: DiffimSpatialMetricsQuiverPlot
       atools.dipoleQuiver.angleName: dipole_direction
       atools.dipoleQuiver.lengthName: dipole_separation
@@ -252,24 +255,24 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import DiffimSpatialMetricsHistPlot, DiffimSpatialMetricsInterpolatePlot
         from lsst.analysis.tools.atools import DiffimSpatialMetricsQuiverPlot
-  initialPviCore:
+  analyzePreliminarySummaryStats:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
-      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
-      connections.data: initial_pvi.summaryStats
+      connections.data: preliminary_visit_image.summaryStats
       connections.outputName: initialPviSummary
+      atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
 subsets:
   promptQaMetrics:
     subset:
-      - analyzeAssocDiaSrcCore
-      - analyzeTrailedDiaSrcCore
-      - diffimTaskCore
-      - detectionTaskCore
-      - associationCore
-      - loadDiaCatalogsCore
-      - associationTiming
-      - diffimTaskPlots
-      - initialPviCore
+      - analyzeAssociatedDiaSourceTable
+      - analyzeTrailedDiaSourceTable
+      - analyzeImageDifferenceMetrics
+      - analyzeDiaSourceDetectionMetrics
+      - analyzeDiaSourceAssociationMetrics
+      - analyzeLoadDiaCatalogsMetrics
+      - analyzeAssociateDiaSourceTiming
+      - analyzeSampledImageSubtractionMetrics
+      - analyzePreliminarySummaryStats
     description: >
       QA metrics to run in Prompt Processing.

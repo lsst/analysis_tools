@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from lsst.analysis.tools.actions.plot import CompletenessHist
 from lsst.analysis.tools.actions.plot.plotUtils import get_and_remove_figure_text
-from lsst.analysis.tools.math import divide
+from lsst.analysis.tools.math import divide, sqrt
 
 # Set to True to debug plot test(s)
 debug_plot = False
@@ -65,10 +65,10 @@ class CompletenessPlotTestCase(lsst.utils.tests.TestCase):
         rng = np.random.default_rng(0)
         # See usage below if changing this to allow nan/bad extendedness
         extendedness = 0.0 + (rng.uniform(size=len(mag)) < 0.99 * (mag - mag[0]) / (mag[-1] - mag[0]))
-        flux_meas = flux + rng.normal(scale=np.sqrt(flux * (1 + extendedness)))
+        flux_meas = flux + rng.normal(scale=sqrt(flux * (1 + extendedness)))
         flux_pos = flux_meas > 0
         flux_err = np.empty_like(flux_meas)
-        flux_err[flux_pos] = np.sqrt(flux_meas[flux_pos])
+        flux_err[flux_pos] = sqrt(flux_meas[flux_pos])
         flux_err[~flux_pos] = 0
         detect_sn = divide(flux_meas, flux_err)
         good = detect_sn > 3

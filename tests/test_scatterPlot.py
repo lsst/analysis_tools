@@ -44,6 +44,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
 )
 from lsst.analysis.tools.actions.vector.vectorActions import ConvertFluxToMag, DownselectVector, LoadVector
 from lsst.analysis.tools.interfaces import AnalysisTool
+from lsst.analysis.tools.math import sqrt
 
 matplotlib.use("Agg")
 
@@ -64,8 +65,8 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
         rng = np.random.default_rng(0)
         extendedness = 0.0 + (rng.uniform(size=len(mag)) < 0.99 * (mag - mag[0]) / (mag[-1] - mag[0]))
         flux_meas = flux + rng.normal(scale=np.sqrt(flux * (1 + extendedness)))
-        flux_err = np.sqrt(flux_meas * (1 + extendedness))
-        good = (flux_meas / np.sqrt(flux * (1 + extendedness))) > 3
+        flux_err = sqrt(flux_meas * (1 + extendedness))
+        good = (flux_meas / sqrt(flux * (1 + extendedness))) > 3
         extendedness = extendedness[good]
         flux = flux[good]
         flux_meas = flux_meas[good]

@@ -39,7 +39,7 @@ class CustomPlot(NullPlot):
 
 
 class StructPlotActionTestCase(TestCase):
-    """Test that analysis tools can be loaded from a pipeline"""
+    """Test the generic StructPlotAction"""
 
     def setUp(self) -> None:
         super().setUp()

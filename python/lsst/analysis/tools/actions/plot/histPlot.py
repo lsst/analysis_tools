@@ -419,6 +419,7 @@ class HistPlot(PlotAction):
             mads.append(mad)
         panel_range = self._getPanelRange(data, panel, mads=mads, meds=meds)
         if all(np.isfinite(panel_range)):
+            nHist = 0
             for i, hist in enumerate(self.panels[panel].hists):
                 hist_data = data[hist][np.isfinite(data[hist])]
                 if len(hist_data) > 0:
@@ -433,8 +434,10 @@ class HistPlot(PlotAction):
                         label=self.panels[panel].hists[hist],
                     )
                     ax.axvline(meds[i], ls=(0, (5, 3)), lw=1, c=colors[i])
+                    nHist += 1
 
-            ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
+            if nHist > 0:
+                ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
             ax.set_xlim(panel_range)
             # The following accommodates spacing for ranges with large numbers
             # but small-ish dynamic range (example use case: RA 300-301).

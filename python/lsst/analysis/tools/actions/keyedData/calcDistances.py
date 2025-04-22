@@ -54,6 +54,14 @@ class CalcRelativeDistances(KeyedDataAction):
         doc="Maximum number of pairs to use; downsample otherwise.",
         default=100_000,
     )
+    bruteForceRadiusThreshold = Field[float](
+        doc="Matching radius at which to switch to brute-force matching (deg).",
+        default=0.1,
+    )
+    bruteForceMaxMatch = Field[int](
+        doc="Number of objects to sample for brute-force matching.",
+        default=10_000,
+    )
     randomSeed = Field[int](
         doc="Random seed to use when downsampling.",
         default=12345,
@@ -140,12 +148,29 @@ class CalcRelativeDistances(KeyedDataAction):
         width = (self.width * u.arcmin).to_value(u.degree)
         annulus = D + (width / 2) * np.array([-1, +1])
 
-        # Match this catalog to itself within the radius and then cut
-        # to the annulus inner radius.
-        with Matcher(meanRa, meanDec) as m:
-            idx, i1, i2, d = m.query_self(annulus[1], return_indices=True)
+        if annulus[1] >= self.bruteForceRadiusThreshold:
+            # Use brute-force matching.
+            if len(meanRa) > self.bruteForceMaxMatch:
+                bruteForceSelection = rng.choice(len(meanRa), size=self.bruteForceMaxMatch, replace=False)
+            else:
+                bruteForceSelection = np.arange(len(meanRa))
 
-        inAnnulus = d > annulus[0]
+            i1 = np.tile(bruteForceSelection, len(bruteForceSelection))
+            i2 = np.repeat(bruteForceSelection, len(bruteForceSelection))
+
+            d = np.rad2deg(
+                sphDist(
+                    np.deg2rad(meanRa)[i1],
+                    np.deg2rad(meanDec)[i1],
+                    np.deg2rad(meanRa)[i2],
+                    np.deg2rad(meanDec)[i2],
+                ),
+            )
+        else:
+            with Matcher(meanRa, meanDec) as m:
+                idx, i1, i2, d = m.query_self(annulus[1], return_indices=True)
+
+        inAnnulus = (d > annulus[0]) & (d < annulus[1])
         i1 = i1[inAnnulus]
         i2 = i2[inAnnulus]
 

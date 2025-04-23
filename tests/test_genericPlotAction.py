@@ -38,8 +38,8 @@ class CustomPlot(NullPlot):
         return "Custom"
 
 
-class LoadFromPipelineTestCase(TestCase):
-    """Test that analysis tools can be loaded from a pipeline"""
+class StructPlotActionTestCase(TestCase):
+    """Test the generic StructPlotAction"""
 
     def setUp(self) -> None:
         super().setUp()
@@ -52,7 +52,7 @@ class LoadFromPipelineTestCase(TestCase):
         tool.produce = action_joint
         self.tool = tool
 
-    def testJoint(self) -> None:
+    def testTool(self) -> None:
         results = self.tool({})
         assert tuple(results.keys()) == ("hist_NullPlot", "xy_Custom")
 

@@ -30,6 +30,7 @@ __all__ = (
     "nanMedian",
     "nanSigmaMad",
     "nanStd",
+    "power",
     "sigmaMad",
     "sin",
     "sqrt",
@@ -55,6 +56,7 @@ from .warning_control import (
     numpy_invalid_value_divide,
     numpy_invalid_value_log,
     numpy_invalid_value_log10,
+    numpy_invalid_value_power,
     numpy_invalid_value_scalar_divide,
     numpy_invalid_value_sin,
     numpy_invalid_value_sqrt,
@@ -185,6 +187,14 @@ def nanStd(vector: Vector) -> Scalar:
         warnings.filterwarnings(filterwarnings_action, numpy_dof_zero)
         result = float(np.nanstd(np.asarray(vector)))
     return cast(Scalar, result)
+
+
+def power(values: Scalar | Vector, power: float) -> Scalar | Vector:
+    """Return the sqrt of values."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(filterwarnings_action, numpy_invalid_value_power)
+        result = np.power(values, power)
+    return result
 
 
 def sigmaMad(vector: Vector) -> Scalar:

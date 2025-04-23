@@ -756,7 +756,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         for key in keys_notany:
             config_datatype = self._datatypes[key]
-            vector = data[f"x{config_datatype.suffix_xy}{suf_x}"]
+            vector = np.array(data[f"x{config_datatype.suffix_xy}{suf_x}"])
             if np.sum(vector > 0) > 0:
                 log = True
             else:
@@ -791,27 +791,25 @@ class ScatterPlotWithTwoHists(PlotAction):
         bins = np.linspace(y_min, y_max, 100)
 
         if "any" in self.plotTypes:
-            y_any = f"y{self._datatypes['any'].suffix_xy}{suf_y}"
+            y_any = np.array(data[f"y{self._datatypes['any'].suffix_xy}{suf_y}"])
             keys_notany = [x for x in self.plotTypes if x != "any"]
         else:
             y_any = (
-                np.concatenate([data[f"y{self._datatypes[key].suffix_xy}{suf_y}"] for key in self.plotTypes])
+                np.concatenate(
+                    [np.array(data[f"y{self._datatypes[key].suffix_xy}{suf_y}"]) for key in self.plotTypes]
+                )
                 if (len(self.plotTypes) > 1)
                 else None
             )
             keys_notany = self.plotTypes
         if y_any is not None:
-            if np.sum(np.array(y_any) > 0) > 0:
-                log = True
-            else:
-                log = False
             sideHist.hist(
                 np.array(y_any),
                 bins=bins,
                 color="grey",
                 alpha=0.3,
                 orientation="horizontal",
-                log=log,
+                log=np.any(y_any > 0),
             )
 
         kwargs_hist = dict(
@@ -840,14 +838,14 @@ class ScatterPlotWithTwoHists(PlotAction):
             sideHist.hist(
                 vector[cast(Vector, data[f"{key}HighSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
-                ls="--",
+                linestyle="--",
                 **kwargs_hist,
             )
             sideHist.hist(
                 vector[cast(Vector, data[f"{key}LowSNMask{self.suffix_stat}"])],
                 color=config_datatype.color,
                 **kwargs_hist,
-                ls=":",
+                linestyle=":",
             )
 
         # Add a horizontal reference line at 0 to the side histogram

@@ -27,6 +27,7 @@ from lsst.pex.config import Field, FieldValidationError
 from lsst.pex.config.choiceField import ChoiceField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
+from ...math import power, sqrt
 
 
 class CalcMomentSize(VectorAction):
@@ -97,21 +98,22 @@ class CalcMomentSize(VectorAction):
             )  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        xx = data[self.colXx.format(**kwargs)]
-        yy = data[self.colYy.format(**kwargs)]
+        xx = np.array(data[self.colXx.format(**kwargs)])
+        yy = np.array(data[self.colYy.format(**kwargs)])
         if self.sizeType == "trace":
             if not self.is_covariance:
                 xx *= xx
                 yy *= yy
-            size = np.sqrt(0.5 * (xx + yy))  # type: ignore
+            size = sqrt(0.5 * (xx + yy))
         else:
-            xy_sq = data[self.colXy.format(**kwargs)] ** 2
+            xy_sq = np.array(data[self.colXy.format(**kwargs)]) ** 2
             if not self.is_covariance:
-                # cov = rho * sigma_x * sigma_y
-                xy_sq *= xx * yy
                 xx *= xx
                 yy *= yy
-            size = np.power(xx * yy - xy_sq, 0.25)  # type: ignore
+                # cov = rho * sigma_x * sigma_y
+                # this term needs to be cov^2
+                xy_sq *= xx * yy
+            size = power(xx * yy - xy_sq, 0.25)
 
         return size
 

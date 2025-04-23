@@ -511,6 +511,7 @@ class SizeDefaultConfig(Config):
     bulge = ConfigField[SizeConfig](doc="Bulge model size config.")
     disk = ConfigField[SizeConfig](doc="Disk model size config.")
     moments = ConfigField[SizeConfig](doc="Second moments size config.")
+    sersic = ConfigField[SizeConfig](doc="Sersic effective radius config")
     shape_slot = ConfigField[SizeConfig](doc="Shape slot size config.")
 
 
@@ -546,6 +547,7 @@ class SizeTool(ObjectClassTool):
         bulge=SizeConfig(key_size="{band}_bdReB", name_size="CModel Bulge $R_{eff}$", has_moments=False),
         disk=SizeConfig(key_size="{band}_bdReD", name_size="CModel Disk $R_{eff}$", has_moments=False),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
+        sersic=SizeConfig(key_size="sersic_{suffix}", name_size="Sersic $R_{eff}$"),
         shape_slot=SizeConfig(key_size="shape_{suffix}", name_size="Shape slot radius"),
     )
     size_type = ChoiceField[str](

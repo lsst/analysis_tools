@@ -67,6 +67,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     StarSelector,
     VectorSelector,
 )
+from lsst.analysis.tools.math import sqrt
 from lsst.pex.config import FieldValidationError
 
 
@@ -215,7 +216,7 @@ class TestVectorActions(unittest.TestCase):
         result = action(self.data, band="g")
         schema = [col for col, colType in action.getInputSchema()]
         self.assertEqual(sorted(schema), ["{band}_iixx", "{band}_iiyy"])
-        truth = np.sqrt(0.5 * (xx + yy))
+        truth = sqrt(0.5 * (xx + yy))
         np.testing.assert_array_almost_equal(result, truth)
 
         CalcMomentSize(sizeType="trace", colXy=None).validate()
@@ -272,7 +273,7 @@ class TestVectorActions(unittest.TestCase):
         self._testMath(DivideVector, truth, compare_exact=False)
 
     def testSqrt(self):
-        truth = np.sqrt(np.arange(1, 6))
+        truth = sqrt(np.arange(1, 6))
         self._testMath(SqrtVector, truth, compare_exact=False, num_vectors=1)
 
     def testSquare(self):
@@ -452,7 +453,7 @@ class TestVectorRhoStats(unittest.TestCase):
             e1 = 0
         if abs(e2) >= 1:
             e2 = 0
-        e = np.sqrt(e1**2 + e2**2)
+        e = sqrt(e1**2 + e2**2)
         q = (1 - e) / (1 + e)
         phi = 0.5 * np.arctan2(e2, e1)
         rot = np.array([[np.cos(phi), np.sin(phi)], [-np.sin(phi), np.cos(phi)]])

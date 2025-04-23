@@ -25,7 +25,8 @@ __all__ = ("MagnitudeScatterPlot",)
 from lsst.pex.config import ListField
 
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
-from ..actions.vector.vectorActions import DownselectVector, VectorSelector
+from ..actions.vector import DownselectVector
+from ..actions.vector.selectors import VectorSelector
 from .genericBuild import MagnitudeXTool
 
 

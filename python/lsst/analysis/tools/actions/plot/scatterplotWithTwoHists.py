@@ -593,11 +593,11 @@ class ScatterPlotWithTwoHists(PlotAction):
                     (threeSigMadLine,) = ax.plot(
                         xEdgesPlot,
                         threeSigMadVerts[: len(xEdgesPlot), 1],
-                        color,
+                        linecolor,
                         alpha=0.4,
                         label=r"3$\sigma_{MAD}$",
                     )
-                    ax.plot(xEdgesPlot[::-1], threeSigMadVerts[len(xEdgesPlot) :, 1], color, alpha=0.4)
+                    ax.plot(xEdgesPlot[::-1], threeSigMadVerts[len(xEdgesPlot) :, 1], linecolor, alpha=0.4)
 
                 # Add lines for the median +/- 1 * sigma MAD
                 (sigMadLine,) = ax.plot(
@@ -614,16 +614,16 @@ class ScatterPlotWithTwoHists(PlotAction):
                 if not self.publicationStyle:
                     # Add lines for the median +/- 2 * sigma MAD
                     (twoSigMadLine,) = ax.plot(
-                        xEdgesPlot, meds + 2.0 * sigMads, color, alpha=0.6, label=r"2$\sigma_{MAD}$"
+                        xEdgesPlot, meds + 2.0 * sigMads, linecolor, alpha=0.6, label=r"2$\sigma_{MAD}$"
                     )
                     linesForLegend.append(twoSigMadLine)
                     linesForLegend.append(threeSigMadLine)
-                    ax.plot(xEdgesPlot, meds - 2.0 * sigMads, color, alpha=0.6)
+                    ax.plot(xEdgesPlot, meds - 2.0 * sigMads, linecolor, alpha=0.6)
 
                 # Check which points are outside 3 sigma MAD of the median
                 # and plot these as points.
                 inside = threeSigMadPath.contains_points(np.array([xs, ys]).T)
-                ax.plot(xs[~inside], ys[~inside], ".", ms=5, alpha=0.3, mfc=color, mec="none", zorder=-1)
+                ax.plot(xs[~inside], ys[~inside], ".", ms=5, alpha=0.2, mfc=color, mec="none", zorder=-1)
 
                 if not self.publicationStyle:
                     # Add some stats text
@@ -659,7 +659,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                         xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3, edgecolors=None
                     )
                 else:
-                    ax.plot(xs[inside], ys[inside], ".", ms=3, alpha=0.3, mfc=color, mec=color, zorder=-1)
+                    ax.plot(xs[inside], ys[inside], ".", ms=3, alpha=0.2, mfc=color, mec=color, zorder=-1)
 
                 if not self.publicationStyle:
                     # If there are not many sources being used for the
@@ -779,8 +779,13 @@ class ScatterPlotWithTwoHists(PlotAction):
         )
 
         # Add axes labels
-        ax.set_ylabel(self.yAxisLabel, labelpad=10)
-        ax.set_xlabel(self.xAxisLabel, labelpad=2)
+        if self.publicationStyle:
+            ax.set_ylabel(self.yAxisLabel, labelpad=10)
+            ax.set_xlabel(self.xAxisLabel, labelpad=2)
+        else:
+            ax.set_ylabel(self.yAxisLabel, labelpad=10, fontsize=10)
+            ax.tick_params(labelsize=8)
+            ax.set_xlabel(self.xAxisLabel, labelpad=2, fontsize=10)
 
         return ax, histIm
 
@@ -829,6 +834,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         topHist.set_ylabel("Count", fontsize=10)
         if not self.publicationStyle:
             topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
+            topHist.tick_params(labelsize=8)
 
         # Side histogram
 
@@ -911,6 +917,8 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         sideHist.axes.get_yaxis().set_visible(False)
         sideHist.set_xlabel("Count", fontsize=10)
+        if not self.publicationStyle:
+            sideHist.tick_params(labelsize=8)
         if self.plot2DHist and histIm is not None:
             divider = make_axes_locatable(sideHist)
             cax = divider.append_axes("right", size="25%", pad=0)

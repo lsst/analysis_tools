@@ -484,17 +484,8 @@ def addSummaryPlot(fig, loc, sumStats, label):
     yOffset = (pos.y1 - pos.y0) / 3
     cax = fig.add_axes([pos.x0, pos.y1 + yOffset, pos.x1 - pos.x0, 0.025])
     fig.colorbar(collection, cax=cax, orientation="horizontal")
-    cax.text(
-        0.5,
-        0.48,
-        label,
-        color="k",
-        transform=cax.transAxes,
-        rotation="horizontal",
-        horizontalalignment="center",
-        verticalalignment="center",
-        fontsize=6,
-    )
+    cornerLabel = "Median of patch\nvalues for\ny axis"
+    axCorner.text(1.1, 1.3, cornerLabel, transform=axCorner.transAxes, fontsize=6)
     cax.tick_params(
         axis="x", labelsize=6, labeltop=True, labelbottom=False, bottom=False, top=True, pad=0.5, length=2
     )

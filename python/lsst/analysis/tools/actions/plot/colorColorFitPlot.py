@@ -591,6 +591,15 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
         axLowerRight.tick_params(labelsize=6)
 
+        # This is here because matplotlib occasionally decides
+        # that there needs to be 10^15 minor ticks.
+        # This is probably unneeded and may make the plot look
+        # rather busy if it ever finds enough memory to render.
+        # If this ever becomes a problem it can be looked at in
+        # the future.
+        for ax in fig.get_axes():
+            ax.minorticks_off()
+
         fig.canvas.draw()
         if not self.publicationStyle:
             fig = addPlotInfo(fig, plotInfo)

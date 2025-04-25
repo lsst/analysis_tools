@@ -1,0 +1,20 @@
+description: |
+  AP plots and metrics to assess CcdVisit quality in Prompt Processing
+  From SingleFrame measurement tasks only.
+tasks:
+  analyzeAssociatedDirectSolarSystemObjectTable:
+    class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
+    config:
+      connections.data: ss_source_direct_detector
+      connections.outputName: ss_source_direct_detector  # Will be appended with "_metrics"
+      atools.numDirectSsObjects: NumSsObjectsMetric
+      python: |
+        from lsst.analysis.tools.atools import *
+  analyzeUnassociatedDirectSolarSystemObjectTable:
+    class: lsst.analysis.tools.tasks.AssocDiaSrcDetectorVisitAnalysisTask
+    config:
+      connections.data: ss_object_direct_unassociated
+      connections.outputName: ss_object_direct_unassociated  # Will be appended with "_metrics"
+      atools.numDirectSsObjectsMissed: NumSsObjectsMetric
+      python: |
+        from lsst.analysis.tools.atools import *

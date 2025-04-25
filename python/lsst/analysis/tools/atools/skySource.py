@@ -50,8 +50,8 @@ class SkySourceSkyPlot(AnalysisTool):
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["any"]
         self.produce.plot.plotName = "skySource"
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
         self.produce.plot.zAxisLabel = "Sky Source ap09Flux (nJy)"
         self.produce.plot.plotOutlines = False
         self.produce.plot.fixAroundZero = True

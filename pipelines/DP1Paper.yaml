@@ -1,0 +1,63 @@
+description: |
+  Tier1 plots and metrics to assess coadd quality
+tasks:
+  analyzeObjectTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.outputName: objectTableCore
+      atools.wPerpPSF: WPerpPSF
+      atools.wPerpPSF.produce.plot.publicationStyle: true
+      atools.skyObjectSky: SkyObjectSkyPlot
+      atools.skyObjectSky.produce.plot.publicationStyle: true
+      atools.skyObjectFlux: SkyObjectHistPlot
+      atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
+      atools.psfCModelScatter.produce.plot.publicationStyle: true
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
+  catalogMatchTract: lsst.analysis.tools.tasks.astrometricCatalogMatch.AstrometricCatalogMatchTask
+  refCatObjectTract:
+    class: lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask
+    config:
+      atools.astromDiffRAScatterPlot: TargetRefCatDeltaRAScatterPlot
+      atools.astromDiffRAScatterPlot.produce.publicationStyle: true
+      atools.astromDiffDecScatterPlot: TargetRefCatDeltaDecScatterPlot
+      atools.astromDiffDecScatterPlot.produce.publicationStyle: true
+      atools.astromDiffRASkyPlot: TargetRefCatDeltaRASkyPlot
+      atools.astromDiffRASkyPlot.produce.publicationStyle: true
+      atools.astromDiffRASkyPlot.produce.divergent: true
+      atools.astromDiffRASkyPlot.produce.fixAroundZero: true
+      atools.astromDiffDecSkyPlot: TargetRefCatDeltaDecSkyPlot
+      atools.astromDiffDecSkyPlot.produce.publicationStyle: true
+      atools.astromDiffDecSkyPlot.produce.fixAroundZero: true
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
+
+  #  Perform photometric comparison to the reference catalog
+  photometricCatalogMatch: lsst.analysis.tools.tasks.photometricCatalogMatch.PhotometricCatalogMatchTask
+  photometricRefCatObjectTract:
+    class: lsst.analysis.tools.tasks.refCatObjectPhotometricAnalysis.RefCatObjectPhotometricAnalysisTask
+    config:
+      atools.targetRefCatDeltaPsfScatterPlot: TargetRefCatDeltaPsfScatterPlot
+      atools.targetRefCatDeltaPsfScatterPlot.produce.publicationStyle: true
+      atools.targetRefCatDeltaCModelScatterPlot: TargetRefCatDeltaCModelScatterPlot
+      atools.targetRefCatDeltaPsfSkyPlot: TargetRefCatDeltaPsfSkyPlot
+      atools.targetRefCatDeltaPsfSkyPlot.produce.publicationStyle: true
+      atools.targetRefCatDeltaPsfSkyPlot.produce.divergent: true
+      atools.targetRefCatDeltaCModelSkyPlot: TargetRefCatDeltaCModelSkyPlot
+      python: |
+        from lsst.analysis.tools.atools import *
+  plotPropertyMapTract:
+    class: lsst.analysis.tools.tasks.PerTractPropertyMapAnalysisTask
+    config:
+      connections.outputName: propertyMapTract
+      zoomFactors: [2, 8]
+      projectionKwargs:
+        celestial: true
+        gridlines: true
+      # The entries in the 'atools' namespace must exactly match the dataset types.
+      atools.deepCoadd_dcr_ddec_map_weighted_mean: PerTractPropertyMapTool
+      publicationStyle: true
+      python: |
+        from lsst.analysis.tools.atools import PerTractPropertyMapTool

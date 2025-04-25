@@ -79,9 +79,9 @@ class Ap12PsfSkyPlot(AnalysisTool):
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.plotName = "{band}_ap12-psf"
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
-        self.produce.plot.zAxisLabel = "Ap 12 - PSF [mag]"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
+        self.produce.plot.zAxisLabel = "Ap 12 - PSF (mag)"
 
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
 
@@ -123,9 +123,9 @@ class PsfCModelSkyPlot(AnalysisTool):
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["stars"]
         self.produce.plot.plotName = "cModel-{band}_psf"
-        self.produce.plot.xAxisLabel = "R.A. (degrees)"
-        self.produce.plot.yAxisLabel = "Dec. (degrees)"
-        self.produce.plot.zAxisLabel = "cModel - PSF [mmag]"
+        self.produce.plot.xAxisLabel = "R.A. (deg)"
+        self.produce.plot.yAxisLabel = "Dec. (deg)"
+        self.produce.plot.zAxisLabel = "cModel - PSF (mmag)"
 
 
 class PsfCModelScatterPlot(AnalysisTool):
@@ -167,8 +167,8 @@ class PsfCModelScatterPlot(AnalysisTool):
 
         self.produce.plot = ScatterPlotWithTwoHists()
         self.produce.plot.plotTypes = ["stars"]
-        self.produce.plot.xAxisLabel = "PSF Magnitude (Mag)"
-        self.produce.plot.yAxisLabel = "PSF - cModel [mmag]"
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.plot.yAxisLabel = "PSF - cModel (mmag)"
         self.produce.plot.magLabel = "PSF Magnitude (mag)"
 
         self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}

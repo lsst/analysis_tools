@@ -29,7 +29,7 @@ import matplotlib.patheffects as pathEffects
 import numpy as np
 import scipy.stats
 from lsst.pex.config import Field, ListField, RangeField
-from lsst.utils.plotting import make_figure
+from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.ndimage import median_filter
@@ -93,6 +93,11 @@ class ColorColorFitPlot(PlotAction):
         doc="Plot distance from fit as a function of color in lower right panel?",
         default=True,
         optional=True,
+    )
+
+    publicationStyle = Field[bool](
+        doc="Use a publication-quality plot style.",
+        default=False,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -226,6 +231,7 @@ class ColorColorFitPlot(PlotAction):
         please see the
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
+        set_rubin_plotstyle()
         paramDict = data.pop("paramDict")
         # Points to use for the fit.
         fitPoints = data.pop("fitPoints")
@@ -246,8 +252,8 @@ class ColorColorFitPlot(PlotAction):
             return fig
 
         # Define new colormaps.
-        newBlues = mkColormap(["darkblue", "paleturquoise"])
-        newGrays = mkColormap(["lightslategray", "white"])
+        newBlues = mkColormap(["#3D5195"])
+        newGrays = mkColormap(["#CFCFCF", "#595959"])
 
         # Make a figure with three panels.
         fig = make_figure(dpi=300)
@@ -271,10 +277,11 @@ class ColorColorFitPlot(PlotAction):
             label="Initial selection",
         )
 
-        # Add some useful information to the plot.
-        bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-        infoText = "N Total: {}\nN Used: {}".format(sum(goodPoints), sum(fitPoints))
-        ax.text(0.04, 0.97, infoText, color="k", transform=ax.transAxes, fontsize=7, bbox=bbox, va="top")
+        if not self.publicationStyle:
+            # Add some useful information to the plot.
+            bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
+            infoText = "N Total: {}\nN Used: {}".format(sum(goodPoints), sum(fitPoints))
+            ax.text(0.04, 0.97, infoText, color="k", transform=ax.transAxes, fontsize=7, bbox=bbox, va="top")
 
         # Calculate the point density for the Used and NotUsed subsamples.
         xyUsed = np.vstack([xs[fitPoints], ys[fitPoints]])
@@ -334,8 +341,8 @@ class ColorColorFitPlot(PlotAction):
         cbText.set_path_effects([pathEffects.Stroke(linewidth=1.5, foreground="w"), pathEffects.Normal()])
         cbAxNotUsed.set_xticks([])
 
-        ax.set_xlabel(self.xAxisLabel, fontsize=8)
-        ax.set_ylabel(self.yAxisLabel, fontsize=8)
+        ax.set_xlabel(self.xAxisLabel)
+        ax.set_ylabel(self.yAxisLabel)
         ax.tick_params(labelsize=7)
 
         # Set axis limits from configs if set, otherwise based on the data.
@@ -371,7 +378,7 @@ class ColorColorFitPlot(PlotAction):
             )
 
         ax.plot(xsFitLineFixed, ysFitLineFixed, "w", lw=1.5)
-        (lineFixed,) = ax.plot(xsFitLineFixed, ysFitLineFixed, "tab:green", lw=1, ls="--", label="Fixed")
+        (lineFixed,) = ax.plot(xsFitLineFixed, ysFitLineFixed, "#C85200", lw=1, ls="--", label="Fixed")
         ax.plot(xsFitLine, ysFitLine, "w", lw=1.5)
         (lineOdrFit,) = ax.plot(xsFitLine, ysFitLine, "k", lw=1, ls="--", label="ODR Fit")
         ax.legend(
@@ -507,13 +514,13 @@ class ColorColorFitPlot(PlotAction):
         )
 
         axHist.hist(dists, bins=100, histtype="stepfilled", label="ODR Fit", color="k", ec="k", alpha=0.3)
-        axHist.hist(distsFixed, bins=100, histtype="step", label="Fixed", color="tab:green", alpha=1.0)
+        axHist.hist(distsFixed, bins=100, histtype="step", label="Fixed", color="#C85200", alpha=1.0)
         if self.doPlotRedBlueHists:
             axHist.hist(blueDists, bins=100, histtype="stepfilled", color="blue", ec="blue", alpha=0.3)
             axHist.hist(redDists, bins=100, histtype="stepfilled", color="red", ec="red", alpha=0.3)
 
         handles = [Rectangle((0, 0), 1, 1, color="k", alpha=0.4)]
-        handles.append(Rectangle((0, 0), 1, 1, color="none", ec="tab:green", alpha=1.0))
+        handles.append(Rectangle((0, 0), 1, 1, color="none", ec="#C85200", alpha=1.0))
         labels = ["ODR Fit", "Fixed"]
         if self.doPlotRedBlueHists:
             handles.append(Rectangle((0, 0), 1, 1, color="blue", alpha=0.3))
@@ -539,7 +546,7 @@ class ColorColorFitPlot(PlotAction):
             nCumulate = int(max(3, len(xRun) // 10))
             yRunMedian = median_filter(ySorted, size=nCumulate)
             axLowerRight.plot(xSorted, yRunMedian, "w", lw=1.8)
-            axLowerRight.plot(xSorted, yRunMedian, c="purple", ls="-", lw=1.1, label="Running Median")
+            axLowerRight.plot(xSorted, yRunMedian, c="#595959", ls="-", lw=1.1, label="Running Median")
             axLowerRight.set_ylim(-2.5 * madDists, 2.5 * madDists)
             axLowerRight.set_ylabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
             axLowerRight.legend(fontsize=4, loc="upper right", handlelength=1.0)
@@ -584,7 +591,17 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
         axLowerRight.tick_params(labelsize=6)
 
+        # This is here because matplotlib occasionally decides
+        # that there needs to be 10^15 minor ticks.
+        # This is probably unneeded and may make the plot look
+        # rather busy if it ever finds enough memory to render.
+        # If this ever becomes a problem it can be looked at in
+        # the future.
+        for ax in fig.get_axes():
+            ax.minorticks_off()
+
         fig.canvas.draw()
-        fig = addPlotInfo(fig, plotInfo)
+        if not self.publicationStyle:
+            fig = addPlotInfo(fig, plotInfo)
 
         return fig

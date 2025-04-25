@@ -112,10 +112,10 @@ class WPerpPSF(StellarLocusBase):
             "wPerp_psfFlux_median": "mmag",
         }
 
-        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.xAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[0], colorBands[1], fluxType.replace("Flux", "")
         )
-        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.yAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[1], colorBands[2], fluxType.replace("Flux", "")
         )
         self.produce.plot.xLims = (-0.7, 1.99)
@@ -265,10 +265,10 @@ class YPerpPSF(StellarLocusBase):
             "yPerp_psfFlux_median": "mmag",
         }
 
-        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.xAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[0], colorBands[1], fluxType.replace("Flux", "")
         )
-        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.yAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[1], colorBands[2], fluxType.replace("Flux", "")
         )
         self.produce.plot.xLims = (-0.8, 3.59)
@@ -313,10 +313,10 @@ class YPerpCModel(YPerpPSF):
             "yPerp_cModelFlux_median": "mmag",
         }
 
-        self.produce.plot.xAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.xAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[0], colorBands[1], fluxType.replace("Flux", "")
         )
-        self.produce.plot.yAxisLabel = "{} - {} ({}) [mags]".format(
+        self.produce.plot.yAxisLabel = "{} - {} ({}) (mag)".format(
             colorBands[1], colorBands[2], fluxType.replace("Flux", "")
         )
         self.produce.plot.magLabel = "{} {}_Mag".format(

@@ -328,17 +328,42 @@ def mkColormap(colorNames):
     cmap : `matplotlib.colors.LinearSegmentedColormap`
         A colormap stepping through the supplied list of names.
     """
-    nums = np.linspace(0, 1, len(colorNames))
     blues = []
     greens = []
     reds = []
-    for num, color in zip(nums, colorNames):
-        r, g, b = colors.colorConverter.to_rgb(color)
-        blues.append((num, b, b))
-        greens.append((num, g, g))
-        reds.append((num, r, r))
+    alphas = []
 
-    colorDict = {"blue": blues, "red": reds, "green": greens}
+    if len(colorNames) == 1:
+        # Alpha is between 0 and 1 really but
+        # using 1.5 saturates out the top of the
+        # colorscale, this looks good for ComCam data
+        # but might want to be changed in the future.
+        alphaRange = [0.3, 1.0]
+        nums = np.linspace(0, 1, len(alphaRange))
+        r, g, b = colors.colorConverter.to_rgb(colorNames[0])
+        for num, alpha in zip(nums, alphaRange):
+            blues.append((num, b, b))
+            greens.append((num, g, g))
+            reds.append((num, r, r))
+            alphas.append((num, alpha, alpha))
+
+    else:
+        nums = np.linspace(0, 1, len(colorNames))
+        if len(colorNames) == 3:
+            alphaRange = [1.0, 0.3, 1.0]
+        elif len(colorNames) == 5:
+            alphaRange = [1.0, 0.7, 0.3, 0.7, 1.0]
+        else:
+            alphaRange = np.ones(len(colorNames))
+
+        for num, color, alpha in zip(nums, colorNames, alphaRange):
+            r, g, b = colors.colorConverter.to_rgb(color)
+            blues.append((num, b, b))
+            greens.append((num, g, g))
+            reds.append((num, r, r))
+            alphas.append((num, alpha, alpha))
+
+    colorDict = {"blue": blues, "red": reds, "green": greens, "alpha": alphas}
     cmap = colors.LinearSegmentedColormap("newCmap", colorDict)
     return cmap
 
@@ -459,17 +484,8 @@ def addSummaryPlot(fig, loc, sumStats, label):
     yOffset = (pos.y1 - pos.y0) / 3
     cax = fig.add_axes([pos.x0, pos.y1 + yOffset, pos.x1 - pos.x0, 0.025])
     fig.colorbar(collection, cax=cax, orientation="horizontal")
-    cax.text(
-        0.5,
-        0.48,
-        label,
-        color="k",
-        transform=cax.transAxes,
-        rotation="horizontal",
-        horizontalalignment="center",
-        verticalalignment="center",
-        fontsize=6,
-    )
+    cornerLabel = "Median of patch\nvalues for\ny axis"
+    axCorner.text(1.1, 1.3, cornerLabel, transform=axCorner.transAxes, fontsize=6)
     cax.tick_params(
         axis="x", labelsize=6, labeltop=True, labelbottom=False, bottom=False, top=True, pad=0.5, length=2
     )

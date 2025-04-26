@@ -53,6 +53,7 @@ class CompletenessHist(PlotAction):
         default="below_line",
     )
     publicationStyle = Field[bool](doc="Make a publication-style of plot", default=False)
+    show_purity = Field[bool](doc="Whether to include a purity plot below completness", default=True)
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from self.action.getOutputSchema()
@@ -133,7 +134,10 @@ class CompletenessHist(PlotAction):
 
         # Make plot showing the fraction recovered in magnitude bins
         set_rubin_plotstyle()
-        fig, axes = plt.subplots(dpi=300, nrows=2, figsize=(8, 8))
+        n_sub = 1 + self.show_purity
+        fig, axes = plt.subplots(dpi=300, nrows=n_sub, figsize=(8, 4 * n_sub))
+        if not self.show_purity:
+            axes = [axes]
         color_counts = "purple"
         color_wrong = "firebrick"
         color_right = "teal"
@@ -179,7 +183,9 @@ class CompletenessHist(PlotAction):
                 ),
                 "xlabel": self.mag_ref_label,
             },
-            "Purity": {
+        }
+        if self.show_purity:
+            plots["Purity"] = {
                 "count_type": "Object",
                 "counts": data[names["count_target"]],
                 "lines": (
@@ -188,8 +194,7 @@ class CompletenessHist(PlotAction):
                     (data[names["purity_good_match"]], False, color_right, "right class"),
                 ),
                 "xlabel": self.mag_target_label,
-            },
-        }
+            }
 
         # idx == 0 should be completeness; update this if that assumption
         # is changed

@@ -302,8 +302,8 @@ class MatchedRefCoaddDiffTool(MagnitudeXTool, MatchedRefCoaddTool):
     limits_diff_mag_mmag_zoom_default = (-50.0, 50.0)
     limits_diff_pos_mas_default = (-500, 500)
     limits_diff_pos_mas_zoom_default = (-10, 10)
-    limits_x_mag_default = (16.0, 31.0)
-    limits_x_mag_zoom_default = (16.0, 23.5)
+    limits_x_mag_default = (16.5, 29.0)
+    limits_x_mag_zoom_default = (16.5, 24.0)
 
     compute_chi = pexConfig.Field[bool](
         default=False,

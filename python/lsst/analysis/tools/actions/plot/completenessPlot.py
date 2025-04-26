@@ -52,6 +52,7 @@ class CompletenessHist(PlotAction):
         },
         default="below_line",
     )
+    publicationStyle = Field[bool](doc="Make a publication-style of plot", default=False)
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from self.action.getOutputSchema()
@@ -266,7 +267,8 @@ class CompletenessHist(PlotAction):
                         axes_idx.text(xlims[0], max_left, texts, ha="left", va="bottom")
 
         # Add useful information to the plot
-        addPlotInfo(fig, plotInfo)
+        if not self.publicationStyle:
+            addPlotInfo(fig, plotInfo)
         fig.tight_layout()
         fig.subplots_adjust(top=0.90)
         return fig

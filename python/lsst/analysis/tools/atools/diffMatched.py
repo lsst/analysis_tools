@@ -1029,7 +1029,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
                         actionB=CosVector(
                             actionA=MultiplyVector(
                                 actionA=ConstantValue(value=factor_cos),
-                                actionB=LoadVector(vectorKey=self.coord_meas),
+                                actionB=LoadVector(vectorKey=self.coord_ref_cos),
                             )
                         ),
                     )

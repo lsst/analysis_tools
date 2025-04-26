@@ -58,6 +58,7 @@ class CalexpSummaryMetrics(AnalysisTool):
         "zeroPoint": "mag",
         "skyBg": "electron",
         "skyNoise": "electron",
+        "skyBgNormRange": "",
         "meanVar": "",  # electron**2
         "astromOffsetMean": "arcsec",
         "astromOffsetStd": "arcsec",

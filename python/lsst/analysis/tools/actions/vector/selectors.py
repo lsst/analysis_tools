@@ -25,6 +25,7 @@ __all__ = (
     "FlagSelector",
     "CoaddPlotFlagSelector",
     "RangeSelector",
+    "SetSelector",
     "SnSelector",
     "ExtendednessSelector",
     "SkyObjectSelector",
@@ -260,6 +261,63 @@ class RangeSelector(SelectorBase):
         mask = (values >= self.minimum) & (values < self.maximum)
 
         return cast(Vector, mask)
+
+
+class SetSelector(SelectorBase):
+    """Selects rows with any number of column values within a given set.
+
+    For example, given a set of patches (1, 2, 3), and a set of columns
+    (index_1, index_2), return all rows with either index_1 or index_2
+     in the set (1, 2, 3).
+
+    Notes
+    -----
+    The values are given as floats for flexibility. Integers above
+    the floating point limit (2^53 + 1 = 9,007,199,254,740,993 for 64 bits)
+    will not compare exactly with their float representations.
+    """
+
+    vectorKeys = ListField[str](
+        doc="Keys to select from data",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+    values = ListField[float](
+        doc="The set of acceptable values",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from ((key, Vector) for key in self.vectorKeys)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values in the specified set.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values in the specified set.
+        """
+        mask = np.zeros_like(data[self.vectorKeys[0]], dtype=bool)
+        for key in self.vectorKeys:
+            values = cast(Vector, data[key])
+            for compare in self.values:
+                mask |= values == compare
+
+        return cast(Vector, mask)
+
+
+class PatchSelector(SetSelector):
+    """Select rows within a set of patches."""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.vectorKeys = ["patch"]
 
 
 class SnSelector(SelectorBase):

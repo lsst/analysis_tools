@@ -52,13 +52,12 @@ tasks:
     class: lsst.analysis.tools.tasks.PerTractPropertyMapAnalysisTask
     config:
       connections.outputName: propertyMapTract
-      zoomFactors: [2, 8]
       projectionKwargs:
         celestial: true
         gridlines: true
         min_lon_ticklabel_delta: 0.12
-      # The entries in the 'atools' namespace must exactly match the dataset types.
-      atools.deepCoadd_dcr_ddec_map_weighted_mean: PerTractPropertyMapTool
       publicationStyle: true
+      # The entries in the 'atools' namespace must exactly match the dataset types.
+      atools.deepCoadd_sky_noise_map_weighted_mean: PerTractPropertyMapTool
       python: |
         from lsst.analysis.tools.atools import PerTractPropertyMapTool

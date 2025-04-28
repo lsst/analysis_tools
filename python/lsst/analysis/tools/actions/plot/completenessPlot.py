@@ -220,6 +220,7 @@ class CompletenessHist(PlotAction):
                     y=y,
                     xerr=x_err if do_err else None,
                     yerr=1.0 / np.sqrt(counts_all + 1) if do_err else None,
+                    capsize=0,
                     color=color,
                     label=label,
                 )

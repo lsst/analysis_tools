@@ -267,7 +267,14 @@ class CompletenessHist(PlotAction):
                             if above_plot:
                                 texts.append(text)
                             elif below_line:
-                                axes_idx.text(mag_completeness - offset, pct, text, ha="right", va="top")
+                                axes_idx.text(
+                                    mag_completeness - offset,
+                                    pct,
+                                    text,
+                                    ha="right",
+                                    va="top",
+                                    fontsize=12,
+                                )
                     if above_plot:
                         texts = f"Thresholds: {'; '.join(texts)}"
                         axes_idx.text(xlims[0], max_left, texts, ha="left", va="bottom")

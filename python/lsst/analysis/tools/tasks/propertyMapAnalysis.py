@@ -112,7 +112,7 @@ class PerTractPropertyMapAnalysisConfig(
         keyCheck=lambda k: k not in ["orientation", "location"],
     )
 
-    publicationStyle = Field[bool](doc="Make a publication-style of plot", default=False)
+    publicationStyle = Field[bool](doc="Make a simplified plot for publication use?", default=False)
 
 
 class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
@@ -268,6 +268,8 @@ class SurveyWidePropertyMapAnalysisConfig(
     )
     # TODO: Mixed types will be allowed after DM-47937. You can then add things
     # like "aspect": 20, rather than just strings.
+
+    publicationStyle = Field[bool](doc="Make a simplified plot for publication use?", default=False)
 
 
 class SurveyWidePropertyMapAnalysisTask(AnalysisPipelineTask):

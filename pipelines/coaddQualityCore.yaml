@@ -116,6 +116,7 @@ tasks:
       projectionKwargs:
         celestial: true
         gridlines: true
+        min_lon_ticklabel_delta: 0.12
       colorbarKwargs:
         cmap: viridis
       # The entries in the 'atools' namespace must exactly match the dataset types.

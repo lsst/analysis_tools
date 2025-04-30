@@ -401,7 +401,15 @@ class ScatterPlotWithTwoHists(PlotAction):
             fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         fig.canvas.draw()
-        fig.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
+        # TODO: Check if these spacings can be defined less arbitrarily
+        fig.subplots_adjust(
+            wspace=0.0,
+            hspace=0.0,
+            bottom=0.13 if self.publicationStyle else 0.22,
+            left=0.18 if self.publicationStyle else 0.21,
+            right=0.95 if self.publicationStyle else None,
+            top=0.98 if self.publicationStyle else None,
+        )
         if not self.publicationStyle:
             fig = addPlotInfo(fig, plotInfo)
         return fig

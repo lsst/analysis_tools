@@ -39,13 +39,18 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-from matplotlib import rc_context
+from matplotlib import cm, rc_context
 from matplotlib.figure import Figure
 from matplotlib.legend_handler import HandlerTuple
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1.axes_size import AxesX, AxesY, Fraction
 
 from ...interfaces import KeyedData, PlotAction
 
 _LOG = logging.getLogger(__name__)
+
+# Holds unit renames to match style guidelines: {"old_unit": "new_unit"}.
+unitRenameDict = {"mag(AB)": r"$\rm mag_{AB}$"}
 
 
 def getZoomedExtent(fullExtent, n):
@@ -226,14 +231,15 @@ class PerTractPropertyMapPlot(PlotAction):
         if not isinstance(plotInfo, dict):
             raise TypeError("`plotConfig` must be a dictionary.")
 
-        zoomFactors = plotConfig.zoomFactors
-        isListOfFloats = isinstance(zoomFactors, pexConfig.listField.List) and all(
-            isinstance(zf, float) for zf in zoomFactors
-        )
-        if not (isListOfFloats and len(zoomFactors) == 2) or any(zf <= 1 for zf in zoomFactors):
-            raise TypeError(
-                "`zoomFactors` must be a two-element `lsst.pex.config.listField.List` of floats > 1."
+        if not plotConfig.publicationStyle:
+            zoomFactors = plotConfig.zoomFactors
+            isListOfFloats = isinstance(zoomFactors, pexConfig.listField.List) and all(
+                isinstance(zf, float) for zf in zoomFactors
             )
+            if not (isListOfFloats and len(zoomFactors) == 2) or any(zf <= 1 for zf in zoomFactors):
+                raise TypeError(
+                    "`zoomFactors` must be a two-element `lsst.pex.config.listField.List` of floats > 1."
+                )
 
         for atool in plotConfig.atools:
             if not isinstance(atool.nBinsHist, int) or atool.nBinsHist <= 0:
@@ -352,6 +358,7 @@ class PerTractPropertyMapPlot(PlotAction):
         """
 
         set_rubin_plotstyle()
+
         # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
@@ -362,35 +369,68 @@ class PerTractPropertyMapPlot(PlotAction):
             plotInfo["plotName"] = self.plotName
 
         # Plotting customization.
+        colorbarLocation = "right"
         colorbarTickLabelSize = 14
         colorBarAspect = 16
+        colorBarFraction = 0.07  # w.r.t. the axes size.
+        colorBarPad = 0  # w.r.t. the axes size.
         rcparams = {
-            "axes.labelsize": 18,
+            "axes.labelsize": 22 if plotConfig.publicationStyle else 19,
             "axes.linewidth": 1.8,
-            "xtick.labelsize": 13,
-            "ytick.labelsize": 13,
+            "xtick.labelsize": 15 if plotConfig.publicationStyle else 14,
+            "ytick.labelsize": 15 if plotConfig.publicationStyle else 14,
         }
-        zoomFactors = plotConfig.zoomFactors
 
-        # Muted green for the full map, and muted red and blue for the two
-        # zoomed-in maps.
-        histColors = ["#265D40", "#8B0000", "#00008B"]
+        colorbarKwargs = dict(plotConfig.colorbarKwargs)
+        projectionKwargs = dict(plotConfig.projectionKwargs)
+
         if plotConfig.publicationStyle:
-            histColors = ["#440154", "#31688e", "#35b779"]
+            zoomFactors = []
+            _LOG.info(
+                "Zoom factors are not used in publication-style plots. "
+                "Only the full-tract map will be plotted."
+            )
+            if "cmap" in colorbarKwargs and colorbarKwargs["cmap"] != "viridis":
+                _LOG.warning(
+                    "Color map set to 'viridis' for publication style plots. "
+                    f"The color map '{colorbarKwargs['cmap']}' set in the config will be ignored."
+                )
+            colorbarKwargs["cmap"] = "viridis"
+            cmap = cm.get_cmap(colorbarKwargs["cmap"])
+            # Colorbar text color only, not used for any histogram.
+            histColors = [cmap(0.1)]
+            rasterized = False
+            labelpad = 14
+        else:
+            zoomFactors = plotConfig.zoomFactors
+            colorbarKwargs["cmap"] = colorbarKwargs.get("cmap", "viridis")
+            # Muted green for the full map, and muted red and blue for the two
+            # zoomed-in maps. Used for boxes, colorbar texts and histograms.
+            histColors = ["#265D40", "#8B0000", "#00008B"]
+            rasterized = True  # Plot with rasterized graphics.
+            labelpad = 11
 
         toolName = data["data"].ref.datasetType.name
         mapName = toolName.replace("_map_", "_")
         mapData = data["data"].get()
 
         with rc_context(rcparams):
-            fig = make_figure(figsize=(16, 16))
-            ax1 = fig.add_subplot(221)
-            ax2 = fig.add_subplot(222)
-            ax3 = fig.add_subplot(223)
-            ax4 = fig.add_subplot(224)
+            if plotConfig.publicationStyle:
+                # Make a single plot for the full tract.
+                fig = make_figure(figsize=(8, 8))
+                ax1 = fig.add_subplot(111)
+                fig.subplots_adjust(left=0.133, right=0.888, bottom=0.1, top=0.855)
+            else:
+                # Make a 2x2 grid of subplots for the full tract, two zoomed-in
+                # views, and a histogram of values.
+                fig = make_figure(figsize=(16, 16))
+                ax1 = fig.add_subplot(221)
+                ax2 = fig.add_subplot(222)
+                ax3 = fig.add_subplot(223)
+                ax4 = fig.add_subplot(224)
 
-            # Reduce whitespace but leave some room at the top for plotInfo.
-            fig.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.18, hspace=0.24)
+                # Reduce whitespace but leave some room at the top for info.
+                fig.subplots_adjust(left=0.064, right=0.96, top=0.855, bottom=0.07, wspace=0.275, hspace=0.24)
 
             # Get the values for the valid pixels of the full tract.
             values = mapData[mapData.valid_pixels]
@@ -441,6 +481,10 @@ class PerTractPropertyMapPlot(PlotAction):
                 .replace("E2", "e2")
             )
 
+            # Handle unit renaming.
+            if plotInfo["unit"] in unitRenameDict:
+                plotInfo["unit"] = unitRenameDict[plotInfo["unit"]]
+
             atool = getattr(plotConfig.atools, toolName)
             nBinsHist = atool.nBinsHist
 
@@ -457,8 +501,15 @@ class PerTractPropertyMapPlot(PlotAction):
                 ctr_lat + height / 2.0,
             ]
 
+            # Prepare plot elements for the full tract and optional zoomed-in
+            # views.
+            if plotConfig.publicationStyle:
+                skyprojAxes = [ax1]
+            else:
+                skyprojAxes = [ax1, ax3, ax4]
+
             zoomIdx = []
-            for ax, zoomFactor, histColor in zip([ax1, ax3, ax4], [1.0, *zoomFactors], histColors):
+            for ax, zoomFactor, histColor in zip(skyprojAxes, [1.0, *zoomFactors], histColors):
                 extent = getZoomedExtent(fullExtent, zoomFactor)
 
                 sp = skyproj.GnomonicSkyproj(
@@ -466,33 +517,45 @@ class PerTractPropertyMapPlot(PlotAction):
                     lon_0=ctr_lon,
                     lat_0=ctr_lat,
                     extent=extent,
-                    **plotConfig.projectionKwargs,
+                    **projectionKwargs,
                 )
-                if "cmap" not in plotConfig.colorbarKwargs.keys() or plotConfig.publicationStyle:
-                    plotKwargs = {"cmap": "viridis"}
-                else:
-                    plotKwargs = {}
-                for key in plotConfig.colorbarKwargs.keys():
-                    if key != "cmap" and not plotConfig.publicationStyle:
-                        plotKwargs[key] = plotConfig.colorbarKwargs[key]
-                if "cmap" not in plotKwargs.keys():
-                    plotKwargs["cmap"] = "viridis"
 
-                sp.draw_hspmap(mapData, zoom=False, cmap=plotKwargs["cmap"])
+                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"], rasterized=rasterized)
 
-                sp.ax.set_xlabel("RA")
-                sp.ax.set_ylabel("Dec")
+                sp.ax.set_xlabel("R.A.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
+                sp.ax.set_ylabel("Dec.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
+
+                # Specify the size and padding of the colorbar axes with
+                # respect to the main axes.
+                refAx = AxesX(ax) if colorbarLocation in ("left", "right") else AxesY(ax)
+                cbsize = Fraction(colorBarFraction, refAx)
+                cbpad = Fraction(colorBarPad, refAx)
+
+                # Make divider and a colorbar axes to be attached to the main
+                # axes.
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes(colorbarLocation, size=cbsize, pad=cbpad)
+
                 cbar = sp.draw_colorbar(
                     **{
-                        "location": "right",
+                        "location": colorbarLocation,
                         "aspect": colorBarAspect,
-                        "fraction": 0.15,
-                        "pad": 0,
-                        **plotKwargs,
+                        "fraction": colorBarFraction,
+                        "pad": colorBarPad,
+                        "cax": cax,
+                        **colorbarKwargs,
                     }
                 )
                 cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-                cbarText = "Full Tract" if zoomFactor == 1.0 else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                if plotConfig.publicationStyle:
+                    if plotInfo["unit"] not in ["dimensionless", "N/A"]:
+                        cbarText = f"{plotInfo['property']} ({plotInfo['unit']})"
+                    else:
+                        cbarText = plotInfo["property"]
+                else:
+                    cbarText = (
+                        "Full Tract" if zoomFactor == 1.0 else f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                    )
                 addTextToColorbar(cbar, cbarText, color=histColor)
                 if zoomFactor == 1.0:
                     # Store the "full tract" map so that we can overplot
@@ -541,95 +604,114 @@ class PerTractPropertyMapPlot(PlotAction):
             # histogram reaches 1.
             weights = np.ones_like(values) / np.histogram(values, bins=nBinsHist)[0].max()
 
-            # Compute full-tract histogram and get its bins.
-            # NOTE: `exposure_time` histograms are quantized and look more
-            # bar-like, so they look better with fewer bins.
-            bins = ax2.hist(
-                values,
-                bins=nBinsHist,
-                label="Full Tract",
-                color=histColors[0],
-                weights=weights,
-                alpha=0.7,
-            )[1]
-
-            # Align the histogram (top right panel) with the skyproj plots.
-            pos1 = spf.ax.get_position()  # Top left.
-            pos4 = sp.ax.get_position()  # Bottom right.
-            cbarWidth = cbar.ax.get_position().height / colorBarAspect
-            # NOTE: cbarWidth != cbar.ax.get_position().width
-            ax2.set_position([pos4.x0, pos1.y0, pos4.width + cbarWidth, pos1.height])
-
-            # Overplot the histograms for the zoomed-in plots.
-            for zoomFactor, zidx, color, linestyle, hatch in zip(
-                zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
-            ):
-                weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
-                histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
-                histValues = ax2.hist(
-                    values[zidx],
-                    bins=bins,
-                    label=histLabel,
-                    color=color,
+            if not plotConfig.publicationStyle:
+                # Compute full-tract histogram and get its bins.
+                # NOTE: `exposure_time` histograms are quantized and look more
+                # bar-like, so they look better with fewer bins.
+                bins = ax2.hist(
+                    values,
+                    bins=nBinsHist,
+                    label="Full Tract",
+                    color=histColors[0],
                     weights=weights,
-                    histtype="step",
-                    linewidth=2,
-                    linestyle=linestyle,
-                    alpha=0.6,
-                )[0]
-                # Fill the area under the step.
-                ax2.fill_between(
-                    bins[:-1],
-                    histValues,
-                    step="post",
-                    color=color,
-                    alpha=0.2,
-                    hatch=hatch,
-                    label="hidden",
+                    alpha=0.7,
+                )[1]
+
+                # Align the histogram (top right panel) with the skyproj plots.
+                pos1 = spf.ax.get_position()  # Top left.
+                pos4 = sp.ax.get_position()  # Bottom right.
+                cbarWidth = cbar.ax.get_position().height / colorBarAspect
+                # NOTE: cbarWidth != cbar.ax.get_position().width
+                ax2.set_position([pos4.x0, pos1.y0, pos4.width + cbarWidth, pos1.height])
+
+                # Overplot the histograms for the zoomed-in plots.
+                for zoomFactor, zidx, color, linestyle, hatch in zip(
+                    zoomFactors, zoomIdx, histColors[1:], ["solid", "dotted"], ["//", "xxxx"]
+                ):
+                    weights = np.ones_like(values[zidx]) / np.histogram(values[zidx], bins=bins)[0].max()
+                    histLabel = f"{self.prettyPrintFloat(zoomFactor)}x Zoom"
+                    histValues = ax2.hist(
+                        values[zidx],
+                        bins=bins,
+                        label=histLabel,
+                        color=color,
+                        weights=weights,
+                        histtype="step",
+                        linewidth=2,
+                        linestyle=linestyle,
+                        alpha=0.6,
+                    )[0]
+                    # Fill the area under the step.
+                    ax2.fill_between(
+                        bins[:-1],
+                        histValues,
+                        step="post",
+                        color=color,
+                        alpha=0.2,
+                        hatch=hatch,
+                        label="hidden",
+                    )
+
+                # Set labels and legend.
+                xlabel = plotInfo["property"]
+                if plotInfo["unit"] not in ["dimensionless", "N/A"]:
+                    xlabel += f" ({plotInfo['unit']})"
+                xtext = ax2.set_xlabel(xlabel, labelpad=labelpad)
+                ytext = ax2.set_ylabel("Normalized Count", labelpad=labelpad)
+                xtext.set_fontsize(rcparams["axes.labelsize"])
+                ytext.set_fontsize(rcparams["axes.labelsize"])
+
+                # Get handles and labels from the axis.
+                handles, labels = ax2.get_legend_handles_labels()
+
+                # Add a legend with custom handler that combines the handle
+                # pairs for the zoomed-in cases.
+                handles = [handles[0], (handles[1], handles[2]), (handles[3], handles[4])]
+                while "hidden" in labels:
+                    labels.remove("hidden")
+                legend = ax2.legend(
+                    handles,
+                    labels,
+                    handler_map={tuple: CustomHandler()},
+                    loc="best",
+                    frameon=False,
+                    fontsize=15,
                 )
 
-            # Set labels and legend.
-            xlabel = plotInfo["property"]
-            if plotInfo["unit"] not in ["dimensionless", "N/A"]:
-                xlabel += f" [{plotInfo['unit']}]"
-            ax2.set_xlabel(xlabel)
-            ax2.set_ylabel("Normalized Count")
+                for line, text in zip(handles, legend.get_texts()):
+                    if isinstance(line, tuple):
+                        # Use the first handle to get the color.
+                        line = line[0]
+                    color = line.get_edgecolor() if line.get_facecolor()[-1] == 0 else line.get_facecolor()
+                    text.set_color(color)
 
-            # Get handles and labels from the axis.
-            handles, labels = ax2.get_legend_handles_labels()
+                # Add extra info to plotInfo.
+                plotInfo["projection"] = "Gnomonic"
+                plotInfo["nside"] = mapData.nside_sparse
+                plotInfo["valid_area"] = mapData.get_valid_area()
 
-            # Add a legend with custom handler that combines the handle
-            # pairs for the zoomed-in cases.
-            handles = [handles[0], (handles[1], handles[2]), (handles[3], handles[4])]
-            while "hidden" in labels:
-                labels.remove("hidden")
-            legend = ax2.legend(
-                handles,
-                labels,
-                handler_map={tuple: CustomHandler()},
-                loc="best",
-                frameon=False,
-                fontsize=15,
-            )
-
-            for line, text in zip(handles, legend.get_texts()):
-                if isinstance(line, tuple):
-                    # Use the first handle to get the color.
-                    line = line[0]
-                color = line.get_edgecolor() if line.get_facecolor()[-1] == 0 else line.get_facecolor()
-                text.set_color(color)
-
-            # Add extra info to plotInfo.
-            plotInfo["projection"] = "Gnomonic"
-            plotInfo["nside"] = mapData.nside_sparse
-            plotInfo["valid_area"] = mapData.get_valid_area()
-
-            if not plotConfig.publicationStyle:
                 # Add useful information to the plot.
                 self.addPlotInfo(fig, plotInfo, toolName)
+                style = ""
+            else:
+                style = "publication-style "
+                fig.suptitle(
+                    f"{plotInfo['description']} {plotInfo['operation']} map",
+                    fontsize=18.5,
+                    ha="center",
+                    va="top",
+                    y=0.985,
+                )
+                fig.text(
+                    0.5,
+                    0.925,
+                    f"Tract: {plotInfo['tract']}, Band: {plotInfo['band']}, Coadd: {plotInfo['coaddName']}",
+                    ha="center",
+                    fontsize=15.5,
+                )
 
             _LOG.info(
-                f"Made per-tract property map plot for dataset type '{toolName}', "
+                f"Made {style}per-tract property map plot for dataset type '{toolName}', "
                 f"tract: {plotInfo['tract']}, band: '{plotInfo['band']}'."
             )
 
@@ -748,6 +830,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
         """
 
         set_rubin_plotstyle()
+
         # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.healSparsePropertyMap.
@@ -775,8 +858,9 @@ class SurveyWidePropertyMapPlot(PlotAction):
             fig = make_figure(figsize=(19, 7))
             ax = fig.add_subplot(111)
 
-            # Leave some room at the top for plotInfo.
-            fig.subplots_adjust(left=0.072, right=0.945, top=0.55)
+            if not plotConfig.publicationStyle:
+                # Leave some room at the top for plotInfo.
+                fig.subplots_adjust(left=0.072, right=0.945, top=0.55)
 
             # Get the values for the valid pixels of the full tract.
             values = mapData[mapData.valid_pixels]
@@ -827,25 +911,40 @@ class SurveyWidePropertyMapPlot(PlotAction):
                 .replace("E2", "e2")
             )
 
+            # Handle unit renaming.
+            if plotInfo["unit"] in unitRenameDict:
+                plotInfo["unit"] = unitRenameDict[plotInfo["unit"]]
+
             sp = getattr(skyproj, f"{plotConfig.projection}Skyproj")(ax=ax, **plotConfig.projectionKwargs)
+
+            colorbarKwargs = dict(plotConfig.colorbarKwargs)
+            if plotConfig.publicationStyle:
+                colorbarKwargs["cmap"] = "viridis"
+                rasterized = False
+            else:
+                colorbarKwargs["cmap"] = colorbarKwargs.get("cmap", "viridis")
+                rasterized = True  # Plot with rasterized graphics.
+
             # Work around skyproj bug that will fail to zoom on empty map.
             if mapData.n_valid == 0:
                 if plotConfig.autozoom:
                     _LOG.warning("No valid pixels found in the map. Auto zooming is disabled.")
-                sp.draw_hspmap(mapData, zoom=False)
+                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"], rasterized=rasterized)
             else:
-                sp.draw_hspmap(mapData, zoom=plotConfig.autozoom)
-            sp.ax.set_xlabel("RA")
-            sp.ax.set_ylabel("Dec")
+                sp.draw_hspmap(
+                    mapData, zoom=plotConfig.autozoom, cmap=colorbarKwargs["cmap"], rasterized=rasterized
+                )
+            sp.ax.set_xlabel("R.A.")
+            sp.ax.set_ylabel("Dec.")
 
             # In the below, colorbarKwargs takes precedence over hardcoded
             # arguments in case of conflict.
-            cbar = sp.draw_colorbar(**{"location": "top", "pad": 0.2, **plotConfig.colorbarKwargs})
+            cbar = sp.draw_colorbar(**{"location": "top", "pad": 0.2, **colorbarKwargs})
             cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-            unit = f" [{plotInfo['unit']}]" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
+            unit = f" ({plotInfo['unit']})" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
             cbarText = f"{plotInfo['property']}{unit}"
-            cbarLoc = plotConfig.colorbarKwargs["location"]
-            cbarOrientation = plotConfig.colorbarKwargs.get("orientation", None)
+            cbarLoc = colorbarKwargs["location"]
+            cbarOrientation = colorbarKwargs.get("orientation", None)
             if cbarOrientation is None:
                 cbarOrientation = "vertical" if cbarLoc in ["right", "left"] else "horizontal"
             addTextToColorbar(cbar, cbarText, color="#265D40", fontsize=16, orientation=cbarOrientation)

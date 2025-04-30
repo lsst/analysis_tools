@@ -53,7 +53,7 @@ tasks:
       atools.sersicSizeVsSersicMag.config_moments.xx: "reff_x"
       atools.sersicSizeVsSersicMag.config_moments.yy: "reff_y"
       atools.sersicSizeVsSersicMag.config_moments.xy: "rho"
-      atools.sersicSizeVsSersicMag.is_covariance: False
+      atools.sersicSizeVsSersicMag.is_covariance: false
       atools.sersicSizeVsSersicMag.mag_x: "sersic_err"
       atools.sersicSizeVsSersicMag.size_type: "determinantRadius"
       atools.sersicSizeVsSersicMag.size_y: "sersic"
@@ -116,6 +116,7 @@ tasks:
       projectionKwargs:
         celestial: true
         gridlines: true
+        min_lon_ticklabel_delta: 0.12
       colorbarKwargs:
         cmap: viridis
       # The entries in the 'atools' namespace must exactly match the dataset types.

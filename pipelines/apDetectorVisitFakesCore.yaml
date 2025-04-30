@@ -4,7 +4,6 @@ parameters:
   # Note that these parameter names are shared with ApPipe, and are overwritten
   # by changes in the values there.
   coaddName: goodSeeing
-  fakesType: 'fakes_'
 
 tasks:
   analyzeDiaFakesDetectorVisitCore:
@@ -43,6 +42,7 @@ tasks:
       atools.numFoundFakesDiaMag24t26Metric.magMin: 24
       atools.numFoundFakesDiaMag24t26Metric.magMax: 26
       connections.outputName: diaFakesDetectorVisitCore
+      connections.data: "fakes_{coaddName}Diff_matchDiaSrc"
       python: |
         from lsst.analysis.tools.atools import FractionFoundFakesDiaSnrMetric
         from lsst.analysis.tools.atools import FractionFoundFakesDiaMagMetric

@@ -201,6 +201,17 @@ class ScatterPlotWithTwoHists(PlotAction):
         doc="Add a summary plot to the figure?",
         default=True,
     )
+    xHistMaxLabels = Field[int](
+        doc="Maximum number of labels for ticks on the x-axis marginal histogram",
+        default=3,
+        check=lambda x: x >= 2,
+    )
+    yHistMaxLabels = Field[int](
+        doc="Maximum number of labels for ticks on the y-axis marginal histogram",
+        default=3,
+        check=lambda x: x >= 2,
+    )
+
     suffix_x = Field[str](doc="Suffix for all x-axis action inputs", optional=True, default="")
     suffix_y = Field[str](doc="Suffix for all y-axis action inputs", optional=True, default="")
     suffix_stat = Field[str](doc="Suffix for all binned statistic action inputs", optional=True, default="")
@@ -836,7 +847,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
             topHist.tick_params(labelsize=8)
 
-        # Side histogram
+        self._modifyHistogramTicks(topHist, do_x=False, max_labels=self.xHistMaxLabels)
 
     def _makeSideHistogram(
         self,
@@ -917,6 +928,8 @@ class ScatterPlotWithTwoHists(PlotAction):
 
         sideHist.axes.get_yaxis().set_visible(False)
         sideHist.set_xlabel("Count", fontsize=10)
+        self._modifyHistogramTicks(sideHist, do_x=True, max_labels=self.yHistMaxLabels)
+
         if not self.publicationStyle:
             sideHist.tick_params(labelsize=8)
         if self.plot2DHist and histIm is not None:
@@ -935,3 +948,12 @@ class ScatterPlotWithTwoHists(PlotAction):
                 fontsize=10,
             )
             text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+
+    def _modifyHistogramTicks(self, histogram, do_x: bool, max_labels: int):
+        axis = histogram.get_xaxis() if do_x else histogram.get_yaxis()
+        labels = axis.get_ticklabels()
+        if (n_labels := len(labels)) > max_labels:
+            labels_new = [""] * n_labels
+            for idx_fill in np.round(np.linspace(1, n_labels - 1, max_labels)).astype(int):
+                labels_new[idx_fill] = labels[idx_fill]
+            axis.set_ticks(histogram.get_xticks() if do_x else histogram.get_yticks(), labels_new)

@@ -49,6 +49,9 @@ from ...interfaces import KeyedData, PlotAction
 
 _LOG = logging.getLogger(__name__)
 
+# Holds unit renames to match style guidelines: {"old_unit": "new_unit"}.
+unitRenameDict = {"mag(AB)": r"$\rm mag_{AB}$"}
+
 
 def getZoomedExtent(fullExtent, n):
     """Get zoomed extent centered on the original full plot.
@@ -356,9 +359,6 @@ class PerTractPropertyMapPlot(PlotAction):
 
         set_rubin_plotstyle()
 
-        # Renames {"old": "new"} to follow the guidelines on units and styles.
-        unitRenameDict = {"mag(AB)": r"$\rm mag_{AB}$"}
-
         # 'plotName' by default is constructed from the attribute specified in
         # 'atools.<attribute>' in the pipeline YAML. If it is explicitly
         # set in `~lsst.analysis.tools.atools.propertyMap.PropertyMapTool`,
@@ -655,7 +655,7 @@ class PerTractPropertyMapPlot(PlotAction):
                 # Set labels and legend.
                 xlabel = plotInfo["property"]
                 if plotInfo["unit"] not in ["dimensionless", "N/A"]:
-                    xlabel += f" [{plotInfo['unit']}]"
+                    xlabel += f" ({plotInfo['unit']})"
                 xtext = ax2.set_xlabel(xlabel, labelpad=labelpad)
                 ytext = ax2.set_ylabel("Normalized Count", labelpad=labelpad)
                 xtext.set_fontsize(rcparams["axes.labelsize"])
@@ -911,6 +911,10 @@ class SurveyWidePropertyMapPlot(PlotAction):
                 .replace("E2", "e2")
             )
 
+            # Handle unit renaming.
+            if plotInfo["unit"] in unitRenameDict:
+                plotInfo["unit"] = unitRenameDict[plotInfo["unit"]]
+
             sp = getattr(skyproj, f"{plotConfig.projection}Skyproj")(ax=ax, **plotConfig.projectionKwargs)
 
             colorbarKwargs = dict(plotConfig.colorbarKwargs)
@@ -937,7 +941,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
             # arguments in case of conflict.
             cbar = sp.draw_colorbar(**{"location": "top", "pad": 0.2, **colorbarKwargs})
             cbar.ax.tick_params(labelsize=colorbarTickLabelSize)
-            unit = f" [{plotInfo['unit']}]" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
+            unit = f" ({plotInfo['unit']})" if plotInfo["unit"] not in ["dimensionless", "N/A"] else ""
             cbarText = f"{plotInfo['property']}{unit}"
             cbarLoc = colorbarKwargs["location"]
             cbarOrientation = colorbarKwargs.get("orientation", None)

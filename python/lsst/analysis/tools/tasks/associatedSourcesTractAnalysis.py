@@ -294,7 +294,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         names = self.collectInputNames()
         names |= {"sourceId", "coord_ra", "coord_dec"}
         for item in ["obj_index", "isolated_star_id"]:
-            names.remove(item)
+            if item in names:
+                names.remove(item)
 
         sourceCatalogs = []
         for handle in inputs["sourceCatalogs"]:

@@ -666,8 +666,16 @@ class ScatterPlotWithTwoHists(PlotAction):
                     fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
+                    extent = [xLims[0], xLims[1], self.yLims[0], self.yLims[1]] if self.yLims else None
                     histIm = ax.hexbin(
-                        xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3, edgecolors=None
+                        xs[inside],
+                        ys[inside],
+                        gridsize=75,
+                        extent=extent,
+                        cmap=cmap,
+                        mincnt=1,
+                        zorder=-3,
+                        edgecolors=None,
                     )
                 else:
                     ax.plot(xs[inside], ys[inside], ".", ms=3, alpha=0.2, mfc=color, mec=color, zorder=-1)

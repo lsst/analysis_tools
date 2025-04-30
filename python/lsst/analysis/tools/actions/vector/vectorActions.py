@@ -372,7 +372,7 @@ class PerGroupStatistic(VectorAction):
     by pandas DataFrameGroupBy.aggregate passed in as a string function name.
     """
 
-    groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
+    groupKey = Field[str](doc="Column key to use for forming groups", default="isolated_star_id")
     buildAction = ConfigurableActionField[VectorAction](doc="Action to build vector", default=LoadVector)
     func = Field[str](doc="Name of function to be applied per group")
 
@@ -389,7 +389,7 @@ class ResidualWithPerGroupStatistic(VectorAction):
     """Compute residual between individual elements of group and the per-group
     statistic."""
 
-    groupKey = Field[str](doc="Column key to use for forming groups", default="obj_index")
+    groupKey = Field[str](doc="Column key to use for forming groups", default="isolated_star_id")
     buildAction = ConfigurableActionField(doc="Action to build vector", default=LoadVector)
     func = Field[str](doc="Name of function to be applied per group", default="mean")
 

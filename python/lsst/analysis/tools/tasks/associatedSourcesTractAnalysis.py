@@ -45,6 +45,7 @@ class AssociatedSourcesTractAnalysisConnections(
     defaultTemplates={
         "outputName": "isolated_star_presources",
         "associatedSourcesInputName": "isolated_star_presources",
+        "associatedSourceIdsInputName": "isolated_star_presource_associations",
     },
 ):
     sourceCatalogs = ct.Input(
@@ -64,12 +65,21 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument", "skymap", "tract"),
     )
 
+    associatedSourceIds = ct.Input(
+        doc="Table containing unique ids for the associated sources",
+        name="{associatedSourceIdsInputName}",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=("instrument", "skymap", "tract"),
+    )
+
     skyMap = ct.Input(
         doc="Input definition of geometry/bbox and projection/wcs for warped exposures",
         name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
         storageClass="SkyMap",
         dimensions=("skymap",),
     )
+
     camera = ct.PrerequisiteInput(
         doc="Input camera to use for focal plane geometry.",
         name="camera",
@@ -77,6 +87,7 @@ class AssociatedSourcesTractAnalysisConnections(
         dimensions=("instrument",),
         isCalibration=True,
     )
+
     astrometricCorrectionCatalogs = ct.Input(
         doc="Catalog containing proper motion and parallax.",
         name="gbdesAstrometricFit_starCatalog",
@@ -85,6 +96,7 @@ class AssociatedSourcesTractAnalysisConnections(
         multiple=True,
         deferLoad=True,
     )
+
     visitTable = ct.Input(
         doc="Catalog containing visit information.",
         name="visitTable",
@@ -149,6 +161,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             dataId["tract"],
             inputs["sourceCatalogs"],
             inputs["associatedSources"],
+            inputs["associatedSourceIds"],
             inputs["astrometricCorrectionCatalogs"],
             inputs["visitTable"],
         )
@@ -159,16 +172,23 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         tract,
         sourceCatalogs,
         associatedSources,
+        associatedSourceIds,
         astrometricCorrectionCatalogs=None,
         visitTable=None,
     ):
-        """Concatenate source catalogs and join on associated object index."""
+        """Concatenate source catalogs and join on associated source IDs."""
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
         for srcCat in sourceCatalogs:
             DatasetProvenance.strip_provenance_from_flat_dict(srcCat.meta)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
+        DatasetProvenance.strip_provenance_from_flat_dict(associatedSourceIds.meta)
+
+        # associatedSource["obj_index"] refers to the corresponding index (row)
+        # in associatedSourceIds.
+        index = associatedSources["obj_index"]
+        associatedSources["isolated_star_id"] = associatedSourceIds["isolated_star_id"][index]
 
         # Keep only sources with associations
         sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
@@ -273,7 +293,10 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         # Load specified columns from source catalogs
         names = self.collectInputNames()
         names |= {"sourceId", "coord_ra", "coord_dec"}
-        names.remove("obj_index")
+        for item in ["obj_index", "isolated_star_id"]:
+            if item in names:
+                names.remove(item)
+
         sourceCatalogs = []
         for handle in inputs["sourceCatalogs"]:
             sourceCatalogs.append(self.loadData(handle, names))
@@ -296,6 +319,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # TODO: make key used for object index configurable
         inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
+        inputs["associatedSourceIds"] = self.loadData(inputs["associatedSourceIds"], ["isolated_star_id"])
 
         if len(inputs["associatedSources"]) == 0:
             raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")

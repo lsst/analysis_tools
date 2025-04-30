@@ -201,6 +201,10 @@ class ScatterPlotWithTwoHists(PlotAction):
         doc="Add a summary plot to the figure?",
         default=True,
     )
+    histMinimum = Field[float](
+        doc="Minimum value for the histogram count axis",
+        default=0.3,
+    )
     xHistMaxLabels = Field[int](
         doc="Maximum number of labels for ticks on the x-axis marginal histogram",
         default=3,
@@ -967,9 +971,20 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     def _modifyHistogramTicks(self, histogram, do_x: bool, max_labels: int):
         axis = histogram.get_xaxis() if do_x else histogram.get_yaxis()
-        labels = axis.get_ticklabels()
+        limits = list(histogram.get_xlim() if do_x else histogram.get_ylim())
+        ticks = histogram.get_xticks() if do_x else histogram.get_yticks()
+        # Let the minimum be larger then specified if the histogram has large
+        # values everywhere, but cut it down a little so the lowest-valued bin
+        # is still easily visible
+        limits[0] = max(self.histMinimum, 0.9 * limits[0])
+        # Round the upper limit to the nearest power of 10
+        limits[1] = 10 ** (np.ceil(np.log10(limits[1]))) if (limits[1] > 0) else limits[1]
+        # Ignore ticks that are below the minimum value
+        valid = (ticks >= limits[0]) & (ticks <= limits[1])
+        labels = [label for label, _valid in zip(axis.get_ticklabels(), valid) if _valid]
         if (n_labels := len(labels)) > max_labels:
             labels_new = [""] * n_labels
             for idx_fill in np.round(np.linspace(1, n_labels - 1, max_labels)).astype(int):
                 labels_new[idx_fill] = labels[idx_fill]
-            axis.set_ticks(histogram.get_xticks() if do_x else histogram.get_yticks(), labels_new)
+            axis.set_ticks(ticks[valid], labels_new)
+        (histogram.set_xlim if do_x else histogram.set_ylim)(limits)

@@ -49,6 +49,7 @@ class ColumnMagnitudeScatterPlotTestCase(TestCase):
         key_flux = f"{band}_cModelFlux"
 
         data = {
+            "objectId": np.arange(n_good),
             key_flux: flux_meas,
             f"{key_flux}Err": flux_err,
             "detect_isPrimary": np.ones(n_good, dtype=bool),

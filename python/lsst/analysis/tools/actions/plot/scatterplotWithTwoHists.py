@@ -23,6 +23,7 @@ from __future__ import annotations
 
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 
+import math
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.colors
@@ -44,6 +45,7 @@ from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from matplotlib.path import Path
+from matplotlib.ticker import LogFormatterMathtext, NullFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
@@ -163,6 +165,28 @@ class DataTypeDefaults(NamedTuple):
     suffix_xy: str
     color: str
     colormap: matplotlib.colors.Colormap | None
+
+
+class LogFormatterExponentSci(LogFormatterMathtext):
+    """
+    Format values following scientific notation.
+
+    Unlike the matplotlib LogFormatterExponent, this will print near-integer
+    coefficients with a base between 0 and 2 such as 500 as 500 (if base10)
+    or 5e2 otherwise.
+    """
+
+    def _non_decade_format(self, sign_string, base, fx, usetex):
+        """Return string for non-decade locations."""
+        b = float(base)
+        exponent = math.floor(fx)
+        coeff = b ** (fx - exponent)
+        rounded = round(coeff)
+        if math.isclose(coeff, rounded):
+            if (base == "10") and (0 <= exponent <= 3):
+                return f"{sign_string}{rounded}{'0'*int(exponent)}"
+            coeff = rounded
+        return f"{sign_string}{coeff:1.1f}e{exponent}"
 
 
 class ScatterPlotWithTwoHists(PlotAction):
@@ -972,19 +996,33 @@ class ScatterPlotWithTwoHists(PlotAction):
     def _modifyHistogramTicks(self, histogram, do_x: bool, max_labels: int):
         axis = histogram.get_xaxis() if do_x else histogram.get_yaxis()
         limits = list(histogram.get_xlim() if do_x else histogram.get_ylim())
-        ticks = histogram.get_xticks() if do_x else histogram.get_yticks()
+        get_ticks = histogram.get_xticks if do_x else histogram.get_yticks
+        ticks = get_ticks()
         # Let the minimum be larger then specified if the histogram has large
         # values everywhere, but cut it down a little so the lowest-valued bin
         # is still easily visible
         limits[0] = max(self.histMinimum, 0.9 * limits[0])
         # Round the upper limit to the nearest power of 10
         limits[1] = 10 ** (np.ceil(np.log10(limits[1]))) if (limits[1] > 0) else limits[1]
-        # Ignore ticks that are below the minimum value
-        valid = (ticks >= limits[0]) & (ticks <= limits[1])
-        labels = [label for label, _valid in zip(axis.get_ticklabels(), valid) if _valid]
-        if (n_labels := len(labels)) > max_labels:
-            labels_new = [""] * n_labels
-            for idx_fill in np.round(np.linspace(1, n_labels - 1, max_labels)).astype(int):
-                labels_new[idx_fill] = labels[idx_fill]
-            axis.set_ticks(ticks[valid], labels_new)
+        for minor in (False, True):
+            # Ignore ticks that are below the minimum value
+            valid = (ticks >= limits[0]) & (ticks <= limits[1])
+            labels = [label for label, _valid in zip(axis.get_ticklabels(minor=minor), valid) if _valid]
+            if (n_labels := len(labels)) > max_labels:
+                labels_new = [""] * n_labels
+                # Skip the first label if we're not using minor axis labels
+                # This helps avoid overlap with the scatter plot labels
+                for idx_fill in np.round(np.linspace(1 - minor, n_labels - 1, max_labels)).astype(int):
+                    labels_new[idx_fill] = labels[idx_fill]
+                axis.set_ticks(ticks[valid], labels_new)
+            # If there are enough major tick labels, disable minor tick labels
+            if len(labels) >= 2:
+                axis.set_minor_formatter(NullFormatter())
+                break
+            else:
+                axis.set_minor_formatter(
+                    LogFormatterExponentSci(minor_thresholds=(1, self.histMinimum / 10.0))
+                )
+                ticks = get_ticks(minor=True)
+
         (histogram.set_xlim if do_x else histogram.set_ylim)(limits)

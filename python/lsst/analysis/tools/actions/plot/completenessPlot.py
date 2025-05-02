@@ -42,8 +42,8 @@ class CompletenessHist(PlotAction):
     action = ConfigurableActionField[CalcCompletenessHistogramAction](
         doc="Action to compute completeness/purity",
     )
-    mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference magnitude")
-    mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured magnitude")
+    mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference Magnitude")
+    mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured Magnitude")
     percentiles_style = ChoiceField[str](
         doc="Style and locations for completeness threshold percentile labels",
         allowed={
@@ -138,9 +138,9 @@ class CompletenessHist(PlotAction):
         fig, axes = plt.subplots(dpi=300, nrows=n_sub, figsize=(8, 4 * n_sub))
         if not self.show_purity:
             axes = [axes]
-        color_counts = "purple"
-        color_wrong = "firebrick"
-        color_right = "teal"
+        color_counts = "#949494"
+        color_wrong = "#961A45"
+        color_right = "#357BA3"
         max_left = 1.05
 
         band = kwargs.get("band")
@@ -172,15 +172,23 @@ class CompletenessHist(PlotAction):
 
         counts_all = data[names["count"]]
 
+        if self.publicationStyle:
+            lineTuples = (
+                (data[names["completeness"]], False, "k", "Completeness"),
+                (data[names["completeness_bad_match"]], False, color_wrong, "Incorrect Class"),
+            )
+        else:
+            lineTuples = (
+                (data[names["completeness"]], True, "k", "Completeness"),
+                (data[names["completeness_bad_match"]], False, color_wrong, "Incorrect class"),
+                (data[names["completeness_good_match"]], False, color_right, "Correct Class"),
+            )
+
         plots = {
             "Completeness": {
                 "count_type": "Reference",
                 "counts": data[names["count_ref"]],
-                "lines": (
-                    (data[names["completeness"]], True, "k", "completeness"),
-                    (data[names["completeness_bad_match"]], False, color_wrong, "wrong class"),
-                    (data[names["completeness_good_match"]], False, color_right, "right class"),
-                ),
+                "lines": lineTuples,
                 "xlabel": self.mag_ref_label,
             },
         }
@@ -189,9 +197,9 @@ class CompletenessHist(PlotAction):
                 "count_type": "Object",
                 "counts": data[names["count_target"]],
                 "lines": (
-                    (data[names["purity"]], True, "k", None),
-                    (data[names["purity_bad_match"]], False, color_wrong, "wrong class"),
-                    (data[names["purity_good_match"]], False, color_right, "right class"),
+                    (data[names["purity"]], True, "k", "Purity"),
+                    (data[names["purity_bad_match"]], False, color_wrong, "Incorrect class"),
+                    (data[names["purity_good_match"]], False, color_right, "Correct class"),
                 ),
                 "xlabel": self.mag_target_label,
             }
@@ -209,9 +217,10 @@ class CompletenessHist(PlotAction):
                 xticks=np.arange(round(xlim[0]), round(xlim[1])),
                 yticks=np.linspace(0, 1, 11),
             )
-            axes_idx.grid(color="lightgrey", ls="-")
+            if not self.publicationStyle:
+                axes_idx.grid(color="lightgrey", ls="-")
             ax_right = axes_idx.twinx()
-            ax_right.set_ylabel(f"{plot_data['count_type']} counts/mag")
+            ax_right.set_ylabel(f"{plot_data['count_type']} Counts/Magnitude", color="k")
             ax_right.set_yscale("log")
 
             for y, do_err, color, label in plot_data["lines"]:
@@ -226,21 +235,36 @@ class CompletenessHist(PlotAction):
                 )
             y = plot_data["counts"] / interval
             # It should be unusual for np.max(y) to be zero; nonetheless...
+            lines_left, labels_left = axes_idx.get_legend_handles_labels()
             ax_right.step(
                 [x[0] - interval] + list(x) + [x[-1] + interval],
                 [0] + list(y) + [0],
                 where="mid",
                 color=color_counts,
-                label="counts",
+                label="Counts",
             )
+
+            # Force the inputs counts histogram to the back
+            ax_right.zorder = 1
+            axes_idx.zorder = 2
+            axes_idx.patch.set_visible(False)
+
             ax_right.set_ylim(0.999, 10 ** (max_left * np.log10(max(np.nanmax(y), 2))))
             ax_right.tick_params(axis="y", labelcolor=color_counts)
-            lines_left, labels_left = axes_idx.get_legend_handles_labels()
             lines_right, labels_right = ax_right.get_legend_handles_labels()
-            axes_idx.legend(lines_left + lines_right, labels_left + labels_right, loc="lower left", ncol=2)
+
+            axes_idx.legend(
+                lines_left + lines_right,
+                labels_left + labels_right,
+                loc="lower left",
+                ncol=2 + (not self.publicationStyle),
+            )
 
             if idx == 0:
-                percentiles = self.action.config_metrics.completeness_percentiles
+                if not self.publicationStyle:
+                    percentiles = self.action.config_metrics.completeness_percentiles
+                else:
+                    percentiles = [90.0, 50.0]
                 if percentiles:
                     above_plot = self.percentiles_style == "above_plot"
                     below_line = self.percentiles_style == "below_line"
@@ -269,7 +293,7 @@ class CompletenessHist(PlotAction):
                             elif below_line:
                                 axes_idx.text(
                                     mag_completeness - offset,
-                                    pct,
+                                    pct - 0.02,
                                     text,
                                     ha="right",
                                     va="top",

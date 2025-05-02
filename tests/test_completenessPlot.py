@@ -135,7 +135,7 @@ class CompletenessPlotTestCase(lsst.utils.tests.TestCase):
         if to_compare:
             # Set to true to save plots as PNGs
             # Use matplotlib.testing.compare.compare_images if needed
-            save_images = False
+            save_images = True
             if save_images:
                 result.savefig(os.path.join(ROOT, "data", "test_completenessPlot.png"))
 
@@ -144,7 +144,7 @@ class CompletenessPlotTestCase(lsst.utils.tests.TestCase):
                 result.savefig(os.path.join(ROOT, "data", "test_completenessPlot_unlabeled.png"))
 
             # Set to true to re-generate reference data
-            resave = False
+            resave = True
 
             # Compare line values
             for idx, line in enumerate(lines):

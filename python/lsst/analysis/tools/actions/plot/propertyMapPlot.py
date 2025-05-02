@@ -399,7 +399,6 @@ class PerTractPropertyMapPlot(PlotAction):
             cmap = cm.get_cmap(colorbarKwargs["cmap"])
             # Colorbar text color only, not used for any histogram.
             histColors = [cmap(0.1)]
-            rasterized = False
             labelpad = 14
         else:
             zoomFactors = plotConfig.zoomFactors
@@ -407,7 +406,6 @@ class PerTractPropertyMapPlot(PlotAction):
             # Muted green for the full map, and muted red and blue for the two
             # zoomed-in maps. Used for boxes, colorbar texts and histograms.
             histColors = ["#265D40", "#8B0000", "#00008B"]
-            rasterized = True  # Plot with rasterized graphics.
             labelpad = 11
 
         toolName = data["data"].ref.datasetType.name
@@ -520,7 +518,7 @@ class PerTractPropertyMapPlot(PlotAction):
                     **projectionKwargs,
                 )
 
-                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"], rasterized=rasterized)
+                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"])
 
                 sp.ax.set_xlabel("R.A.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
                 sp.ax.set_ylabel("Dec.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
@@ -920,20 +918,16 @@ class SurveyWidePropertyMapPlot(PlotAction):
             colorbarKwargs = dict(plotConfig.colorbarKwargs)
             if plotConfig.publicationStyle:
                 colorbarKwargs["cmap"] = "viridis"
-                rasterized = False
             else:
                 colorbarKwargs["cmap"] = colorbarKwargs.get("cmap", "viridis")
-                rasterized = True  # Plot with rasterized graphics.
 
             # Work around skyproj bug that will fail to zoom on empty map.
             if mapData.n_valid == 0:
                 if plotConfig.autozoom:
                     _LOG.warning("No valid pixels found in the map. Auto zooming is disabled.")
-                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"], rasterized=rasterized)
+                sp.draw_hspmap(mapData, zoom=False, cmap=colorbarKwargs["cmap"])
             else:
-                sp.draw_hspmap(
-                    mapData, zoom=plotConfig.autozoom, cmap=colorbarKwargs["cmap"], rasterized=rasterized
-                )
+                sp.draw_hspmap(mapData, zoom=plotConfig.autozoom, cmap=colorbarKwargs["cmap"])
             sp.ax.set_xlabel("R.A.")
             sp.ax.set_ylabel("Dec.")
 

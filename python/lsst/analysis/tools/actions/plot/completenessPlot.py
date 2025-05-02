@@ -39,6 +39,11 @@ __all__ = ("CompletenessHist",)
 class CompletenessHist(PlotAction):
     """Makes plots of completeness and purity."""
 
+    label_shift = Field[float](
+        doc="Fraction of plot width to shift completeness/purity labels by."
+        "Ignored if percentiles_style is not 'below_line'",
+        default=-0.1,
+    )
     action = ConfigurableActionField[CalcCompletenessHistogramAction](
         doc="Action to compute completeness/purity",
     )
@@ -274,7 +279,7 @@ class CompletenessHist(PlotAction):
                     if above_plot:
                         texts = []
                     elif below_line:
-                        offset = 0.1 * (xlims[1] - xlims[0])
+                        offset = self.label_shift * (xlims[1] - xlims[0])
                     else:
                         raise RuntimeError(f"Unimplemented {self.percentiles_style=}")
                     for pct in percentiles:
@@ -293,7 +298,7 @@ class CompletenessHist(PlotAction):
                                 texts.append(text)
                             elif below_line:
                                 axes_idx.text(
-                                    mag_completeness - offset,
+                                    mag_completeness + offset,
                                     pct - 0.02,
                                     text,
                                     ha="right",

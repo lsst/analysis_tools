@@ -22,11 +22,12 @@
 
 from typing import Mapping
 
-import matplotlib.pyplot as plt
 import numpy as np
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
-from lsst.utils.plotting import set_rubin_plotstyle
+from lsst.utils.plotting import make_figure, set_rubin_plotstyle
+
+# from matplotlib import gridspec
 from matplotlib.figure import Figure
 
 from ...actions.keyedData import CalcCompletenessHistogramAction
@@ -141,9 +142,11 @@ class CompletenessHist(PlotAction):
         # Make plot showing the fraction recovered in magnitude bins
         set_rubin_plotstyle()
         n_sub = 1 + self.show_purity
-        fig, axes = plt.subplots(dpi=300, nrows=n_sub, figsize=(8, 4 * n_sub))
-        if not self.show_purity:
-            axes = [axes]
+        fig = make_figure(dpi=300, figsize=(8, 4 * n_sub))
+        if self.show_purity:
+            axes = (fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2))
+        else:
+            axes = [fig.add_axes([0.1, 0.15, 0.8, 0.75])]
         color_counts = "#949494"
         color_wrong = "#961A45"
         color_right = "#357BA3"
@@ -259,11 +262,12 @@ class CompletenessHist(PlotAction):
             ax_right.tick_params(axis="y", labelcolor=color_counts)
             lines_right, labels_right = ax_right.get_legend_handles_labels()
 
-            axes_idx.legend(
+            # Using fig for legend
+            (axes_idx if self.show_purity else fig).legend(
                 lines_left + lines_right,
                 labels_left + labels_right,
                 loc=self.legendLocation,
-                ncol=2 + (not self.publicationStyle),
+                ncol=3,
             )
 
             if idx == 0:
@@ -312,6 +316,7 @@ class CompletenessHist(PlotAction):
         # Add useful information to the plot
         if not self.publicationStyle:
             addPlotInfo(fig, plotInfo)
-        fig.tight_layout()
-        fig.subplots_adjust(top=0.90)
+        if self.show_purity:
+            fig.tight_layout()
+            fig.subplots_adjust(top=0.90)
         return fig

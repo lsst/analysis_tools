@@ -42,6 +42,7 @@ class CompletenessHist(PlotAction):
     action = ConfigurableActionField[CalcCompletenessHistogramAction](
         doc="Action to compute completeness/purity",
     )
+    legendLocation = Field[str](doc="Legend position within main plot", default="lower left")
     mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference Magnitude")
     mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured Magnitude")
     percentiles_style = ChoiceField[str](
@@ -256,7 +257,7 @@ class CompletenessHist(PlotAction):
             axes_idx.legend(
                 lines_left + lines_right,
                 labels_left + labels_right,
-                loc="lower left",
+                loc=self.legendLocation,
                 ncol=2 + (not self.publicationStyle),
             )
 

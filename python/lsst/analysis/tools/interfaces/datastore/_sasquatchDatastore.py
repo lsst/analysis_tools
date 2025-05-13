@@ -26,7 +26,7 @@ __all__ = ("SasquatchDatastore",)
 """Sasquatch datastore"""
 import logging
 import os
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
@@ -182,8 +182,11 @@ class SasquatchDatastore(GenericBaseDatastore):
         log.debug("Sasquatch datastore does not support trashing skipping %s", ref)
         raise FileNotFoundError()
 
-    def emptyTrash(self, ignore_errors: bool = True) -> None:
+    def emptyTrash(
+        self, ignore_errors: bool = True, refs: Collection[DatasetRef] | None = None, dry_run: bool = False
+    ) -> set[ResourcePath]:
         log.debug("Sasquatch datastore does not support trash, nothing to empty")
+        return set()
 
     def forget(self, ref: Iterable[DatasetRef]) -> None:
         pass

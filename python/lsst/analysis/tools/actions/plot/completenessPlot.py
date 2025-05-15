@@ -48,6 +48,13 @@ class CompletenessHist(PlotAction):
     action = ConfigurableActionField[CalcCompletenessHistogramAction](
         doc="Action to compute completeness/purity",
     )
+    color_counts = Field[str](doc="Color for the line showing object counts", default="#029E73")
+    color_right = Field[str](
+        doc="Color for the line showing the correctly classified fraction", default="#949494"
+    )
+    color_wrong = Field[str](
+        doc="Color for the line showing the wrongly classified fraction", default="#DE8F05"
+    )
     legendLocation = Field[str](doc="Legend position within main plot", default="lower left")
     mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference Magnitude")
     mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured Magnitude")
@@ -147,9 +154,6 @@ class CompletenessHist(PlotAction):
             axes = (fig.add_subplot(2, 1, 1), fig.add_subplot(2, 1, 2))
         else:
             axes = [fig.add_axes([0.1, 0.15, 0.8, 0.75])]
-        color_counts = "#949494"
-        color_wrong = "#961A45"
-        color_right = "#357BA3"
         max_left = 1.05
 
         band = kwargs.get("band")
@@ -184,13 +188,13 @@ class CompletenessHist(PlotAction):
         if self.publicationStyle:
             lineTuples = (
                 (data[names["completeness"]], False, "k", "Completeness"),
-                (data[names["completeness_bad_match"]], False, color_wrong, "Incorrect Class"),
+                (data[names["completeness_bad_match"]], False, self.color_wrong, "Incorrect Class"),
             )
         else:
             lineTuples = (
                 (data[names["completeness"]], True, "k", "Completeness"),
-                (data[names["completeness_bad_match"]], False, color_wrong, "Incorrect class"),
-                (data[names["completeness_good_match"]], False, color_right, "Correct Class"),
+                (data[names["completeness_bad_match"]], False, self.color_wrong, "Incorrect class"),
+                (data[names["completeness_good_match"]], False, self.color_right, "Correct Class"),
             )
 
         plots = {
@@ -207,8 +211,8 @@ class CompletenessHist(PlotAction):
                 "counts": data[names["count_target"]],
                 "lines": (
                     (data[names["purity"]], True, "k", "Purity"),
-                    (data[names["purity_bad_match"]], False, color_wrong, "Incorrect class"),
-                    (data[names["purity_good_match"]], False, color_right, "Correct class"),
+                    (data[names["purity_bad_match"]], False, self.color_wrong, "Incorrect class"),
+                    (data[names["purity_good_match"]], False, self.color_right, "Correct class"),
                 ),
                 "xlabel": self.mag_target_label,
             }
@@ -249,7 +253,7 @@ class CompletenessHist(PlotAction):
                 [x[0] - interval] + list(x) + [x[-1] + interval],
                 [0] + list(y) + [0],
                 where="mid",
-                color=color_counts,
+                color=self.color_counts,
                 label="Counts",
             )
 
@@ -259,7 +263,7 @@ class CompletenessHist(PlotAction):
             axes_idx.patch.set_visible(False)
 
             ax_right.set_ylim(0.999, 10 ** (max_left * np.log10(max(np.nanmax(y), 2))))
-            ax_right.tick_params(axis="y", labelcolor=color_counts)
+            ax_right.tick_params(axis="y", labelcolor=self.color_counts)
             lines_right, labels_right = ax_right.get_legend_handles_labels()
 
             # Using fig for legend

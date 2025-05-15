@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("PanelConfig",)
+__all__ = ("PanelConfig", "sortAllArrays")
 
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 

@@ -51,6 +51,7 @@ import astropy.units as u
 import lsst.pex.config as pexConfig
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
+from lsst.utils.plotting.publication_plots import galaxies_color, stars_color
 
 from ..actions.config import MagnitudeBinConfig
 from ..actions.keyedData import (
@@ -660,6 +661,11 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                 )
 
                 if self.make_plots:
+                    overrides = {}
+                    if name_type == self.type_galaxies:
+                        overrides["color_counts"] = galaxies_color()
+                    elif name_type == self.type_stars:
+                        overrides["color_counts"] = stars_color()
                     setattr(
                         self.produce.plot.actions,
                         object_class,

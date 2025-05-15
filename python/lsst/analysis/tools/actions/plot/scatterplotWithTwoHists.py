@@ -830,7 +830,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             framealpha=0.9,
             edgecolor="k",
             borderpad=0.4,
-            handlelength=1,
+            handlelength=3,
         )
 
         # Add axes labels

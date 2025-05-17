@@ -886,7 +886,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                 label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
-        topHist.set_ylabel("Count", fontsize=10)
+        topHist.set_ylabel("Count", fontsize=10 + 4 * self.publicationStyle)
         if not self.publicationStyle:
             topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
             topHist.tick_params(labelsize=8)
@@ -971,7 +971,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         sideHist.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         sideHist.axes.get_yaxis().set_visible(False)
-        sideHist.set_xlabel("Count", fontsize=10)
+        sideHist.set_xlabel("Count", fontsize=10 + 4 * self.publicationStyle)
         self._modifyHistogramTicks(sideHist, do_x=True, max_labels=self.yHistMaxLabels)
 
         if not self.publicationStyle:

@@ -39,7 +39,7 @@ class VerifyBiasResultsAnalysisConnections(
         doc="verifyBiasResults",
         name="verifyBiasResults",
         storageClass="ArrowAstropy",
-        dimensions=("instrument",),
+        dimensions=("instrument","day_obs"),
         deferLoad=True,
     )
 

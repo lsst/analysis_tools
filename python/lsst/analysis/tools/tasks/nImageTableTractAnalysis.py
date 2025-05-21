@@ -36,10 +36,10 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class NImageTableTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "nImageTable_tract", "outputName": "nImageTable_tract"},
+    defaultTemplates={"inputName": "template_coadd_n_image_table", "outputName": "template_coadd_metric"},
 ):
     data = cT.Input(
-        doc="Table with n_image stats",
+        doc="Table with n_image stats.",
         name="{inputName}",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
@@ -50,7 +50,7 @@ class NImageTableTractAnalysisConnections(
 class NImageTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=NImageTableTractAnalysisConnections
 ):
-    load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap", default=True)
+    load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap.", default=True)
 
 
 class NImageTableTractAnalysisTask(AnalysisPipelineTask):

@@ -443,15 +443,16 @@ class IsMatchedObjectSameClass(VectorAction):
         yield self.key_is_target_galaxy, Vector
         yield self.key_is_target_star, Vector
 
+
 class UniqueAction(VectorAction):
-   """Return the unique items from a vector"""
+   """Return the unique items from a vector."""
 
    vectorKey = Field[str](doc="The vector key to return the unique values from.")
 
    def __call__(self, data: KeyedData, **kwargs) -> Vector:
        mask = kwargs.get("mask")
-
-       return np.array(set(data[vectorKey][mask]))
+       result = data[self.vectorKey][mask]
+       return np.array(set(list(result[0])))
 
    def getInputSchema(self) -> KeyedDataSchema:
        yield self.vectorKey, Vector

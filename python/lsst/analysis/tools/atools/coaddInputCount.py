@@ -25,7 +25,7 @@ __all__ = ("CoaddInputCount", "CoaddQualityCheck",)
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
-from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector
+from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector, UniqueAction
 from ..interfaces import AnalysisTool
 
 from lsst.pex.config import ListField
@@ -104,8 +104,8 @@ class CoaddQualityCheck(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.buildActions.patches = LoadVector()
-        self.process.buildActions.patches.vectorKey = "patch"
+        self.process.buildActions.patch = LoadVector()
+        self.process.buildActions.patch.vectorKey = "patch"
 
         self.process.buildActions.bands = LoadVector()
         self.process.buildActions.bands.vectorKey = "band"
@@ -122,4 +122,4 @@ class CoaddQualityCheck(AnalysisTool):
                 "median": f"nImage_threshold_{threshold}_median",
             }
 
-        self.process.calculateActions.setPatches = uniqueAction(self.vectorKey="patches")
+        self.process.calculateActions.setPatch = UniqueAction(vectorKey="patch")

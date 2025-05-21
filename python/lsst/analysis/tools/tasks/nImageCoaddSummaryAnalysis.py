@@ -37,11 +37,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class NImageCoaddSummaryAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("tract", "band", "skymap"),
-    defaultTemplates={"inputName": "goodSeeingCoadd_nImage", "outputName": "nImageTable"},
+    dimensions=("tract", "skymap"),
+    defaultTemplates={"inputName": "template_coadd_n_image", "outputName": "template_coadd_n_image_table"},
 ):
     data = cT.Input(
-        doc="Number of input images per pixel summary statistics to load from the butler",
+        doc="Number of input images per pixel summary statistics to load from the butler.",
         name="{inputName}",
         storageClass="ImageU",
         multiple=True,
@@ -50,8 +50,8 @@ class NImageCoaddSummaryAnalysisConnections(
     )
 
     statTable = cT.Output(
-        doc="Table with n_image stats",
-        name="{outputName}_tract",
+        doc="Table with n_image stats.",
+        name="{outputName}",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
     )

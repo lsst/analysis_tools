@@ -105,6 +105,8 @@ tasks:
         nBadPixelsDetectedNegative: ct
         nUnmergedDiaSources: ct
         nMergedDiaSources: ct
+        residualFootprintRatioMean: ''
+        residualFootprintRatioStdev: ''
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   analyzeLoadDiaCatalogsMetrics:

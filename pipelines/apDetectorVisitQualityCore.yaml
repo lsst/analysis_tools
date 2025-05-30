@@ -5,7 +5,6 @@ parameters:
   # Note that these parameter names are shared with ApPipe, and are overwritten
   # by changes in the values there.
   coaddName: goodSeeing
-  fakesType: ''
 
 tasks:
   analyzeAssociatedDiaSourceTable:
@@ -13,8 +12,7 @@ tasks:
     config:
       connections.outputName: assocDiaSrcCore
       connections.coaddName: parameters.coaddName
-      connections.fakesType: parameters.fakesType
-      connections.data: "{fakesType}dia_source_apdb"
+      connections.data: dia_source_apdb
       atools.numDiaSources: NumDiaSourcesMetric
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numDiaSourcesAll
@@ -47,9 +45,8 @@ tasks:
     class: lsst.analysis.tools.tasks.TrailedDiaSrcDetectorVisitAnalysisTask
     config:
       connections.outputName: trailedDiaSrcCore
-      connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
-      connections.data: "{fakesType}long_trailed_source_detector"
+      connections.data: long_trailed_source_detector
       # Counts up the number of dia sources in the trailed table.
       atools.numDiaSourcesAll: NumDiaSourcesSelectionMetric
       atools.numDiaSourcesAll.metricName: numTrailedDiaSrc
@@ -172,9 +169,8 @@ tasks:
     class: lsst.analysis.tools.tasks.DiffimDetectorVisitSpatiallySampledPlotsTask
     config:
       connections.outputName: diffimPlots
-      connections.fakesType: parameters.fakesType
       connections.coaddName: parameters.coaddName
-      connections.data: "{fakesType}difference_image_metrics"
+      connections.data: difference_image_metrics
       atools.dipoleQuiver: DiffimSpatialMetricsQuiverPlot
       atools.dipoleQuiver.angleName: dipole_direction
       atools.dipoleQuiver.lengthName: dipole_separation

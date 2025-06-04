@@ -28,7 +28,6 @@ __all__ = (
     "CoaddDepthSummaryAnalysisTask",
 )
 from lsst.pex.config import ListField
-from lsst.pipe.base import InputQuantizedConnection, OutputQuantizedConnection, QuantumContext
 from lsst.pipe.base import connectionTypes as cT
 from lsst.pipe.base import Struct
 
@@ -38,11 +37,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class CoaddDepthSummaryAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "template_coadd_n_image", 
+    defaultTemplates={"inputName": "template_coadd_n_image",  # TODO this should be {coaddName} with a default
                       "outputName": "coadd_depth_table"},
 ):
     data = cT.Input(
-        doc="Number of input images per pixel summary statistics to load from the butler.",
+        doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
         name="{inputName}",
         storageClass="ImageU",
         multiple=True,
@@ -51,24 +50,25 @@ class CoaddDepthSummaryAnalysisConnections(
     )
 
     statTable = cT.Output(
-        doc="Table with n_image stats.",
+        doc="Table with resulting n_image based depth statistics.",
         name="{outputName}",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
     )
 
 
-class CoaddDepthSummaryAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CoaddDepthSummaryAnalysisConnections):
+class CoaddDepthSummaryAnalysisConfig(AnalysisBaseConfig,
+                                      pipelineConnections=CoaddDepthSummaryAnalysisConnections):
     threshold_list = ListField(
         default=[1, 3, 5, 12],
         dtype=int,
-        doc="The n_image pixel value thresholds in ascending order.",
+        doc="The n_image pixel value thresholds, in ascending order.",
     )
 
     quantile_list = ListField(
         default=[5, 10, 25, 50, 75, 90, 95],
         dtype=int,
-        doc="The quantiles to calculate for in ascending order.",
+        doc="The percentiles at which to compute n_image values, in ascending order.",
     )
 
 
@@ -80,7 +80,7 @@ class CoaddDepthSummaryAnalysisTask(AnalysisPipelineTask):
         inputs = butlerQC.get(inputRefs)
         outputs = self.run(inputs)
         butlerQC.put(outputs, outputRefs)
-    
+
     def run(self, inputs):
         t = Table()
         bands = []
@@ -113,7 +113,8 @@ class CoaddDepthSummaryAnalysisTask(AnalysisPipelineTask):
             quantile = list(np.percentile(n_image.array, q=self.config.quantile_list))
             quantiles.append(quantile)
 
-        threshold_col_names = [f"depth_above_threshold_{threshold}" for threshold in self.config.threshold_list]
+        threshold_col_names = [f"depth_above_threshold_{threshold}"
+                               for threshold in self.config.threshold_list]
         quantile_col_names = [f"depth_{q}_percentile" for q in self.config.quantile_list]
 
         data = [patches, bands, medians, stdevs] + list(zip(*stats)) + list(zip(*quantiles))

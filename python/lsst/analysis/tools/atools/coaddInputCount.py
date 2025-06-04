@@ -32,8 +32,8 @@ from lsst.pex.config import ListField
 
 
 class CoaddInputCount(AnalysisTool):
-    """skyPlot and associated metrics indicating the number
-    of exposures that have gone into creating a coadd.
+    """Metrics and plots pertaining to how many exposures have gone into
+    a coadd. This quantifies depth and typically correlates with quality.
     """
 
     def setDefaults(self):
@@ -81,6 +81,11 @@ class CoaddInputCount(AnalysisTool):
         self.produce.plot.showExtremeOutliers = False
         self.produce.plot.colorbarRange = MinMax()
 
+        # TODO: look at the plot made above and adjust it how we want
+        # for example, what are all the "z" vectorKeys doing?
+
+        # TODO: add a (per-patch) cumulative distribution plot that shows the thresholds and quantiles
+
         # Summary metrics for the whole coadd.
         self.produce.metric.units = {"median": "ct", "sigmaMad": "ct", "mean": "ct"}
         self.produce.metric.newNames = {
@@ -91,7 +96,17 @@ class CoaddInputCount(AnalysisTool):
 
 
 class CoaddQualityCheck(AnalysisTool):
-    """TODO: Describe this thing please.
+    """Compute the percentage of each coadd that has a number of input
+    exposures exceeding a threshold.
+
+    For example, if exactly half of a coadd patch contains 15 overlapping
+    constituent visits and half contains fewer, the value computed for
+    `depth_above_threshold_12` would be 50.
+
+    These values come from the n_image data product, which is an image
+    identical to the coadd but with pixel values of the number of input
+    images instead of flux or counts. n_images are persisted during
+    coadd assembly.
     """
 
     threshold_list = ListField(
@@ -112,13 +127,14 @@ class CoaddQualityCheck(AnalysisTool):
         for threshold in self.threshold_list:
             self.process.buildActions.tract_thresh = LoadVector()
             self.process.buildActions.tract_thresh.vectorKey = f"depth_above_threshold_{threshold}"
-    
+
             self.process.calculateActions.median = MedianAction()
             self.process.calculateActions.median.vectorKey = f"depth_above_threshold_{threshold}"
 
             self.produce.metric.units = {"median": "ct"}
             self.produce.metric.newNames = {
-                "median": f"nImage_threshold_{threshold}_median",
+                "median": f"depth_threshold_{threshold}_median",
             }
+            # TODO: add stdev also
 
         self.process.calculateActions.setPatch = UniqueAction(vectorKey="patch")

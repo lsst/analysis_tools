@@ -28,7 +28,6 @@ __all__ = (
 
 import lsst.pex.config as pexConfig
 from lsst.pipe.base import connectionTypes as cT
-from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -40,7 +39,7 @@ class CoaddDepthTableTractAnalysisConnections(
                       "outputName": "coadd_depth_summary"},
 ):
     data = cT.Input(
-        doc="Table with n_image stats.",
+        doc="Table with coadd depth statistics based on n_image values.",
         name="{inputName}",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),

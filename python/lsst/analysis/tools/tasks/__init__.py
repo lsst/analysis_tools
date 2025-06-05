@@ -7,6 +7,7 @@ from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
 from .coaddDepthSummaryAnalysis import *
+from .coaddDepthSummaryPlot import *
 from .coaddDepthTableTractAnalysis import *
 from .diaFakesDetectorVisitAnalysis import *
 from .diaFakesVisitAnalysis import *

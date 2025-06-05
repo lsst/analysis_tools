@@ -38,6 +38,7 @@ __all__ = (
     "VisitPlotFlagSelector",
     "ThresholdSelector",
     "BandSelector",
+    "PatchSelector",
     "MatchingFlagSelector",
     "MagSelector",
     "InjectedClassSelector",
@@ -548,6 +549,37 @@ class BandSelector(VectorAction):
             mask = np.isin(data[self.vectorKey], bands).flatten()
         else:
             # No band selection is applied, i.e., select all rows
+            mask = np.full(len(data[self.vectorKey]), True)  # type: ignore
+        return cast(Vector, mask)
+
+
+class PatchSelector(VectorAction):
+    """Makes a mask for sources observed in a specified set of patches."""
+
+    vectorKey = Field[str](doc="Key of the Vector which defines the patch.", default="patch")
+    patches = ListField[str](
+        doc="The patches to select. `None` indicates no patch selection applied.",
+        default=[],
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector),)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        patches: Optional[tuple[str, ...]]
+        match kwargs:
+            case {"patch": patch} if not self.patches and self.patches == []:
+                patches = (patch,)
+            case {"patches": patches} if not self.patches and self.patches == []:
+                patches = patches
+            case _ if self.patches:
+                patches = tuple(self.patches)
+            case _:
+                patches = None
+        if patches:
+            mask = np.isin(data[self.vectorKey], patches).flatten()
+        else:
+            # No patch selection is applied, i.e., select all rows
             mask = np.full(len(data[self.vectorKey]), True)  # type: ignore
         return cast(Vector, mask)
 

@@ -6,7 +6,12 @@ tasks:
   coaddDepthMetricTract:
     class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
     config:
-      atools.coaddQualityCheck: CoaddQualityCheck
+      atools.coadd_depth_summary_metrics: CoaddQualityCheck
       python: |
-        from lsst.analysis.tools.atools import *
-        from lsst.analysis.tools.contexts import *
+        from lsst.analysis.tools.atools import CoaddQualityCheck
+  coaddDepthPlot:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
+    config:
+      atools.coadd_depth_per_pixel: CoaddQualityPlot
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityPlot

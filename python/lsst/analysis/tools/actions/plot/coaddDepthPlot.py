@@ -24,25 +24,20 @@ from __future__ import annotations
 __all__ = ("CoaddDepthPlot",)
 
 from typing import TYPE_CHECKING, Any, Mapping
-
-import math
+import numpy as np
 import matplotlib.pyplot as plt
-
-from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError, ListField
-from lsst.utils.plotting import make_figure, publication_plots, set_rubin_plotstyle
-bands_dict = publication_plots.get_band_dicts()
-
-from astropy.table import unique, Table
-from matplotlib.ticker import SymmetricalLogLocator
 from matplotlib.figure import Figure
 
+from lsst.utils.plotting import publication_plots
+
 from ...interfaces import PlotAction, Vector
+from ..vector import BandSelector, PatchSelector, UniqueAction
 from .plotUtils import addPlotInfo
 
 if TYPE_CHECKING:
-    from matplotlib.figure import Figure
-
     from ...interfaces import KeyedData, KeyedDataSchema
+
+bands_dict = publication_plots.get_band_dicts()
 
 
 class CoaddDepthPlot(PlotAction):
@@ -53,7 +48,6 @@ class CoaddDepthPlot(PlotAction):
     #     default=[5, 10, 25, 50, 75, 90, 95],
     #     dtype=int,
     # )
-        
 
     def setDefaults(self):
         super().setDefaults()
@@ -64,7 +58,7 @@ class CoaddDepthPlot(PlotAction):
         base.append(("band", Vector))
         base.append(("depth", Vector))
         base.append(("pixels", Vector))
-        
+
         # base.append(("q_band", Vector))
         # base.append(("q_depth", Vector))
         # base.append(("quantiles", Vector))
@@ -95,56 +89,52 @@ class CoaddDepthPlot(PlotAction):
         fig : `~matplotlib.figure.Figure`
             The resulting figure.
         """
-        # set_rubin_plotstyle()
-        fig = plt.figure(dpi=300)
+        fig = plt.figure(dpi=300, figsize=(20, 20))
 
-        patch_list = range(100)
-    
-        ncols = 10
-        nrows = 10
-    
-        max_depth = max(data["depth"])
-        max_pixels = max(data["pixels"])
-    
-        plt.figure(figsize=(4*ncols, 4*nrows))
-        
+        max_depth = max(data['depth'])
+        max_pixels = max(data['pixels'])
+
         plt.subplots_adjust(hspace=0, wspace=0)
-    
-        patch=90 # The top left corner of a tract is patch 90
-        m=0
-        while patch >= 0:
-            for n in range(10):
-                ax = plt.subplot(nrows, ncols, m + 1)
-                patch_mask = (data['patch'] == patch)
-                bands = list(set(data[patch_mask]["band"]))
-    
-                if patch in data['patch']:
-                    for band in bands:
-                        color=bands_dict['colors'][band]
-                        markerstyle=bands_dict['symbols'][band]
-                        
-                        mask = (patch_mask) & (data['band'] == band)
-                        patch_band = data[mask]
-                        
-                        ax.plot(patch_band["depth"], patch_band["pixels"], 
-                                color=color, linewidth=0, ls=None, 
+
+        patch_counter = 90  # The top left corner of a tract is patch 90
+        m = 0  # subplot index
+        while patch_counter >= 0:
+            for n in range(10):  # column index
+                ax = plt.subplot(10, 10, m + 1)
+                patchSelector = PatchSelector(vectorKey='patch', patches=[patch_counter])
+                patch_mask = patchSelector(data)
+
+                # uniqueBands = UniqueAction(vectorKey='band')  # gives a weird 0d numpy array
+                bandList = ['u', 'g', 'r', 'i', 'z', 'y']  # TODO it better
+
+                if patch_counter in data['patch']:
+                    for band in bandList:
+                        color = bands_dict['colors'][band]
+                        markerstyle = bands_dict['symbols'][band]
+                        bandSelector = BandSelector(vectorKey='band', bands=[band])
+                        band_mask = bandSelector(data)
+
+                        tot_mask = (patch_mask) & (band_mask)
+
+                        ax.plot(data['depth'][tot_mask], data['pixels'][tot_mask],
+                                color=color, linewidth=0, ls=None,
                                 marker=markerstyle, alpha=0.75,
                                 label=f'{band}')
                         ax.grid(alpha=0.5)
-        
+
                     # chart formatting
                     ax.set_yscale('log')
-                    ax.set_xlim(0,max_depth)
-                    ax.set_ylim(5,max_pixels)
-                    ax.set_xticks(np.arange(0,max_depth,20))
+                    ax.set_xlim(0, max_depth)
+                    ax.set_ylim(5, max_pixels)
+                    ax.set_xticks(np.arange(0, max_depth, 20))
                 if (n != 0):
                     ax.set_yticklabels([])
-                if (patch not in range(10)):
+                if (patch_counter not in range(10)):
                     ax.set_xticklabels([])
-                ax.set_title(f"patch {patch}", y=0.9)
-                patch += 1
+                ax.set_title(f"patch {patch_counter}", y=0.9)
+                patch_counter += 1
                 m += 1
-            patch -= 2*(n+1)
+            patch_counter -= 2*(n+1)
         fig.supxlabel('Number of input visits (n_image depth)')
         fig.supylabel('Count (pixels)')
 

@@ -557,7 +557,7 @@ class PatchSelector(VectorAction):
     """Makes a mask for sources observed in a specified set of patches."""
 
     vectorKey = Field[str](doc="Key of the Vector which defines the patch.", default="patch")
-    patches = ListField[str](
+    patches = ListField[int](
         doc="The patches to select. `None` indicates no patch selection applied.",
         default=[],
     )

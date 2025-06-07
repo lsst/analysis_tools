@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from astropy.table import Table
 
 import numpy as np
 
@@ -31,38 +30,33 @@ from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as cT
 from lsst.pipe.base import Struct
 
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask, KeyedData
 
 
 class CoaddDepthSummaryPlotConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "coadd_depth_table",
-                      "outputName": "coadd_depth_per_pixel",},
+    defaultTemplates={"inputName": "template_coadd_n_image",
+                      "outputName": "depth", },
 ):
-    statTable = cT.Input(
-        doc="Table with resulting n_image based depth statistics.",
-        name="{inputName}",
-        storageClass="ArrowAstropy",
-        dimensions=("tract", "skymap"),
-    )
-    
-    data = cT.Input(
+
+    n_image_data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
-        name="template_coadd_n_image",
+        name="{inputName}",
         storageClass="ImageU",
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),
         deferLoad=True,
     )
-    
-    depth_table = cT.Output(
-        doc="Table with coadd depth per pixel.",
+
+    # TODO: this is not an actual output anymore
+    pixel_depth_table = cT.Output(
+        doc="Ugly table with coadd depth per pixel.",
         name="{outputName}",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
     )
-    
+
     calculated_quantiles = cT.Output(
         doc="Table with calculated percentile values.",
         name="calculated_quantiles",
@@ -86,21 +80,26 @@ class CoaddDepthSummaryPlotTask(AnalysisPipelineTask):
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
-        outputs = self.run(inputs)
+        # dataId = butlerQC.quantum.dataId
+        # plotInfo = self.parsePlotInfo(inputs, dataId)
+        # TODO: maybe pass plotInfo as an arg to self.run below
+        outputs = self.run(data={'n_image_data': inputs['n_image_data']})
         butlerQC.put(outputs, outputRefs)
 
-    def run(self, inputs):
+    def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:
+        """Load n_images and use them to make a plot illustrating coadd depth.
+        """
         bands = []
         patches = []
-        
+
         q_bands = []
         q_patches = []
-        
+
         depths = []
         pixels = []
         quantiles = []
 
-        for n_image_handle in inputs["data"]:
+        for n_image_handle in data['n_image_data']:
             n_image = n_image_handle.get()
             data_id = n_image_handle.dataId
             band = str(data_id.band.name)
@@ -114,7 +113,7 @@ class CoaddDepthSummaryPlotTask(AnalysisPipelineTask):
             for i in range(len(depth)):
                 bands.append(band)
                 patches.append(patch)
-            
+
             quantile = list(np.percentile(n_image.array, q=self.config.quantile_list))
 
             quantiles.extend(quantile)
@@ -123,13 +122,15 @@ class CoaddDepthSummaryPlotTask(AnalysisPipelineTask):
                 q_bands.append(band)
                 q_patches.append(patch)
 
-        names = ["patch", "band", "depth", "pixels"]
-        data = [patches, bands, depths, pixels]
+        pixel_data = {'patch': patches, 'band': bands, 'depth': depths, 'pixels': pixels}
 
-        q_names = ["q_patch", "q_band", "quantiles"]
-        q_data = [q_patches, q_bands, quantiles]
-        
-        depth_table = Table(data=data, names=names)
-        calculated_quantiles = Table(data=q_data, names=q_names)
-        
-        return Struct(depth_table=depth_table, calculated_quantiles=calculated_quantiles)
+        # q_names = ["q_patch", "q_band", "quantiles"]
+        # q_data = [q_patches, q_bands, quantiles]
+
+        # calculated_quantiles = Table(data=q_data, names=q_names)
+
+        outputs = super().run(data=pixel_data, **kwargs)  # this puts a thing in a struct
+
+        # outputs['calculated_quantiles'] = calculated_quantiles  # may not want to bother to write this out?
+
+        return outputs

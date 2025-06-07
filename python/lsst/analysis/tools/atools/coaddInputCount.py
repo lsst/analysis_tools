@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount", "CoaddQualityCheck", 
+__all__ = ("CoaddInputCount", "CoaddQualityCheck",
            "CoaddQualityPlot", "CoaddQualityPlot")
 
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.skyPlot import SkyPlot
 from ..actions.plot.coaddDepthPlot import CoaddDepthPlot
 from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
-from ..actions.vector import CoaddPlotFlagSelector, DownselectVector, LoadVector, BandSelector, PatchSelector, SnSelector, UniqueAction
+from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector, UniqueAction
 from ..interfaces import AnalysisTool
 
 from lsst.pex.config import ListField
@@ -146,12 +146,14 @@ class CoaddQualityPlot(AnalysisTool):
     """Make a plot (with quantiles) of coadd depth.
     """
 
+    parameterizedBand: bool = False
+
     def setDefaults(self):
         super().setDefaults()
-        self.process.buildActions.patch = LoadVector(vectorKey = "patch")
-        self.process.buildActions.band = LoadVector(vectorKey = "band")
-        self.process.buildActions.depth = LoadVector(vectorKey = "depth")
-        self.process.buildActions.pixels = LoadVector(vectorKey = "pixels")
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
+        self.process.buildActions.band = LoadVector(vectorKey="band")
+        self.process.buildActions.depth = LoadVector(vectorKey="depth")
+        self.process.buildActions.pixels = LoadVector(vectorKey="pixels")
 
         # self.process.buildActions.q_patch = LoadVector(vectorKey = "q_patch")
         # self.process.buildActions.q_band = LoadVector(vectorKey = "q_band")

@@ -38,14 +38,14 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class VerifyCalibAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("instrument",),
+    dimensions=("instrument", "day_obs"),
     defaultTemplates={"inputName": "verifyBiasResults"},
 ):
     data = cT.Input(
         doc="Table containing bias verification data to load from the butler",
         name="verifyBiasResults",
         storageClass="ArrowAstropy",
-        dimensions=("instrument",),
+        dimensions=("instrument", "day_obs"),
         deferLoad=True,
     )
 

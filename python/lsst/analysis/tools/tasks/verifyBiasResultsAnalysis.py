@@ -33,13 +33,13 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 
 class VerifyBiasResultsAnalysisConnections(
     AnalysisBaseConnections,
-    dimensions=("instrument",),
+    dimensions=("instrument", "day_obs"),
 ):
     data = Input(
         doc="verifyBiasResults",
         name="verifyBiasResults",
         storageClass="ArrowAstropy",
-        dimensions=("instrument","day_obs"),
+        dimensions=("instrument", "day_obs"),
         deferLoad=True,
     )
 

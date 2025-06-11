@@ -36,32 +36,17 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class CoaddDepthSummaryPlotConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "template_coadd_n_image",
-                      "outputName": "depth", },
+    defaultTemplates={"coaddType": "",
+                      "outputName": "n_image", },
 ):
 
     n_image_data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
-        name="{inputName}",
+        name="{coaddType}_coadd_n_image",
         storageClass="ImageU",
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),
         deferLoad=True,
-    )
-
-    # TODO: this is not an actual output anymore
-    pixel_depth_table = cT.Output(
-        doc="Ugly table with coadd depth per pixel.",
-        name="{outputName}",
-        storageClass="ArrowAstropy",
-        dimensions=("tract", "skymap"),
-    )
-
-    calculated_quantiles = cT.Output(
-        doc="Table with calculated percentile values.",
-        name="calculated_quantiles",
-        storageClass="ArrowAstropy",
-        dimensions=("tract", "skymap"),
     )
 
 

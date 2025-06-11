@@ -20,8 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount", "CoaddQualityCheck",
-           "CoaddQualityPlot", "CoaddQualityPlot")
+__all__ = ("CoaddInputCount", "CoaddQualityCheck", "CoaddQualityPlot")
 
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.skyPlot import SkyPlot
@@ -34,8 +33,11 @@ from lsst.pex.config import ListField
 
 
 class CoaddInputCount(AnalysisTool):
-    """Metrics and plots pertaining to how many exposures have gone into
-    a coadd. This quantifies depth and typically correlates with quality.
+    """Coadd-wide metrics pertaining to how many exposures have gone into
+    a deep coadd.
+
+    This AnalysisTool is designed to run on an object table, which is only
+    created for deep coadds, not template coadds.
     """
 
     def setDefaults(self):
@@ -83,11 +85,6 @@ class CoaddInputCount(AnalysisTool):
         self.produce.plot.showExtremeOutliers = False
         self.produce.plot.colorbarRange = MinMax()
 
-        # TODO: look at the plot made above and adjust it how we want
-        # for example, what are all the "z" vectorKeys doing?
-
-        # TODO: add a (per-patch) cumulative distribution plot that shows the thresholds and quantiles
-
         # Summary metrics for the whole coadd.
         self.produce.metric.units = {"median": "ct", "sigmaMad": "ct", "mean": "ct"}
         self.produce.metric.newNames = {
@@ -100,6 +97,9 @@ class CoaddInputCount(AnalysisTool):
 class CoaddQualityCheck(AnalysisTool):
     """Compute the percentage of each coadd that has a number of input
     exposures exceeding a threshold.
+
+    This AnalysisTool is designed to run on any coadd, provided a
+    coadd_depth_table is created first (via CoaddDepthSummaryAnalysisTask).
 
     For example, if exactly half of a coadd patch contains 15 overlapping
     constituent visits and half contains fewer, the value computed for
@@ -138,6 +138,7 @@ class CoaddQualityCheck(AnalysisTool):
                 "median": f"depth_threshold_{threshold}_median",
             }
             # TODO: add stdev also
+            # TODO: this is only being persisted for a single threshold?!
 
         self.process.calculateActions.setPatch = UniqueAction(vectorKey="patch")
 

@@ -24,7 +24,6 @@ from __future__ import annotations
 __all__ = ("CoaddDepthPlot",)
 
 from typing import TYPE_CHECKING, Any, Mapping
-import numpy as np
 import matplotlib.pyplot as plt
 
 from matplotlib.figure import Figure
@@ -99,7 +98,7 @@ class CoaddDepthPlot(PlotAction):
         m = 0  # subplot index
         while patch_counter >= 0:
             for n in range(10):  # column index
-                ax = plt.subplot(10, 10, m + 1) # there are 10x10 patches per tract
+                ax = plt.subplot(10, 10, m + 1)  # there are 10x10 patches per tract
                 patchSelector = PatchSelector(vectorKey='patch', patches=[patch_counter])
                 patch_mask = patchSelector(data)
 
@@ -125,7 +124,8 @@ class CoaddDepthPlot(PlotAction):
                     #                 ls='--', lw=1)
 
                 # chart formatting
-                # ax.set_xscale('symlog', base=2) # Need a solution for when max_depth is high, but not all patches/bands have quality coverage.
+                # ax.set_xscale('symlog', base=2)
+                # Need a solution for when max_depth is high, but not all patches/bands have quality coverage.
                 ax.set_yscale('log')
                 ax.set_xlim(0, max_depth + 5)
                 ax.set_ylim(5, max_pixels)
@@ -148,12 +148,18 @@ class CoaddDepthPlot(PlotAction):
         fig.supxlabel('Number of input visits (n_image depth)', y=0.075)
         fig.supylabel('Count (pixels)', x=0.075)
         legend_elements = [
-            Line2D([0], [0], color=bands_dict['colors']['u'], lw=0, marker=bands_dict['symbols']['u'], label='u'),
-            Line2D([0], [0], color=bands_dict['colors']['g'], lw=0, marker=bands_dict['symbols']['g'], label='g'),
-            Line2D([0], [0], color=bands_dict['colors']['r'], lw=0, marker=bands_dict['symbols']['r'], label='r'),
-            Line2D([0], [0], color=bands_dict['colors']['i'], lw=0, marker=bands_dict['symbols']['i'], label='i'),
-            Line2D([0], [0], color=bands_dict['colors']['z'], lw=0, marker=bands_dict['symbols']['z'], label='z'),
-            Line2D([0], [0], color=bands_dict['colors']['y'], lw=0, marker=bands_dict['symbols']['y'], label='y'),
+            Line2D([0], [0], color=bands_dict['colors']['u'],
+                   lw=0, marker=bands_dict['symbols']['u'], label='u'),
+            Line2D([0], [0], color=bands_dict['colors']['g'],
+                   lw=0, marker=bands_dict['symbols']['g'], label='g'),
+            Line2D([0], [0], color=bands_dict['colors']['r'],
+                   lw=0, marker=bands_dict['symbols']['r'], label='r'),
+            Line2D([0], [0], color=bands_dict['colors']['i'],
+                   lw=0, marker=bands_dict['symbols']['i'], label='i'),
+            Line2D([0], [0], color=bands_dict['colors']['z'],
+                   lw=0, marker=bands_dict['symbols']['z'], label='z'),
+            Line2D([0], [0], color=bands_dict['colors']['y'],
+                   lw=0, marker=bands_dict['symbols']['y'], label='y'),
         ]
         plt.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1.05, 10))
 

@@ -3,6 +3,8 @@ description: |
 tasks:
   analyzeCoaddDepthCore:
     class: lsst.analysis.tools.tasks.CoaddDepthSummaryAnalysisTask
+    config:
+      connections.coaddType: template
   coaddDepthMetricTract:
     class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
     config:
@@ -12,7 +14,12 @@ tasks:
   coaddDepthPlot:
     class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
     config:
-      # name will be {outputName}_template_CoaddQualityPlot
+      connections.coaddType: template
+      # plot will be called n_image_template_CoaddDepthPlot
+      # 'n_image' originates from the task outputName; 'template' originates from the line below
       atools.template: CoaddQualityPlot
       python: |
         from lsst.analysis.tools.atools import CoaddQualityPlot
+
+# todo: make a similar pipeline for deep coadds that has connections.coaddType: deep (analyzeCoaddDepthCore)
+# todo: if we make a similar plot for deep coadds, try to call it n_image_deep_CoaddDepthPlot

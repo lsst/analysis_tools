@@ -37,12 +37,12 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class CoaddDepthSummaryAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "template_coadd_n_image",  # TODO this should be {coaddName} with a default
+    defaultTemplates={"coaddType": "",  # set as either deep or template in the pipeline
                       "outputName": "coadd_depth_table"},
 ):
     data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
-        name="{inputName}",
+        name="{coaddType}_coadd_n_image",
         storageClass="ImageU",
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),

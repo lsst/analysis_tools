@@ -25,6 +25,7 @@ __all__ = (
     "FlagSelector",
     "CoaddPlotFlagSelector",
     "RangeSelector",
+    "SetSelector",
     "SnSelector",
     "ExtendednessSelector",
     "SkyObjectSelector",
@@ -258,6 +259,44 @@ class RangeSelector(SelectorBase):
         """
         values = cast(Vector, data[self.vectorKey])
         mask = (values >= self.minimum) & (values < self.maximum)
+
+        return cast(Vector, mask)
+
+
+class SetSelector(SelectorBase):
+    """Selects rows with any number of column values within a given set."""
+
+    vectorKeys = ListField[str](
+        doc="Key to select from data",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+    values = ListField[float](
+        doc="The set of acceptable values",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from ((key, Vector) for key in self.vectorKeys)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values in the specified set.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values in the specified set.
+        """
+        mask = np.zeros_like(data[self.vectorKeys[0]], dtype=bool)
+        for key in self.vectorKeys:
+            values = cast(Vector, data[key])
+            for compare in self.values:
+                mask |= values == compare
 
         return cast(Vector, mask)
 

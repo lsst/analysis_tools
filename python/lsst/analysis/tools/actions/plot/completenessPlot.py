@@ -271,7 +271,7 @@ class CompletenessHist(PlotAction):
                 lines_left + lines_right,
                 labels_left + labels_right,
                 loc=self.legendLocation,
-                ncol=3,
+                ncol=2,
             )
 
             if idx == 0:

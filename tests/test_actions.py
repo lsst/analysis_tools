@@ -62,6 +62,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     FlagSelector,
     GalaxySelector,
     RangeSelector,
+    SetSelector,
     SkyObjectSelector,
     SnSelector,
     StarSelector,
@@ -582,6 +583,18 @@ class TestVectorSelectors(unittest.TestCase):
         self._checkSchema(selector, ["r_psfFlux"])
         result = self.data["r_psfFlux"][selector(self.data)]
         truth = [30, 40]
+        np.testing.assert_array_equal(result, truth)
+
+    def testSetSelector(self):
+        n_values = 3
+        values = self.data["r_psfFlux"][:n_values]
+        selector = SetSelector(vectorKeys=("r_psfFlux", "i_cmodelFlux"), values=values)
+        self._checkSchema(selector, ("r_psfFlux", "i_cmodelFlux"))
+        result = selector(self.data)
+        truth = np.zeros_like(result)
+        truth[:n_values] = True
+        # i_cModelFlux is just r_psfFlux reversed
+        truth[-n_values:] = True
         np.testing.assert_array_equal(result, truth)
 
     def testSnSelector(self):

@@ -51,6 +51,7 @@ import astropy.units as u
 import lsst.pex.config as pexConfig
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
+from lsst.utils.plotting.publication_plots import galaxies_color, stars_color
 
 from ..actions.config import MagnitudeBinConfig
 from ..actions.keyedData import (
@@ -302,8 +303,8 @@ class MatchedRefCoaddDiffTool(MagnitudeXTool, MatchedRefCoaddTool):
     limits_diff_mag_mmag_zoom_default = (-50.0, 50.0)
     limits_diff_pos_mas_default = (-500, 500)
     limits_diff_pos_mas_zoom_default = (-10, 10)
-    limits_x_mag_default = (16.0, 31.0)
-    limits_x_mag_zoom_default = (16.0, 23.5)
+    limits_x_mag_default = (16.5, 29.0)
+    limits_x_mag_zoom_default = (16.5, 24.0)
 
     compute_chi = pexConfig.Field[bool](
         default=False,
@@ -660,6 +661,11 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                 )
 
                 if self.make_plots:
+                    overrides = {}
+                    if name_type == self.type_galaxies:
+                        overrides["color_counts"] = galaxies_color()
+                    elif name_type == self.type_stars:
+                        overrides["color_counts"] = stars_color()
                     setattr(
                         self.produce.plot.actions,
                         object_class,
@@ -1029,7 +1035,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
                         actionB=CosVector(
                             actionA=MultiplyVector(
                                 actionA=ConstantValue(value=factor_cos),
-                                actionB=LoadVector(vectorKey=self.coord_meas),
+                                actionB=LoadVector(vectorKey=self.coord_ref_cos),
                             )
                         ),
                     )

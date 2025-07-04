@@ -23,6 +23,7 @@ from __future__ import annotations
 
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 
+import math
 from typing import Mapping, NamedTuple, Optional, cast
 
 import matplotlib.colors
@@ -44,6 +45,7 @@ from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
 from matplotlib.path import Path
+from matplotlib.ticker import LogFormatterMathtext, NullFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
@@ -165,6 +167,28 @@ class DataTypeDefaults(NamedTuple):
     colormap: matplotlib.colors.Colormap | None
 
 
+class LogFormatterExponentSci(LogFormatterMathtext):
+    """
+    Format values following scientific notation.
+
+    Unlike the matplotlib LogFormatterExponent, this will print near-integer
+    coefficients with a base between 0 and 2 such as 500 as 500 (if base10)
+    or 5e2 otherwise.
+    """
+
+    def _non_decade_format(self, sign_string, base, fx, usetex):
+        """Return string for non-decade locations."""
+        b = float(base)
+        exponent = math.floor(fx)
+        coeff = b ** (fx - exponent)
+        rounded = round(coeff)
+        if math.isclose(coeff, rounded):
+            if (base == "10") and (0 <= exponent <= 3):
+                return f"{sign_string}{rounded}{'0'*int(exponent)}"
+            coeff = rounded
+        return f"{sign_string}{coeff:1.1f}e{exponent}"
+
+
 class ScatterPlotWithTwoHists(PlotAction):
     """Makes a scatter plot of the data with a marginal
     histogram for each axis.
@@ -201,6 +225,21 @@ class ScatterPlotWithTwoHists(PlotAction):
         doc="Add a summary plot to the figure?",
         default=True,
     )
+    histMinimum = Field[float](
+        doc="Minimum value for the histogram count axis",
+        default=0.3,
+    )
+    xHistMaxLabels = Field[int](
+        doc="Maximum number of labels for ticks on the x-axis marginal histogram",
+        default=3,
+        check=lambda x: x >= 2,
+    )
+    yHistMaxLabels = Field[int](
+        doc="Maximum number of labels for ticks on the y-axis marginal histogram",
+        default=3,
+        check=lambda x: x >= 2,
+    )
+
     suffix_x = Field[str](doc="Suffix for all x-axis action inputs", optional=True, default="")
     suffix_y = Field[str](doc="Suffix for all y-axis action inputs", optional=True, default="")
     suffix_stat = Field[str](doc="Suffix for all binned statistic action inputs", optional=True, default="")
@@ -390,7 +429,15 @@ class ScatterPlotWithTwoHists(PlotAction):
             fig = addSummaryPlot(fig, gs[0, -1], sumStats, label)
 
         fig.canvas.draw()
-        fig.subplots_adjust(wspace=0.0, hspace=0.0, bottom=0.22, left=0.21)
+        # TODO: Check if these spacings can be defined less arbitrarily
+        fig.subplots_adjust(
+            wspace=0.0,
+            hspace=0.0,
+            bottom=0.13 if self.publicationStyle else 0.22,
+            left=0.18 if self.publicationStyle else 0.21,
+            right=0.95 if self.publicationStyle else None,
+            top=0.98 if self.publicationStyle else None,
+        )
         if not self.publicationStyle:
             fig = addPlotInfo(fig, plotInfo)
         return fig
@@ -655,8 +702,16 @@ class ScatterPlotWithTwoHists(PlotAction):
                     fig.text(xPos, 0.020, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                 if self.plot2DHist:
+                    extent = [xLims[0], xLims[1], self.yLims[0], self.yLims[1]] if self.yLims else None
                     histIm = ax.hexbin(
-                        xs[inside], ys[inside], gridsize=75, cmap=cmap, mincnt=1, zorder=-3, edgecolors=None
+                        xs[inside],
+                        ys[inside],
+                        gridsize=75,
+                        extent=extent,
+                        cmap=cmap,
+                        mincnt=1,
+                        zorder=-3,
+                        edgecolors=None,
                     )
                 else:
                     ax.plot(xs[inside], ys[inside], ".", ms=3, alpha=0.2, mfc=color, mec=color, zorder=-1)
@@ -775,7 +830,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             framealpha=0.9,
             edgecolor="k",
             borderpad=0.4,
-            handlelength=1,
+            handlelength=3,
         )
 
         # Add axes labels
@@ -831,12 +886,12 @@ class ScatterPlotWithTwoHists(PlotAction):
                 label=f"{config_datatype.suffix_stat} ({len(vector)})",
             )
         topHist.axes.get_xaxis().set_visible(False)
-        topHist.set_ylabel("Count", fontsize=10)
+        topHist.set_ylabel("Count", fontsize=10 + 4 * self.publicationStyle)
         if not self.publicationStyle:
             topHist.legend(fontsize=6, framealpha=0.9, borderpad=0.4, loc="lower left", ncol=3, edgecolor="k")
             topHist.tick_params(labelsize=8)
 
-        # Side histogram
+        self._modifyHistogramTicks(topHist, do_x=False, max_labels=self.xHistMaxLabels)
 
     def _makeSideHistogram(
         self,
@@ -916,7 +971,9 @@ class ScatterPlotWithTwoHists(PlotAction):
         sideHist.axhline(0, color=kwargs["hlineColor"], ls=kwargs["hlineStyle"], alpha=0.7, zorder=-2)
 
         sideHist.axes.get_yaxis().set_visible(False)
-        sideHist.set_xlabel("Count", fontsize=10)
+        sideHist.set_xlabel("Count", fontsize=10 + 4 * self.publicationStyle)
+        self._modifyHistogramTicks(sideHist, do_x=True, max_labels=self.yHistMaxLabels)
+
         if not self.publicationStyle:
             sideHist.tick_params(labelsize=8)
         if self.plot2DHist and histIm is not None:
@@ -935,3 +992,37 @@ class ScatterPlotWithTwoHists(PlotAction):
                 fontsize=10,
             )
             text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+
+    def _modifyHistogramTicks(self, histogram, do_x: bool, max_labels: int):
+        axis = histogram.get_xaxis() if do_x else histogram.get_yaxis()
+        limits = list(histogram.get_xlim() if do_x else histogram.get_ylim())
+        get_ticks = histogram.get_xticks if do_x else histogram.get_yticks
+        ticks = get_ticks()
+        # Let the minimum be larger then specified if the histogram has large
+        # values everywhere, but cut it down a little so the lowest-valued bin
+        # is still easily visible
+        limits[0] = max(self.histMinimum, 0.9 * limits[0])
+        # Round the upper limit to the nearest power of 10
+        limits[1] = 10 ** (np.ceil(np.log10(limits[1]))) if (limits[1] > 0) else limits[1]
+        for minor in (False, True):
+            # Ignore ticks that are below the minimum value
+            valid = (ticks >= limits[0]) & (ticks <= limits[1])
+            labels = [label for label, _valid in zip(axis.get_ticklabels(minor=minor), valid) if _valid]
+            if (n_labels := len(labels)) > max_labels:
+                labels_new = [""] * n_labels
+                # Skip the first label if we're not using minor axis labels
+                # This helps avoid overlap with the scatter plot labels
+                for idx_fill in np.round(np.linspace(1 - minor, n_labels - 1, max_labels)).astype(int):
+                    labels_new[idx_fill] = labels[idx_fill]
+                axis.set_ticks(ticks[valid], labels_new)
+            # If there are enough major tick labels, disable minor tick labels
+            if len(labels) >= 2:
+                axis.set_minor_formatter(NullFormatter())
+                break
+            else:
+                axis.set_minor_formatter(
+                    LogFormatterExponentSci(minor_thresholds=(1, self.histMinimum / 10.0))
+                )
+                ticks = get_ticks(minor=True)
+
+        (histogram.set_xlim if do_x else histogram.set_ylim)(limits)

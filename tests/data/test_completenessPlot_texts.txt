@@ -3,26 +3,25 @@ compurity test
 PhotoCalib: None, Astrometry: None[newline]Table: , Bands: r
 
 
-Reference magnitude
+Reference Magnitude
 Completeness
-completeness
-wrong class
-right class
-counts
+Completeness
+Incorrect class
+Correct Class
+Counts
 90%: 21.37
 80%: 21.88
 50%: 23.26
-20%: 25.00
-10%: 25.00
 
-Measured magnitude
+Measured Magnitude
 Purity
-wrong class
-right class
-counts
+Purity
+Incorrect class
+Correct class
+Counts
 
 
-Reference counts/mag
+Reference Counts/Magnitude
 
 
-Object counts/mag
+Object Counts/Magnitude

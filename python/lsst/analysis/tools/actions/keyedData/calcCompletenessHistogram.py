@@ -44,7 +44,7 @@ class MagnitudeCompletenessConfig(pexConfig.Config):
     )
     completeness_percentiles = pexConfig.ListField[float](
         doc="The percentiles to find the magnitude at.",
-        default=[90.0, 80.0, 50.0, 20.0, 10.0],
+        default=[90.0, 80.0, 50.0],
         itemCheck=isPercent,
     )
 

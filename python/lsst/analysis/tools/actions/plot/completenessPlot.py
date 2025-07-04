@@ -26,8 +26,6 @@ import numpy as np
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-
-# from matplotlib import gridspec
 from matplotlib.figure import Figure
 
 from ...actions.keyedData import CalcCompletenessHistogramAction

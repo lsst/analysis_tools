@@ -50,7 +50,11 @@ class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrumen
         storageClass="ArrowAstropy",
         doc="Visit-based source table",
         multiple=True,
-        dimensions=("instrument", "visit", "detector",),
+        dimensions=(
+            "instrument",
+            "visit",
+            "detector",
+        ),
         deferLoad=True,
     )
 
@@ -59,16 +63,24 @@ class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrumen
         storageClass="PhotoCalib",
         doc="Photometric calibration associated with the visit image.",
         multiple=True,
-        dimensions=("instrument", "visit", "detector",),
+        dimensions=(
+            "instrument",
+            "visit",
+            "detector",
+        ),
         deferLoad=True,
     )
 
     wcs = Input(
         name="visit_image.wcs",
-        storageClass="wcs",
+        storageClass="Wcs",
         doc="WCS header associated with the visit image.",
         multiple=True,
-        dimensions=("instrument", "visit", "detector",),
+        dimensions=(
+            "instrument",
+            "visit",
+            "detector",
+        ),
         deferLoad=True,
     )
 
@@ -78,21 +90,20 @@ class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrumen
         doc="A dictionary containing the histogram values, bin mid points, and bin lower/upper edges for the "
         "aggregated limiting surface brightness dataset, i.e. limiting surface brightnesses estimated for "
         " all detectors in a single visit.",
-        dimensions=("instrument", "visit")
+        dimensions=("instrument", "visit"),
     )
 
 
-class LimitingSurfBriConfig(PipelineTaskConfig,
-                            pipelineConnections=LimitingSurfBriConnections):
+class LimitingSurfBriConfig(PipelineTaskConfig, pipelineConnections=LimitingSurfBriConnections):
     """Config class for LimitingSurfBriTask."""
 
     bin_range = ListField[float](
         doc="The lower and upper range for the histogram bins, in ABmag.",
-        default=[32, 26],
+        default=[25, 31],
     )
     bin_width = Field[float](
         doc="The width of each histogram bin, in ABmag.",
-        default=0.1,
+        default=0.2,
     )
 
 
@@ -113,11 +124,11 @@ class LimitingSurfBriTask(PipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
         limiting_surface_brightness_hist = self.run(**{k: v for k, v in inputs.items()})
-        butlerQC.put(limiting_surface_brightness_hist, outputRefs.delta_skyCorr_hist)
+        butlerQC.put(limiting_surface_brightness_hist, outputRefs.limiting_surface_brightness_hist)
 
-    def run(self, recalibrated_star_detector, photoCalib, wcs):
+    def run(self, recalibrated_star_detectors, photoCalib, wcs):
         # Generate lookup tables for per-detector catalogues
-        lookup_recalibrated_star_detector = {x.dataId: x for x in recalibrated_star_detector}
+        lookup_recalibrated_star_detector = {x.dataId: x for x in recalibrated_star_detectors}
         lookup_photoCalib = {x.dataId: x for x in photoCalib}
         lookup_wcs = {x.dataId: x for x in wcs}
 
@@ -135,27 +146,25 @@ class LimitingSurfBriTask(PipelineTask):
             # Get the detector catalogue
             recalibrated_star_catalogue = lookup_recalibrated_star_detector[dataId].get()
             # And the photometric calibration
-            nanojanskyToInstFlux = lookup_photoCalib[dataId].get().nanojanskyToInstFlux(1)
             instFluxToMagnitude = lookup_photoCalib[dataId].get().instFluxToMagnitude(1)
             # And the pixel scale
             pxScale = lookup_wcs[dataId].get().getPixelScale().asArcseconds()
 
             # Isolate the sky sources, 9px radius apertures only
-            isSky = (recalibrated_star_catalogue["sky_source"] > 0)
+            isSky = recalibrated_star_catalogue["sky_source"] > 0
             skySources = recalibrated_star_catalogue[isSky]["ap09Flux"]
 
             # Derive the clipped standard deviation of sky sources in nJy
+            nPix = np.pi * 9**2  # Number of pixels within the circular aperture
             ctrl = afwMath.StatisticsControl(3, 3)  # TODO: make these configurable
             ctrl.setNanSafe(True)
             statistic = afwMath.stringToStatisticsProperty("STDEVCLIP")
-            sigSkySources = afwMath.makeStatistics(skySources, statistic, ctrl).getValue()
+            sigSkySources = afwMath.makeStatistics(skySources / nPix, statistic, ctrl).getValue()
 
             # Derive limiting surface brightness.  3sigma, on 10"x10" scales
-            nPix = np.pi*9**2  # Number of pixels within the circular aperture
-            sigSkySources *= nanojanskyToInstFlux
-            pixScaleRatio = np.sqrt(pxScale**2 / (nPix*pxScale**2))
+            pixScaleRatio = np.sqrt(pxScale**2 / (nPix * pxScale**2))
             sigma = sigSkySources / pixScaleRatio
-            muLim = -2.5*np.log10((3*sigma)/(pxScale*10)) + instFluxToMagnitude
+            muLim = -2.5 * np.log10((3 * sigma) / (pxScale * 10)) + instFluxToMagnitude
 
             # Compute the per-detector histogram; update the global histogram.
             hist_det, _ = np.histogram(muLim, bins=bin_edges)
@@ -187,8 +196,9 @@ class LimitingSurfBriAnalysisConnections(
     )
 
 
-class LimitingSurfBriAnalysisConfig(AnalysisBaseConfig,
-                                    pipelineConnections=LimitingSurfBriAnalysisConnections):
+class LimitingSurfBriAnalysisConfig(
+    AnalysisBaseConfig, pipelineConnections=LimitingSurfBriAnalysisConnections
+):
     pass
 
 

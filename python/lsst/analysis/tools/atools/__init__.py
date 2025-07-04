@@ -24,6 +24,7 @@ from .genericPrep import *
 from .genericProduce import *
 from .healSparsePropertyMap import *
 from .limitingMagnitudeMetric import *
+from .limitingSurfBri import *
 from .magDiff import *
 from .metadataMetrics import *
 from .numericalValidity import *

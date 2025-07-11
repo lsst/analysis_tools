@@ -48,6 +48,7 @@ from math import nan
 from typing import cast
 
 import numpy as np
+
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
@@ -64,7 +65,7 @@ def _dataToArray(data):
     """
     try:
         return np.from_dlpack(data)
-    except AttributeError:
+    except (AttributeError, BufferError):
         return np.array(data)
 
 
@@ -414,7 +415,7 @@ class IqrHistAction(ScalarAction):
     def __call__(self, data: KeyedData, **kwargs):
         hist = _dataToArray(data[self.histKey.format(**kwargs)])
         if hist.size != 0:
-            bin_mid = _dataToArray([self.midKey.format(**kwargs)])
+            bin_mid = _dataToArray(data[self.midKey.format(**kwargs)])
             iqr = cast(Scalar, float(self.histIqr(hist, bin_mid)))
         else:
             iqr = np.nan

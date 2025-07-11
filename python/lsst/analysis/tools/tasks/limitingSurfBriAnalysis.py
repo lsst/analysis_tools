@@ -31,37 +31,50 @@ __all__ = (
 import logging
 
 import numpy as np
+from astropy.table import Table
 
 import lsst.afw.math as afwMath
 from lsst.pex.config import Field, ListField
-from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections
+from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base.connectionTypes import Input, Output
+from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
 log = logging.getLogger(__name__)
 
 
-class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrument", "visit")):
+class LimitingSurfBriConnections(
+    PipelineTaskConnections,
+    dimensions=(),
+    defaultTemplates={
+        "detectionTableName": "",
+        "photoCalibName": "",
+        "wcsName": "",
+    },
+):
     """Connections class for LimitingSurfBriTask."""
 
-    recalibrated_star_detectors = Input(
-        name="recalibrated_star_detector",
+    data = Input(
+        doc="Visit- or coadd-level object table",
+        name="{detectionTableName}",
         storageClass="ArrowAstropy",
-        doc="Visit-based source table",
         multiple=True,
-        dimensions=(
-            "instrument",
-            "visit",
-            "detector",
-        ),
+        dimensions=(),
         deferLoad=True,
     )
 
+    skymap = Input(
+        doc="The skymap that covers the originating data's tract.",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
+        storageClass="SkyMap",
+        dimensions=("skymap",),
+    )
+
     photoCalib = Input(
-        name="visit_image.photoCalib",
+        name="{photoCalibName}",
         storageClass="PhotoCalib",
-        doc="Photometric calibration associated with the visit image.",
+        doc="Photometric calibration associated with the originating data image.",
         multiple=True,
         dimensions=(
             "instrument",
@@ -72,9 +85,9 @@ class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrumen
     )
 
     wcs = Input(
-        name="visit_image.wcs",
+        name="{wcsName}",
         storageClass="Wcs",
-        doc="WCS header associated with the visit image.",
+        doc="WCS header associated with the originating data image.",
         multiple=True,
         dimensions=(
             "instrument",
@@ -90,12 +103,69 @@ class LimitingSurfBriConnections(PipelineTaskConnections, dimensions=("instrumen
         doc="A dictionary containing the histogram values, bin mid points, and bin lower/upper edges for the "
         "aggregated limiting surface brightness dataset, i.e. limiting surface brightnesses estimated for "
         " all detectors in a single visit.",
-        dimensions=("instrument", "visit"),
+        dimensions=(),
     )
+
+    limiting_surface_brightness_table = Output(
+        name="limiting_surface_brightness_table",
+        storageClass="ArrowAstropy",
+        doc="A table containing two columns: the detector or patch ID and the value of limiting surface "
+        "brightness derived for that detector or patch.",
+        dimensions=(),
+    )
+
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+        self.data = Input(
+            doc=self.data.doc,
+            name=self.data.name,
+            storageClass=self.data.storageClass,
+            deferLoad=self.data.deferLoad,
+            dimensions=frozenset(sorted(config.inputDataDimensions)),
+            multiple=self.data.multiple,
+        )
+        self.limiting_surface_brightness_hist = Output(
+            doc=self.limiting_surface_brightness_hist.doc,
+            name=self.limiting_surface_brightness_hist.name,
+            storageClass=self.limiting_surface_brightness_hist.storageClass,
+            dimensions=frozenset(sorted(config.outputDataDimensions)),
+        )
+
+        self.limiting_surface_brightness_table = Output(
+            doc=self.limiting_surface_brightness_table.doc,
+            name=self.limiting_surface_brightness_table.name,
+            storageClass=self.limiting_surface_brightness_table.storageClass,
+            dimensions=frozenset(sorted(config.outputDataDimensions)),
+        )
+
+        assert config is not None, "Missing required config object."
+
+        if "tract" not in config.inputDataDimensions:
+            del self.skymap
+
+        self.dimensions.update(frozenset(sorted(config.outputDataDimensions)))
 
 
 class LimitingSurfBriConfig(PipelineTaskConfig, pipelineConnections=LimitingSurfBriConnections):
     """Config class for LimitingSurfBriTask."""
+
+    inputDataDimensions = ListField[str](
+        doc="Dimensions of the input data.",
+        default=(
+            "instrument",
+            "visit",
+            "detector",
+        ),
+        optional=False,
+    )
+    outputDataDimensions = ListField[str](
+        doc="Dimensions of the output histogram and table data.",
+        default=(
+            "instrument",
+            "visit",
+        ),
+        optional=False,
+    )
 
     bin_range = ListField[float](
         doc="The lower and upper range for the histogram bins, in ABmag.",
@@ -103,7 +173,7 @@ class LimitingSurfBriConfig(PipelineTaskConfig, pipelineConnections=LimitingSurf
     )
     bin_width = Field[float](
         doc="The width of each histogram bin, in ABmag.",
-        default=0.2,
+        default=0.1,
     )
 
 
@@ -123,12 +193,34 @@ class LimitingSurfBriTask(PipelineTask):
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
-        limiting_surface_brightness_hist = self.run(**{k: v for k, v in inputs.items()})
-        butlerQC.put(limiting_surface_brightness_hist, outputRefs.limiting_surface_brightness_hist)
+        limiting_surface_brightness_struct = self.run(**{k: v for k, v in inputs.items()})
+        butlerQC.put(limiting_surface_brightness_struct, outputRefs)
 
-    def run(self, recalibrated_star_detectors, photoCalib, wcs):
-        # Generate lookup tables for per-detector catalogues
-        lookup_recalibrated_star_detector = {x.dataId: x for x in recalibrated_star_detectors}
+    def run(self, data, photoCalib, wcs):
+        """Output a histogram and table of per-detector or per-patch limiting
+        surface brightnesses for the input visit or coadd tract
+
+        Parameters
+        ----------
+        data : `list`
+            List of dicts with information respecting the extracted source
+            detection catalogues
+        photoCalib : `list`
+            List of dicts with information respecting the extracted image
+            photometric calibrations
+        wcs : `list`
+            List of dicts with information respecting the extracted image
+            world coordinate systems
+
+        Returns
+        -------
+        `pipe.base.Struct` containing `dict` and `astropy.table.Table`
+            Dictionary containing limiting surface brightness histogram
+            bin parameters and counts; table containing per-detector or per-
+            patch limiting surface brightness values
+        """
+        # Generate lookup tables
+        lookup_source_catalogue = {x.dataId: x for x in data}
         lookup_photoCalib = {x.dataId: x for x in photoCalib}
         lookup_wcs = {x.dataId: x for x in wcs}
 
@@ -141,22 +233,28 @@ class LimitingSurfBriTask(PipelineTask):
         hist = np.zeros(len(bin_edges) - 1)
         log.info("Generating a histogram containing %d bins.", len(hist))
 
+        # Set up the global table
+        limiting_surface_brightness_table = Table(
+            names=["detector", "limiting_surface_brightness"],
+            dtype=[np.int64, np.float64],
+        )
+
         # Loop over the recalibrated_star_detector data
-        for dataId in lookup_recalibrated_star_detector.keys():
-            # Get the detector catalogue
-            recalibrated_star_catalogue = lookup_recalibrated_star_detector[dataId].get()
+        for dataId in lookup_source_catalogue.keys():
+            # Get the detection catalogue
+            recalibrated_star_catalogue = lookup_source_catalogue[dataId].get()
             # And the photometric calibration
             instFluxToMagnitude = lookup_photoCalib[dataId].get().instFluxToMagnitude(1)
             # And the pixel scale
             pxScale = lookup_wcs[dataId].get().getPixelScale().asArcseconds()
 
-            # Isolate the sky sources, 9px radius apertures only
+            # Isolate the sky sources, 9px radius apertures
             isSky = recalibrated_star_catalogue["sky_source"] > 0
             skySources = recalibrated_star_catalogue[isSky]["ap09Flux"]
 
             # Derive the clipped standard deviation of sky sources in nJy
             nPix = np.pi * 9**2  # Number of pixels within the circular aperture
-            ctrl = afwMath.StatisticsControl(3, 3)  # TODO: make these configurable
+            ctrl = afwMath.StatisticsControl(3, 3)
             ctrl.setNanSafe(True)
             statistic = afwMath.stringToStatisticsProperty("STDEVCLIP")
             sigSkySources = afwMath.makeStatistics(skySources / nPix, statistic, ctrl).getValue()
@@ -166,9 +264,12 @@ class LimitingSurfBriTask(PipelineTask):
             sigma = sigSkySources / pixScaleRatio
             muLim = -2.5 * np.log10((3 * sigma) / (pxScale * 10)) + instFluxToMagnitude
 
-            # Compute the per-detector histogram; update the global histogram.
+            # Compute the histogram; update the global histogram.
             hist_det, _ = np.histogram(muLim, bins=bin_edges)
             hist += hist_det
+
+            # Append a new row to the table
+            limiting_surface_brightness_table.add_row([dataId["detector"], muLim])
 
         # Return results.
         num_populated_bins = len([x for x in hist if x == 0])
@@ -177,7 +278,10 @@ class LimitingSurfBriTask(PipelineTask):
         limiting_surface_brightness_hist = dict(
             hist=hist, bin_lower=bin_edges[:-1], bin_upper=bin_edges[1:], bin_mid=bin_mid
         )
-        return limiting_surface_brightness_hist
+        return Struct(
+            limiting_surface_brightness_hist=limiting_surface_brightness_hist,
+            limiting_surface_brightness_table=limiting_surface_brightness_table,
+        )
 
 
 class LimitingSurfBriAnalysisConnections(

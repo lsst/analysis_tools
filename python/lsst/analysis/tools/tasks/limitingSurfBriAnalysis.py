@@ -30,10 +30,9 @@ __all__ = (
 
 import logging
 
+import lsst.afw.math as afwMath
 import numpy as np
 from astropy.table import Table
-
-import lsst.afw.math as afwMath
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base.connectionTypes import Input, Output

@@ -47,10 +47,9 @@ class LimitingSurfBriXYPlot(AnalysisTool):
         self.process.calculateActions.iqr.midKey = "bin_mid"
 
         self.produce.plot = XYPlot()
-        self.produce.plot.xAxisLabel = r"$mu_{\rm lim}$ (ABmag)"
+        self.produce.plot.xAxisLabel = r"$\mu_{\rm lim}$ (ABmag arcsec$^{-2}$)"
         self.produce.plot.yAxisLabel = "Frequency"
         self.produce.plot.yScale = "linear"
-        self.produce.plot.xLine = 0
         self.produce.plot.strKwargs = {
             "fmt": "-",
             "color": "b",

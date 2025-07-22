@@ -1267,7 +1267,7 @@ def reconfigure_diff_matched_defaults(
     # These are class attributes and don't need to be changed in subclasses
     # These may end up being changed multiple times with repeated calls,
     # but there isn't a good way to avoid that.
-    MagnitudeTool.fluxes_default.ref_matched.name_flux = "Truth"
+    MagnitudeTool.fluxes_default.ref_matched.name_flux = "True"
     MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
     MagnitudeTool.fluxes_default.ref_matched.key_flux = "ref_{band}_flux"
 

@@ -269,7 +269,7 @@ class CompletenessHist(PlotAction):
                 lines_left + lines_right,
                 labels_left + labels_right,
                 loc=self.legendLocation,
-                ncol=2,
+                ncol=3 if self.publicationStyle else 2,
             )
 
             if idx == 0:

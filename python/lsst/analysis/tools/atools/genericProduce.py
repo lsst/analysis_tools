@@ -59,7 +59,7 @@ class MagnitudeScatterPlot(MagnitudeXTool):
         ]
 
         config_x = self.config_mag_x
-        label_x = f"{config_x.name_flux} (mag)"
+        label_x = f"{{band}} {config_x.name_flux} (mag)"
         # Hacky way to check if setup is complete
         if self.produce.plot.xAxisLabel == label_x:
             return

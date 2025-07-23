@@ -310,7 +310,7 @@ class MagnitudeTool(ObjectClassTool):
         sersic_err=FluxConfig(
             key_flux="{band}_sersicFlux",
             key_flux_error="{band}_sersicFluxErr",
-            name_flux="Sersic",
+            name_flux="Sérsic",
             name_flux_short="sersic",
         ),
     )
@@ -547,7 +547,7 @@ class SizeTool(ObjectClassTool):
         bulge=SizeConfig(key_size="{band}_bdReB", name_size="CModel Bulge $R_{eff}$", has_moments=False),
         disk=SizeConfig(key_size="{band}_bdReD", name_size="CModel Disk $R_{eff}$", has_moments=False),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
-        sersic=SizeConfig(key_size="sersic_{suffix}", name_size="Sersic $R_{eff}$"),
+        sersic=SizeConfig(key_size="sersic_{suffix}", name_size="Sérsic $R_{eff}$"),
         shape_slot=SizeConfig(key_size="shape_{suffix}", name_size="Shape slot radius"),
     )
     size_type = ChoiceField[str](

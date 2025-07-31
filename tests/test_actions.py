@@ -63,6 +63,7 @@ from lsst.analysis.tools.actions.vector.selectors import (
     AllSelector,
     CoaddPlotFlagSelector,
     FlagSelector,
+    AllSelector,
     GalaxySelector,
     RangeSelector,
     SetSelector,

@@ -666,10 +666,26 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         overrides["color_counts"] = galaxies_color()
                     elif name_type == self.type_stars:
                         overrides["color_counts"] = stars_color()
+                    plot_action = CompletenessHist(
+                        action=completeness_plot,
+                    )
+                    # Since the plot action is made on the fly, it can't be
+                    # configured in a pipeline yaml. This makes the keys
+                    # formattable, but (unfortunately) in a way that's hard
+                    # to discover or document.
+                    for label_type in ("ref", "target"):
+                        name_mag_label = f"mag_{label_type}_label"
+                        label = getattr(plot_action, name_mag_label)
+                        if "{name_flux}" in label:
+                            name_flux = getattr(self, f"config_mag_{label_type}").name_flux
+                            # Still no support for partial formatting
+                            kwargs_format = {"band": "{band}"} if "{band}" in label else {}
+                            label = label.format(name_flux=name_flux, **kwargs_format)
+                            setattr(plot_action, name_mag_label, label)
                     setattr(
                         self.produce.plot.actions,
                         object_class,
-                        CompletenessHist(action=completeness_plot),
+                        plot_action,
                     )
 
     def reconfigure_dependent_magnitudes(

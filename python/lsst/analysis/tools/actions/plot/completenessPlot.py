@@ -195,12 +195,17 @@ class CompletenessHist(PlotAction):
                 (data[names["completeness_good_match"]], False, self.color_right, "Correct Class"),
             )
 
+        mag_labels = {"ref": self.mag_ref_label, "target": self.mag_target_label}
+        for key, label in mag_labels.items():
+            if "{band}" in label:
+                mag_labels[key] = label.format(band=band)
+
         plots = {
             "Completeness": {
                 "count_type": "Reference",
                 "counts": data[names["count_ref"]],
                 "lines": lineTuples,
-                "xlabel": self.mag_ref_label,
+                "xlabel": mag_labels["ref"],
             },
         }
         if self.show_purity:
@@ -212,7 +217,7 @@ class CompletenessHist(PlotAction):
                     (data[names["purity_bad_match"]], False, self.color_wrong, "Incorrect class"),
                     (data[names["purity_good_match"]], False, self.color_right, "Correct class"),
                 ),
-                "xlabel": self.mag_target_label,
+                "xlabel": mag_labels["target"],
             }
 
         # idx == 0 should be completeness; update this if that assumption

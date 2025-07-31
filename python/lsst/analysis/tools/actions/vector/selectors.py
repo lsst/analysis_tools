@@ -24,6 +24,7 @@ __all__ = (
     "SelectorBase",
     "FlagSelector",
     "CoaddPlotFlagSelector",
+    "AllSelector",
     "RangeSelector",
     "SetSelector",
     "SnSelector",
@@ -233,6 +234,29 @@ class VisitPlotFlagSelector(FlagSelector):
             "centroid_flag",
             "sky_source",
         ]
+
+
+class AllSelector(SelectorBase):
+    """Return a trivial selection of all rows."""
+
+    vectorKey = Field[str](doc="Key to select from data")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.vectorKey, Vector
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values within the specified range.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values within the specified range.
+        """
+        return np.ones_like(data[self.vectorKey], dtype=bool)
 
 
 class RangeSelector(SelectorBase):

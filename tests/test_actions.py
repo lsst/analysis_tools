@@ -60,6 +60,7 @@ from lsst.analysis.tools.actions.vector.mathActions import (
     SubtractVector,
 )
 from lsst.analysis.tools.actions.vector.selectors import (
+    AllSelector,
     CoaddPlotFlagSelector,
     FlagSelector,
     GalaxySelector,
@@ -585,6 +586,13 @@ class TestVectorSelectors(unittest.TestCase):
         truth = np.ones(self.size, dtype=bool)
         for bit in (1, 11):
             truth[bit] = 0
+        np.testing.assert_array_equal(result, truth)
+
+    def testAllSelector(self):
+        selector = AllSelector(vectorKey="r_psfFlux")
+        self._checkSchema(selector, ["r_psfFlux"])
+        result = selector(self.data)
+        truth = np.ones(len(self.data["r_psfFlux"]), dtype=bool)
         np.testing.assert_array_equal(result, truth)
 
     def testRangeSelector(self):

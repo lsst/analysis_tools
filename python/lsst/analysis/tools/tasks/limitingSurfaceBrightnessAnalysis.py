@@ -30,11 +30,10 @@ __all__ = (
 
 import logging
 
+import lsst.afw.math as afwMath
 import numpy as np
 from astropy.table import Table
-
-import lsst.afw.math as afwMath
-from lsst.pex.config import ListField
+from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base.connectionTypes import Input, Output
 from lsst.skymap import BaseSkyMap
@@ -158,6 +157,10 @@ class LimitingSurfaceBrightnessConfig(
         default=(),
         optional=False,
     )
+    apertureSize = Field[int](
+        doc="The size of the sky objects photometry aperture.",
+        default=9,
+    )
 
 
 class LimitingSurfaceBrightnessTask(PipelineTask):
@@ -230,7 +233,7 @@ class LimitingSurfaceBrightnessTask(PipelineTask):
             skyKey = "sky_source" if "detector" in dataId else "sky_object"
             isImage = source_catalogue[idKey] == dataId[idKey]
             isSky = source_catalogue[skyKey] > 0
-            skySources = source_catalogue[isImage & isSky][band + "ap09Flux"]
+            skySources = source_catalogue[isImage & isSky][band + "ap%02dFlux" % (self.config.apertureSize)]
 
             # Derive the clipped standard deviation of sky sources in nJy
             nPix = np.pi * 9**2  # Number of pixels within the circular aperture

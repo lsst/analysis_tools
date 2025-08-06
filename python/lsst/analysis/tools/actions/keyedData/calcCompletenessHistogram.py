@@ -92,7 +92,10 @@ class CalcCompletenessHistogramAction(KeyedDataAction):
             action.selector_range_target.maximum = maximum
             result = action(data, **kwargs)
             for key_formatted, array in results.items():
-                array[n_bins - idx_rev - 1] = result[key_formatted]
+                value = result[key_formatted]
+                # The implicit float conversion will generate a warning if the
+                # value is masked, so check for that first
+                array[n_bins - idx_rev - 1] = np.nan if np.ma.is_masked(value) else value
             if median >= self.config_metrics.completeness_mag_max:
                 completeness = result[name_completeness] * 100
                 if completeness:

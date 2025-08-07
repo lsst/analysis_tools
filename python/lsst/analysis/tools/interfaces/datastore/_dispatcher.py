@@ -202,14 +202,13 @@ class SasquatchDispatcher:
 
         headers = {"content-type": "application/json"}
 
-        with http_client() as session:
-            r = session.get(f"{self.url}/v3/clusters", headers=headers)
-            cluster_id = r.json()["data"][0]["cluster_id"]
-            self._cluster_id = str(cluster_id)
-
         try:
+            with http_client() as session:
+                r = session.get(f"{self.url}/v3/clusters", headers=headers)
+                cluster_id = r.json()["data"][0]["cluster_id"]
+                self._cluster_id = str(cluster_id)
             r.raise_for_status()
-        except requests.HTTPError:
+        except requests.RequestException:
             log.error("Could not retrieve the cluster id for the specified url")
             raise SasquatchDispatchFailure("Could not retrieve the cluster id for the specified url")
 
@@ -237,11 +236,11 @@ class SasquatchDispatcher:
             "replication_factor": REPLICATION_FACTOR,
         }
 
-        with http_client() as session:
-            r = session.post(
-                f"{self.url}/v3/clusters/{self.clusterId}/topics", json=topic_config, headers=headers
-            )
         try:
+            with http_client() as session:
+                r = session.post(
+                    f"{self.url}/v3/clusters/{self.clusterId}/topics", json=topic_config, headers=headers
+                )
             r.raise_for_status()
             log.debug("Created topic %s.%s", self.namespace, topic_name)
             return True
@@ -256,6 +255,9 @@ class SasquatchDispatcher:
                     e.response.reason,
                 )
                 return False
+        except requests.RequestException:
+            log.exception("Unknown error occurred creating kafka topic")
+            return False
 
     def _generateAvroSchema(self, metric: str, record: MutableMapping[str, Any]) -> tuple[str, bool]:
         """Infer the Avro schema from the record payload.
@@ -704,9 +706,10 @@ class SasquatchDispatcher:
                 if schemaTrimmed:
                     partialUpload = True
 
-                r = session.post(f"{self.url}/topics/{self.namespace}.{metric}", json=data, headers=headers)
-
                 try:
+                    r = session.post(
+                        f"{self.url}/topics/{self.namespace}.{metric}", json=data, headers=headers
+                    )
                     r.raise_for_status()
                     log.debug("Succesfully sent data for metric %s", metric)
                     uploadFailed.append(False)
@@ -717,6 +720,12 @@ class SasquatchDispatcher:
                         e.response.status_code,
                         e.response.reason,
                     )
+                    uploadFailed.append(True)
+                    partialUpload = True
+                except requests.RequestException as e:
+                    # Don't log full stack trace because there may be lots
+                    # of these.
+                    log.error("There was a problem submitting the metric %s: %s", metric, e)
                     uploadFailed.append(True)
                     partialUpload = True
 

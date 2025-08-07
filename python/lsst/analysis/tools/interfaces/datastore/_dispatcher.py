@@ -208,9 +208,8 @@ class SasquatchDispatcher:
                 cluster_id = r.json()["data"][0]["cluster_id"]
                 self._cluster_id = str(cluster_id)
             r.raise_for_status()
-        except requests.RequestException:
-            log.error("Could not retrieve the cluster id for the specified url")
-            raise SasquatchDispatchFailure("Could not retrieve the cluster id for the specified url")
+        except requests.RequestException as e:
+            raise SasquatchDispatchFailure("Could not retrieve the cluster id for the specified url") from e
 
     def _create_topic(self, topic_name: str) -> bool:
         """Create a kafka topic in Sasquatch.

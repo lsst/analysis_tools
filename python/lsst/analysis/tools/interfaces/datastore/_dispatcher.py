@@ -669,7 +669,7 @@ class SasquatchDispatcher:
 
         Raises
         ------
-        SasquatchDispatchPartialFailure
+        SasquatchDispatchPartialFailure, SasquatchDispatchFailure
             Raised if there were any errors in dispatching a bundle.
         """
         if id is None:
@@ -768,7 +768,7 @@ class SasquatchDispatcher:
 
         Raises
         ------
-        SasquatchDispatchPartialFailure
+        SasquatchDispatchPartialFailure, SasquatchDispatchFailure
             Raised if there were any errors in dispatching a bundle.
         """
         # Parse the relevant info out of the dataset ref.

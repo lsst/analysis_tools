@@ -47,9 +47,9 @@ class LimitingSurfaceBrightnessConnections(
     PipelineTaskConnections,
     dimensions=(),
     defaultTemplates={
-        "detectionTableName": "",
-        "photoCalibName": "",
-        "wcsName": "",
+        "detectionTableName": "object_all",
+        "photoCalibName": "deep_coadd.photoCalib",
+        "wcsName": "deep_coadd.wcs",
     },
 ):
     """Connections class for LimitingSurfaceBrightnessTask."""
@@ -98,6 +98,8 @@ class LimitingSurfaceBrightnessConnections(
 
     def __init__(self, *, config=None):
         super().__init__(config=config)
+        # Update output table name for configurable dimensions
+        dimen = "_visit" if "visit" in config.inputTableDimensions else "_tract"
         self.data = Input(
             doc=self.data.doc,
             name=self.data.name,
@@ -124,7 +126,7 @@ class LimitingSurfaceBrightnessConnections(
         )
         self.limiting_surface_brightness_table = Output(
             doc=self.limiting_surface_brightness_table.doc,
-            name=self.limiting_surface_brightness_table.name,
+            name=self.limiting_surface_brightness_table.name + dimen,
             storageClass=self.limiting_surface_brightness_table.storageClass,
             dimensions=frozenset(sorted(config.outputDataDimensions)),
         )
@@ -144,17 +146,17 @@ class LimitingSurfaceBrightnessConfig(
 
     inputTableDimensions = ListField[str](
         doc="Dimensions of the input object table data.",
-        default=(),
+        default=("skymap", "tract"),
         optional=False,
     )
     inputCalibDimensions = ListField[str](
         doc="Dimensions of the input calibration data.",
-        default=(),
+        default=("tract", "band"),
         optional=False,
     )
     outputDataDimensions = ListField[str](
         doc="Dimensions of the output table data.",
-        default=(),
+        default=("tract", "band"),
         optional=False,
     )
     apertureSize = Field[int](
@@ -164,7 +166,7 @@ class LimitingSurfaceBrightnessConfig(
 
 
 class LimitingSurfaceBrightnessTask(PipelineTask):
-    """A task for measuring the 3sigma limiting surface brightness on 10
+    """A task for measuring the 3 sigma limiting surface brightness on 10
     arcsecond scales for a given image.  This is currently a widely accepted
     metric for depth within the low surface brightness community.
 
@@ -236,7 +238,7 @@ class LimitingSurfaceBrightnessTask(PipelineTask):
             skySources = source_catalogue[isImage & isSky][band + "ap%02dFlux" % (self.config.apertureSize)]
 
             # Derive the clipped standard deviation of sky sources in nJy
-            nPix = np.pi * 9**2  # Number of pixels within the circular aperture
+            nPix = np.pi * self.config.apertureSize**2  # Number of pixels within the circular aperture
             ctrl = afwMath.StatisticsControl(3, 3)
             ctrl.setNanSafe(True)
             statistic = afwMath.stringToStatisticsProperty("STDEVCLIP")
@@ -270,9 +272,10 @@ class LimitingSurfaceBrightnessAnalysisConnections(
 
     def __init__(self, *, config=None):
         super().__init__(config=config)
-
+        # Update input table name for configurable dimensions
+        dimen = "_visit" if "visit" in config.inputDataDimensions else "_tract"
         self.data = Input(
-            name=self.data.name,
+            name=self.data.name + dimen,
             storageClass=self.data.storageClass,
             doc=self.data.doc,
             deferLoad=self.data.deferLoad,

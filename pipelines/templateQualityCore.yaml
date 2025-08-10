@@ -1,0 +1,22 @@
+description: |
+  Tier1 plots and metrics to assess template quality.
+tasks:
+  analyzeCoaddDepthCore:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryAnalysisTask
+    config:
+      connections.coaddType: template
+  coaddDepthMetricTract:
+    class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
+    config:
+      atools.coadd_depth_summary_metrics: CoaddQualityCheck
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityCheck
+  coaddDepthPlot:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
+    config:
+      connections.coaddType: template
+      # plot will be called n_image_template_CoaddDepthPlot
+      # 'n_image' originates from the task outputName; 'template' originates from the line below
+      atools.template: CoaddQualityPlot
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityPlot

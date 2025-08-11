@@ -435,7 +435,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             hspace=0.0,
             bottom=0.13 if self.publicationStyle else 0.22,
             left=0.18 if self.publicationStyle else 0.21,
-            right=0.95 if self.publicationStyle else None,
+            right=0.92 if self.publicationStyle else None,
             top=0.98 if self.publicationStyle else None,
         )
         if not self.publicationStyle:

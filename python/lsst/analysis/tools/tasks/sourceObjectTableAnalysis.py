@@ -173,7 +173,7 @@ class SourceObjectTableAnalysisConnections(
     refCat = ct.Input(
         doc="Catalog of positions to use as reference.",
         name="objectTable",
-        storageClass="DataFrame",
+        storageClass="ArrowAstropy",
         dimensions=["skymap", "tract", "patch"],
         multiple=True,
         deferLoad=True,

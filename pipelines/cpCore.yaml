@@ -245,19 +245,8 @@ tasks:
       atools.defectsPixelsFrac.quantityKey: DEFECTS_FRAC
       atools.defectsPixelsFrac.unit: "pix"
 
-      atools.defectsPixelsFracNoEdge: CalibStatisticFocalPlanePlot
-      atools.defectsPixelsFracNoEdge.produce.plot.addHistogram: false
-      atools.defectsPixelsFracNoEdge.quantityKey: DEFECTS_FRAC_NOEDGE
-      atools.defectsPixelsFracNoEdge.unit: "pix"
-
-      atools.defectsPixelsRequirement: CalibStatisticFocalPlanePlot
-      atools.defectsPixelsRequirement.produce.plot.addHistogram: false
-      atools.defectsPixelsRequirement.produce.plot.plotMin: 0
-      atools.defectsPixelsRequirement.produce.plot.plotMax: 1
-      atools.defectsPixelsRequirement.quantityKey: DEFECTS_REQUIREMENT
-      atools.defectsPixelsRequirement.unit: "---"
-
-      # TODO: DM-43880 Sort out defects
+      # TODO: DM-52156 The following will be replaced with statistics for
+      # different defects reasons
       # atools.defectsHotPixels: CalibStatisticFocalPlanePlot
       # atools.defectsHotPixels.produce.plot.addHistogram: true
       # atools.defectsHotPixels.produce.plot.zAxisLabel: "Number of Hot Pixels"

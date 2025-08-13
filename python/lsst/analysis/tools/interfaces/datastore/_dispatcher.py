@@ -251,7 +251,7 @@ class SasquatchDispatcher:
                 return True
             else:
                 log.error(
-                    "Unknown error occured creating kafka topic %s %s",
+                    "Unknown error occurred creating kafka topic %s %s",
                     e.response.status_code,
                     e.response.reason,
                 )

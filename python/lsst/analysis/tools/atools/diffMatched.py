@@ -813,7 +813,7 @@ class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):
                     setattr(self.process.buildActions, f"diff{plot.suffix_y}", diff)
 
                     label = f"({band1} - {band2}) ({config_mag_y.name_flux} - {config_mag_x.name_flux})"
-                    label = f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
+                    label = f"χ = ({label})/σ" if self.compute_chi else f"{label} (mmag)"
                     plot.yAxisLabel = label
                     actions_metric[name_color] = metric
                     actions_plot[name_color] = plot
@@ -928,9 +928,7 @@ class MatchedRefCoaddDiffMagTool(MatchedRefCoaddDiffPlot):
             if not self.produce.plot.yAxisLabel:
                 label_x, label_y = (mag.name_flux for mag in (self.config_mag_x, self.config_mag_y))
                 label = f"{label_y} - {label_x}" if self.measure_y_minus_x else f"{label_x} - {label_y}"
-                self.produce.plot.yAxisLabel = (
-                    f"chi = ({label})/error" if self.compute_chi else f"{label} (mmag)"
-                )
+                self.produce.plot.yAxisLabel = f"χ = ({label})/σ" if self.compute_chi else f"{label} (mmag)"
             if self.unit is None:
                 self.unit = "" if self.compute_chi else "mmag"
             if self.name_prefix is None:
@@ -1061,7 +1059,7 @@ class MatchedRefCoaddDiffPositionTool(MatchedRefCoaddDiffPlot):
                 label = f"({name_short_y} - {name_short_x})"
                 coord_suffix = "" if "coord" in name else " coord"
                 self.produce.plot.yAxisLabel = (
-                    f"chi = ({label} {name}{coord_suffix})/error"
+                    f"χ = ({label} {name}{coord_suffix})/σ"
                     if self.compute_chi
                     else f"{label} {name}{coord_suffix} ({self.unit})"
                 )
@@ -1180,7 +1178,7 @@ class MatchedRefCoaddDiffDistanceTool(MatchedRefCoaddDiffPlot):
             if not self.produce.plot.yAxisLabel:
                 label = f"({name_short_y} - {name_short_x}) distance"
                 self.produce.plot.yAxisLabel = (
-                    f"chi = {label}/error" if self.compute_chi else f"{label} ({self.unit})"
+                    f"χ = ({label})/σ" if self.compute_chi else f"{label} ({self.unit})"
                 )
 
     def get_key_flux_y(self) -> str:
@@ -1267,7 +1265,7 @@ def reconfigure_diff_matched_defaults(
     # These are class attributes and don't need to be changed in subclasses
     # These may end up being changed multiple times with repeated calls,
     # but there isn't a good way to avoid that.
-    MagnitudeTool.fluxes_default.ref_matched.name_flux = "Truth"
+    MagnitudeTool.fluxes_default.ref_matched.name_flux = "True"
     MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
     MagnitudeTool.fluxes_default.ref_matched.key_flux = "ref_{band}_flux"
 

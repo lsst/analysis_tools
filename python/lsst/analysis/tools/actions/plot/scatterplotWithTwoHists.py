@@ -435,7 +435,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             hspace=0.0,
             bottom=0.13 if self.publicationStyle else 0.22,
             left=0.18 if self.publicationStyle else 0.21,
-            right=0.95 if self.publicationStyle else None,
+            right=0.92 if self.publicationStyle else None,
             top=0.98 if self.publicationStyle else None,
         )
         if not self.publicationStyle:
@@ -834,13 +834,20 @@ class ScatterPlotWithTwoHists(PlotAction):
         )
 
         # Add axes labels
+        band = kwargs.get("band", "unspecified")
+        xlabel = self.xAxisLabel
+        ylabel = self.yAxisLabel
+        if "{band}" in xlabel:
+            xlabel = xlabel.format(band=band)
+        if "{band}" in ylabel:
+            ylabel = ylabel.format(band=band)
         if self.publicationStyle:
-            ax.set_ylabel(self.yAxisLabel, labelpad=10)
-            ax.set_xlabel(self.xAxisLabel, labelpad=2)
+            ax.set_ylabel(ylabel, labelpad=10)
+            ax.set_xlabel(xlabel, labelpad=2)
         else:
-            ax.set_ylabel(self.yAxisLabel, labelpad=10, fontsize=10)
+            ax.set_ylabel(ylabel, labelpad=10, fontsize=10)
+            ax.set_xlabel(xlabel, labelpad=2, fontsize=10)
             ax.tick_params(labelsize=8)
-            ax.set_xlabel(self.xAxisLabel, labelpad=2, fontsize=10)
 
         return ax, histIm
 

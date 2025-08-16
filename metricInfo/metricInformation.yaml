@@ -354,3 +354,14 @@ diaSourcesGoodVsBadRatio:
     description: |
         The ratio of the number of diaSources with high reliability (>0.9)
         over the number of diaSources with low reliability (<0.1)
+
+# Surface brightness limit metrics
+limitingSurfaceBrightness:
+    lowThreshold: 27.0
+    highThreshold: 32.0
+    divergent: false
+    plot:
+    debugGroup: surfaceBrightness
+    atoolsFile: limitingSurfaceBrightness.py
+    description: |
+        Standard deviation of sky objects in coadd, converted to AB mag / arcsec^2

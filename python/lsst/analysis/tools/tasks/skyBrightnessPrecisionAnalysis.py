@@ -47,14 +47,14 @@ log = logging.getLogger(__name__)
 
 class SkyBrightnessPrecisionConnections(
     PipelineTaskConnections,
-    dimensions=(),
-    defaultTamplates={
-        "detectionTableName": "object_all",
-        "calexpName": "deep_coadd.calexp",
-        "backgroundName": "deep_coadd.calexpBackground",
-        "photoCalibName": "deep_coadd.photoCalib",
-        "wcsName": "deep_coadd.wcs",
+    defaultTemplates={
+        "detectionTableName": "sourceTable",
+        "calexpName": "calexp",
+        "backgroundName": "calexpBackground",
+        "photoCalibName": "calexp.photoCalib",
+        "wcsName": "calexp.wcs",
     },
+    dimensions=(),
 ):
     """Connections for the SkyBrightnessPrecisionTask."""
 
@@ -76,7 +76,7 @@ class SkyBrightnessPrecisionConnections(
         deferLoad=True,
     )
 
-    calexpBackground = Input(
+    background = Input(
         name="{backgroundName}",
         storageClass="Background",
         doc="Background model for calexp.",
@@ -120,15 +120,17 @@ class SkyBrightnessPrecisionConnections(
 
     def __init__(self, *, config=None):
         super().__init__(config=config)
+
         # Update output table name for configurable dimensions
         dimen = "_visit" if "visit" in config.inputTableDimensions else "_tract"
+
         self.objTable = Input(
-            doc=self.data.doc,
-            name=self.data.name,
-            storageClass=self.data.storageClass,
-            deferLoad=self.data.deferLoad,
+            doc=self.objTable.doc,
+            name=self.objTable.name,
+            storageClass=self.objTable.storageClass,
+            deferLoad=self.objTable.deferLoad,
             dimensions=frozenset(sorted(config.inputTableDimensions)),
-            multiple=self.data.multiple,
+            multiple=self.objTable.multiple,
         )
         self.calexp = Input(
             doc=self.calexp.doc,
@@ -173,6 +175,8 @@ class SkyBrightnessPrecisionConnections(
 
         if "tract" not in config.inputTableDimensions:
             del self.skymap
+
+        self.dimensions.update(frozenset(sorted(config.outputDataDimensions)))
 
 
 class SkyBrightnessPrecisionConfig(
@@ -257,117 +261,118 @@ class SkyBrightnessPrecisionTask(PipelineTask):
         sky_brightness_precision_struct = self.run(**{k: v for k, v in inputs.items() if k != "skymap"})
         butlerQC.put(sky_brightness_precision_struct, outputRefs)
 
-        def run(self, objTable, calexp, background, photoCalib, wcs):
-            """Output a table of per-detector or per-patch sky brightness precision measurement
-            for the input visit or tract coadd
+    def run(self, objTable, calexp, background, photoCalib, wcs):
+        """Output a table of per-detector or per-patch sky brightness precision measurement
+        for the input visit or tract coadd
 
-            Parameters
-            ----------
-            data : `list`
-                List of dicts with information respecting the extracted source
-                detection catalogues
-            photoCalib : `list`
-                List of dicts with information respecting the extracted image
-                photometric calibrations
-            wcs : `list`
-                List of dicts with information respecting the extracted image
-                world coordinate systems
+        Parameters
+        ----------
+        data : `list`
+            List of dicts with information respecting the extracted source
+            detection catalogues
+        photoCalib : `list`
+            List of dicts with information respecting the extracted image
+            photometric calibrations
+        wcs : `list`
+            List of dicts with information respecting the extracted image
+            world coordinate systems
 
-            Returns
-            -------
-            `pipe.base.Struct` containing `astropy.table.Table`
-                Table containing per-detector or per-patch sky brightness precision values
-            """
+        Returns
+        -------
+        `pipe.base.Struct` containing `astropy.table.Table`
+            Table containing per-detector or per-patch sky brightness precision values
+        """
 
-            # lookup_photoCalib = {x.dataId: x for x in photoCalib}
-            # lookup_wcs = {x.dataId: x for x in wcs}
-            lookup_calexp = {x.dataId: x for x in calexp}
-            lookup_bg = {x.dataId: x for x in background}
+        # lookup_photoCalib = {x.dataId: x for x in photoCalib}
+        # lookup_wcs = {x.dataId: x for x in wcs}
+        lookup_calexp = {x.dataId: x for x in calexp}
+        lookup_bg = {x.dataId: x for x in background}
 
-            source_catalog = objTable[0].get()
+        source_catalog = objTable[0].get()
 
-            if "band" in self.config.inputCalibDimensions and len(photoCalib) > 0:
-                band = photoCalib[0].dataId["band"] + "_"
-            else:
-                band = ""
+        if "band" in self.config.inputCalibDimensions and len(photoCalib) > 0:
+            band = photoCalib[0].dataId["band"] + "_"
+        else:
+            band = ""
 
-            if "visit" in self.config.inputTableDimensions:
-                skyKeyName = "sky_source"
-            else:
-                skyKeyName = "sky_object"
 
-            out = Table(
-                names=["imageID", "fracWithin1pct", "maxAbsErr", "medianRatio", "nSky"],
-                dtype=[np.int64, np.float64, np.float64, np.float64, np.int64],
+        out = Table(
+            names=["imageID", "fracWithin1pct", "maxAbsErr", "medianRatio", "nSky"],
+            dtype=[np.int64, np.float64, np.float64, np.float64, np.int64],
+        )
+
+        aper = int(self.config.apertureSize)
+        disk = self._disk_mask(aper)
+        nAperPixels = int(SpanSet.fromShape(aper).asArray().sum())
+        nPixIdeal = np.pi * aper**2
+        
+        if "visit" in self.config.inputTableDimensions:
+            skyKeyName = "sky_source"
+            ap_col = f"ap{aper:02d}Flux"
+        else:
+            skyKeyName = "sky_object"
+            ap_col = f"{band}ap{aper:02d}Flux"
+
+        # Iterate over images (detectors or patches)
+        for dataId in lookup_calexp.keys():
+            idKey = "detector" if "detector" in dataId else "patch"
+
+            # Slice catalogue rows for this image and sky sources
+            isImage = (source_catalog[idKey] == dataId[idKey])
+            assert np.any(isImage), f"No sources found for {dataId}."
+            if skyKeyName not in source_catalog.colnames:
+                raise ValueError(f"No sky flag column {skyKeyName} found for {dataId}.")
+
+            isSky = source_catalog[skyKeyName] > 0
+            rows = source_catalog[isImage & isSky]
+
+            if ap_col not in rows.colnames:
+                raise ValueError(f"No aperture flux column {ap_col} found for {dataId}.")
+            if len(rows) == 0:
+                out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, 0])
+                continue
+
+            cal = lookup_calexp[dataId].get()
+            bg = lookup_bg[dataId].get()
+
+            nano = cal.getPhotoCalib().instFluxToNanojansky(1.0)
+            calimg = cal.image.array.astype("f8", copy=False) * nano
+            bgimg = bg.getImage().array.astype("f8", copy=False) * nano
+
+            x = np.asarray(rows["x"], dtype="f8")
+            y = np.asarray(rows["y"], dtype="f8")
+            mean_flux_sky = np.asarray(rows[ap_col], dtype="f8") / nPixIdeal
+
+            mean_img = np.empty_like(mean_flux_sky)
+            mean_bg = np.empty_like(mean_flux_sky)
+            for i in range(mean_img.size):
+                mean_img[i] = self._mean_in_aperture(calimg, x[i], y[i], disk, nAperPixels, aper)
+                mean_bg[i] = self._mean_in_aperture(bgimg, x[i], y[i], disk, nAperPixels, aper)
+
+            good = mean_bg != 0.0
+            if not np.any(good):
+                out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, int(mean_bg.size)])
+                continue
+
+            # SBRatio per the notebook: (background + skyFlux) / background
+            sb_ratio = (mean_bg[good] + mean_flux_sky[good]) / mean_bg[good]
+
+            tol = float(self.config.tolerance)
+            fracWithin = np.count_nonzero((sb_ratio >= (1 - tol)) & (sb_ratio <= (1 + tol))) / sb_ratio.size
+            maxAbsErr = np.max(np.abs(sb_ratio - 1.0))
+            medianRatio = np.median(sb_ratio)
+
+            out.add_row(
+                [
+                    int(dataId[idKey]),
+                    float(fracWithin),
+                    float(maxAbsErr),
+                    float(medianRatio),
+                    int(sb_ratio.size),
+                ]
             )
 
-            aper = int(self.config.apertureSize)
-            ap_col = f"{band}ap{aper:02d}Flux"
-            disk = self._disk_mask(aper)
-            nAperPixels = int(SpanSet.fromShape(aper).asArray().sum())
-            nPixIdeal = np.pi * aper**2
-
-            # Iterate over images (detectors or patches)
-            for dataId in lookup_calexp.keys():
-                idKey = "detector" if "detector" in dataId else "patch"
-
-                # Slice catalogue rows for this image and sky sources
-                isImage = source_catalog[idKey] == dataId[idKey]
-                if skyKeyName not in source_catalog.colnames:
-                    raise ValueError(f"No sky flag column {skyKeyName} found for {dataId}.")
-
-                isSky = source_catalog[skyKey] > 0
-                rows = source_catalog[isImage & isSky]
-
-                if ap_col not in rows.colnames:
-                    raise ValueError(f"No aperture flux column {ap_col} found for {dataId}.")
-                if len(rows) == 0:
-                    out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, 0])
-                    continue
-
-                cal = lookup_calexp[dataId].get()
-                bg = lookup_bg[dataId].get()
-
-                nano = cal.getPhotoCalib().instFluxToNanojansky(1.0)
-                calimg = cal.image.array.astype("f8", copy=False) * nano
-                bgimg = bg.getImage().array.astype("f8", copy=False) * nano
-
-                x = np.asarray(rows["x"], dtype="f8")
-                y = np.asarray(rows["y"], dtype="f8")
-                mean_flux_sky = np.asarray(rows[ap_col], dtype="f8") / nPixIdeal
-
-                mean_img = np.empty_like(mean_flux_sky)
-                mean_bg = np.empty_like(mean_flux_sky)
-                for i in range(mean_img.size):
-                    mean_img[i] = self._mean_in_aperture(calimg, x[i], y[i], disk, nAperPixels, aper)
-                    mean_bg[i] = self._mean_in_aperture(bgimg, x[i], y[i], disk, nAperPixels, aper)
-
-                good = mean_bg != 0.0
-                if not np.any(good):
-                    out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, int(mean_bg.size)])
-                    continue
-
-                # SBRatio per the notebook: (background + skyFlux) / background
-                sb_ratio = (mean_bg[good] + mean_flux_sky[good]) / mean_bg[good]
-
-                tol = float(self.config.tolerance)
-                fracWithin = (
-                    np.count_nonzero((sb_ratio >= (1 - tol)) & (sb_ratio <= (1 + tol))) / sb_ratio.size
-                )
-                maxAbsErr = np.max(np.abs(sb_ratio - 1.0))
-                medianRatio = np.median(sb_ratio)
-
-                out.add_row(
-                    [
-                        int(dataId[idKey]),
-                        float(fracWithin),
-                        float(maxAbsErr),
-                        float(medianRatio),
-                        int(sb_ratio.size),
-                    ]
-                )
-
-            return Struct(sky_brightness_precision_table=out)
+        return Struct(sky_brightness_precision_table=out)
 
 
 class SkyBrightnessPrecisionAnalysisConnections(

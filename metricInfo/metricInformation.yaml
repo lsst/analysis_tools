@@ -363,4 +363,4 @@ skyBrightnessPrecision:
     debugGroup:surfaceBrightness
     atoolsFile: skyBrightnessPrecision.py
     description: |
-        Fraction of sky brightness that is within 1%
+        Fraction of sky brightness precision that is within 1%

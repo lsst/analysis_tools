@@ -354,13 +354,3 @@ diaSourcesGoodVsBadRatio:
     description: |
         The ratio of the number of diaSources with high reliability (>0.9)
         over the number of diaSources with low reliability (<0.1)
-
-skyBrightnessPrecision:
-    lowThreshold: 0.95
-    highThreshold: 1.00
-    divergent: false
-    plot:
-    debugGroup:surfaceBrightness
-    atoolsFile: skyBrightnessPrecision.py
-    description: |
-        Fraction of sky brightness precision that is within 1%

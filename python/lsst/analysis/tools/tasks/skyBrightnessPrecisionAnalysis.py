@@ -220,41 +220,31 @@ class SkyBrightnessPrecisionTask(PipelineTask):
         super().__init__(*args, **kwargs)
 
     @staticmethod
-    def _disk_mask(radius_px: int):
-        r = int(radius_px)
-        yy, xx = np.ogrid[-r : r + 1, -r : r + 1]
-        return (xx * xx + yy * yy) <= r * r
+    def _mean_in_aperture(image, x, y, aper, npix_unmasked):
+        # Ensure x and y are integers and  is a numpy array
+        x, y = int(x), int(y)
+        img = np.asarray(image)
+        rows, cols = img.shape
 
-    @staticmethod
-    def _mean_in_aperture(
-        image_array: np.ndarray, x: float, y: float, disk_mask: np.ndarray, nAperPixels: int, aper: int
-    ) -> float:
-        """Mean over an *effective* area for circular aperture centered at (x,y)."""
-        r = disk_mask.shape[0] // 2
-        x0 = int(np.round(x)) - r
-        y0 = int(np.round(y)) - r
-        x1 = x0 + disk_mask.shape[1]
-        y1 = y0 + disk_mask.shape[0]
+        # Create grid arrays for the entire image using ogrid (memory efficient)
+        X, Y = np.ogrid[:rows, :cols]
 
-        H, W = image_array.shape
-        xs0, ys0 = max(0, x0), max(0, y0)
-        xs1, ys1 = min(W, x1), min(H, y1)
-        if xs0 >= xs1 or ys0 >= ys1:
-            return 0.0
+        # Create the mask for points within the circle (distance from (x, y) <= aper)
+        mask = (X - x) ** 2 + (Y - y) ** 2 <= aper**2
 
-        im_cut = image_array[ys0:ys1, xs0:xs1]
-        mk_cut = disk_mask[
-            (ys0 - y0) : (ys1 - y1 + disk_mask.shape[0]), (xs0 - x0) : (xs1 - x1 + disk_mask.shape[1])
-        ]
-        mk_cut = mk_cut[: im_cut.shape[0], : im_cut.shape[1]]
+        # Compute the mean using the actual number of pixels within the mask
+        nPix = np.sum(mask)
 
-        nPix = int(mk_cut.sum())
+        # 9 pixel aperture has 253 pixels if unmasked, so we scale the area accordingly
+        area = nPix / npix_unmasked * np.pi * aper**2
+
+        # There are some sky sources that are out of bound, return 0 in this case
         if nPix == 0:
-            return 0.0
+            meanFluxInApe = 0
+        else:
+            meanFluxInApe = img[mask].sum() / area
 
-        ideal_area = np.pi * (aper**2)
-        eff_area = ideal_area * (nPix / nAperPixels)
-        return float(im_cut[mk_cut].sum() / eff_area)
+        return meanFluxInApe
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
@@ -295,17 +285,15 @@ class SkyBrightnessPrecisionTask(PipelineTask):
         else:
             band = ""
 
-
         out = Table(
             names=["imageID", "fracWithin1pct", "maxAbsErr", "medianRatio", "nSky"],
             dtype=[np.int64, np.float64, np.float64, np.float64, np.int64],
         )
 
         aper = int(self.config.apertureSize)
-        disk = self._disk_mask(aper)
         nAperPixels = int(SpanSet.fromShape(aper).asArray().sum())
         nPixIdeal = np.pi * aper**2
-        
+
         if "visit" in self.config.inputTableDimensions:
             skyKeyName = "sky_source"
             ap_col = f"ap{aper:02d}Flux"
@@ -318,7 +306,7 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             idKey = "detector" if "detector" in dataId else "patch"
 
             # Slice catalogue rows for this image and sky sources
-            isImage = (source_catalog[idKey] == dataId[idKey])
+            isImage = source_catalog[idKey] == dataId[idKey]
             assert np.any(isImage), f"No sources found for {dataId}."
             if skyKeyName not in source_catalog.colnames:
                 raise ValueError(f"No sky flag column {skyKeyName} found for {dataId}.")
@@ -329,14 +317,15 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             if ap_col not in rows.colnames:
                 raise ValueError(f"No aperture flux column {ap_col} found for {dataId}.")
             if len(rows) == 0:
-                out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, 0])
-                continue
+                raise ValueError(f"No valid rows found for {dataId}.")
 
             cal = lookup_calexp[dataId].get()
             bg = lookup_bg[dataId].get()
 
             nano = cal.getPhotoCalib().instFluxToNanojansky(1.0)
             calimg = cal.image.array.astype("f8", copy=False) * nano
+            x0, y0 = cal.getXY0()
+
             bgimg = bg.getImage().array.astype("f8", copy=False) * nano
 
             x = np.asarray(rows["x"], dtype="f8")
@@ -346,15 +335,14 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             mean_img = np.empty_like(mean_flux_sky)
             mean_bg = np.empty_like(mean_flux_sky)
             for i in range(mean_img.size):
-                mean_img[i] = self._mean_in_aperture(calimg, x[i], y[i], disk, nAperPixels, aper)
-                mean_bg[i] = self._mean_in_aperture(bgimg, x[i], y[i], disk, nAperPixels, aper)
+                mean_img[i] = self._mean_in_aperture(calimg, x[i] - x0, y[i] - y0, aper, nAperPixels)
+                mean_bg[i] = self._mean_in_aperture(bgimg, x[i] - x0, y[i] - y0, aper, nAperPixels)
 
             good = mean_bg != 0.0
             if not np.any(good):
-                out.add_row([int(dataId[idKey]), np.nan, np.nan, np.nan, int(mean_bg.size)])
-                continue
+                raise ValueError(f"No valid background flux found for {dataId}.")
 
-            # SBRatio per the notebook: (background + skyFlux) / background
+            # SBRatio: (background + skyFlux) / background
             sb_ratio = (mean_bg[good] + mean_flux_sky[good]) / mean_bg[good]
 
             tol = float(self.config.tolerance)
@@ -399,6 +387,8 @@ class SkyBrightnessPrecisionAnalysisConnections(
             deferLoad=self.data.deferLoad,
             dimensions=frozenset(sorted(config.inputDataDimensions)),
         )
+        
+        self.dimensions.update(frozenset(sorted(config.inputDataDimensions)))
 
 
 class SkyBrightnessPrecisionAnalysisConfig(

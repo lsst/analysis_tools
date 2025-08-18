@@ -32,7 +32,7 @@ class SkyBrightnessPrecisionHistPlot(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
         self.process.buildActions.hist_sky_brightness_precision = LoadVector(
-            vectorKey="sky_brightness_precision"
+            vectorKey="fracWithin1pct"
         )
 
         self.produce.plot = HistPlot()

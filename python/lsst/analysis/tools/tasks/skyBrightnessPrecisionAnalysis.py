@@ -23,6 +23,9 @@ __all__ = (
     "SkyBrightnessPrecisionTask",
     "SkyBrightnessPrecisionConfig",
     "SkyBrightnessPrecisionConnections",
+    "SkyBrightnessPrecisionAggregateConnections",
+    "SkyBrightnessPrecisionAggregateConfig",
+    "SkyBrightnessPrecisionAggregateTask",
     "SkyBrightnessPrecisionAnalysisConnections",
     "SkyBrightnessPrecisionAnalysisConfig",
     "SkyBrightnessPrecisionAnalysisTask",
@@ -35,9 +38,10 @@ import numpy as np
 from astropy.table import Table
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
-from lsst.pipe.base.connectionTypes import Input, Output
+from lsst.pipe.base.connectionTypes import Input, Output, PrerequisiteInput
 from lsst.skymap import BaseSkyMap
 from lsst.afw.geom import SpanSet
+from astropy.table import vstack, Table
 
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -273,8 +277,7 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             Table containing per-detector or per-patch sky brightness precision values
         """
 
-        # lookup_photoCalib = {x.dataId: x for x in photoCalib}
-        # lookup_wcs = {x.dataId: x for x in wcs}
+
         lookup_calexp = {x.dataId: x for x in calexp}
         lookup_bg = {x.dataId: x for x in background}
 
@@ -284,11 +287,6 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             band = photoCalib[0].dataId["band"] + "_"
         else:
             band = ""
-
-        out = Table(
-            names=["imageID", "fracWithin1pct", "maxAbsErr", "medianRatio", "nSky"],
-            dtype=[np.int64, np.float64, np.float64, np.float64, np.int64],
-        )
 
         aper = int(self.config.apertureSize)
         nAperPixels = int(SpanSet.fromShape(aper).asArray().sum())
@@ -300,9 +298,11 @@ class SkyBrightnessPrecisionTask(PipelineTask):
         else:
             skyKeyName = "sky_object"
             ap_col = f"{band}ap{aper:02d}Flux"
-            
+
         ids_all: list[int] = []
         ratios_all: list[float] = []
+        if "detector" in self.config.inputTableDimensions:
+            visits_all: list[float] = []
 
         # Iterate over images (detectors or patches)
         for dataId in lookup_calexp.keys():
@@ -351,64 +351,105 @@ class SkyBrightnessPrecisionTask(PipelineTask):
             ids_all.extend([img_id] * sb_ratio.size)
             ratios_all.extend(sb_ratio.astype("f8").tolist())
 
-        out["imageID"] = np.array(ids_all, dtype=np.int64)
-        out["sb_ratio"] = np.array(ratios_all, dtype=np.float64)
-            
+            if "detector" in dataId:
+                visit = dataId["visit"]
+                visits_all.extend([visit] * sb_ratio.size)
 
-            # tol = float(self.config.tolerance)
-            # fracWithin = np.count_nonzero((sb_ratio >= (1 - tol)) & (sb_ratio <= (1 + tol))) / sb_ratio.size
-            # maxAbsErr = np.max(np.abs(sb_ratio - 1.0))
-            # medianRatio = np.median(sb_ratio)
-
-            # out.add_row(
-            #     [
-            #         int(dataId[idKey]),
-            #         float(fracWithin),
-            #         float(maxAbsErr),
-            #         float(medianRatio),
-            #         int(sb_ratio.size),
-            #     ]
-            # )
+        ids = np.array(ids_all, dtype=np.int64)
+        ratios = np.array(ratios_all, dtype=np.float64)
+        if visits_all:
+            visits = np.array(visits_all, dtype=np.int64)
+            out = Table({"imageID": ids, "visit": visits, "SBRatio": ratios})
+        else:
+            out = Table({"imageID": ids, "SBRatio": ratios})
 
         return Struct(sky_brightness_precision_table=out)
 
 
-class SkyBrightnessPrecisionAnalysisConnections(
-    AnalysisBaseConnections,
-    defaultTemplates={"outputName": "skyBrightnessPrecision"},
+class SkyBrightnessPrecisionAggregateConnections(
+    PipelineTaskConnections,
+    dimensions=(), 
 ):
-    data = Input(
-        name="sky_brightness_precision_table",
+    
+    inputTables = Input(
+        name="sky_brightness_precision_table_visit",  
         storageClass="ArrowAstropy",
-        doc="A table containing sky brightness precision metrics.",
+        doc="Per-visit SB ratio tables to aggregate.",
+        dimensions=("instrument", "visit", "detector", "band"),
+        multiple=True,
         deferLoad=True,
+    )
+
+    # Dimensionless outputs for plotting
+    stacked = Output(
+        name="sky_brightness_precision_table_all_visit",
+        storageClass="ArrowAstropy",
+        doc="All SB ratios stacked (imageID, visit, SBRatio).",
+        dimensions=(),
+    )
+    visitStats = Output(
+        name="sky_brightness_precision_visit_stats",
+        storageClass="ArrowAstropy",
+        doc="Per-visit summary (visit, median, max).",
         dimensions=(),
     )
 
-    def __init__(self, *, config=None):
-        super().__init__(config=config)
 
-        dimen = "_visit" if "visit" in config.inputDataDimensions else "_tract"
+class SkyBrightnessPrecisionAggregateConfig(
+    PipelineTaskConfig, pipelineConnections=SkyBrightnessPrecisionAggregateConnections
+):
+    pass
 
-        self.data = Input(
-            name=self.data.name + dimen,
-            storageClass=self.data.storageClass,
-            doc=self.data.doc,
-            deferLoad=self.data.deferLoad,
-            dimensions=frozenset(sorted(config.inputDataDimensions)),
-        )
 
-        self.dimensions.update(frozenset(sorted(config.inputDataDimensions)))
+class SkyBrightnessPrecisionAggregateTask(PipelineTask):
+    ConfigClass = SkyBrightnessPrecisionAggregateConfig
+    _DefaultName = "skyBrightnessPrecisionAggregate"
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        inputs = butlerQC.get(inputRefs)
+        result = self.run(**inputs)
+        butlerQC.put(result, outputRefs)
+
+    def run(self, inputTables):
+        tables = [ref.get() for ref in inputTables]
+        if not tables:
+            return Struct()
+
+        big = vstack(tables, join_type="exact") 
+
+        if "visit" in big.colnames:
+            grouped = big.group_by("visit")
+            visits = grouped.groups.keys["visit"].astype("i8")
+            med = grouped.groups.aggregate(np.median)["SBRatio"].astype("f8")
+            mx = grouped.groups.aggregate(np.max)["SBRatio"].astype("f8")
+            stats = Table({"visit": visits, "median": med, "max": mx})
+        else:
+            stats = Table(names=("visit", "median", "max"), dtype=("i8", "f8", "f8"))
+
+        return Struct(stacked=big, visitStats=stats)
+
+
+class SkyBrightnessPrecisionAnalysisConnections(
+    AnalysisBaseConnections, defaultTemplates={"outputName": "skyBrightnessPrecision"}
+):
+    data = Input(
+        name="sky_brightness_precision_table_all_visit",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=(),  # dimensionless
+    )
+    stats = Input(
+        name="sky_brightness_precision_visit_stats",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=(),
+    )
 
 
 class SkyBrightnessPrecisionAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=SkyBrightnessPrecisionAnalysisConnections
 ):
-    inputDataDimensions = ListField[str](
-        doc="Dimensions of the input table data.",
-        default=(),
-        optional=False,
-    )
+    inputDataDimensions = ListField[str](doc="Dims for analysis", default=(), optional=False)
 
 
 class SkyBrightnessPrecisionAnalysisTask(AnalysisPipelineTask):

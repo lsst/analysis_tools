@@ -21,7 +21,9 @@
 
 __all__ = ("SkyBrightnessPrecisionHistPlot",)
 
-from ..actions.plot.histPlot import HistPanel, HistPlot
+from ..actions.plot.histPlot import HistPanel, HistPlot, HistStatsPanel
+from ..actions.scalar import FracInRange, MedianAction, MaxAction
+from ..actions.keyedData import KeyedScalars
 from ..actions.vector import LoadVector
 from ..interfaces import AnalysisTool
 
@@ -31,18 +33,34 @@ class SkyBrightnessPrecisionHistPlot(AnalysisTool):
 
     def setDefaults(self):
         super().setDefaults()
-        self.process.buildActions.hist_sky_brightness_precision = LoadVector(
-            vectorKey="sb_ratio"
+
+        self.process.buildActions.hist_all = LoadVector(vectorKey="SBRatio")
+
+        self.process.calculateActions.frac_1pct = FracInRange(
+            vectorKey="SBRatio",
+            minimum=0.99,          
+            maximum=1.01,
+            percent=False,         
         )
+        self.process.calculateActions.median = MedianAction(vectorKey="SBRatio")
+        self.process.calculateActions.maximum = MaxAction(vectorKey="SBRatio")
 
         self.produce.plot = HistPlot()
 
-        self.produce.plot.panels["panel_flux"] = HistPanel()
-        self.produce.plot.panels["panel_flux"].label = "Sky Brightness Ratio"
-        self.produce.plot.panels["panel_flux"].hists = dict(
-            hist_sky_brightness_precision=r"Sky Brightness Ratio",
-        )
-        # self.produce.plot.panels["panel_flux"].rangeType = "sigmaMad"
-        # self.produce.plot.panels["panel_flux"].lowerRange = 3.5
-        # self.produce.plot.panels["panel_flux"].upperRange = 3.5
-        # self.produce.plot.panels["panel_flux"].validate()
+        p = HistPanel()
+        p.label = "All SBRatio"
+        p.hists = dict(hist_all="All SBRatio")
+        p.rangeType = "sigmaMad"
+        p.lowerRange = 3.5
+        p.upperRange = 3.5
+        p.referenceValue = 1.0
+
+        p.statsPanel = HistStatsPanel()
+        p.statsPanel.statsLabels = ["Frac in [0.99,1.01]", "Median", "Max"]
+        p.statsPanel.stat1 = ["frac_1pct"]  
+        p.statsPanel.stat2 = ["median"]
+        p.statsPanel.stat3 = ["maximum"]
+
+
+        p.validate()
+        self.produce.plot.panels["panel_all"] = p

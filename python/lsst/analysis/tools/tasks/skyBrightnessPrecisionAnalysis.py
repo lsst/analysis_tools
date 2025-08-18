@@ -114,7 +114,7 @@ class SkyBrightnessPrecisionConnections(
         name="sky_brightness_precision_table",
         storageClass="ArrowAstropy",
         doc="A table containing two columns: the detector or patch IDs and the values of limiting surface "
-        "brightness derived for those detectors or patches.",  # TODO: change doc
+        "brightness derived for those detectors or patches.",
         dimensions=(),
     )
 
@@ -300,6 +300,9 @@ class SkyBrightnessPrecisionTask(PipelineTask):
         else:
             skyKeyName = "sky_object"
             ap_col = f"{band}ap{aper:02d}Flux"
+            
+        ids_all: list[int] = []
+        ratios_all: list[float] = []
 
         # Iterate over images (detectors or patches)
         for dataId in lookup_calexp.keys():
@@ -344,21 +347,28 @@ class SkyBrightnessPrecisionTask(PipelineTask):
 
             # SBRatio: (background + skyFlux) / background
             sb_ratio = (mean_bg[good] + mean_flux_sky[good]) / mean_bg[good]
+            img_id = int(dataId[idKey])
+            ids_all.extend([img_id] * sb_ratio.size)
+            ratios_all.extend(sb_ratio.astype("f8").tolist())
 
-            tol = float(self.config.tolerance)
-            fracWithin = np.count_nonzero((sb_ratio >= (1 - tol)) & (sb_ratio <= (1 + tol))) / sb_ratio.size
-            maxAbsErr = np.max(np.abs(sb_ratio - 1.0))
-            medianRatio = np.median(sb_ratio)
+        out["imageID"] = np.array(ids_all, dtype=np.int64)
+        out["sb_ratio"] = np.array(ratios_all, dtype=np.float64)
+            
 
-            out.add_row(
-                [
-                    int(dataId[idKey]),
-                    float(fracWithin),
-                    float(maxAbsErr),
-                    float(medianRatio),
-                    int(sb_ratio.size),
-                ]
-            )
+            # tol = float(self.config.tolerance)
+            # fracWithin = np.count_nonzero((sb_ratio >= (1 - tol)) & (sb_ratio <= (1 + tol))) / sb_ratio.size
+            # maxAbsErr = np.max(np.abs(sb_ratio - 1.0))
+            # medianRatio = np.median(sb_ratio)
+
+            # out.add_row(
+            #     [
+            #         int(dataId[idKey]),
+            #         float(fracWithin),
+            #         float(maxAbsErr),
+            #         float(medianRatio),
+            #         int(sb_ratio.size),
+            #     ]
+            # )
 
         return Struct(sky_brightness_precision_table=out)
 
@@ -387,7 +397,7 @@ class SkyBrightnessPrecisionAnalysisConnections(
             deferLoad=self.data.deferLoad,
             dimensions=frozenset(sorted(config.inputDataDimensions)),
         )
-        
+
         self.dimensions.update(frozenset(sorted(config.inputDataDimensions)))
 
 

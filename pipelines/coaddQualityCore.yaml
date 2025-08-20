@@ -137,3 +137,18 @@ tasks:
       atools.deepCoadd_sky_noise_map_weighted_mean: PerTractPropertyMapTool
       python: |
         from lsst.analysis.tools.atools import PerTractPropertyMapTool
+  # Spatially bin and plot the coadd images:
+  makeBinnedCoaddImage:
+    class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
+    config:
+      binFactor: 16
+      doBinInnerBBox: True
+  makeWholeTractImage:
+    class: lsst.analysis.tools.tasks.WholeTractImageAnalysisTask
+    config:
+      connections.outputName: deep
+      atools.coaddImage: WholeTractImageTool # wholeTractImageTool.py
+      atools.clippedMask: WholeTractClippedMaskTool # wholeTractImageTool.py
+      atools.coaddImagePostageStamp: WholeTractPostageStampTool # wholeTractImageTool.py
+      python: |
+        from lsst.analysis.tools.atools import *

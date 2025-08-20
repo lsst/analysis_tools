@@ -14,4 +14,5 @@ from .rhoStatisticsPlot import *
 from .scatterplotWithTwoHists import *
 from .skyPlot import *
 from .wholeSkyPlot import *
+from .wholeTractImage import *
 from .xyPlot import *

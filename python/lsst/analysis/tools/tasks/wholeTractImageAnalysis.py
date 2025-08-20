@@ -22,14 +22,22 @@
 __all__ = (
     "WholeTractImageAnalysisConfig",
     "WholeTractImageAnalysisTask",
+    "MakeBinnedCoaddConfig",
+    "MakeBinnedCoaddTask",
 )
 
 from typing import Any, Mapping
 
+import lsst.pipe.base as pipeBase
 from lsst.daf.butler import DataCoordinate
+from lsst.ip.isr.binExposureTask import binExposure
+from lsst.pex.config import Field
 from lsst.pipe.base import (
     InputQuantizedConnection,
     OutputQuantizedConnection,
+    PipelineTask,
+    PipelineTaskConfig,
+    PipelineTaskConnections,
     QuantumContext,
 )
 from lsst.pipe.base import connectionTypes as ct
@@ -42,13 +50,12 @@ class WholeTractImageAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("skymap", "tract", "band"),
     defaultTemplates={
-        "inputName": "deep_coaddBin",
-        "outputName": "deepTract_PostageStamp",
+        "coaddName": "deep",
     },
 ):
     data = ct.Input(
         doc="Binned deepCoadd calibrated exposures to read from the butler.",
-        name="{inputName}",
+        name="{coaddName}Coadd_calexp_bin",
         storageClass="ExposureF",
         deferLoad=True,
         dimensions=(
@@ -147,3 +154,99 @@ class WholeTractImageAnalysisTask(AnalysisPipelineTask):
 
         self._populatePlotInfoWithDataId(plotInfo, dataId)
         return plotInfo
+
+
+class MakeBinnedCoaddConnections(
+    PipelineTaskConnections,
+    dimensions=("skymap", "tract", "patch", "band"),
+    defaultTemplates={"coaddName": "deep"},
+):
+
+    coadd = ct.Input(
+        doc="Input coadd exposures to bin.",
+        name="{coaddName}Coadd_calexp",
+        storageClass="ExposureF",
+        dimensions=("skymap", "tract", "patch", "band"),
+        deferLoad=True,
+    )
+    skymap = ct.Input(
+        doc="The skymap that covers the tract that the data is from.",
+        name=BaseSkyMap.SKYMAP_DATASET_TYPE_NAME,
+        storageClass="SkyMap",
+        dimensions=("skymap",),
+    )
+    binnedCoadd = ct.Output(
+        doc="Binned coadd exposure.",
+        name="{coaddName}Coadd_calexp_bin",
+        storageClass="ExposureF",
+        dimensions=("skymap", "tract", "patch", "band"),
+    )
+
+
+class MakeBinnedCoaddConfig(PipelineTaskConfig, pipelineConnections=MakeBinnedCoaddConnections):
+    """Config for MakeBinnedCoaddTask"""
+
+    doBinInnerBBox = Field[bool](
+        doc=(
+            "Only retrieve and bin the coadd within the patch Inner Bounding Box, ",
+            "thereby excluding the regions that overlap neighboring patches.",
+        ),
+        default=False,
+    )
+    binFactor = Field[int](
+        doc="Binning factor applied to both spatial dimensions.",
+        default=8,
+        check=lambda x: x > 1,
+    )
+
+
+class MakeBinnedCoaddTask(PipelineTask):
+
+    ConfigClass = MakeBinnedCoaddConfig
+    _DefaultName = "makeBinnedCoaddTask"
+
+    def runQuantum(
+        self,
+        butlerQC: QuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        """Takes a coadd exposure and bins it by the factor specified in
+        self.config.binFactor. This task uses the binExposure function
+        defined ip_isr, but adds the option to only retrieve and bin the
+        data contained within the patch's inner bounding box.
+
+        Parameters
+        ----------
+        butlerQC : `lsst.pipe.base.QuantumContext`
+            A butler which is specialized to operate in the context of a
+            `lsst.daf.butler.Quantum`.
+        inputRefs : `lsst.pipe.base.InputQuantizedConnection`
+            Datastructure containing named attributes 'coadd' and 'skymap'.
+            The values of these attributes are the corresponding
+            `lsst.daf.butler.DatasetRef` objects defined in the corresponding
+            `PipelineTaskConnections` class.
+        outputRefs : `lsst.pipe.base.OutputQuantizedConnection`
+            Datastructure containing named attribute 'binnedCoadd'.
+            The value of this attribute is the corresponding
+            `lsst.daf.butler.DatasetRef` object defined in the corresponding
+            `PipelineTaskConnections` class.
+        """
+
+        inputs = butlerQC.get(inputRefs)
+        coaddRef = inputs["coadd"]
+
+        if self.config.doBinInnerBBox:
+            skymap = inputs["skymap"]
+            tractId = butlerQC.quantum.dataId["tract"]
+            patchId = butlerQC.quantum.dataId["patch"]
+            tractInfo = skymap.generateTract(tractId)
+            bbox = tractInfo.getPatchInfo(patchId).getInnerBBox()
+
+            coadd = coaddRef.get(parameters={"bbox": bbox})
+        else:
+            coadd = coaddRef.get()
+
+        binnedCoadd = binExposure(coadd, self.config.binFactor)
+
+        butlerQC.put(pipeBase.Struct(binnedCoadd=binnedCoadd), outputRefs)

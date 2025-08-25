@@ -1,12 +1,17 @@
 description: |
   Tier1 plots and metrics to assess coadd quality.
 parameters:
-  coaddName: template
+  coaddDepthSummaryKeysByBand: [
+    "coadd_depth_summary_metrics_depth_above_threshold_1_{band}_mean",
+    "coadd_depth_summary_metrics_depth_above_threshold_3_{band}_mean",
+    "coadd_depth_summary_metrics_depth_above_threshold_5_{band}_mean",
+    "coadd_depth_summary_metrics_depth_above_threshold_12_{band}_mean",
+  ]
 tasks:
   analyzeCoaddDepthCore:
     class: lsst.analysis.tools.tasks.CoaddDepthSummaryAnalysisTask
     config:
-      connections.coaddType: parameters.coaddName
+      connections.coaddType: template
   coaddDepthMetricTract:
     class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
     config:
@@ -16,7 +21,28 @@ tasks:
   coaddDepthPlot:
     class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
     config:
-      connections.coaddType: parameters.coaddName
-      atools.quality: CoaddQualityPlot
+      connections.coaddType: template
+      atools.template: CoaddQualityPlot
       python: |
         from lsst.analysis.tools.atools import CoaddQualityPlot
+  makeCoaddDepthSummaryMetricTable:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "coadd_depth_summary_metrics"
+      connections.outputTableName: "coadd_depth_summary_metrics_table"
+      inputDataDimensions: ["skymap", "tract"]
+  coaddDepthSummaryMetricTableWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.inputName: "coadd_depth_summary_metrics_table"
+      connections.outputName: "template"
+      atools.wholeSkyMetric: WholeSkyPlotTool
+      atools.wholeSkyMetric.plotKeys: []
+      atools.wholeSkyMetric.keysWithBand: parameters.coaddDepthSummaryKeysByBand
+      atools.wholeSkyMetric.showOutliers: False
+      atools.wholeSkyMetric.showNaNs: False
+      atools.wholeSkyMetric.labelTracts: True
+      atools.wholeSkyMetric.colorBarMin: 0.0
+      atools.wholeSkyMetric.colorBarRange: 1.0
+      python: |
+        from lsst.analysis.tools.atools import *

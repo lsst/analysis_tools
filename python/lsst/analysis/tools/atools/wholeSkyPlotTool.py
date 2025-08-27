@@ -34,15 +34,14 @@ from ..interfaces import AnalysisTool
 class WholeSkyPlotTool(AnalysisTool):
     """Plot metrics across all tracts on the sky."""
 
-    parameterizedBand = False
-    propagateData = True
+    parameterizedBand: bool = False
+    propagateData: bool = True
 
     bands = ListField[str](
         doc="Photometric bands to use for plots.",
         default=["u", "g", "r", "i", "z", "y"],
         listCheck=lambda x: len(set(x)) == len(x),
     )
-
     plotKeys = ListField[str](
         doc="Metrics to plot that are not band-specific.",
         default=["yPerpPSF_yPerp_psfFlux_median"],
@@ -59,16 +58,26 @@ class WholeSkyPlotTool(AnalysisTool):
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
+    dpi = Field[int](doc="DPI size of the figure.", default=500)
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
+    colorBarMin = Field[float](doc="The minimum value of the color bar.", optional=True)
+    colorBarMax = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarRange = Field[float](
-        doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
-        ", where N is this config value.",
+        doc="The multiplier for the color bar range when the color bar is centered. "
+        "The max/min range values are: median +/- N * sigmaMad, where N is this config value.",
         default=3.0,
     )
+    showOutliers = Field[bool](
+        doc="Show the outliers on the plot. "
+        "Outliers are values whose absolute value is > colorBarRange * sigmaMAD.",
+        default=True,
+    )
+    showNaNs = Field[bool](doc="Show the NaNs on the plot.", default=True)
+    labelTracts = Field[bool](doc="Label the tracts.", default=False)
     sequentialMetrics = ListField[str](
         doc="Partial names of metrics with sequential values. This is a placeholder until metric information "
         "is available via yaml.",
-        default=["count", "num", "igma", "tdev", "Repeat"],
+        default=["count", "ean", "edian", "num", "igma", "tdev", "Repeat"],
     )
     sequentialColorMap = ListField[str](
         doc="List of hexidecimal colors for a sequential color map.",
@@ -119,8 +128,14 @@ class WholeSkyPlotTool(AnalysisTool):
             self.produce.plot.xLimits = self.xLimits
             self.produce.plot.yLimits = self.yLimits
             self.produce.plot.autoAxesLimits = self.autoAxesLimits
+            self.produce.plot.dpi = self.dpi
             self.produce.plot.figureSize = self.figureSize
+            self.produce.plot.colorBarMin = self.colorBarMin
+            self.produce.plot.colorBarMax = self.colorBarMax
             self.produce.plot.colorBarRange = self.colorBarRange
+            self.produce.plot.showOutliers = self.showOutliers
+            self.produce.plot.showNaNs = self.showNaNs
+            self.produce.plot.labelTracts = self.labelTracts
             self.produce.plot.sequentialMetrics = self.sequentialMetrics
             self.produce.plot.sequentialColorMap = self.sequentialColorMap
             self.produce.plot.divergentColorMap = self.divergentColorMap

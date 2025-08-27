@@ -23,13 +23,12 @@ from __future__ import annotations
 
 __all__ = ("WholeSkyPlot",)
 
-from collections.abc import Iterable
 from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Config, Field, ListField
+from lsst.pex.config import ChoiceField, Field, FieldValidationError, ListField
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import CenteredNorm
 from matplotlib.figure import Figure
@@ -37,6 +36,7 @@ from matplotlib.patches import Patch, Polygon
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanSigmaMad
+from ...utils import getTractCorners
 from .plotUtils import addPlotInfo, mkColormap
 
 
@@ -51,10 +51,9 @@ class WholeSkyPlot(PlotAction):
     The default axes limits and figure size were chosen to plot HSC PDR2.
     """
 
-    keyBands = ListField[str](doc="Band for each metric, if any.", optional=True)
-    plotKeys = ListField[str](doc="Names of metrics to plot.", optional=True)
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
+    zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
@@ -64,28 +63,30 @@ class WholeSkyPlot(PlotAction):
         ", where N is this config value.",
         default=3.0,
     )
-    sequentialMetrics = ListField[str](
-        doc="Partial names of metrics with sequential values. This is a placeholder until metric information "
-        "is available via yaml.",
-        default=["count", "num", "igma", "tdev", "Repeat"],
+    colorMapType = ChoiceField[str](
+        doc="Type of color map to use for the color bar. Options: sequential, divergent, userDefined.",
+        allowed={cmType: cmType for cmType in ("sequential", "divergent", "user-defined")},
+        default="divergent",
     )
-    sequentialColorMap = ListField[str](
-        doc="List of hexidecimal colors for a sequential color map.",
-        default=["#F5F5F5", "#5AB4AC", "#284D48"],
-    )
-    divergentColorMap = ListField[str](
-        doc="List of hexidecimal colors for a divergent color map.",
-        default=["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"],
+    colorMap = ListField[str](
+        doc="List of hexidecimal colors for a user-defined color map.",
+        optional=True,
     )
 
-    def getOutputNames(self, config: Config | None = None) -> Iterable[str]:
-        return list(self.plotKeys)
+    def validate(self):
+        super().validate()
+
+        if self.colorMapType == "user-defined" and self.colorMap is None:
+            raise FieldValidationError(
+                self.__class__.colorMap,
+                self,
+                "'colorMap' must be provided if 'colorMapType' is specified as 'user-defined'",
+            )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
-        base.append(("corners", Vector))
-        for key in self.plotKeys:
-            base.append((key, Vector))
+        base.append(("z", Vector))
+        base.append(("tract", Vector))
         return base
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
@@ -184,7 +185,7 @@ class WholeSkyPlot(PlotAction):
         plotInfo: Optional[Mapping[str, str]] = None,
         **kwargs,
     ) -> Figure:
-        """Make a skyPlot of the given data.
+        """Make a WholeSkyPlot of the given data.
 
         Parameters
         ----------
@@ -204,8 +205,9 @@ class WholeSkyPlot(PlotAction):
 
         Returns
         -------
-        results : `dict`
-            A dictionary containing the resulting figures.
+        `pipeBase.Struct` containing:
+            skyPlot : `matplotlib.figure.Figure`
+                The resulting figure.
 
 
         Examples
@@ -218,191 +220,193 @@ class WholeSkyPlot(PlotAction):
         please see the
         :ref:`getting started guide<analysis-tools-getting-started>`.
         """
-        # Make colorblind-friendly colormap options.
-        sequentialColorMap = mkColormap(self.sequentialColorMap)
-        divergentColorMap = mkColormap(self.divergentColorMap)
+        skymap = kwargs["skymap"]
+        if plotInfo is None:
+            plotInfo = {}
 
-        results = {}
-        for key, band in zip(self.plotKeys, self.keyBands):
+        # Prevent Bands in the plot info showing a list of bands.
+        # If bands is a list, it implies that parameterizedBand=False,
+        # and that the metric is not band-specific.
+        if "bands" in plotInfo:
+            if isinstance(plotInfo["bands"], list):
+                plotInfo["bands"] = "-"
 
-            if plotInfo is None:
-                plotInfo = {}
-
-            # Choose the color map based on metric type.
-            for metricType in self.sequentialMetrics:
-                if metricType in key:
-                    colorMap = sequentialColorMap
-                    # Choose arbitrary color bar center.
-                    norm = None
-                    break
-                else:
-                    colorMap = divergentColorMap
-                    # Center color bar on zero.
+        match self.colorMapType:
+            case "sequential":
+                colorMap = mkColormap(["#F5F5F5", "#5AB4AC", "#284D48"])
+                norm = None
+            case "divergent":
+                colorMap = mkColormap(["#9A6E3A", "#C6A267", "#A9A9A9", "#4F938B", "#2C665A"])
+                norm = CenteredNorm()
+            case "user-defined":
+                colorMap = mkColormap(self.colorMap)
+                # Guess if user-defined colormap is divergent or sequential.
+                if len(self.colorMap) == 5:
                     norm = CenteredNorm()
+                else:
+                    norm = None
 
-            # Create patches using the corners of each tract.
-            patches = []
-            colBarVals = []
-            tracts = []
-            ras = []
-            decs = []
-            for i, corners in enumerate(data["corners"]):
-                patches.append(Polygon(corners, closed=True))
-                colBarVals.append(data[key][i])
-                tracts.append(data["tract"][i])
-                ras.append(corners[0][0])
-                decs.append(corners[0][1])
+        # Create patches using the corners of each tract.
+        patches = []
+        colBarVals = []
+        tracts = []
+        ras = []
+        decs = []
+        for i, tract in enumerate(data["tract"]):
+            corners = getTractCorners(skymap, tract)
+            patches.append(Polygon(corners, closed=True))
+            colBarVals.append(data["z"][i])
+            tracts.append(tract)
+            ras.append(corners[0][0])
+            decs.append(corners[0][1])
 
-            # Setup figure.
-            fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
-            if self.autoAxesLimits:
-                xlim, ylim = self._getAxesLimits(ras, decs)
-            else:
-                xlim, ylim = self.xLimits, self.yLimits
-            ax.set_xlim(xlim)
-            ax.set_ylim(ylim)
-            ax.set_xlabel(self.xAxisLabel)
-            ax.set_ylabel(self.yAxisLabel)
-            ax.invert_xaxis()
+        # Setup figure.
+        fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
+        if self.autoAxesLimits:
+            xlim, ylim = self._getAxesLimits(ras, decs)
+        else:
+            xlim, ylim = self.xLimits, self.yLimits
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.set_xlabel(self.xAxisLabel)
+        ax.set_ylabel(self.yAxisLabel)
+        ax.invert_xaxis()
 
-            # Add colored patches showing tract metric values.
-            patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
-            ax.add_collection(patchCollection)
+        # Add colored patches showing tract metric values.
+        patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
+        ax.add_collection(patchCollection)
 
-            # Define color bar range.
-            med = np.nanmedian(colBarVals)
-            sigmaMad = nanSigmaMad(colBarVals)
-            vmin = med - self.colorBarRange * sigmaMad
-            vmax = med + self.colorBarRange * sigmaMad
+        # Define color bar range.
+        med = np.nanmedian(colBarVals)
+        sigmaMad = nanSigmaMad(colBarVals)
+        vmin = med - self.colorBarRange * sigmaMad
+        vmax = med + self.colorBarRange * sigmaMad
 
-            # Note tracts with metrics outside (vmin, vmax) as outliers.
-            outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
+        # Note tracts with metrics outside (vmin, vmax) as outliers.
+        outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
 
-            # Initialize legend handles.
-            handles = []
+        # Initialize legend handles.
+        handles = []
 
-            # Plot the outlier patches.
-            outlierPatches = []
-            if len(outlierInds) > 0:
-                for ind in outlierInds:
-                    outlierPatches.append(patches[ind])
-                outlierPatchCollection = PatchCollection(
-                    outlierPatches,
-                    cmap=colorMap,
-                    norm=norm,
-                    facecolors="none",
-                    edgecolors="k",
-                    linewidths=0.5,
-                    zorder=100,
-                )
-                ax.add_collection(outlierPatchCollection)
-                # Add legend information.
-                outlierPatch = Patch(
-                    facecolor="none",
-                    edgecolor="k",
-                    linewidth=0.5,
-                    label="Outlier",
-                )
-                handles.append(outlierPatch)
-
-            # Plot tracts with NaN metric values.
-            nanInds = np.where(~np.isfinite(colBarVals))[0]
-            nanPatches = []
-            if len(nanInds) > 0:
-                for ind in nanInds:
-                    nanPatches.append(patches[ind])
-                nanPatchCollection = PatchCollection(
-                    nanPatches,
-                    cmap=None,
-                    norm=norm,
-                    facecolors="white",
-                    edgecolors="grey",
-                    linestyles="dotted",
-                    linewidths=0.5,
-                    zorder=10,
-                )
-                ax.add_collection(nanPatchCollection)
-                # Add legend information.
-                nanPatch = Patch(
-                    facecolor="white",
-                    edgecolor="grey",
-                    linestyle="dotted",
-                    linewidth=0.5,
-                    label="NaN",
-                )
-                handles.append(nanPatch)
-
-            if len(handles) > 0:
-                fig.legend(handles=handles)
-
-            # Add text boxes to show the number of tracts, number of NaNs,
-            # median, sigma MAD, and the five largest outlier values.
-            outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
-            # Make vertical text spacing readable for different figure sizes.
-            multiplier = 3.5 / self.figureSize[1]
-            verticalSpacing = 0.028 * multiplier
-            fig.text(
-                0.01,
-                0.01 + 3 * verticalSpacing,
-                f"Num tracts: {len(tracts)}",
-                transform=fig.transFigure,
-                fontsize=8,
-                alpha=0.7,
-            )
-            fig.text(
-                0.01,
-                0.01 + 2 * verticalSpacing,
-                f"Num nans: {len(nanInds)}",
-                transform=fig.transFigure,
-                fontsize=8,
-                alpha=0.7,
-            )
-            fig.text(
-                0.01,
-                0.01 + verticalSpacing,
-                f"Median: {med:.3f}; " + r"$\sigma_{MAD}$" + f": {sigmaMad:.3f}",
-                transform=fig.transFigure,
-                fontsize=8,
-                alpha=0.7,
-            )
-            fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
-
-            # Truncate the color range to (vmin, vmax).
-            colorBarVals = np.clip(np.array(colBarVals), vmin, vmax)
-            patchCollection.set_array(colorBarVals)
-            # Make the color bar with a metric label.
-            cbar = plt.colorbar(
-                patchCollection,
-                ax=ax,
-                shrink=0.7,
-                extend="both",
-                location="top",
-                orientation="horizontal",
-            )
-            cbarText = key
-            if data[key].unit is not None:
-                unit = data[key].unit.to_string()
-                cbarText += f" ({unit})"
-            text = cbar.ax.text(
-                0.5,
-                0.5,
-                cbarText,
-                transform=cbar.ax.transAxes,
-                ha="center",
-                va="center",
-                fontsize=10,
+        # Plot the outlier patches.
+        outlierPatches = []
+        if len(outlierInds) > 0:
+            for ind in outlierInds:
+                outlierPatches.append(patches[ind])
+            outlierPatchCollection = PatchCollection(
+                outlierPatches,
+                cmap=colorMap,
+                norm=norm,
+                facecolors="none",
+                edgecolors="k",
+                linewidths=0.5,
                 zorder=100,
             )
-            text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+            ax.add_collection(outlierPatchCollection)
+            # Add legend information.
+            outlierPatch = Patch(
+                facecolor="none",
+                edgecolor="k",
+                linewidth=0.5,
+                label="Outlier",
+            )
+            handles.append(outlierPatch)
 
-            # Finalize plot appearance.
-            ax.grid()
-            ax.set_axisbelow(True)
-            ax.set_aspect("equal")
-            fig = plt.gcf()
-            plotInfo["bands"] = band
-            fig = addPlotInfo(fig, plotInfo)
-            plt.subplots_adjust(left=0.08, right=0.97, top=0.8, bottom=0.17, wspace=0.35)
+        # Plot tracts with NaN metric values.
+        nanInds = np.where(~np.isfinite(colBarVals))[0]
+        nanPatches = []
+        if len(nanInds) > 0:
+            for ind in nanInds:
+                nanPatches.append(patches[ind])
+            nanPatchCollection = PatchCollection(
+                nanPatches,
+                cmap=None,
+                norm=norm,
+                facecolors="white",
+                edgecolors="grey",
+                linestyles="dotted",
+                linewidths=0.5,
+                zorder=10,
+            )
+            ax.add_collection(nanPatchCollection)
+            # Add legend information.
+            nanPatch = Patch(
+                facecolor="white",
+                edgecolor="grey",
+                linestyle="dotted",
+                linewidth=0.5,
+                label="NaN",
+            )
+            handles.append(nanPatch)
 
-            results[key] = fig
-        return results
+        if len(handles) > 0:
+            fig.legend(handles=handles)
+
+        # Add text boxes to show the number of tracts, number of NaNs,
+        # median, sigma MAD, and the five largest outlier values.
+        outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
+        # Make vertical text spacing readable for different figure sizes.
+        multiplier = 3.5 / self.figureSize[1]
+        verticalSpacing = 0.028 * multiplier
+        fig.text(
+            0.01,
+            0.01 + 3 * verticalSpacing,
+            f"Num tracts: {len(tracts)}",
+            transform=fig.transFigure,
+            fontsize=8,
+            alpha=0.7,
+        )
+        fig.text(
+            0.01,
+            0.01 + 2 * verticalSpacing,
+            f"Num nans: {len(nanInds)}",
+            transform=fig.transFigure,
+            fontsize=8,
+            alpha=0.7,
+        )
+        fig.text(
+            0.01,
+            0.01 + verticalSpacing,
+            f"Median: {med:.3f}; " + r"$\sigma_{MAD}$" + f": {sigmaMad:.3f}",
+            transform=fig.transFigure,
+            fontsize=8,
+            alpha=0.7,
+        )
+        fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
+
+        # Truncate the color range to (vmin, vmax).
+        colorBarVals = np.clip(np.array(colBarVals), vmin, vmax)
+        patchCollection.set_array(colorBarVals)
+        # Make the color bar with a metric label.
+        cbar = plt.colorbar(
+            patchCollection,
+            ax=ax,
+            shrink=0.7,
+            extend="both",
+            location="top",
+            orientation="horizontal",
+        )
+        cbarText = self.zAxisLabel.format_map(kwargs)
+        if "zUnit" in data and data["zUnit"] != "":
+            cbarText += f" ({data['zUnit']})"
+        text = cbar.ax.text(
+            0.5,
+            0.5,
+            cbarText,
+            transform=cbar.ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=10,
+            zorder=100,
+        )
+        text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+
+        # Finalize plot appearance.
+        ax.grid()
+        ax.set_axisbelow(True)
+        ax.set_aspect("equal")
+        fig = plt.gcf()
+        fig = addPlotInfo(fig, plotInfo)
+        plt.subplots_adjust(left=0.08, right=0.97, top=0.8, bottom=0.17, wspace=0.35)
+
+        return fig

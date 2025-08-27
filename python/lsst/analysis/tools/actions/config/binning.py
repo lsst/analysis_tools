@@ -37,7 +37,7 @@ class MagnitudeBinConfig(pexConfig.Config):
     )
     mag_low_max = pexConfig.Field[int](
         doc="Lower bound for the first excluded (largest) magnitude bin in millimags",
-        default=31000,
+        default=28500,
     )
     mag_interval = pexConfig.Field[int](
         doc="Spacing interval of magnitude bins in millimags",

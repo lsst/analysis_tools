@@ -763,23 +763,34 @@ class MatchedObjectSelector(RangeSelector):
         self.vectorKey = "match_distance"
 
 
-class ReferenceGalaxySelector(ThresholdSelector):
-    """A selector that selects galaxies from a catalog with a
-    boolean column identifying unresolved sources.
+class ReferenceClassSelector(ThresholdSelector):
+    """A selector that selects objects of a given class from a catalog with a
+    specific value for the class.
     """
+
+    plotLabelValue = Field[str](
+        doc="Value to populate plotLabelKey with, ignored if empty string", optional=True, default=""
+    )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         result = super().__call__(data=data, **kwargs)
-        if self.plotLabelKey:
-            self._addValueToPlotInfo("reference galaxies", **kwargs)
+        if self.plotLabelKey and self.plotLabelValue:
+            self._addValueToPlotInfo(self.plotLabelValue, **kwargs)
         return result
 
     def setDefaults(self):
         super().setDefaults()
         self.op = "eq"
+        self.vectorKey = "refcat_is_pointsource"
+
+
+class ReferenceGalaxySelector(ReferenceClassSelector):
+    """A selector that selects galaxies from a catalog with a class column."""
+
+    def setDefaults(self):
+        super().setDefaults()
         self.threshold = 0
         self.plotLabelKey = "Selection: Galaxies"
-        self.vectorKey = "refcat_is_pointsource"
 
 
 class ReferenceObjectSelector(RangeSelector):
@@ -799,20 +810,10 @@ class ReferenceObjectSelector(RangeSelector):
         self.vectorKey = "refcat_is_pointsource"
 
 
-class ReferenceStarSelector(ThresholdSelector):
-    """A selector that selects stars from a catalog with a
-    boolean column identifying unresolved sources.
-    """
-
-    def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result = super().__call__(data=data, **kwargs)
-        if self.plotLabelKey:
-            self._addValueToPlotInfo("reference stars", **kwargs)
-        return result
+class ReferenceStarSelector(ReferenceClassSelector):
+    """A selector that selects stars from a catalog with a class column."""
 
     def setDefaults(self):
         super().setDefaults()
-        self.op = "eq"
-        self.plotLabelKey = "Selection: Stars"
         self.threshold = 1
-        self.vectorKey = "refcat_is_pointsource"
+        self.plotLabelKey = "Selection: Stars"

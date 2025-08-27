@@ -26,6 +26,7 @@ __all__ = (
     "KeyedDataSelectorAction",
     "KeyedScalars",
     "KeyedDataKeyAccessAction",
+    "KeyedDataUnitAccessAction",
 )
 
 from typing import Any, Optional, cast
@@ -172,3 +173,21 @@ class KeyedDataKeyAccessAction(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> Any:
         return data[self.topLevelKey]
+
+
+class KeyedDataUnitAccessAction(KeyedDataAction):
+    """Fetches the unit for a given key in a KeyedData as a string.
+
+    If the requested key doesn't have a unit, an empty string is returned.
+    """
+
+    key = Field[str](doc="The key in the KeyedData structure to extract the unit from.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from [(self.key, Any)]
+
+    def __call__(self, data: KeyedData, **kwargs) -> str:
+        if data[self.key.format_map(kwargs)].unit is not None:
+            return data[self.key.format_map(kwargs)].unit.to_string()
+        else:
+            return ""

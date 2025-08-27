@@ -1,46 +1,5 @@
 description: |
   Tier1 plots and metrics to assess the data quality across the whole sky
-parameters:
-  objectTableCoreKeysWithBand: [
-    "e1Diff_{band}_highSNStars_median",
-    "e1Diff_{band}_highSNStars_sigmaMad",
-    "e1Diff_{band}_lowSNStars_median",
-    "e1Diff_{band}_lowSNStars_sigmaMad",
-    "e2Diff_{band}_highSNStars_median",
-    "e2Diff_{band}_highSNStars_sigmaMad",
-    "e2Diff_{band}_lowSNStars_median",
-    "e2Diff_{band}_lowSNStars_sigmaMad",
-    "psfCModelScatter_{band}_psf_cModel_diff_median",
-    "psfCModelScatter_{band}_psf_cModel_diff_sigmaMad",
-    "psfCModelScatter_{band}_psf_cModel_diff_mean",
-    "shapeSizeFractionalDiff_{band}_highSNStars_median",
-    "shapeSizeFractionalDiff_{band}_highSNStars_sigmaMad",
-    "shapeSizeFractionalDiff_{band}_lowSNStars_median",
-    "shapeSizeFractionalDiff_{band}_lowSNStars_sigmaMad",
-    "skyFluxStatisticMetric_{band}_medianSky",
-    "skyFluxStatisticMetric_{band}_meanSky",
-    "skyFluxStatisticMetric_{band}_stdevSky",
-    "skyFluxStatisticMetric_{band}_sigmaMADSky",
-  ]
-  objectTableCorePlotKeys: [
-    "wPerpPSF_wPerp_psfFlux_median",
-    "wPerpPSF_wPerp_psfFlux_sigmaMAD",
-    "yPerpPSF_yPerp_psfFlux_median",
-    "yPerpPSF_yPerp_psfFlux_sigmaMAD",
-    "skippedDeblenderMetrics_numSkippedPeaks",
-    "skippedDeblenderMetrics_numSkippedBlends",
-    "skippedDeblenderMetrics_numBlendParentTooBig",
-    "skippedDeblenderMetrics_numBlendTooManyPeaks",
-    "skippedDeblenderMetrics_numBlendTooManyMasked",
-  ]
-  objectTableCoreRefCatMatchKeysWithBand: [
-    "astromDiffMetrics_{band}_AA1_RA_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_RA_coadd",
-    "astromDiffMetrics_{band}_AA1_Dec_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_Dec_coadd",
-    "astromDiffMetrics_{band}_AA1_tot_coadd",
-    "astromDiffMetrics_{band}_AA1_sigmaMad_tot_coadd",
-  ]
 tasks:
   makeMetricTableObjectTableCore:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
@@ -50,24 +9,29 @@ tasks:
   objectTableCoreWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
-      atools.wholeSkyMetric: WholeSkyPlotTool
-      atools.wholeSkyMetric.plotKeys: parameters.objectTableCorePlotKeys
-      atools.wholeSkyMetric.keysWithBand: parameters.objectTableCoreKeysWithBand
-      python: |
-        from lsst.analysis.tools.atools import *
+      file: $ANALYSIS_TOOLS_DIR/config/objectTableCoreWholeSkyPlot.py
   makeMetricTableObjectTableCoreRefCatMatch:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
-      connections.metricBundleName: objectTable_tract_gaia_dr3_20230707_match_astrom_metrics
-      connections.outputTableName: objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable
+      connections.metricBundleName: "objectTable_tract_gaia_dr3_20230707_match_astrom_metrics"
+      connections.outputTableName: "objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable"
   objectTableCoreRefCatMatchWholeSkyPlot:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
       connections.inputName: "objectTable_tract_gaia_dr3_20230707_match_astrom_metricsTable"
       connections.outputName: "objectTableCoreRefCatMatch_wholeSky"
-      atools.wholeSkyMetric: WholeSkyPlotTool
-      atools.wholeSkyMetric.plotKeys: []
-      atools.wholeSkyMetric.keysWithBand: parameters.objectTableCoreRefCatMatchKeysWithBand
+      atools.astromDiffMetrics_AA1_RA_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_RA_coadd.metric: "astromDiffMetrics_{band}_AA1_RA_coadd"
+      atools.astromDiffMetrics_AA1_sigmaMad_RA_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_sigmaMad_RA_coadd.metric: "astromDiffMetrics_{band}_AA1_sigmaMad_RA_coadd"
+      atools.astromDiffMetrics_AA1_Dec_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_Dec_coadd.metric: "astromDiffMetrics_{band}_AA1_Dec_coadd"
+      atools.astromDiffMetrics_AA1_sigmaMad_Dec_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_sigmaMad_Dec_coadd.metric: "astromDiffMetrics_{band}_AA1_sigmaMad_Dec_coadd"
+      atools.astromDiffMetrics_AA1_tot_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_tot_coadd.metric: "astromDiffMetrics_{band}_AA1_tot_coadd"
+      atools.astromDiffMetrics_AA1_sigmaMad_tot_coadd: WholeSkyPlotTool
+      atools.astromDiffMetrics_AA1_sigmaMad_tot_coadd.metric: "astromDiffMetrics_{band}_AA1_sigmaMad_tot_coadd"
       python: |
         from lsst.analysis.tools.atools import *
   makeMetricTableMatchedVisitCore:

@@ -102,7 +102,8 @@ class TargetRefCatDelta(AnalysisTool):
         self.prep.selectors.flagSelector = VisitPlotFlagSelector()
         self.prep.selectors.starSelector.vectorKey = "extendedness_target"
         self.prep.selectors.snSelector.fluxType = "psfFlux_target"
-        self.prep.selectors.snSelector.threshold = 50
+        # self.prep.selectors.snSelector.threshold = 50
+        self.prep.selectors.snSelector.threshold = 200
 
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "psfFlux_target"
@@ -796,11 +797,6 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         self.process.buildActions.srcRefMagdiffStars.col1 = "psfFlux_target"
         self.process.buildActions.srcRefMagdiffStars.col2 = "mag_ref"
         self.process.buildActions.srcRefMagdiffStars.fluxUnits2 = "mag(AB)"
-
-        self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="srcRefMagdiffStars")
-        self.process.calculateActions.stars.lowSNSelector.fluxType = "psfFlux_target"
-        self.process.calculateActions.stars.highSNSelector.fluxType = "psfFlux_target"
-        self.process.calculateActions.stars.fluxType = "psfFlux_target"
 
         # Calculate median, std, sigmaMad, RMS, and number counts:
         self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")

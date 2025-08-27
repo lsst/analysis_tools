@@ -51,7 +51,15 @@ if TYPE_CHECKING:
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
-from lsst.pipe.base import Instrument, PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
+from lsst.pipe.base import (
+    AlgorithmError,
+    AnnotatedPartialOutputsError,
+    Instrument,
+    PipelineTask,
+    PipelineTaskConfig,
+    PipelineTaskConnections,
+    Struct,
+)
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
 from lsst.pipe.base.pipelineIR import ConfigIR, ParametersIR
@@ -426,7 +434,11 @@ class AnalysisPipelineTask(PipelineTask):
             weakrefArgs = []
             for name, action in self.config.atools.items():
                 kwargs["plotInfo"] = deepcopy(plotInfo)
-                actionResult = action(data, **kwargs)
+                try:
+                    actionResult = action(data, **kwargs)
+                except AlgorithmError as e:
+                    error = AnnotatedPartialOutputsError.annotate(e, self, log=self.log)
+                    raise error from e
                 metricAccumulate = []
                 for resultName, value in actionResult.items():
                     match value:

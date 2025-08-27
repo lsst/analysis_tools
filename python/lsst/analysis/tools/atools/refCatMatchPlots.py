@@ -102,8 +102,7 @@ class TargetRefCatDelta(AnalysisTool):
         self.prep.selectors.flagSelector = VisitPlotFlagSelector()
         self.prep.selectors.starSelector.vectorKey = "extendedness_target"
         self.prep.selectors.snSelector.fluxType = "psfFlux_target"
-        # self.prep.selectors.snSelector.threshold = 50
-        self.prep.selectors.snSelector.threshold = 200
+        self.prep.selectors.snSelector.threshold = 50
 
         self.process.buildActions.starStatMask = SnSelector()
         self.process.buildActions.starStatMask.fluxType = "psfFlux_target"
@@ -779,13 +778,6 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
 
     def setDefaults(self):
         super().setDefaults()
-
-        # Keep only stars brighter than 17 in the refcat,
-        # to avoid including saturated stars
-        self.prep.selectors.magSelector = RangeSelector()
-        self.prep.selectors.magSelector.vectorKey = "mag_ref"
-        self.prep.selectors.magSelector.minimum = 17.0
-        self.prep.selectors.magSelector.maximum = 25.5
         
         self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.snSelector = SnSelector()

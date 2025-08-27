@@ -22,6 +22,7 @@ from __future__ import annotations
 
 __all__ = (
     "SelectorBase",
+    "CompositeSelector",
     "FlagSelector",
     "CoaddPlotFlagSelector",
     "RangeSelector",
@@ -56,6 +57,7 @@ from typing import Optional, cast
 
 import numpy as np
 from lsst.pex.config import Field
+from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.listField import ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, Vector, VectorAction
@@ -77,7 +79,32 @@ class SelectorBase(VectorAction):
                 raise RuntimeError(f"No plotLabelKey provided for value {value}, so can't add to plotInfo")
 
 
-class FlagSelector(VectorAction):
+class CompositeSelector(SelectorBase):
+    """A selector that applies and/or to the results of given selectors."""
+
+    combine_by_and = Field[bool](doc="Whether to AND selectors; otherwise OR", default=True)
+    selectors = ConfigurableActionStructField[SelectorBase](
+        doc="Selectors to combine",
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        for action in self.selectors:
+            yield from action.getInputSchema()
+
+    def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
+        mask: Vector | None = None
+        for selector in self.selectors:
+            subMask = selector(data, **kwargs)
+            if mask is None:
+                mask = subMask
+            else:
+                if self.combine_by_and:
+                    mask &= subMask  # type: ignore
+                else:
+                    mask |= subMask
+
+
+class FlagSelector(SelectorBase):
     """The base flag selector to use to select valid sources for QA."""
 
     selectWhenFalse = ListField[str](

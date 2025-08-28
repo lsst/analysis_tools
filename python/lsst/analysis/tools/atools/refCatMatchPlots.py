@@ -800,8 +800,9 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         # Calculate median, std, sigmaMad, RMS, and number counts:
         self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_stdev = StdevAction(vectorKey="srcRefMagdiffStars")
-        self.process.calculateActions.ref_photom_offset_sigmaMad = \
-            SigmaMadAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_sigmaMad = SigmaMadAction(
+            vectorKey="srcRefMagdiffStars"
+        )
         self.process.calculateActions.ref_photom_offset_rms = RmsAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_nstars = CountAction(vectorKey="srcRefMagdiffStars")
 

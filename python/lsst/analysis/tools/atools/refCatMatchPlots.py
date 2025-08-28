@@ -50,7 +50,14 @@ from lsst.pex.config import Field
 from ..actions.plot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction, RmsAction, SigmaMadAction, StdevAction
+from ..actions.scalar.scalarActions import (
+    CountAction,
+    FracThreshold,
+    MedianAction,
+    RmsAction,
+    SigmaMadAction,
+    StdevAction,
+)
 from ..actions.vector import (
     AngularSeparation,
     CoaddPlotFlagSelector,
@@ -778,7 +785,7 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
 
     def setDefaults(self):
         super().setDefaults()
-        
+
         self.prep.selectors.starSelector = StarSelector()
         self.prep.selectors.snSelector = SnSelector()
         self.prep.selectors.snSelector.fluxType = "psfFlux_target"
@@ -793,7 +800,8 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         # Calculate median, std, sigmaMad, RMS, and number counts:
         self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_stdev = StdevAction(vectorKey="srcRefMagdiffStars")
-        self.process.calculateActions.ref_photom_offset_sigmaMad = SigmaMadAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_sigmaMad = \
+            SigmaMadAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_rms = RmsAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_nstars = CountAction(vectorKey="srcRefMagdiffStars")
 

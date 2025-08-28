@@ -9,7 +9,6 @@ from lsst.analysis.tools.atools import *
 from lsst.analysis.tools.contexts import VisitContext
 
 config.atools.photomDiffPsfSkyVisitPlot = TargetRefCatDeltaPsfSkyVisitPlot
-# config.atools.photomDiffPsfSkyVisitPlot.prep.selectors.snSelector.threshold: 200.0
 config.atools.photomDiffAp09SkyVisitPlot = TargetRefCatDeltaAp09SkyVisitPlot
 config.atools.photoDiffPsfScatterVisitPlot = TargetRefCatDeltaPsfScatterVisitPlot
 config.atools.photoDiffCModelScatterVisitPlot = TargetRefCatDeltaAp09ScatterVisitPlot

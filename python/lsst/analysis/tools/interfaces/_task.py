@@ -42,6 +42,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
 import matplotlib.pyplot as plt
+
 from lsst.verify import Measurement
 
 if TYPE_CHECKING:
@@ -51,7 +52,14 @@ if TYPE_CHECKING:
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
-from lsst.pipe.base import Instrument, PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
+from lsst.pipe.base import (
+    AnnotatedPartialOutputsError,
+    Instrument,
+    PipelineTask,
+    PipelineTaskConfig,
+    PipelineTaskConnections,
+    Struct,
+)
 from lsst.pipe.base import connectionTypes as ct
 from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
 from lsst.pipe.base.pipelineIR import ConfigIR, ParametersIR
@@ -407,6 +415,7 @@ class AnalysisPipelineTask(PipelineTask):
     )
 
     def _runTools(self, data: KeyedData, **kwargs) -> Struct:
+        caughtErrors = []
         with warnings.catch_warnings():
             # Change below to "in self.warnings_all" to find otherwise
             # unfiltered numpy warnings.
@@ -426,7 +435,11 @@ class AnalysisPipelineTask(PipelineTask):
             weakrefArgs = []
             for name, action in self.config.atools.items():
                 kwargs["plotInfo"] = deepcopy(plotInfo)
-                actionResult = action(data, **kwargs)
+                try:
+                    actionResult = action(data, **kwargs)
+                except Exception as e:
+                    caughtErrors.append((name, e))
+                    continue
                 metricAccumulate = []
                 for resultName, value in actionResult.items():
                     match value:
@@ -444,6 +457,7 @@ class AnalysisPipelineTask(PipelineTask):
             # of a task. When DM-39114 is implemented, this step should not
             # be required and may be removed.
             weakref.finalize(results, _plotCloser, *weakrefArgs)
+        results.__caughtErrors = caughtErrors
         return results
 
     def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:
@@ -565,6 +579,16 @@ class AnalysisPipelineTask(PipelineTask):
             else:
                 if dataset := getattr(outputs, outputRefName, None):
                     butlerQC.put(dataset, datasetRef)
+        if outputs.__caughtErrors:
+            reasons = [
+                (caughtErrorName, str(caughtError))
+                for (caughtErrorName, caughtError) in outputs.__caughtErrors
+            ]
+            baseError = RuntimeError(f"The following tasks have failed for the following reasons: {reasons}")
+            raise AnnotatedPartialOutputsError.annotate(
+                baseError,
+                log=self.log,
+            ) from ValueError()
 
     def _populatePlotInfoWithDataId(
         self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None

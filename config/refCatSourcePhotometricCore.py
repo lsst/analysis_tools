@@ -6,7 +6,6 @@
 # that includes this standard set.
 
 from lsst.analysis.tools.atools import *
-from lsst.analysis.tools.contexts import VisitContext
 
 config.atools.photomDiffPsfSkyVisitPlot = TargetRefCatDeltaPsfSkyVisitPlot
 config.atools.photomDiffAp09SkyVisitPlot = TargetRefCatDeltaAp09SkyVisitPlot

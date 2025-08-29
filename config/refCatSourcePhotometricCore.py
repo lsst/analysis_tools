@@ -11,4 +11,5 @@ config.atools.photomDiffPsfSkyVisitPlot = TargetRefCatDeltaPsfSkyVisitPlot
 config.atools.photomDiffAp09SkyVisitPlot = TargetRefCatDeltaAp09SkyVisitPlot
 config.atools.photoDiffPsfScatterVisitPlot = TargetRefCatDeltaPsfScatterVisitPlot
 config.atools.photoDiffCModelScatterVisitPlot = TargetRefCatDeltaAp09ScatterVisitPlot
+config.atools.photomDiffMetrics = TargetRefCatDeltaPhotomMetrics
 config.addOutputNamePrefix = True

@@ -42,6 +42,7 @@ __all__ = (
     "TargetRefCatDeltaDecScatterVisitPlot",
     "TargetRefCatDeltaMetrics",
     "TargetRefCatDeltaColorMetrics",
+    "TargetRefCatDeltaPhotomMetrics",
 )
 
 from lsst.pex.config import Field
@@ -49,7 +50,14 @@ from lsst.pex.config import Field
 from ..actions.plot import HistPanel, HistPlot, HistStatsPanel
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import CountAction, FracThreshold, MedianAction, RmsAction, SigmaMadAction
+from ..actions.scalar.scalarActions import (
+    CountAction,
+    FracThreshold,
+    MedianAction,
+    RmsAction,
+    SigmaMadAction,
+    StdevAction,
+)
 from ..actions.vector import (
     AngularSeparation,
     CoaddPlotFlagSelector,
@@ -764,3 +772,47 @@ class TargetRefCatDeltaColorMetrics(AnalysisTool):
         self.process.calculateActions.ABF1_tot = FracThreshold(
             vectorKey="brightStarsTot", threshold=self.AB2, op="gt", percent=True
         )
+
+
+class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
+    """Calculate statistics from the differences between
+    the target and reference catalog magnitudes.
+    """
+
+    parameterizedBand = Field[bool](
+        doc="Does this AnalysisTool support band as a name parameter", default=False
+    )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "psfFlux_target"
+        self.prep.selectors.snSelector.threshold = 200
+
+        # Calculate magnitude difference
+        self.process.buildActions.srcRefMagdiffStars = MagDiff()
+        self.process.buildActions.srcRefMagdiffStars.col1 = "psfFlux_target"
+        self.process.buildActions.srcRefMagdiffStars.col2 = "mag_ref"
+        self.process.buildActions.srcRefMagdiffStars.fluxUnits2 = "mag(AB)"
+
+        # Calculate median, std, sigmaMad, RMS, and number counts:
+        self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_stdev = StdevAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_sigmaMad = SigmaMadAction(
+            vectorKey="srcRefMagdiffStars"
+        )
+        self.process.calculateActions.ref_photom_offset_rms = RmsAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_nstars = CountAction(vectorKey="srcRefMagdiffStars")
+
+        self.applyContext(VisitContext)
+        self.applyContext(RefMatchContext)
+
+        self.produce.metric.units = {
+            "ref_photom_offset": "mmag",
+            "ref_photom_offset_stdev": "mmag",
+            "ref_photom_offset_sigmaMad": "mmag",
+            "ref_photom_offset_rms": "mmag",
+            "ref_photom_offset_nstars": "ct",
+        }

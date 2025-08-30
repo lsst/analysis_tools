@@ -2,11 +2,10 @@
 # that aggregate metrics from the standard configuration of
 # lsst.analysis.tools.tasks.AssociatedSourcesTractAnalysisTask.
 
-from lsst.analysis.tools.atools import *
+from lsst.analysis.tools.atools import WholeSkyPlotTool
 
-config.atools.wholeSkyMetric = WholeSkyPlotTool
-config.atools.wholeSkyMetric.plotKeys = []
-config.atools.wholeSkyMetric.keysWithBand = [
+# Keys with band:
+keysWithBand = [
     "stellarAstrometricRepeatability1_{band}_AM1",
     "stellarAstrometricRepeatability1_{band}_AF1",
     "stellarAstrometricRepeatability1_{band}_AD1",
@@ -24,4 +23,13 @@ config.atools.wholeSkyMetric.keysWithBand = [
     "stellarPhotometricResiduals_{band}_photResidTractStdev",
     "stellarPhotometricResiduals_{band}_photResidTractMedian",
 ]
+if hasattr(parameters, "matchedVisitCoreWholeSkyPlotKeysWithBand"):
+    keysWithBand = parameters.matchedVisitCoreWholeSkyPlotKeysWithBand
+
+for key in keysWithBand:
+    atoolName = key.replace("_{band}", "")
+    setattr(config.atools, atoolName, WholeSkyPlotTool)
+    atool = getattr(config.atools, atoolName)
+    setattr(atool, "metric", key)
+
 config.addOutputNamePrefix = True

@@ -20,7 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("WholeTractImageTool", "WholeTractClippedMaskTool", "WholeTractPostageStampTool")
+__all__ = (
+    "WholeTractImageTool",
+    "WholeTractClippedMaskTool",
+    "WholeTractPostageStampTool",
+    "WholeTractNImageTool",
+)
 
 from ..actions.plot.calculateRange import Linear, MinMax
 from ..actions.plot.wholeTractImage import WholeTractImage
@@ -71,3 +76,22 @@ class WholeTractPostageStampTool(AnalysisTool):
         self.prep.keysToLoad = ["image"]
         self.produce.plot = WholeTractImage()
         self.produce.plot.displayAsPostageStamp = True
+
+
+class WholeTractNImageTool(AnalysisTool):
+
+    propagateData = True
+    parameterizedBand = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.produce.plot = WholeTractImage()
+        self.produce.plot.interval = MinMax
+        self.produce.plot.stretch = Linear()
+        self.produce.plot.showColorbar = True
+        self.produce.plot.zAxisLabel = "Number of input images"
+        self.produce.plot.colorbarCmap = "viridis"
+        self.produce.plot.noDataColor = "white"
+        self.produce.plot.noDataValue = 0
+        self.produce.plot.vmaxFloor = 10

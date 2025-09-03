@@ -53,6 +53,7 @@ from ..actions.plot.skyPlot import SkyPlot
 from ..actions.scalar.scalarActions import (
     CountAction,
     FracThreshold,
+    MeanAction,
     MedianAction,
     RmsAction,
     SigmaMadAction,
@@ -780,8 +781,45 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
     """
 
     parameterizedBand = Field[bool](
-        doc="Does this AnalysisTool support band as a name parameter", default=False
+        doc="Does this AnalysisTool support band as a name parameter", default=True
     )
+
+    def coaddContext(self) -> None:
+        """Apply coadd options for the metrics. Applies the coadd plot flag
+        selector and sets flux types.
+        """
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness_target"
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux_target"
+
+        # Calculate magnitude difference
+        self.process.buildActions.srcRefMagdiffStars.col1 = "{band}_psfFlux_target"
+        self.process.buildActions.srcRefMagdiffStars.col2 = "{band}_mag_ref"
+
+        self.applyContext(RefMatchContext)
+
+        self.process.buildActions.mags.vectorKey = "{band}_psfFlux_target"
+
+        self.produce.metric.newNames = {
+            "ref_photom_offset": "{band}_ref_photom_offset_coadd",
+            "ref_photom_offset_mean": "{band}_ref_photom_offset_mean_coadd",
+            "ref_photom_offset_stdev": "{band}_ref_photom_offset_stdev_coadd",
+            "ref_photom_offset_sigmaMad": "{band}_ref_photom_offset_sigmaMad_coadd",
+            "ref_photom_offset_rms": "{band}_ref_photom_offset_rms_coadd",
+            "ref_photom_offset_nstars": "{band}_ref_photom_offset_nstars_coadd",
+        }
+
+    def visitContext(self) -> None:
+        """Apply visit options for the metrics. Applies the visit plot flag
+        selector and sets flux types.
+        """
+        self.parameterizedBand = False
+        self.prep.selectors.flagSelector = VisitPlotFlagSelector()
+        self.prep.selectors.starSelector.vectorKey = "extendedness_target"
+
+        self.applyContext(RefMatchContext)
+
+        self.process.buildActions.mags.vectorKey = "psfFlux_target"
 
     def setDefaults(self):
         super().setDefaults()
@@ -799,6 +837,7 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
 
         # Calculate median, std, sigmaMad, RMS, and number counts:
         self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_mean = MeanAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_stdev = StdevAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_sigmaMad = SigmaMadAction(
             vectorKey="srcRefMagdiffStars"
@@ -806,11 +845,9 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         self.process.calculateActions.ref_photom_offset_rms = RmsAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_nstars = CountAction(vectorKey="srcRefMagdiffStars")
 
-        self.applyContext(VisitContext)
-        self.applyContext(RefMatchContext)
-
         self.produce.metric.units = {
             "ref_photom_offset": "mmag",
+            "ref_photom_offset_mean": "mmag",
             "ref_photom_offset_stdev": "mmag",
             "ref_photom_offset_sigmaMad": "mmag",
             "ref_photom_offset_rms": "mmag",

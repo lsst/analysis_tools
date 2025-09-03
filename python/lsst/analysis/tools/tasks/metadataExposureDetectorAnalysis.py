@@ -62,4 +62,4 @@ class MetadataExposureDetectorAnalysisTask(AnalysisPipelineTask):
         if not metadata:
             raise NoWorkFound(f"No metadata entries for {taskName}.")
         outputs = self.run(data=metadata, plotInfo=plotInfo)
-        butlerQC.put(outputs, outputRefs)
+        self.putByBand(butlerQC, outputs, outputRefs)

@@ -106,8 +106,11 @@ tasks:
       atools.targetRefCatDeltaCModelScatterPlot: TargetRefCatDeltaCModelScatterPlot
       atools.targetRefCatDeltaPsfSkyPlot: TargetRefCatDeltaPsfSkyPlot
       atools.targetRefCatDeltaCModelSkyPlot: TargetRefCatDeltaCModelSkyPlot
+      atools.photomDiffMetrics: TargetRefCatDeltaPhotomMetrics
+      atools.photomDiffMetrics.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
   plotPropertyMapTract:
     class: lsst.analysis.tools.tasks.PerTractPropertyMapAnalysisTask
     config:

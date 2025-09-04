@@ -30,7 +30,7 @@ from typing import Any, Mapping
 
 import lsst.pipe.base as pipeBase
 from lsst.daf.butler import DataCoordinate
-from lsst.ip.isr.binExposureTask import binExposure
+from lsst.ip.isr.binImageDataTask import binImageData
 from lsst.pex.config import Field
 from lsst.pipe.base import (
     InputQuantizedConnection,
@@ -84,7 +84,7 @@ class WholeTractImageAnalysisConfig(
 class WholeTractImageAnalysisTask(AnalysisPipelineTask):
 
     ConfigClass = WholeTractImageAnalysisConfig
-    _DefaultName = "wholeTractImageAnalysisTask"
+    _DefaultName = "wholeTractImageAnalysis"
 
     def runQuantum(
         self,
@@ -203,7 +203,7 @@ class MakeBinnedCoaddConfig(PipelineTaskConfig, pipelineConnections=MakeBinnedCo
 class MakeBinnedCoaddTask(PipelineTask):
 
     ConfigClass = MakeBinnedCoaddConfig
-    _DefaultName = "makeBinnedCoaddTask"
+    _DefaultName = "makeBinnedCoadd"
 
     def runQuantum(
         self,
@@ -212,8 +212,8 @@ class MakeBinnedCoaddTask(PipelineTask):
         outputRefs: OutputQuantizedConnection,
     ) -> None:
         """Takes a coadd exposure and bins it by the factor specified in
-        self.config.binFactor. This task uses the binExposure function
-        defined ip_isr, but adds the option to only retrieve and bin the
+        self.config.binFactor. This task uses the binImageData function
+        defined in ip_isr, but adds the option to only retrieve and bin the
         data contained within the patch's inner bounding box.
 
         Parameters
@@ -222,7 +222,7 @@ class MakeBinnedCoaddTask(PipelineTask):
             A butler which is specialized to operate in the context of a
             `lsst.daf.butler.Quantum`.
         inputRefs : `lsst.pipe.base.InputQuantizedConnection`
-            Datastructure containing named attributes 'coadd' and 'skymap'.
+            Data structure containing named attributes 'coadd' and 'skymap'.
             The values of these attributes are the corresponding
             `lsst.daf.butler.DatasetRef` objects defined in the corresponding
             `PipelineTaskConnections` class.
@@ -247,6 +247,6 @@ class MakeBinnedCoaddTask(PipelineTask):
         else:
             coadd = coaddRef.get()
 
-        binnedCoadd = binExposure(coadd, self.config.binFactor)
+        binnedCoadd = binImageData(coadd, self.config.binFactor)
 
         butlerQC.put(pipeBase.Struct(binnedCoadd=binnedCoadd), outputRefs)

@@ -120,7 +120,6 @@ class WholeTractImage(PlotAction):
 
     def getInputSchema(self) -> KeyedDataSchema:
         base = []
-        base.append(("mask", KeyedData))
         base.append((self.component, KeyedData))
         return base
 
@@ -232,17 +231,21 @@ class WholeTractImage(PlotAction):
         for patchId in patchIds:
 
             if first:
-                noDataBitmask = data["mask"][patchId].getPlaneBitMask("NO_DATA")
-                if self.bitmaskPlanes:
-                    bitmasks = data["mask"][patchId].getPlaneBitMask(self.bitmaskPlanes)
-                first = False
+                if "mask" in data:
+                    noDataBitmask = data["mask"][patchId].getPlaneBitMask("NO_DATA")
+                    if self.bitmaskPlanes:
+                        bitmasks = data["mask"][patchId].getPlaneBitMask(self.bitmaskPlanes)
+                    first = False
 
             emptyPatches.remove(patchId)
             im = data[self.component][patchId].array
             if self.bitmaskPlanes:
                 im = (im & bitmasks > 0) * 1.0
 
-            noDataMask = data["mask"][patchId].array & noDataBitmask > 0
+            if "mask" in data:
+                noDataMask = data["mask"][patchId].array & noDataBitmask > 0
+            else:
+                noDataMask = np.zeros_like(data[self.component][patchId].array) > 0
 
             allPix = np.append(allPix, im[~noDataMask].flatten())
             imStack[patchId] = np.ma.masked_array(im, mask=noDataMask)
@@ -343,11 +346,12 @@ class WholeTractImage(PlotAction):
             ax.set_title(title, fontsize=20)
 
         if not self.displayAsPostageStamp:
-            noDataPatch = patches.Rectangle(
-                (0.8, 1.1), 0.05, 0.04, transform=ax.transAxes, facecolor="red", alpha=0.6, clip_on=False
-            )
-            ax.add_patch(noDataPatch)
-            ax.text(0.86, 1.115, "NO_DATA", transform=ax.transAxes, va="center", ha="left", fontsize=8)
+            if "mask" in data:
+                noDataPatch = patches.Rectangle(
+                    (0.8, 1.1), 0.05, 0.04, transform=ax.transAxes, facecolor="red", alpha=0.6, clip_on=False
+                )
+                ax.add_patch(noDataPatch)
+                ax.text(0.86, 1.115, "NO_DATA", transform=ax.transAxes, va="center", ha="left", fontsize=8)
 
             noCoaddPatch = patches.Rectangle(
                 (0.8, 1.02),

@@ -54,7 +54,7 @@ class WholeTractImageAnalysisConnections(
     },
 ):
     data = ct.Input(
-        doc="Binned deepCoadd calibrated exposures to read from the butler.",
+        doc="Binned coadd image data to read from the butler.",
         name="{coaddName}Coadd_calexp_bin",
         storageClass="ExposureF",
         deferLoad=True,
@@ -74,11 +74,39 @@ class WholeTractImageAnalysisConnections(
         dimensions=("skymap",),
     )
 
+    def __init__(self, *, config=None):
+        """Customize the storageClass for a specific instance. This enables it
+        to be dynamically set at runtime, allowing the task to work with
+        different types of image-like data.
+
+        Parameters
+        ----------
+        config : `WholeTractImageAnalysisConfig`
+            A config for `WholeTractImageAnalysisTask`.
+        """
+        super().__init__(config=config)
+        if config and config.dataStorageClass != self.data.storageClass:
+            self.data = ct.Input(
+                name=self.data.name,
+                doc=self.data.doc,
+                storageClass=config.dataStorageClass,
+                dimensions=self.data.dimensions,
+                deferLoad=self.data.deferLoad,
+                multiple=self.data.multiple,
+            )
+
 
 class WholeTractImageAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=WholeTractImageAnalysisConnections
 ):
-    pass
+    dataStorageClass = Field(
+        default="ExposureF",
+        dtype=str,
+        doc=(
+            "Override the storageClass of the input data. "
+            "Must be of type `Image`, `MaskedImage` or `Exposure`, or one of their subtypes."
+        ),
+    )
 
 
 class WholeTractImageAnalysisTask(AnalysisPipelineTask):
@@ -101,14 +129,21 @@ class WholeTractImageAnalysisTask(AnalysisPipelineTask):
         except KeyError:
             raise RuntimeError("'data' is a required input connection, but is not defined.")
 
-        inputNames = {"mask"}
-        inputNames.update(self.collectInputNames())
-
         keyedData = dict()
-        for inputName in inputNames:
-            keyedData[inputName] = dict()
+        if "Exposure" in self.config.dataStorageClass:
+            inputNames = {"mask"}
+            inputNames.update(self.collectInputNames())
+            for inputName in inputNames:
+                keyedData[inputName] = dict()
+                for handle in inputData:
+                    keyedData[inputName][handle.dataId["patch"]] = handle.get(component=inputName)
+        elif "Image" in self.config.dataStorageClass:
+            keyedData["image"] = dict()
             for handle in inputData:
-                keyedData[inputName][handle.dataId["patch"]] = handle.get(component=inputName)
+                image = handle.get()
+                keyedData["image"][handle.dataId["patch"]] = image
+        else:
+            raise TypeError("'data' must be of type Image, MaskedImage, Exposure, or one of their subtypes")
 
         outputs = self.run(
             data=keyedData,
@@ -163,7 +198,7 @@ class MakeBinnedCoaddConnections(
 ):
 
     coadd = ct.Input(
-        doc="Input coadd exposures to bin.",
+        doc="Input coadd image data to bin.",
         name="{coaddName}Coadd_calexp",
         storageClass="ExposureF",
         dimensions=("skymap", "tract", "patch", "band"),
@@ -176,11 +211,37 @@ class MakeBinnedCoaddConnections(
         dimensions=("skymap",),
     )
     binnedCoadd = ct.Output(
-        doc="Binned coadd exposure.",
+        doc="Binned coadd image data.",
         name="{coaddName}Coadd_calexp_bin",
         storageClass="ExposureF",
         dimensions=("skymap", "tract", "patch", "band"),
     )
+
+    def __init__(self, *, config=None):
+        """Customize the storageClass for a specific instance.
+        This enables it to be dynamically set at runtime, allowing
+        the task to work with different types of image-like data.
+
+        Parameters
+        ----------
+        config : `MakeBinnedCoaddConfig`
+            A config for `MakeBinnedCoaddTask`.
+        """
+        super().__init__(config=config)
+        if config and config.coaddStorageClass != self.coadd.storageClass:
+            self.coadd = ct.Input(
+                name=self.coadd.name,
+                doc=self.coadd.doc,
+                storageClass=config.coaddStorageClass,
+                dimensions=self.coadd.dimensions,
+                deferLoad=self.coadd.deferLoad,
+            )
+            self.binnedCoadd = ct.Output(
+                name=self.binnedCoadd.name,
+                doc=self.binnedCoadd.doc,
+                storageClass=config.coaddStorageClass,
+                dimensions=self.binnedCoadd.dimensions,
+            )
 
 
 class MakeBinnedCoaddConfig(PipelineTaskConfig, pipelineConnections=MakeBinnedCoaddConnections):
@@ -188,7 +249,7 @@ class MakeBinnedCoaddConfig(PipelineTaskConfig, pipelineConnections=MakeBinnedCo
 
     doBinInnerBBox = Field[bool](
         doc=(
-            "Only retrieve and bin the coadd within the patch Inner Bounding Box, ",
+            "Retrieve and bin the coadd image data within the patch Inner Bounding Box, ",
             "thereby excluding the regions that overlap neighboring patches.",
         ),
         default=False,
@@ -197,6 +258,14 @@ class MakeBinnedCoaddConfig(PipelineTaskConfig, pipelineConnections=MakeBinnedCo
         doc="Binning factor applied to both spatial dimensions.",
         default=8,
         check=lambda x: x > 1,
+    )
+    coaddStorageClass = Field(
+        default="ExposureF",
+        dtype=str,
+        doc=(
+            "Override the storageClass of the input and binned coadd image data. "
+            "Must be of type `Image`, `MaskedImage`, or `Exposure`, or one of their subtypes."
+        ),
     )
 
 
@@ -211,7 +280,7 @@ class MakeBinnedCoaddTask(PipelineTask):
         inputRefs: InputQuantizedConnection,
         outputRefs: OutputQuantizedConnection,
     ) -> None:
-        """Takes a coadd exposure and bins it by the factor specified in
+        """Takes coadd image data and bins it by the factor specified in
         self.config.binFactor. This task uses the binImageData function
         defined in ip_isr, but adds the option to only retrieve and bin the
         data contained within the patch's inner bounding box.

@@ -28,6 +28,7 @@ from typing import Mapping, Optional
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.patheffects as pathEffects
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import ImageNormalize
 from lsst.pex.config import (
@@ -86,9 +87,42 @@ class WholeTractImage(PlotAction):
         default=False,
     )
 
+    showColorbar = Field[bool](
+        doc="Show a colorbar alongside the main plot. Default: False",
+        default=False,
+    )
+
+    zAxisLabel = Field[str](
+        doc="Label to display on the colorbar. Optional",
+        optional=True,
+    )
+
     interval = ConfigurableActionField[VectorAction](
         doc="Action to calculate the min and max values of the image scale. Default: Perc.",
         default=Perc,
+    )
+
+    colorbarCmap = ChoiceField[str](
+        doc="Matplotlib colormap to use for the displayed image. Default: gray",
+        default="gray",
+        allowed={name: name for name in plt.colormaps()},
+    )
+
+    noDataColor = Field[str](
+        doc="Matplotlib color to use to indicate regions of no data. Default: red",
+        default="red",
+    )
+
+    noDataValue = Field[int](
+        doc="If data doesn't contain a mask plane, the value in the image plane to "
+        "assign the noDataColor to. Optional.",
+        optional=True,
+    )
+
+    vmaxFloor = Field[float](
+        doc="The floor of the vmax value of the colorbar",
+        default=None,
+        optional=True,
     )
 
     stretch = ConfigurableActionField[TensorAction](
@@ -190,10 +224,8 @@ class WholeTractImage(PlotAction):
         tractRas = [ra for (ra, dec) in tractCorners]
         RaSpansZero = max(tractRas) > 360.0
 
-        cmap = cm.grey
-        cmap.set_bad("red", alpha=0.6)
-        cmapred = cm.Reds
-        cmapred.set_bad(alpha=0)
+        cmap = cm.get_cmap(self.colorbarCmap).reversed().copy()
+        cmap.set_bad(self.noDataColor, alpha=0.6 if self.noDataColor == "red" else 1.0)
 
         set_rubin_plotstyle()
         fig = make_figure()
@@ -215,7 +247,7 @@ class WholeTractImage(PlotAction):
         else:
             axisLabelFontSize = 8
             tickMarkFontSize = 8
-            boundaryColor = "c"
+            boundaryColor = "r" if "viridis" in self.colorbarCmap.lower() else "c"
             boundaryAlpha = 0.3
             boundaryWidth = 1.0
 
@@ -244,6 +276,8 @@ class WholeTractImage(PlotAction):
 
             if "mask" in data:
                 noDataMask = data["mask"][patchId].array & noDataBitmask > 0
+            elif self.noDataValue is not None:
+                noDataMask = data[self.component][patchId].array == self.noDataValue
             else:
                 noDataMask = np.zeros_like(data[self.component][patchId].array) > 0
 
@@ -251,6 +285,10 @@ class WholeTractImage(PlotAction):
             imStack[patchId] = np.ma.masked_array(im, mask=noDataMask)
 
         vmin, vmax = self.interval(allPix)
+
+        # Set a floor to vmax. Useful for low dymanic range data.
+        if self.vmaxFloor is not None:
+            vmax = max(vmax, self.vmaxFloor)
 
         for patchId, im in imStack.items():
 
@@ -272,9 +310,13 @@ class WholeTractImage(PlotAction):
                 alpha=boundaryAlpha,
             )
 
-            normalizedIm = ImageNormalize(vmin=vmin, vmax=vmax)(im)
-            stretchedIm = self.stretch(normalizedIm)
-            ax.imshow(stretchedIm, vmin=0, vmax=1, extent=Extent, cmap=cmap.reversed())
+            norm = ImageNormalize(vmin=vmin, vmax=vmax)
+            stretchedIm = self.stretch(norm(im))
+            masked_stretched = np.ma.masked_array(
+                norm.inverse(stretchedIm.data),
+                mask=stretchedIm.mask,
+            )
+            plotIm = ax.imshow(masked_stretched, vmin=vmin, vmax=vmax, extent=Extent, cmap=cmap)
 
             if self.showPatchIds:
                 ax.annotate(
@@ -338,6 +380,28 @@ class WholeTractImage(PlotAction):
         ax.set_ylim(min(tractDecs), max(tractDecs))
 
         ax.tick_params(axis="both", labelsize=tickMarkFontSize, length=0, pad=1.5)
+
+        if self.showColorbar:
+            cax = fig.add_axes([0.90, 0.11, 0.04, 0.77])
+            cbar = fig.colorbar(plotIm, cax=cax, extend="both")
+            cbar.ax.tick_params(labelsize=tickMarkFontSize)
+            if self.zAxisLabel:
+                colorbarLabel = self.zAxisLabel
+            else:
+                colorbarLabel = ""
+            text = cax.text(
+                0.5,
+                0.5,
+                colorbarLabel,
+                color="k",
+                rotation="vertical",
+                transform=cax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=10,
+            )
+            text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+
         if self.displayAsPostageStamp:
             if "band" in plotInfo:
                 title = f"{str(tractId)}; {plotInfo['band']}"

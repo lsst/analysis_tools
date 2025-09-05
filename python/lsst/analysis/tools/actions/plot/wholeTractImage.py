@@ -28,6 +28,7 @@ from typing import Mapping, Optional
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.patheffects as pathEffects
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import ImageNormalize
 from lsst.pex.config import (
@@ -86,9 +87,31 @@ class WholeTractImage(PlotAction):
         default=False,
     )
 
+    showColorbar = Field[bool](
+        doc="Show a colorbar alongside the main plot. Default: False",
+        default=False,
+    )
+
+    zAxisLabel = Field[str](
+        doc="Label to display on the colorbar. Optional",
+        optional=True,
+    )
+
     interval = ConfigurableActionField[VectorAction](
         doc="Action to calculate the min and max values of the image scale. Default: Percentile.",
         default=Percentile,
+    )
+
+    colorbarCmap = ChoiceField[str](
+        doc="Matplotlib colormap to use for the displayed image. Default: gray_r",
+        default="gray_r",
+        allowed={name: name for name in plt.colormaps()},
+    )
+
+    vmaxFloor = Field[float](
+        doc="The floor of the vmax value of the colorbar",
+        default=None,
+        optional=True,
     )
 
     stretch = ConfigurableActionField[TensorAction](
@@ -181,7 +204,7 @@ class WholeTractImage(PlotAction):
         tractRas = [ra for (ra, dec) in tractCorners]
         RaSpansZero = max(tractRas) > 360.0
 
-        cmap = cm.grey
+        cmap = cm.get_cmap(self.colorbarCmap)
         cmap.set_bad("red", alpha=0.6)
         cmapred = cm.Reds
         cmapred.set_bad(alpha=0)
@@ -242,6 +265,10 @@ class WholeTractImage(PlotAction):
 
         vmin, vmax = self.interval(allPix)
 
+        # Set a floor to vmax. Useful for low dymanic range data.
+        if self.vmaxFloor is not None:
+            vmax = max(vmax, self.vmaxFloor)
+
         for patchId, im in imStack.items():
 
             # Create the patch axes at the appropriate location in tract:
@@ -262,9 +289,11 @@ class WholeTractImage(PlotAction):
                 alpha=boundaryAlpha,
             )
 
-            normalizedIm = ImageNormalize(vmin=vmin, vmax=vmax)(im)
-            stretchedIm = self.stretch(normalizedIm)
-            ax.imshow(stretchedIm, vmin=0, vmax=1, extent=Extent, cmap=cmap.reversed())
+            norm = ImageNormalize(vmin=vmin, vmax=vmax)
+            stretchedIm = self.stretch(norm(im))
+            plotIm = ax.imshow(
+                norm.inverse(stretchedIm), vmin=vmin, vmax=vmax, extent=Extent, cmap=cmap.reversed()
+            )
 
             if self.showPatchIds:
                 ax.annotate(
@@ -328,6 +357,28 @@ class WholeTractImage(PlotAction):
         ax.set_ylim(min(tractDecs), max(tractDecs))
 
         ax.tick_params(axis="both", labelsize=tickMarkFontSize, length=0, pad=1.5)
+
+        if self.showColorbar:
+            cax = fig.add_axes([0.90, 0.11, 0.04, 0.77])
+            cbar = fig.colorbar(plotIm, cax=cax, extend="both")
+            cbar.ax.tick_params(labelsize=tickMarkFontSize)
+            if self.zAxisLabel:
+                colorbarLabel = self.zAxisLabel
+            else:
+                colorbarLabel = ""
+            text = cax.text(
+                0.5,
+                0.5,
+                colorbarLabel,
+                color="k",
+                rotation="vertical",
+                transform=cax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=10,
+            )
+            text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
+
         if self.displayAsPostageStamp:
             if "band" in plotInfo:
                 title = f"{str(tractId)}; {plotInfo['band']}"

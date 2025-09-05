@@ -89,3 +89,7 @@ class WholeTractNImageTool(AnalysisTool):
         self.produce.plot = WholeTractImage()
         self.produce.plot.interval = MinMax
         self.produce.plot.stretch = Linear()
+        self.produce.plot.showColorbar = True
+        self.produce.plot.zAxisLabel = "Number of input images"
+        self.produce.plot.colorbarCmap = "CMRmap"
+        self.produce.plot.vmaxFloor = 10

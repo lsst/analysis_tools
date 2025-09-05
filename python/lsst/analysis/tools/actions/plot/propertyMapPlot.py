@@ -38,6 +38,7 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
     SurveyWidePropertyMapAnalysisConfig,
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
+import lsst.sphgeom as sphgeom
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib import cm, rc_context
 from matplotlib.figure import Figure
@@ -196,6 +197,10 @@ class CustomHandler(HandlerTuple):
 
 
 class PerTractPropertyMapPlot(PlotAction):
+    draw_patch_bounds = pexConfig.Field[bool](
+        doc="Whether to draw patch inner boundaries or not",
+        default=False,
+    )
     plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
 
     def __call__(
@@ -522,6 +527,21 @@ class PerTractPropertyMapPlot(PlotAction):
 
                 sp.ax.set_xlabel("R.A.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
                 sp.ax.set_ylabel("Dec.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
+
+                if self.draw_patch_bounds:
+                    for patchInfo in tractInfo:
+                        vertices = patchInfo.getInnerSkyPolygon().getVertices()
+                        clipped = tractInfo.inner_sky_region.clipTo(
+                            sphgeom.Box(sphgeom.LonLat(vertices[0]), sphgeom.LonLat(vertices[2]))
+                        )
+                        lonlats_patch = np.array([
+                            [x.asDegrees() for x in (lonlat.getA(), lonlat.getB())]
+                            for lonlat in (clipped.getLon(), clipped.getLat())
+                        ])
+                        lons_patch = np.concat((lonlats_patch[0, :], lonlats_patch[0, ::-1]))
+                        lats_patch = np.repeat(lonlats_patch[1, :], 2)
+
+                        sp.draw_polygon(lons_patch, lats_patch, edgecolor="gray")
 
                 # Specify the size and padding of the colorbar axes with
                 # respect to the main axes.

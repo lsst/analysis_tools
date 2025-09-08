@@ -56,6 +56,8 @@ class CompletenessHist(PlotAction):
     legendLocation = Field[str](doc="Legend position within main plot", default="lower left")
     mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference Magnitude")
     mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured Magnitude")
+    object_label = Field[str](doc="Label for measured objects", default="Object")
+    reference_label = Field[str](doc="Label for reference objects", default="Reference")
     percentiles_style = ChoiceField[str](
         doc="Style and locations for completeness threshold percentile labels",
         allowed={
@@ -197,7 +199,7 @@ class CompletenessHist(PlotAction):
 
         plots = {
             "Completeness": {
-                "count_type": "Reference",
+                "count_type": self.reference_label,
                 "counts": data[names["count_ref"]],
                 "lines": lineTuples,
                 "xlabel": self.mag_ref_label,
@@ -205,7 +207,7 @@ class CompletenessHist(PlotAction):
         }
         if self.show_purity:
             plots["Purity"] = {
-                "count_type": "Object",
+                "count_type": self.object_label,
                 "counts": data[names["count_target"]],
                 "lines": (
                     (data[names["purity"]], True, "k", "Purity"),

@@ -26,9 +26,18 @@ __all__ = (
     "ObjectTableTractAnalysisTask",
 )
 
+import copy
+from typing import TYPE_CHECKING
+
 import lsst.pex.config as pexConfig
+from lsst.obs.base.utils import TableVStack
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+
+if TYPE_CHECKING:
+    # from lsst.daf.butler import DatasetRef, DeferredDatasetHandle
+    from lsst.pipe.base.connections import InputQuantizedConnection, OutputQuantizedConnection
+    from lsst.pipe.base import QuantumContext
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -54,17 +63,70 @@ class ObjectTableTractAnalysisConnections(
     )
 
     def __init__(self, *, config=None):
+        if config:
+            if not config.load_skymap:
+                del self.skymap
+            if config.load_multiple:
+                connection = self.data
+                del self.data
+                self.data = type(connection)(
+                    doc=connection.doc,
+                    name=connection.name,
+                    storageClass=connection.storageClass,
+                    deferLoad=connection.deferLoad,
+                    dimensions=connection.dimensions,
+                    multiple=True,
+                )
+                self.dimensions = {"skymap"}
         super().__init__(config=config)
-        if not config.load_skymap:
-            del self.skymap
 
 
 class ObjectTableTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=ObjectTableTractAnalysisConnections
 ):
+    load_multiple = pexConfig.Field[bool](
+        doc="Whether to load multiple tables and concatenate them to make one output for all tracts.",
+        default=False,
+    )
     load_skymap = pexConfig.Field[bool](doc="Whether to load the skymap", default=True)
 
 
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = ObjectTableTractAnalysisConfig
     _DefaultName = "objectTableTractAnalysis"
+
+    def runQuantum(
+        self,
+        butlerQC: QuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        if not self.config.load_multiple:
+            super().runQuantum(butlerQC, inputRefs, outputRefs)
+            return
+        inputs = butlerQC.get(inputRefs)
+        extra_values = {}
+        handles = {}
+        columns = self.collectInputNames()
+        add_tract = "tract" not in columns
+
+        for tract, handle, idx_h in sorted(
+            (inputRef.dataId["tract"], inputHandle, idx)
+            for idx, (inputRef, inputHandle) in enumerate(zip(inputRefs.data, inputs["data"], strict=True))
+        ):
+            handles[tract] = handle
+            if add_tract:
+                extra_values[idx_h] = {"tract": tract}
+        data = TableVStack.vstack_handles(
+            handles.values(), extra_values=extra_values, kwargs_get={"parameters": {"columns": columns}}
+        )
+
+        tracts = ",".join(str(tract) for tract in sorted(handles.keys()))
+        input_first = inputs.pop("data")[0]
+        inputs_plot = {"data": input_first}
+        dataId = copy.copy(input_first.dataId)
+        dataId._values = (dataId._values[0], tracts)
+        plotInfo = self.parsePlotInfo(inputs_plot, dataId)
+
+        outputs = self.run(data=data, plotInfo=plotInfo, **inputs)
+        self.putByBand(butlerQC, outputs, outputRefs)

@@ -54,8 +54,12 @@ class CompletenessHist(PlotAction):
         doc="Color for the line showing the wrongly classified fraction", default="#DE8F05"
     )
     legendLocation = Field[str](doc="Legend position within main plot", default="lower left")
-    mag_ref_label = Field[str](doc="Label for the completeness x axis.", default="Reference Magnitude")
-    mag_target_label = Field[str](doc="Label for the purity x axis.", default="Measured Magnitude")
+    mag_ref_label = Field[str](
+        doc="Label for the completeness x axis.", default="{band}-band Reference Magnitude"
+    )
+    mag_target_label = Field[str](
+        doc="Label for the purity x axis.", default="{band}-band Measured Magnitude"
+    )
     object_label = Field[str](doc="Label for measured objects", default="Object")
     reference_label = Field[str](doc="Label for reference objects", default="Reference")
     percentiles_style = ChoiceField[str](
@@ -197,12 +201,19 @@ class CompletenessHist(PlotAction):
                 (data[names["completeness_good_match"]], False, self.color_right, "Correct Class"),
             )
 
+        mag_ref_label = self.mag_ref_label
+        if "{band}" in mag_ref_label:
+            mag_ref_label = mag_ref_label.format(band=band)
+        mag_target_label = self.mag_target_label
+        if "{band}" in mag_target_label:
+            mag_target_label = mag_target_label.format(band=band)
+
         plots = {
             "Completeness": {
                 "count_type": self.reference_label,
                 "counts": data[names["count_ref"]],
                 "lines": lineTuples,
-                "xlabel": self.mag_ref_label,
+                "xlabel": mag_ref_label,
             },
         }
         if self.show_purity:
@@ -214,7 +225,7 @@ class CompletenessHist(PlotAction):
                     (data[names["purity_bad_match"]], False, self.color_wrong, "Incorrect class"),
                     (data[names["purity_good_match"]], False, self.color_right, "Correct class"),
                 ),
-                "xlabel": self.mag_target_label,
+                "xlabel": mag_target_label,
             }
 
         # idx == 0 should be completeness; update this if that assumption

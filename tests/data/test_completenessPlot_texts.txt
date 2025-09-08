@@ -3,7 +3,7 @@ compurity test
 PhotoCalib: None, Astrometry: None[newline]Table: , Bands: r
 
 
-Reference Magnitude
+r-band Reference Magnitude
 Completeness
 Completeness
 Incorrect class
@@ -13,7 +13,7 @@ Counts
 80%: 21.88
 50%: 23.26
 
-Measured Magnitude
+r-band Measured Magnitude
 Purity
 Purity
 Incorrect class

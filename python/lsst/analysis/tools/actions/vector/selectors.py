@@ -26,6 +26,8 @@ __all__ = (
     "FlagSelector",
     "CoaddPlotFlagSelector",
     "RangeSelector",
+    "SetSelector",
+    "StringSetSelector",
     "SnSelector",
     "ExtendednessSelector",
     "SkyObjectSelector",
@@ -46,6 +48,7 @@ __all__ = (
     "InjectedObjectSelector",
     "InjectedStarSelector",
     "MatchedObjectSelector",
+    "MatchedTractSelector",
     "ReferenceGalaxySelector",
     "ReferenceObjectSelector",
     "ReferenceStarSelector",
@@ -101,6 +104,7 @@ class CompositeSelector(SelectorBase):
                     mask &= subMask  # type: ignore
                 else:
                     mask |= subMask
+        return mask
 
 
 class FlagSelector(SelectorBase):
@@ -285,6 +289,101 @@ class RangeSelector(SelectorBase):
         """
         values = cast(Vector, data[self.vectorKey])
         mask = (values >= self.minimum) & (values < self.maximum)
+
+        return cast(Vector, mask)
+
+
+class SetSelector(SelectorBase):
+    """Selects rows with any number of column values within a given set.
+
+    For example, given a set of patches (1, 2, 3), and a set of columns
+    (index_1, index_2), return all rows with either index_1 or index_2
+     in the set (1, 2, 3).
+
+    Notes
+    -----
+    The values are given as floats for flexibility. Integers above
+    the floating point limit (2^53 + 1 = 9,007,199,254,740,993 for 64 bits)
+    will not compare exactly with their float representations.
+    """
+
+    vectorKeys = ListField[str](
+        doc="Keys to select from data",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+    values = ListField[float](
+        doc="The set of acceptable values",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from ((key, Vector) for key in self.vectorKeys)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values in the specified set.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values in the specified set.
+        """
+        mask = np.zeros_like(data[self.vectorKeys[0]], dtype=bool)
+        for key in self.vectorKeys:
+            values = cast(Vector, data[key])
+            for compare in self.values:
+                mask |= values == compare
+
+        return cast(Vector, mask)
+
+
+class PatchSelector(SetSelector):
+    """Select rows within a set of patches."""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.vectorKeys = ["patch"]
+
+
+class StringSetSelector(SelectorBase):
+    """A SetSelector with string values for categorical columns."""
+
+    vectorKeys = ListField[str](
+        doc="Keys to select from data",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+    values = ListField[str](
+        doc="The set of acceptable values",
+        default=[],
+        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+    )
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield from ((key, Vector) for key in self.vectorKeys)
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        """Return a mask of rows with values in the specified set.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Vector`
+            A mask of the rows with values in the specified set.
+        """
+        mask = np.zeros_like(data[self.vectorKeys[0]], dtype=bool)
+        for key in self.vectorKeys:
+            values = cast(Vector, data[key])
+            for compare in self.values:
+                mask |= values == compare
 
         return cast(Vector, mask)
 
@@ -761,6 +860,46 @@ class MatchedObjectSelector(RangeSelector):
         super().setDefaults()
         self.minimum = 0
         self.vectorKey = "match_distance"
+
+
+class MatchedTractSelector(SelectorBase):
+    """A selector to select rows from a single tract in a multitract
+    matched catalog.
+    """
+
+    key_patch_ref = Field[str](doc="Key for the reference patch", default="refcat_patch")
+    key_patch_target = Field[str](doc="Key for the target patch", default="patch")
+    key_tract_ref = Field[str](doc="Key for the reference tract", default="refcat_tract")
+    key_tract_target = Field[str](doc="Key for the target tract", default="tract")
+
+    patches = ListField[int](
+        doc="The patches to select. An empty list will select all patches.",
+        default=[],
+        listCheck=lambda x: (len(x) >= 0) & (len(x) == len(set(x))),
+    )
+    tract = Field[int](doc="The tract to select")
+
+    def __call__(self, data: KeyedData, **kwargs) -> Vector:
+        matched_tract = np.array(data[self.key_tract_target] == self.tract)
+        if self.patches:
+            patches = data[self.key_patch_target][matched_tract]
+            select_patch = SetSelector(vectorKeys=["p"], values=self.patches)({"p": patches})
+            matched_tract[matched_tract] &= select_patch
+        unmatched_tract_ref = ~np.array(data[self.key_tract_target] >= 0) & (
+            data[self.key_tract_ref] == self.tract
+        )
+        if self.patches:
+            patches = data[self.key_patch_ref][unmatched_tract_ref]
+            select_patch = SetSelector(vectorKeys=["p"], values=self.patches)({"p": patches})
+            unmatched_tract_ref[unmatched_tract_ref] &= select_patch
+        matched_tract |= unmatched_tract_ref
+        return matched_tract
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        yield self.key_patch_ref, Vector
+        yield self.key_patch_target, Vector
+        yield self.key_tract_ref, Vector
+        yield self.key_tract_target, Vector
 
 
 class ReferenceClassSelector(ThresholdSelector):

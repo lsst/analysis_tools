@@ -518,7 +518,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         # no data figure
         numData = 0
         for xs, _, _, _, _, _, _, _, _, _ in toPlotList:
-            numData += len(xs)
+            numData += np.count_nonzero(np.isfinite(xs))
         if numData == 0:
             return None, None
 
@@ -541,8 +541,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             ys = np.array(ys)
             sigMadYs = nanSigmaMad(ys)
             # plot lone median point if there's not enough data to measure more
-            n_xs = len(xs)
-            if n_xs == 0 or not np.isfinite(sigMadYs):
+            n_xs = np.count_nonzero(np.isfinite(xs))
+            if n_xs <= 1 or not (np.isfinite(sigMadYs) and sigMadYs > 0.0):
                 continue
             elif n_xs < 10:
                 xs = [nanMedian(xs)]

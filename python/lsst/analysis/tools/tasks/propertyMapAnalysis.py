@@ -101,7 +101,7 @@ class PerTractPropertyMapAnalysisConfig(
     zoomFactors = ListField(
         dtype=float,
         doc="Two-element list of zoom factors to use when plotting the maps.",
-        default=[2, 8],
+        default=[1.8, 5],
     )
 
     colorbarKwargs = DictField(

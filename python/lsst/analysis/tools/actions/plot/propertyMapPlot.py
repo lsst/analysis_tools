@@ -204,6 +204,15 @@ class PerTractPropertyMapPlot(PlotAction):
         doc="Whether to draw patch inner boundaries or not",
         default=False,
     )
+    label_patches = pexConfig.ChoiceField[str](
+        doc="Which patches to label by ID",
+        default="none",
+        allowed={
+            "all": "All patches",
+            "edge": "Edge patches only",
+            "none": "No labels",
+        },
+    )
     plotName = pexConfig.Field[str](doc="The name for the plotting task.", optional=True)
 
     def __call__(
@@ -525,6 +534,13 @@ class PerTractPropertyMapPlot(PlotAction):
                 sp.ax.set_ylabel("Dec.", labelpad=labelpad, fontsize=rcparams["axes.labelsize"])
 
                 if self.draw_patch_bounds:
+                    label_all = self.label_patches == "all"
+                    label_edge = self.label_patches == "edge"
+                    if label_all or label_edge:
+                        patchids_max = tuple(x - 1 for x in tractInfo.getNumPatches())
+                        lon_min, lon_max = min(extent[:2]), max(extent[:2])
+                        lat_min, lat_max = min(extent[2:]), max(extent[2:])
+
                     for patchInfo in tractInfo:
                         vertices = patchInfo.getInnerSkyPolygon().getVertices()
                         clipped = tractInfo.inner_sky_region.clipTo(
@@ -540,6 +556,28 @@ class PerTractPropertyMapPlot(PlotAction):
                         lats_patch = np.repeat(lonlats_patch[1, :], 2)
 
                         sp.draw_polygon(lons_patch, lats_patch, edgecolor="gray")
+                        label_id = label_all or (
+                            label_edge
+                            and (
+                                (patchInfo.index[0] == 0)
+                                or (patchInfo.index[1] == 0)
+                                or (patchInfo.index[0] == patchids_max[0])
+                                or (patchInfo.index[1] == patchids_max[1])
+                            )
+                        )
+                        if label_id:
+                            lon_label = clipped.getCenter().getLon().asDegrees()
+                            lat_label = clipped.getCenter().getLat().asDegrees()
+                            if (lon_min < lon_label < lon_max) and (lat_min < lat_label < lat_max):
+                                sp.ax.text(
+                                    lon_label,
+                                    lat_label,
+                                    patchInfo.getSequentialIndex(),
+                                    ha="center",
+                                    va="center",
+                                    size=7,
+                                    c=[0, 0, 0, 0.5],
+                                )
 
                 # Specify the size and padding of the colorbar axes with
                 # respect to the main axes.

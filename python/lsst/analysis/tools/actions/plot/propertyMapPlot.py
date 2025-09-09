@@ -29,6 +29,7 @@ import logging
 from typing import Mapping, Union
 
 import lsst.pex.config as pexConfig
+import lsst.sphgeom as sphgeom
 import matplotlib.patheffects as mpl_path_effects
 import numpy as np
 import skyproj
@@ -38,7 +39,6 @@ from lsst.analysis.tools.tasks.propertyMapAnalysis import (
     SurveyWidePropertyMapAnalysisConfig,
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
-import lsst.sphgeom as sphgeom
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib import cm, rc_context
 from matplotlib.figure import Figure
@@ -54,23 +54,13 @@ _LOG = logging.getLogger(__name__)
 unitRenameDict = {"mag(AB)": r"$\rm mag_{AB}$"}
 
 
-def getZoomedExtent(fullExtent, n):
-    """Get zoomed extent centered on the original full plot.
+def getZoomedExtent(box, n):
+    """Get a zoomed plot extent in degrees for a bounding box.
 
     Parameters
     ----------
-    fullExtent : `tuple` [`float`]
-        The full extent defined by (lon_min, lon_max, lat_min, lat_max):
-
-        * ``lon_min``
-            Minimum longitude of the original extent (`float`).
-        * ``"lon_max"``
-            Maximum longitude of the original extent (`float`).
-        * ``lat_min``
-            Minimum latitude of the original extent (`float`).
-        * ``"lat_max"``
-            Maximum latitude of the original extent (`float`).
-
+    box : `lsst.sphgeom.NormalizedAngleInterval`
+        The bounding box to get an extent for.
     n : `float`
         Zoom factor; for instance, n=2 means zooming in 2 times at the
         center. Must be positive.
@@ -80,11 +70,24 @@ def getZoomedExtent(fullExtent, n):
     `tuple` [`float`]
         New extent as (new_lon_min, new_lon_max, new_lat_min, new_lat_max).
     """
-    lon_min, lon_max, lat_min, lat_max = fullExtent
-    lon_center, lat_center = (lon_min + lon_max) / 2, (lat_min + lat_max) / 2
-    half_lon = (lon_max - lon_min) * np.cos(np.radians(lat_center)) / (2 * n)
-    half_lat = (lat_max - lat_min) / (2 * n)
-    return lon_center - half_lon, lon_center + half_lon, lat_center - half_lat, lat_center + half_lat
+    lon = box.getLon()
+    lat = box.getLat()
+    if n > 1:
+        factor = (1.0 - 1.0 / n) / 2.0
+        lon.erodeBy(sphgeom.NormalizedAngle(factor * box.getWidth()))
+        lat.erodeBy(sphgeom.NormalizedAngle(factor * box.getHeight()))
+    elif n < 1:
+        factor = (1.0 / n - 1) / 2.0
+        lon.dilateBy(sphgeom.NormalizedAngle(factor * box.getWidth()))
+        lat.dilateBy(sphgeom.NormalizedAngle(factor * box.getHeight()))
+
+    extent = (
+        lon.getA().asDegrees(),
+        lon.getB().asDegrees(),
+        lat.getA().asDegrees(),
+        lat.getB().asDegrees(),
+    )
+    return extent
 
 
 def getLongestSuffixMatch(s, options):
@@ -492,17 +495,10 @@ class PerTractPropertyMapPlot(PlotAction):
             nBinsHist = atool.nBinsHist
 
             # Use the full tract bounding box to set the default extent.
-            ctr_lon = tractInfo.ctr_coord.getRa().asDegrees()
-            ctr_lat = tractInfo.ctr_coord.getDec().asDegrees()
             box = tractInfo.getOuterSkyPolygon().getBoundingBox()
-            width = box.getWidth().asDegrees()
-            height = box.getHeight().asDegrees()
-            fullExtent = [
-                ctr_lon - width / 2.0,
-                ctr_lon + width / 2.0,
-                ctr_lat - height / 2.0,
-                ctr_lat + height / 2.0,
-            ]
+            ctr_lonlat = box.getCenter()
+            ctr_lon = ctr_lonlat.getLon().asDegrees()
+            ctr_lat = ctr_lonlat.getLat().asDegrees()
 
             # Prepare plot elements for the full tract and optional zoomed-in
             # views.
@@ -513,7 +509,7 @@ class PerTractPropertyMapPlot(PlotAction):
 
             zoomIdx = []
             for ax, zoomFactor, histColor in zip(skyprojAxes, [1.0, *zoomFactors], histColors):
-                extent = getZoomedExtent(fullExtent, zoomFactor)
+                extent = getZoomedExtent(box, zoomFactor)
 
                 sp = skyproj.GnomonicSkyproj(
                     ax=ax,
@@ -534,10 +530,12 @@ class PerTractPropertyMapPlot(PlotAction):
                         clipped = tractInfo.inner_sky_region.clipTo(
                             sphgeom.Box(sphgeom.LonLat(vertices[0]), sphgeom.LonLat(vertices[2]))
                         )
-                        lonlats_patch = np.array([
-                            [x.asDegrees() for x in (lonlat.getA(), lonlat.getB())]
-                            for lonlat in (clipped.getLon(), clipped.getLat())
-                        ])
+                        lonlats_patch = np.array(
+                            [
+                                [x.asDegrees() for x in (lonlat.getA(), lonlat.getB())]
+                                for lonlat in (clipped.getLon(), clipped.getLat())
+                            ]
+                        )
                         lons_patch = np.concat((lonlats_patch[0, :], lonlats_patch[0, ::-1]))
                         lats_patch = np.repeat(lonlats_patch[1, :], 2)
 

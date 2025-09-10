@@ -20,12 +20,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount",)
+__all__ = ("CoaddInputCount", "CoaddQualityCheck", "CoaddQualityPlot")
+
+from lsst.pex.config import ListField
 
 from ..actions.plot.calculateRange import MinMax
+from ..actions.plot.coaddDepthPlot import CoaddDepthPlot
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction
-from ..actions.vector import CoaddPlotFlagSelector, LoadVector, SnSelector
+from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
+from ..actions.vector import BandSelector, CoaddPlotFlagSelector, DownselectVector, LoadVector, SnSelector
 from ..interfaces import AnalysisTool
 
 
@@ -86,3 +89,124 @@ class CoaddInputCount(AnalysisTool):
             "mean": "{band}_inputCount_mean",
             "sigmaMad": "{band}_inputCount_sigmaMad",
         }
+
+
+class CoaddQualityCheck(AnalysisTool):
+    """Compute the percentage of each coadd that has a number of input
+    exposures exceeding a threshold.
+
+    This AnalysisTool is designed to run on any coadd, provided a
+    coadd_depth_table is created first (via CoaddDepthSummaryAnalysisTask).
+
+    For example, if exactly half of a coadd patch contains 15 overlapping
+    constituent visits and half contains fewer, the value computed for
+    `depth_above_threshold_12` would be 50.
+
+    These values come from the n_image data product, which is an image
+    identical to the coadd but with pixel values of the number of input
+    images instead of flux or counts. n_images are persisted during
+    coadd assembly.
+    """
+
+    band_list = ListField(
+        default=["u", "g", "r", "i", "z", "y"],
+        dtype=str,
+        doc="Bands for colors.",
+    )
+
+    threshold_list = ListField(
+        default=[1, 3, 5, 12],
+        dtype=int,
+        doc="The n_image pixel value thresholds.",
+    )
+
+    quantile_list = ListField(
+        default=[5, 10, 25, 50, 75, 90, 95],
+        dtype=int,
+        doc="The percentiles at which to compute n_image values, in ascending order.",
+    )
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
+        self.process.buildActions.band = LoadVector(vectorKey="band")
+
+    def finalize(self):
+        for threshold in self.threshold_list:
+            # This gives a RuntimeWarning whenever the tract doesn't have
+            # a particular band. Need to use a band list derived from the
+            # bands found in the "band" column of a given tract.
+            for band in self.band_list:
+                name = f"depth_above_threshold_{threshold}"
+                setattr(self.process.buildActions, name, LoadVector(vectorKey=name))
+                setattr(
+                    self.process.filterActions,
+                    f"{name}_{band}",
+                    DownselectVector(vectorKey=name, selector=BandSelector(bands=[band])),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_median",
+                    MedianAction(vectorKey=f"{name}_{band}"),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_mean",
+                    MeanAction(vectorKey=f"{name}_{band}"),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_stdev",
+                    StdevAction(vectorKey=f"{name}_{band}"),
+                )
+
+                # The units for the quantity are dimensionless (percentage)
+                self.produce.metric.units[f"{name}_{band}_median"] = ""
+                self.produce.metric.units[f"{name}_{band}_mean"] = ""
+                self.produce.metric.units[f"{name}_{band}_stdev"] = ""
+
+        for quantile in self.quantile_list:
+            for band in self.band_list:
+                name = f"depth_{quantile}_percentile"
+                setattr(self.process.buildActions, name, LoadVector(vectorKey=name))
+                setattr(
+                    self.process.filterActions,
+                    f"{name}_{band}",
+                    DownselectVector(vectorKey=name, selector=BandSelector(bands=[band])),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_median",
+                    MedianAction(vectorKey=f"{name}_{band}"),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_mean",
+                    MeanAction(vectorKey=f"{name}_{band}"),
+                )
+                setattr(
+                    self.process.calculateActions,
+                    f"{name}_{band}_stdev",
+                    StdevAction(vectorKey=f"{name}_{band}"),
+                )
+
+                # The units for the quantity are dimensionless (percentage)
+                self.produce.metric.units[f"{name}_{band}_median"] = ""
+                self.produce.metric.units[f"{name}_{band}_mean"] = ""
+                self.produce.metric.units[f"{name}_{band}_stdev"] = ""
+
+
+class CoaddQualityPlot(AnalysisTool):
+    """Make a plot of coadd depth."""
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
+        self.process.buildActions.band = LoadVector(vectorKey="band")
+        self.process.buildActions.depth = LoadVector(vectorKey="depth")
+        self.process.buildActions.pixels = LoadVector(vectorKey="pixels")
+
+        self.produce.plot = CoaddDepthPlot()

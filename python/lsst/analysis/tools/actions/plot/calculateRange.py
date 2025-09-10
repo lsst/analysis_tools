@@ -21,13 +21,25 @@
 
 from __future__ import annotations
 
-__all__ = ("MinMax", "Med2Mad")
+__all__ = (
+    "MinMax",
+    "Med2Mad",
+    "Asinh",
+    "Perc",
+    "Linear",
+)
 
 from typing import cast
 
 import numpy as np
+from astropy.visualization import (
+    AsinhStretch,
+    LinearStretch,
+    PercentileInterval,
+)
+from lsst.pex.config import Field
 
-from ...interfaces import Vector, VectorAction
+from ...interfaces import Tensor, TensorAction, Vector, VectorAction
 from ...math import nanMax, nanMedian, nanMin, nanSigmaMad
 
 
@@ -75,3 +87,73 @@ class Med2Mad(VectorAction):
         cmin = med - 2 * mad
         cmax = med + 2 * mad
         return cast(Vector, [cmin, cmax])
+
+
+class Perc(VectorAction):
+    """Return the minimum and maximum values of an input vector after
+    excluding a fraction of values from either end of the distribution.
+
+    Parameters
+    ----------
+    data : `Vector`
+        A vector containing the data whose minimum and maximum are to be
+        calculated following the exclusion of a fraction of extreme upper
+        and lower values.
+
+    Returns
+    -------
+    A two-element vector containing the minimum and maximum values of
+    the input vector, following the exclusion of a fraction of extreme
+    upper and lower values.
+    """
+
+    percentile = Field[float](
+        doc="The fraction of values to keep. The same fraction of values is "
+        "eliminated from both ends of the distribution. Default: 97.",
+        default=97.0,
+    )
+
+    def __call__(self, data, **kwargs):
+        return PercentileInterval(self.percentile).get_limits(data)
+
+
+class Asinh(VectorAction, TensorAction):
+    """Transform the input vector/tensor using the asinh stretch.
+
+    Parameters
+    ----------
+    data : `Vector` | `Tensor`
+        A vector or a tensor containing the data to be transformed
+        using the asinh stretch.
+
+    Returns
+    -------
+    A vector or tensor of the same size as the input, transformed
+    using the asinh stretch.
+    """
+
+    def __call__(self, data: Vector | Tensor, **kwargs) -> Vector | Tensor:
+        return AsinhStretch()(data)
+
+
+class Linear(VectorAction, TensorAction):
+    """Transform the input vector/tensor using the linear stretch.
+
+    Parameters
+    ----------
+    data : `Vector`
+        A vector or a tensor containing the data to be transformed
+        using the linear stretch.
+
+    Returns
+    -------
+    A vector or tensor of the same size as the input, transformed
+    using the linear stretch.
+    """
+
+    intercept = Field[float](doc="The offset of the linear stretch. Default: 0.", default=0.0)
+
+    slope = Field[float](doc="The slope of the linear stretch. Default: 1.", default=1.0)
+
+    def __call__(self, data: Vector | Tensor, **kwargs) -> Vector | Tensor:
+        return LinearStretch(self.slope, self.intercept)(data)

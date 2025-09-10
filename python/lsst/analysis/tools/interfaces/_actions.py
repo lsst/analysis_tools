@@ -26,6 +26,7 @@ __all__ = (
     "HealSparseMapAction",
     "KeyedDataAction",
     "VectorAction",
+    "TensorAction",
     "ScalarAction",
     "MetricResultType",
     "MetricAction",

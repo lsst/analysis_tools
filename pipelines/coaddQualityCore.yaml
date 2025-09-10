@@ -137,3 +137,52 @@ tasks:
       atools.deepCoadd_sky_noise_map_weighted_mean: PerTractPropertyMapTool
       python: |
         from lsst.analysis.tools.atools import PerTractPropertyMapTool
+  # Spatially bin and plot the coadd images:
+  makeBinnedCoaddImage:
+    class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
+    config:
+      binFactor: 16
+      doBinInnerBBox: True
+  makeWholeTractImage:
+    class: lsst.analysis.tools.tasks.WholeTractImageAnalysisTask
+    config:
+      connections.outputName: deep
+      atools.coaddImage: WholeTractImageTool # wholeTractImageTool.py
+      atools.clippedMask: WholeTractClippedMaskTool # wholeTractImageTool.py
+      atools.coaddImagePostageStamp: WholeTractPostageStampTool # wholeTractImageTool.py
+      python: |
+        from lsst.analysis.tools.atools import *
+  makeBinnedTemplateNImage:
+    class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
+    config:
+      connections.coadd: "goodSeeingCoadd_nImage"
+      connections.binnedCoadd: "goodSeeingCoadd_nImage_bin"
+      coaddStorageClass: "ImageU"
+      binFactor: 16
+      doBinInnerBBox: true
+  makeWholeTractTemplateNImage:
+    class: lsst.analysis.tools.tasks.WholeTractImageAnalysisTask
+    config:
+      connections.data: "goodSeeingCoadd_nImage_bin"
+      connections.outputName: "goodSeeing"
+      dataStorageClass: "ImageU"
+      atools.nImage: "WholeTractNImageTool" # wholeTractImageTool.py
+      python: |
+        from lsst.analysis.tools.atools import *
+  makeBinnedDeepNImage:
+    class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
+    config:
+      connections.coadd: "deepCoadd_nImage"
+      connections.binnedCoadd: "deepCoadd_nImage_bin"
+      coaddStorageClass: "ImageU"
+      binFactor: 16
+      doBinInnerBBox: true
+  makeWholeTractDeepNImage:
+    class: lsst.analysis.tools.tasks.WholeTractImageAnalysisTask
+    config:
+      connections.data: "deepCoadd_nImage_bin"
+      connections.outputName: "deep"
+      dataStorageClass: "ImageU"
+      atools.nImage: "WholeTractNImageTool" # wholeTractImageTool.py
+      python: |
+        from lsst.analysis.tools.atools import *

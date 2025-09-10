@@ -1,0 +1,20 @@
+description: |
+  Tier1 plots and metrics to assess coadd quality.
+tasks:
+  analyzeCoaddDepthCore:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryAnalysisTask
+    config:
+      connections.coaddType: template
+  coaddDepthMetricTract:
+    class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
+    config:
+      atools.coadd_depth_summary_metrics: CoaddQualityCheck
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityCheck
+  coaddDepthPlot:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
+    config:
+      connections.coaddType: template
+      atools.template: CoaddQualityPlot
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityPlot

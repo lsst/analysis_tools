@@ -1262,12 +1262,13 @@ def reconfigure_diff_matched_defaults(
                 )
             key_flux_meas = key_flux_err
 
-    # These are class attributes and don't need to be changed in subclasses
-    # These may end up being changed multiple times with repeated calls,
-    # but there isn't a good way to avoid that.
-    MagnitudeTool.fluxes_default.ref_matched.name_flux = "True"
-    MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
-    MagnitudeTool.fluxes_default.ref_matched.key_flux = "ref_{band}_flux"
+    if context != "custom":
+        # These are class attributes and don't need to be changed in subclasses
+        # These may end up being changed multiple times with repeated calls,
+        # but there isn't a good way to avoid that.
+        MagnitudeTool.fluxes_default.ref_matched.name_flux = "True"
+        MagnitudeTool.fluxes_default.ref_matched.name_flux_short = "true"
+        MagnitudeTool.fluxes_default.ref_matched.key_flux = "ref_{band}_flux"
 
     def all_subclasses(cls):
         return set(cls.__subclasses__()).union([s for c in cls.__subclasses__() for s in all_subclasses(c)])

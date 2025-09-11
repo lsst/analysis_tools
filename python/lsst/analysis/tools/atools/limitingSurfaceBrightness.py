@@ -27,7 +27,8 @@ from ..interfaces import AnalysisTool
 
 
 class LimitingSurfaceBrightnessHistPlot(AnalysisTool):
-    parameterizedBand: bool = False
+    # We want these to be done and named by band
+    parameterizedBand: bool = True
 
     def setDefaults(self):
         super().setDefaults()
@@ -35,6 +36,7 @@ class LimitingSurfaceBrightnessHistPlot(AnalysisTool):
             vectorKey="limiting_surface_brightness"
         )
 
+    def finalize(self):
         self.produce.plot = HistPlot()
 
         self.produce.plot.panels["panel_flux"] = HistPanel()
@@ -46,3 +48,4 @@ class LimitingSurfaceBrightnessHistPlot(AnalysisTool):
         self.produce.plot.panels["panel_flux"].lowerRange = 3.5
         self.produce.plot.panels["panel_flux"].upperRange = 3.5
         self.produce.plot.panels["panel_flux"].validate()
+        super().finalize()

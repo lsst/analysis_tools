@@ -600,7 +600,13 @@ class PerTractPropertyMapPlot(PlotAction):
 
             # Calculate weights for each bin to ensure that the peak of the
             # histogram reaches 1.
-            weights = np.ones_like(values) / np.histogram(values, bins=nBinsHist)[0].max()
+            if np.ptp(values) < 1e-12:
+                # np.histogram cannot use 100 bins if no variance in values
+                weights = np.ones_like(values) / values.size
+                nBinsHist = 1
+                _LOG.info(f"No variance in {toolName}; set histogram to a single bin.")
+            else:
+                weights = np.ones_like(values) / np.histogram(values, bins=nBinsHist)[0].max()
 
             if not plotConfig.publicationStyle:
                 # Compute full-tract histogram and get its bins.

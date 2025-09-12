@@ -15,12 +15,15 @@ keysWithBand = [
 for key in keysWithBand:
     atoolName = key.replace("_{band}", "")
     setattr(config.atools, atoolName, WholeSkyPlotTool)
+
     atool = getattr(config.atools, atoolName)
     setattr(atool, "metric", key)
-    setattr(atool, "showOutliers", False)
-    setattr(atool, "showNaNs", False)
-    setattr(atool, "labelTracts", True)
-    setattr(atool, "colorBarMin", 0.0)
-    setattr(atool, "colorBarRange", 1.0)
+
+    plot = getattr(getattr(atool, 'produce'), 'plot')
+    setattr(plot, "showOutliers", False)
+    setattr(plot, "showNaNs", False)
+    setattr(plot, "labelTracts", True)
+    setattr(plot, "colorBarMin", 0.0)
+    setattr(plot, "colorBarRange", 1.0)
 
 config.addOutputNamePrefix = True

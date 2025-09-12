@@ -53,7 +53,7 @@ class WholeSkyPlot(PlotAction):
 
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
-    zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
+    zAxisLabel = Field[str](doc="Label to use for the z axis.", default="")
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])

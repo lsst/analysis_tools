@@ -48,48 +48,17 @@ class WholeSkyPlotTool(AnalysisTool):
         default="e1Diff_{band}_highSNStars_median",
     )
 
-    dpi = Field[int](doc="DPI size of the figure.", default=500)
-
-    figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
-
-    colorBarMin = Field[float](doc="The minimum value of the color bar.", optional=True)
-
-    colorBarMax = Field[float](doc="The minimum value of the color bar.", optional=True)
-
-    colorBarRange = Field[float](
-        doc="The multiplier for the color bar range when the color bar is centered. "
-        "The max/min range values are: median +/- N * sigmaMad, where N is this config value.",
-        default=3.0,
-    )
-
-    showOutliers = Field[bool](
-        doc="Show the outliers on the plot. "
-        "Outliers are values whose absolute value is > colorBarRange * sigmaMAD.",
-        default=True,
-    )
-
-    showNaNs = Field[bool](doc="Show the NaNs on the plot.", default=True)
-
-    labelTracts = Field[bool](doc="Label the tracts.", default=False)
-
     def setDefaults(self):
         super().setDefaults()
 
         self.process.buildActions.tract = LoadVector()
         self.process.buildActions.tract.vectorKey = "tract"
+        self.produce.plot = WholeSkyPlot()
 
     def finalize(self):
         self.process.buildActions.z = LoadVector(vectorKey=self.metric)
         self.process.buildActions.zUnit = KeyedDataUnitAccessAction(key=self.metric)
-        self.produce.plot = WholeSkyPlot(zAxisLabel=self.metric)
-        self.produce.plot.dpi = self.dpi
-        self.produce.plot.figureSize = self.figureSize
-        self.produce.plot.colorBarMin = self.colorBarMin
-        self.produce.plot.colorBarMax = self.colorBarMax
-        self.produce.plot.colorBarRange = self.colorBarRange
-        self.produce.plot.showOutliers = self.showOutliers
-        self.produce.plot.showNaNs = self.showNaNs
-        self.produce.plot.labelTracts = self.labelTracts
+        self.produce.plot.zAxisLabel = self.metric
         sequentialMetrics = ["count", "ean", "edian", "num", "igma", "tdev", "Repeat"]
         if any(sequentialMetric in self.metric for sequentialMetric in sequentialMetrics):
             self.produce.plot.colorMapType = "sequential"

@@ -235,7 +235,12 @@ def perpDistance(p1, p2, points):
     points = list(points)
     if len(points) == 0:
         raise ValueError("Must provied a non-empty zip() list of points.")
-    dists = np.cross(p2 - p1, points - p1) / np.linalg.norm(p2 - p1)
+
+    # Recommendation from numpy docs for 2d cross product.
+    def cross2d(x, y):
+        return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
+
+    dists = cross2d(p2 - p1, points - p1) / np.linalg.norm(p2 - p1)
 
     return dists
 

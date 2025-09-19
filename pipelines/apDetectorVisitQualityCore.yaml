@@ -260,6 +260,12 @@ tasks:
       connections.outputName: initialPviSummary
       atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
+  analyzeVisitSampledImageSubtractionMetrics:
+    class: lsst.analysis.tools.tasks.MakeDiffimKernelQuiverPlotVisitTask
+    config:
+      connections.spatiallySampledMetrics: difference_image_metrics
+      connections.visit_summary: preliminary_visit_summary
+      connections.quiverKernelPlot: diffimPlots_kernelQuiver_QuiverPlot_visit
 subsets:
   promptQaMetrics:
     subset:
@@ -276,3 +282,4 @@ subsets:
   afterburnerQaMetrics:
     subset:
       - analyzeSampledImageSubtractionMetrics
+      - analyzeVisitSampledImageSubtractionMetrics

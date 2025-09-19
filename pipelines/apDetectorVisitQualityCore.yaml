@@ -270,7 +270,9 @@ subsets:
       - analyzeDiaSourceAssociationMetrics
       - analyzeLoadDiaCatalogsMetrics
       - analyzeAssociateDiaSourceTiming
-      - analyzeSampledImageSubtractionMetrics
       - analyzePreliminarySummaryStats
     description: >
       QA metrics to run in Prompt Processing.
+  afterburnerQaMetrics:
+    subset:
+      - analyzeSampledImageSubtractionMetrics

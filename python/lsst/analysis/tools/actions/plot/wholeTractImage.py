@@ -284,7 +284,12 @@ class WholeTractImage(PlotAction):
             allPix = np.append(allPix, im[~noDataMask].flatten())
             imStack[patchId] = np.ma.masked_array(im, mask=noDataMask)
 
-        vmin, vmax = self.interval(allPix)
+        # It is possible that all pixels are flagged NO_DATA.
+        # In which case, set vmin & vmax to arbitrary values.
+        if len(allPix) == 0:
+            vmin, vmax = (0, 1)
+        else:
+            vmin, vmax = self.interval(allPix)
 
         # Set a floor to vmax. Useful for low dymanic range data.
         if self.vmaxFloor is not None:

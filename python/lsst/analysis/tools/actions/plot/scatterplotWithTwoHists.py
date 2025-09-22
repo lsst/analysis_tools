@@ -814,7 +814,11 @@ class ScatterPlotWithTwoHists(PlotAction):
             numSig += 1
             yLimMin = plotMed - numSig * sigMadYs  # type: ignore
             yLimMax = plotMed + numSig * sigMadYs  # type: ignore
-            ax.set_ylim(yLimMin, yLimMax)
+
+            # If len(y) == 0 for ys in toPlotList then sigMadY = NaN
+            # ... in which case nothing was plotted and limits are irrelevant.
+            if all(np.isfinite([yLimMin, yLimMax])):
+                ax.set_ylim(yLimMin, yLimMax)
 
         # This could be false if len(x) == 0 for xs in toPlotList
         # ... in which case nothing was plotted and limits are irrelevant

@@ -452,6 +452,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         ax = fig.add_subplot(gs[1:, :-1])
 
         binThresh = 5
+        min_n_xs_for_stats = 10
 
         yBinsOut = []
         linesForLegend = []
@@ -544,7 +545,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             n_xs = np.count_nonzero(np.isfinite(xs))
             if n_xs <= 1 or not (np.isfinite(sigMadYs) and sigMadYs > 0.0):
                 continue
-            elif n_xs < 10:
+            elif n_xs < min_n_xs_for_stats:
                 xs = [nanMedian(xs)]
                 sigMads = np.array([nanSigmaMad(ys)])
                 ys = np.array([nanMedian(ys)])
@@ -800,7 +801,8 @@ class ScatterPlotWithTwoHists(PlotAction):
             plotMed = np.nan
 
         # Ignore types below pending making this not working my accident
-        if len(xs) < 2:  # type: ignore
+        # If len(xs) < min_n_xs_for_stats then `meds` doesn't exist.
+        if len(xs) < min_n_xs_for_stats:  # type: ignore
             meds = [nanMedian(ys)]  # type: ignore
         if self.yLims:
             ax.set_ylim(self.yLims[0], self.yLims[1])  # type: ignore

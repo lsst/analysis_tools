@@ -84,6 +84,25 @@ def _plotCloser(*args):
         plt.close(plot)
 
 
+class PartialWorkFoundError(AlgorithmError):
+    """Raised if an analysis tools action has partially failed.
+
+    Parameters
+    ----------
+    caughtErrors : `dict` of (`str`, `str`)
+        A dictionary mapping the action name to the string representation of
+        the exception raised by that action.
+    """
+
+    def __init__(self, caughtErrors) -> None:
+        self._caughtErrors = caughtErrors
+        super().__init__(f"The following tasks have failed for the following reasons: {self._caughtErrors}")
+
+    @property
+    def metadata(self) -> dict:
+        return self._caughtErrors
+
+
 class AnalysisBaseConnections(
     PipelineTaskConnections, dimensions={}, defaultTemplates={"outputName": "Placeholder"}
 ):
@@ -415,6 +434,7 @@ class AnalysisPipelineTask(PipelineTask):
     )
 
     def _runTools(self, data: KeyedData, **kwargs) -> Struct:
+        caughtErrors = {}
         with warnings.catch_warnings():
             # Change below to "in self.warnings_all" to find otherwise
             # unfiltered numpy warnings.
@@ -436,9 +456,9 @@ class AnalysisPipelineTask(PipelineTask):
                 kwargs["plotInfo"] = deepcopy(plotInfo)
                 try:
                     actionResult = action(data, **kwargs)
-                except AlgorithmError as e:
-                    error = AnnotatedPartialOutputsError.annotate(e, self, log=self.log)
-                    raise error from e
+                except Exception as e:
+                    caughtErrors[name] = str(e)
+                    continue
                 metricAccumulate = []
                 for resultName, value in actionResult.items():
                     match value:
@@ -456,6 +476,7 @@ class AnalysisPipelineTask(PipelineTask):
             # of a task. When DM-39114 is implemented, this step should not
             # be required and may be removed.
             weakref.finalize(results, _plotCloser, *weakrefArgs)
+        results.__caughtErrors = caughtErrors
         return results
 
     def run(self, *, data: KeyedData | None = None, **kwargs) -> Struct:
@@ -577,6 +598,13 @@ class AnalysisPipelineTask(PipelineTask):
             else:
                 if dataset := getattr(outputs, outputRefName, None):
                     butlerQC.put(dataset, datasetRef)
+
+        # If any of the actions encountered errors, raise an
+        # AnnotatedPartialOutputsError with the details.
+        if outputs.__caughtErrors:
+            e = PartialWorkFoundError(outputs.__caughtErrors)
+            error = AnnotatedPartialOutputsError.annotate(e, self, log=self.log)
+            raise error from e
 
     def _populatePlotInfoWithDataId(
         self, plotInfo: MutableMapping[str, Any], dataId: DataCoordinate | None

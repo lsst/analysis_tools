@@ -35,10 +35,26 @@ import numpy as np
 import pandas as pd
 from astropy.table import Table, vstack
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
+from lsst.pipe.base import AlgorithmError
 from lsst.pipe.base import connectionTypes as ct
 from smatch import Matcher
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+
+
+class IndexMismatchError(AlgorithmError):
+    """Raised if the indices in input associatedSources do not match the input
+    data."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Not all sourceIds in the associated sources catalog are available in the input data."
+        )
+
+    @property
+    def metadata(self) -> dict:
+        """There is no metadata associated with this error."""
+        return {}
 
 
 class ObjectEpochTableConnections(
@@ -388,9 +404,14 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         """
         isolatedSources = []
         for associatedSourceRef in associatedSourceRefs:
-            associatedSources = associatedSourceRef.get(parameters={"columns": ["visit", "source_row"]})
+            associatedSources = associatedSourceRef.get(
+                parameters={"columns": ["visit", "source_row", "sourceId"]}
+            )
             visit_sources = associatedSources[associatedSources["visit"] == visit]
-            isolatedSources.append(data[visit_sources["source_row"]])
+            try:
+                isolatedSources.append(data.loc[visit_sources["sourceId"]])
+            except KeyError:
+                raise IndexMismatchError()
         isolatedSources = vstack(isolatedSources)
 
         if len(isolatedSources) == 0:
@@ -429,7 +450,9 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         band = inputs["data"].dataId["band"]
         names = self.collectInputNames()
         names -= {self.config.ra_column, self.config.dec_column}
+        names.add("sourceId")
         data = inputs["data"].get(parameters={"columns": names})
+        data.add_index("sourceId")
         inputs["data"] = data
 
         if self.config.applyAstrometricCorrections:

@@ -31,6 +31,7 @@ from healsparse import HealSparseMap
 from lsst.pex.config import ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.dictField import DictField
+from lsst.pipe.base import AlgorithmError
 from lsst.verify import Measurement
 
 from ._actions import (
@@ -46,6 +47,30 @@ from ._actions import (
 from ._interfaces import KeyedData, KeyedDataSchema, KeyedDataTypes, Scalar, Vector
 
 _LOG = logging.getLogger(__name__)
+
+
+class MissingMetadataError(AlgorithmError):
+    """Raised if a required metadata key is missing.
+
+    Parameters
+    ----------
+    key : `str`
+        The missing key.
+    data_repr : `str`
+        The string representation of the input data which was missing the key.
+    """
+
+    def __init__(self, key, data_repr) -> None:
+        self._key = key
+        self._data_repr = data_repr
+        super().__init__(f"Key '{self._key}' could not be found in input data {self._data_repr}")
+
+    @property
+    def metadata(self) -> dict:
+        return {
+            "metadata_key": self._key,
+            "input_data_repr": self._data_repr,
+        }
 
 
 class BasePrep(KeyedDataAction):
@@ -232,7 +257,7 @@ class BaseMetricAction(MetricAction):
         for key, unit in self.units.items():
             formattedKey = key.format(**kwargs)
             if formattedKey not in data:
-                raise ValueError(f"Key: {formattedKey} could not be found in input data {data}")
+                raise MissingMetadataError(formattedKey, data.__repr__())
             value = data[formattedKey]
             if newName := self.newNames.get(key):
                 formattedKey = newName.format(**kwargs)

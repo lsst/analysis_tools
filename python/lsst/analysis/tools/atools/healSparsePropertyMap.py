@@ -45,8 +45,12 @@ class PerTractPropertyMapTool(AnalysisTool):
     )
 
     def finalize(self):
-        self.process.buildActions.data = LoadHealSparseMap()
+        super().finalize()
         self.process.buildActions.data.mapKey = self._name.split(".")[1]
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.data = LoadHealSparseMap(mapKey="")
         self.produce.plot = PerTractPropertyMapPlot()
         self.produce.plot.plotName = "Per-Tract HealSparse Property Map"
 
@@ -58,7 +62,11 @@ class SurveyWidePropertyMapTool(AnalysisTool):
     parameterizedBand: bool = False
 
     def finalize(self):
-        self.process.buildActions.data = LoadHealSparseMap()
+        super().finalize()
         self.process.buildActions.data.mapKey = self._name.split(".")[1]
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.process.buildActions.data = LoadHealSparseMap(mapKey="")
         self.produce.plot = SurveyWidePropertyMapPlot()
         self.produce.plot.plotName = "Survey-Wide HealSparse Property Map"

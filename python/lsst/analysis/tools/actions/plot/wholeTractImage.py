@@ -23,6 +23,7 @@ from __future__ import annotations
 
 __all__ = ("WholeTractImage",)
 
+import logging
 from typing import Mapping, Optional
 
 import matplotlib.cm as cm
@@ -51,6 +52,8 @@ from ...interfaces import (
 )
 from ...utils import getPatchCorners, getTractCorners
 from .calculateRange import Asinh, Perc
+
+_LOG = logging.getLogger(__name__)
 
 
 class WholeTractImage(PlotAction):
@@ -265,9 +268,18 @@ class WholeTractImage(PlotAction):
             if first:
                 if "mask" in data:
                     noDataBitmask = data["mask"][patchId].getPlaneBitMask("NO_DATA")
-                    if self.bitmaskPlanes:
-                        bitmasks = data["mask"][patchId].getPlaneBitMask(self.bitmaskPlanes)
-                    first = False
+                    maskPlanes = set(data["mask"][patchId].getMaskPlaneDict())
+                    bitmaskPlanes = set(self.bitmaskPlanes) if self.bitmaskPlanes else set()
+                    if bitmaskPlanes:
+                        if missingMaskPlanes := bitmaskPlanes - maskPlanes:
+                            _LOG.info(
+                                "%s not found among the mask planes for patchId=%d",
+                                missingMaskPlanes,
+                                patchId,
+                            )
+                        else:
+                            first = False
+                        bitmasks = data["mask"][patchId].getPlaneBitMask(bitmaskPlanes & maskPlanes)
 
             emptyPatches.remove(patchId)
             im = data[self.component][patchId].array

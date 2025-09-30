@@ -265,8 +265,10 @@ class WholeTractImage(PlotAction):
             if first:
                 if "mask" in data:
                     noDataBitmask = data["mask"][patchId].getPlaneBitMask("NO_DATA")
-                    if self.bitmaskPlanes:
-                        if missingMaskPlanes := set(self.bitmaskPlanes).difference(data["mask"][patchId]):
+                    maskPlanes = set(data["mask"][patchId].getMaskPlaneDict())
+                    bitmaskPlanes = set(self.bitmaskPlanes)
+                    if bitmaskPlanes:
+                        if missingMaskPlanes := bitmaskPlanes - maskPlanes:
                             self.log.info(
                                 "%s not found among the mask planes for patchId=%d",
                                 missingMaskPlanes,
@@ -274,8 +276,7 @@ class WholeTractImage(PlotAction):
                             )
                         else:
                             first = False
-                        bitmaskPlanes = set(self.bitmaskPlanes).intersection(data["mask"][patchId])
-                        bitmasks = data["mask"][patchId].getPlaneBitMask(bitmaskPlanes)
+                        bitmasks = data["mask"][patchId].getPlaneBitMask(bitmaskPlanes & maskPlanes)
 
             emptyPatches.remove(patchId)
             im = data[self.component][patchId].array

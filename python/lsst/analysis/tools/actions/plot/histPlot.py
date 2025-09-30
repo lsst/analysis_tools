@@ -22,11 +22,14 @@ from __future__ import annotations
 
 __all__ = ("HistPanel", "HistPlot", "HistStatsPanel")
 
+import importlib.resources as importResources
 import logging
 from collections import defaultdict
 from typing import Mapping
 
+import lsst.analysis.tools
 import numpy as np
+import yaml
 from lsst.pex.config import (
     ChoiceField,
     Config,
@@ -37,7 +40,7 @@ from lsst.pex.config import (
     FieldValidationError,
     ListField,
 )
-from lsst.utils.plotting import make_figure
+from lsst.utils.plotting import get_multiband_plot_colors, make_figure, set_rubin_plotstyle
 from matplotlib import cm
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
@@ -176,6 +179,10 @@ class HistPanel(Config):
         "default stats: N, median, sigma mad are shown",
         default=None,
     )
+    addThresholds = Field[bool](
+        doc="Read in the predefined thresholds and indicate them on the histogram.",
+        default=False,
+    )
 
     def validate(self):
         super().validate()
@@ -216,7 +223,7 @@ class HistPlot(PlotAction):
     cmap = Field[str](
         doc="Color map used for histogram lines. All types available via `plt.cm` may be used. "
         "A number of custom color maps are also defined: `newtab10`, `bright`, `vibrant`.",
-        default="newtab10",
+        default="rubin",
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
@@ -274,6 +281,7 @@ class HistPlot(PlotAction):
 
         # set up figure
         fig = make_figure(dpi=300)
+        set_rubin_plotstyle()
         hist_fig, side_fig = fig.subfigures(1, 2, wspace=0, width_ratios=[2.9, 1.1])
         axs, ncols, nrows = self._makeAxes(hist_fig)
 
@@ -298,6 +306,7 @@ class HistPlot(PlotAction):
                 label_font_size=label_font_size,
                 legend_font_size=legend_font_size,
                 ncols=ncols,
+                addThresholds=self.panels[panel].addThresholds,
             )
 
             all_handles, all_nums, all_meds, all_mads = [], [], [], []
@@ -391,6 +400,19 @@ class HistPlot(PlotAction):
                 "#009988",
                 "#BBBBBB",
             ],
+            rubin=[
+                "#0173B2",
+                "#DE8F05",
+                "#029E73",
+                "#D55E00",
+                "#CC78BC",
+                "#CA9161",
+                "#FBAFE4",
+                "#949494",
+                "#ECE133",
+                "#56B4E9",
+            ],
+            bands=[get_multiband_plot_colors()],
         )
         if self.cmap in custom_cmaps.keys():
             all_colors = custom_cmaps[self.cmap]
@@ -402,13 +424,16 @@ class HistPlot(PlotAction):
 
         counter = 0
         colors = defaultdict(list)
+
         for panel in self.panels:
             for hist in self.panels[panel].hists:
                 colors[panel].append(all_colors[counter % len(all_colors)])
                 counter += 1
         return colors
 
-    def _makePanel(self, data, panel, ax, colors, label_font_size=9, legend_font_size=7, ncols=1):
+    def _makePanel(
+        self, data, panel, ax, colors, label_font_size=9, legend_font_size=7, ncols=1, addThresholds=False
+    ):
         """Plot a single panel containing histograms."""
         nums, meds, mads = [], [], []
         for i, hist in enumerate(self.panels[panel].hists):
@@ -418,6 +443,10 @@ class HistPlot(PlotAction):
             meds.append(med)
             mads.append(mad)
         panel_range = self._getPanelRange(data, panel, mads=mads, meds=meds)
+        if self.panels[panel].addThresholds:
+            metricThresholdFile = importResources.read_text(lsst.analysis.tools, "metricInformation.yaml")
+            metricDefs = yaml.safe_load(metricThresholdFile)
+
         if all(np.isfinite(panel_range)):
             nHist = 0
             for i, hist in enumerate(self.panels[panel].hists):
@@ -434,6 +463,15 @@ class HistPlot(PlotAction):
                         label=self.panels[panel].hists[hist],
                     )
                     ax.axvline(meds[i], ls=(0, (5, 3)), lw=1, c=colors[i])
+                    if self.panels[panel].addThresholds and hist in metricDefs:
+                        if "lowThreshold" in metricDefs[hist].keys():
+                            lowThreshold = metricDefs[hist]["lowThreshold"]
+                            if np.isfinite(lowThreshold):
+                                ax.axvline(lowThreshold, color=colors[i])
+                        if "highThreshold" in metricDefs[hist].keys():
+                            highThreshold = metricDefs[hist]["highThreshold"]
+                            if np.isfinite(highThreshold):
+                                ax.axvline(highThreshold, color=colors[i])
                     nHist += 1
 
             if nHist > 0:

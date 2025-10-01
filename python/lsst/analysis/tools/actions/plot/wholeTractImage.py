@@ -266,7 +266,7 @@ class WholeTractImage(PlotAction):
                 if "mask" in data:
                     noDataBitmask = data["mask"][patchId].getPlaneBitMask("NO_DATA")
                     maskPlanes = set(data["mask"][patchId].getMaskPlaneDict())
-                    bitmaskPlanes = set(self.bitmaskPlanes)
+                    bitmaskPlanes = set(self.bitmaskPlanes) if self.bitmaskPlanes else set()
                     if bitmaskPlanes:
                         if missingMaskPlanes := bitmaskPlanes - maskPlanes:
                             self.log.info(

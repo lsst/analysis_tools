@@ -33,8 +33,11 @@ from ..interfaces import AnalysisTool
 
 
 class CoaddInputCount(AnalysisTool):
-    """skyPlot and associated metrics indicating the number
-    of exposures that have gone into creating a coadd.
+    """Tract-wide metrics pertaining to how many exposures have gone into
+    a deep coadd, per band.
+
+    This AnalysisTool is designed to run on an object table, which is only
+    created for deep coadds, not template coadds.
     """
 
     def setDefaults(self):
@@ -71,7 +74,7 @@ class CoaddInputCount(AnalysisTool):
         self.process.calculateActions.sigmaMad = SigmaMadAction()
         self.process.calculateActions.sigmaMad.vectorKey = "z"
 
-        # SkyPlot of number of contributing exposures across coadd:
+        # SkyPlot of number of contributing exposures in coad, per tract/band:
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["any"]
         self.produce.plot.plotName = "{band}_inputCount"
@@ -82,7 +85,7 @@ class CoaddInputCount(AnalysisTool):
         self.produce.plot.showExtremeOutliers = False
         self.produce.plot.colorbarRange = MinMax()
 
-        # Summary metrics for the whole coadd.
+        # Summary metrics for the whole coadd, per tract/band.
         self.produce.metric.units = {"median": "ct", "sigmaMad": "ct", "mean": "ct"}
         self.produce.metric.newNames = {
             "median": "{band}_inputCount_median",

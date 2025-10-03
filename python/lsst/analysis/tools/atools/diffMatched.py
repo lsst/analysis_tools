@@ -533,6 +533,10 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
             unit_select = ""
             kwargs_matched_class_action = {}
 
+            name_flux_ref = self.config_mag_ref.name_flux
+            if name_flux_ref is None:
+                name_flux_ref = CompletenessHist.mag_ref_label.default
+
             # Set up selectors for all object classes as they may be needed by
             # the wrong/right matched class selector
             for object_class in ("any", "galaxy", "star"):
@@ -669,6 +673,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         overrides["color_counts"] = stars_color()
                     plot_action = CompletenessHist(
                         action=completeness_plot,
+                        mag_ref_label=name_flux_ref,
                     )
                     # Since the plot action is made on the fly, it can't be
                     # configured in a pipeline yaml. This makes the keys

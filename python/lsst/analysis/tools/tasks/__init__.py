@@ -11,6 +11,7 @@ from .diaFakesVisitAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
 from .diaSourceDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *
+from .diffimKernelQuiverPlotVisit import *
 from .diffimTaskDetectorVisitMetricsAnalysis import *
 from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *

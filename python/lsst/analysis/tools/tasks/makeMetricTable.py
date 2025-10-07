@@ -217,14 +217,16 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
 
         # Check if any additional columns are needed; add to dict if needed.
         for i, metricBundle in enumerate(metricBundles[1:]):
+            metricRecord = []
             for key, value in dataIdInfo[i + 1].items():
                 metricsDict[key].append(value)
+                metricRecord.append(key)
 
             if "tract" in self.config.inputDataDimensions:
                 corners = getTractCorners(skymap, dataIdInfo[i + 1]["tract"])
                 metricsDict["corners"].append(corners)
+                metricRecord.append("corners")
 
-            metricNames = list(metricsDict)
             for name, metrics in metricBundle.items():
                 for metric in metrics:
                     fullName = f"{name}_{metric.metric_name}"
@@ -232,7 +234,7 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                     if fullName in metricsDict.keys():
                         metricsDict[fullName].append(metric.quantity.value)
                     else:
-                        values = [np.nan] * (len(metricsDict[metricNames[0]]) - 1)
+                        values = [np.nan] * (len(metricsDict[metricRecord[0]]) - 1)
                         values.append(metric.quantity.value)
                         if (
                             metric.quantity.unit is not u.dimensionless_unscaled
@@ -240,12 +242,12 @@ class MakeMetricTableTask(pipeBase.PipelineTask):
                         ):
                             metricUnits[fullName] = metric.quantity.unit
                         metricsDict[fullName] = values
-                    metricNames.append(fullName)
+                    metricRecord.append(fullName)
 
             # If a metric that existed in a previous bundle does
             # not exist for this one then add a nan
             for metricName in metricsDict.keys():
-                if metricName not in metricNames:
+                if metricName not in metricRecord:
                     metricsDict[metricName].append(np.nan)
 
         metricTableStruct = pipeBase.Struct(metricTable=Table(metricsDict, units=metricUnits))

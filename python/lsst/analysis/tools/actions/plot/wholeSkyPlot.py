@@ -53,11 +53,15 @@ class WholeSkyPlot(PlotAction):
 
     xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
     yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
-    zAxisLabel = Field[str](doc="Label to use for the z axis.", optional=False)
+    zAxisLabel = Field[str](doc="Label to use for the z axis.", default="")
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
+    autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
+    dpi = Field[int](doc="DPI size of the figure.", default=500)
     figureSize = ListField[float](doc="Size of the figure.", default=[9.0, 3.5])
+    colorBarMin = Field[float](doc="The minimum value of the color bar.", optional=True)
+    colorBarMax = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarRange = Field[float](
         doc="The multiplier for the color bar range. The max/min range values are: median +/- N * sigmaMad"
         ", where N is this config value.",
@@ -72,6 +76,13 @@ class WholeSkyPlot(PlotAction):
         doc="List of hexidecimal colors for a user-defined color map.",
         optional=True,
     )
+    showOutliers = Field[bool](
+        doc="Show the outliers on the plot. "
+        "Outliers are values whose absolute value is > colorBarRange * sigmaMAD.",
+        default=True,
+    )
+    showNaNs = Field[bool](doc="Show the NaNs on the plot.", default=True)
+    labelTracts = Field[bool](doc="Label the tracts.", default=False)
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
         base = []
@@ -238,6 +249,8 @@ class WholeSkyPlot(PlotAction):
         tracts = []
         ras = []
         decs = []
+        mid_ras = []
+        mid_decs = []
         for i, tract in enumerate(data["tract"]):
             corners = getTractCorners(skymap, tract)
             patches.append(Polygon(corners, closed=True))
@@ -245,9 +258,11 @@ class WholeSkyPlot(PlotAction):
             tracts.append(tract)
             ras.append(corners[0][0])
             decs.append(corners[0][1])
+            mid_ras.append((corners[0][0] + corners[1][0]) / 2)
+            mid_decs.append((corners[0][1] + corners[2][1]) / 2)
 
         # Setup figure.
-        fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=500)
+        fig, ax = plt.subplots(1, 1, figsize=self.figureSize, dpi=self.dpi)
         if self.autoAxesLimits:
             xlim, ylim = self._getAxesLimits(ras, decs)
         else:
@@ -265,8 +280,14 @@ class WholeSkyPlot(PlotAction):
         # Define color bar range.
         med = np.nanmedian(colBarVals)
         sigmaMad = nanSigmaMad(colBarVals)
-        vmin = med - self.colorBarRange * sigmaMad
-        vmax = med + self.colorBarRange * sigmaMad
+        if self.colorBarMin is not None:
+            vmin = np.float64(self.colorBarMin)
+        else:
+            vmin = med - self.colorBarRange * sigmaMad
+        if self.colorBarMax is not None:
+            vmax = np.float64(self.colorBarMax)
+        else:
+            vmax = med + self.colorBarRange * sigmaMad
 
         # Note tracts with metrics outside (vmin, vmax) as outliers.
         outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
@@ -274,63 +295,81 @@ class WholeSkyPlot(PlotAction):
         # Initialize legend handles.
         handles = []
 
-        # Plot the outlier patches.
-        outlierPatches = []
-        if len(outlierInds) > 0:
-            for ind in outlierInds:
-                outlierPatches.append(patches[ind])
-            outlierPatchCollection = PatchCollection(
-                outlierPatches,
-                cmap=colorMap,
-                norm=norm,
-                facecolors="none",
-                edgecolors="k",
-                linewidths=0.5,
-                zorder=100,
-            )
-            ax.add_collection(outlierPatchCollection)
-            # Add legend information.
-            outlierPatch = Patch(
-                facecolor="none",
-                edgecolor="k",
-                linewidth=0.5,
-                label="Outlier",
-            )
-            handles.append(outlierPatch)
+        if self.showOutliers:
+            # Plot the outlier patches.
+            outlierPatches = []
+            if len(outlierInds) > 0:
+                for ind in outlierInds:
+                    outlierPatches.append(patches[ind])
+                outlierPatchCollection = PatchCollection(
+                    outlierPatches,
+                    cmap=colorMap,
+                    norm=norm,
+                    facecolors="none",
+                    edgecolors="k",
+                    linewidths=0.5,
+                    zorder=100,
+                )
+                ax.add_collection(outlierPatchCollection)
+                # Add legend information.
+                outlierPatch = Patch(
+                    facecolor="none",
+                    edgecolor="k",
+                    linewidth=0.5,
+                    label="Outlier",
+                )
+                handles.append(outlierPatch)
 
-        # Plot tracts with NaN metric values.
-        nanInds = np.where(~np.isfinite(colBarVals))[0]
-        nanPatches = []
-        if len(nanInds) > 0:
-            for ind in nanInds:
-                nanPatches.append(patches[ind])
-            nanPatchCollection = PatchCollection(
-                nanPatches,
-                cmap=None,
-                norm=norm,
-                facecolors="white",
-                edgecolors="grey",
-                linestyles="dotted",
-                linewidths=0.5,
-                zorder=10,
-            )
-            ax.add_collection(nanPatchCollection)
-            # Add legend information.
-            nanPatch = Patch(
-                facecolor="white",
-                edgecolor="grey",
-                linestyle="dotted",
-                linewidth=0.5,
-                label="NaN",
-            )
-            handles.append(nanPatch)
+        if self.showNaNs:
+            # Plot tracts with NaN metric values.
+            nanInds = np.where(~np.isfinite(colBarVals))[0]
+            nanPatches = []
+            if len(nanInds) > 0:
+                for ind in nanInds:
+                    nanPatches.append(patches[ind])
+                nanPatchCollection = PatchCollection(
+                    nanPatches,
+                    cmap=None,
+                    norm=norm,
+                    facecolors="white",
+                    edgecolors="grey",
+                    linestyles="dotted",
+                    linewidths=0.5,
+                    zorder=100,
+                )
+                ax.add_collection(nanPatchCollection)
+                # Add legend information.
+                nanPatch = Patch(
+                    facecolor="white",
+                    edgecolor="grey",
+                    linestyle="dotted",
+                    linewidth=0.5,
+                    label="NaN",
+                )
+                handles.append(nanPatch)
 
         if len(handles) > 0:
             fig.legend(handles=handles)
 
-        # Add text boxes to show the number of tracts, number of NaNs,
-        # median, sigma MAD, and the five largest outlier values.
-        outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
+        if self.labelTracts:
+            # Label the tracts
+            for i, tract in enumerate(tracts):
+                ax.text(
+                    mid_ras[i],
+                    mid_decs[i],
+                    f"{tract}",
+                    ha="center",
+                    va="center",
+                    fontsize=2,
+                    alpha=0.7,
+                    zorder=100,
+                )
+
+        if self.showOutliers:
+            # Add text boxes to show the number of tracts, number of NaNs,
+            # median, sigma MAD, and the five largest outlier values.
+            outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
+
         # Make vertical text spacing readable for different figure sizes.
         multiplier = 3.5 / self.figureSize[1]
         verticalSpacing = 0.028 * multiplier
@@ -342,14 +381,15 @@ class WholeSkyPlot(PlotAction):
             fontsize=8,
             alpha=0.7,
         )
-        fig.text(
-            0.01,
-            0.01 + 2 * verticalSpacing,
-            f"Num nans: {len(nanInds)}",
-            transform=fig.transFigure,
-            fontsize=8,
-            alpha=0.7,
-        )
+        if self.showNaNs:
+            fig.text(
+                0.01,
+                0.01 + 2 * verticalSpacing,
+                f"Num nans: {len(nanInds)}",
+                transform=fig.transFigure,
+                fontsize=8,
+                alpha=0.7,
+            )
         fig.text(
             0.01,
             0.01 + verticalSpacing,
@@ -358,7 +398,8 @@ class WholeSkyPlot(PlotAction):
             fontsize=8,
             alpha=0.7,
         )
-        fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
+        if self.showOutliers:
+            fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
 
         # Truncate the color range to (vmin, vmax).
         colorBarVals = np.clip(np.array(colBarVals), vmin, vmax)

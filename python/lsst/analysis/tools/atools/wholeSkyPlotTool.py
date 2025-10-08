@@ -53,13 +53,13 @@ class WholeSkyPlotTool(AnalysisTool):
 
         self.process.buildActions.tract = LoadVector()
         self.process.buildActions.tract.vectorKey = "tract"
+        self.produce.plot = WholeSkyPlot()
 
     def finalize(self):
-
         self.process.buildActions.z = LoadVector(vectorKey=self.metric)
         self.process.buildActions.zUnit = KeyedDataUnitAccessAction(key=self.metric)
-        self.produce.plot = WholeSkyPlot(zAxisLabel=self.metric)
-        sequentialMetrics = ["count", "num", "igma", "tdev", "Repeat"]
+        self.produce.plot.zAxisLabel = self.metric
+        sequentialMetrics = ["count", "ean", "edian", "num", "igma", "tdev", "Repeat"]
         if any(sequentialMetric in self.metric for sequentialMetric in sequentialMetrics):
             self.produce.plot.colorMapType = "sequential"
         super().finalize()

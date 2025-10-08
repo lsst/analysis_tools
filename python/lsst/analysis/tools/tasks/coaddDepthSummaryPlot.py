@@ -37,8 +37,7 @@ class CoaddDepthSummaryPlotConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
     defaultTemplates={
-        "coaddType": "",
-        "outputName": "n_image",
+        "coaddName": "",
     },
 ):
     skymap = cT.Input(
@@ -50,7 +49,7 @@ class CoaddDepthSummaryPlotConnections(
 
     n_image_data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
-        name="{coaddType}_coadd_n_image",
+        name="{coaddName}_coadd_n_image",
         storageClass="ImageU",
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),

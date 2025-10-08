@@ -35,11 +35,11 @@ from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPi
 class CoaddDepthTableTractAnalysisConnections(
     AnalysisBaseConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={"inputName": "coadd_depth_table", "outputName": "coadd_depth_summary"},
+    defaultTemplates={"coaddName": ""},
 ):
     data = cT.Input(
         doc="Table with coadd depth statistics based on n_image values.",
-        name="{inputName}",
+        name="{coaddName}_coadd_depth_table",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
         deferLoad=True,

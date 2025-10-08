@@ -21,31 +21,26 @@
 from __future__ import annotations
 
 __all__ = (
-    "CoaddDepthSummaryAnalysisConfig",
-    "CoaddDepthSummaryAnalysisTask",
+    "CoaddDepthSummaryConfig",
+    "CoaddDepthSummaryTask",
 )
 
 
 import numpy as np
 from astropy.table import Table
 from lsst.pex.config import ListField
-from lsst.pipe.base import Struct
+from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as cT
 
-from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
-
-class CoaddDepthSummaryAnalysisConnections(
-    AnalysisBaseConnections,
+class CoaddDepthSummaryConnections(
+    PipelineTaskConnections,
     dimensions=("tract", "skymap"),
-    defaultTemplates={
-        "coaddType": "",  # set as either deep or template in the pipeline
-        "outputName": "coadd_depth_table",
-    },
+    defaultTemplates={"coaddName": ""},  # set as either deep or template in the pipeline
 ):
     data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
-        name="{coaddType}_coadd_n_image",
+        name="{coaddName}_coadd_n_image",
         storageClass="ImageU",
         multiple=True,
         dimensions=("tract", "patch", "band", "skymap"),
@@ -54,15 +49,13 @@ class CoaddDepthSummaryAnalysisConnections(
 
     statTable = cT.Output(
         doc="Table with resulting n_image based depth statistics.",
-        name="{outputName}",
+        name="{coaddName}_coadd_depth_table",
         storageClass="ArrowAstropy",
         dimensions=("tract", "skymap"),
     )
 
 
-class CoaddDepthSummaryAnalysisConfig(
-    AnalysisBaseConfig, pipelineConnections=CoaddDepthSummaryAnalysisConnections
-):
+class CoaddDepthSummaryConfig(PipelineTaskConfig, pipelineConnections=CoaddDepthSummaryConnections):
     threshold_list = ListField(
         default=[1, 3, 5, 12],
         dtype=int,
@@ -76,9 +69,9 @@ class CoaddDepthSummaryAnalysisConfig(
     )
 
 
-class CoaddDepthSummaryAnalysisTask(AnalysisPipelineTask):
-    ConfigClass = CoaddDepthSummaryAnalysisConfig
-    _DefaultName = "coaddDepthSummaryAnalysis"
+class CoaddDepthSummaryTask(PipelineTask):
+    ConfigClass = CoaddDepthSummaryConfig
+    _DefaultName = "coaddDepthSummary"
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)

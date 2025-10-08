@@ -462,6 +462,11 @@ class ScatterPlotWithTwoHists(PlotAction):
         highStats: _StatsContainer
         lowStats: _StatsContainer
 
+        magLabel = self.magLabel
+        kwargs_in_label = {k: v for k, v in kwargs.items() if f"{{{k}}}" in magLabel}
+        if kwargs_in_label:
+            magLabel = magLabel.format(**kwargs_in_label)
+
         for name_datatype in self.plotTypes:
             config_datatype = self._datatypes[name_datatype]
             highArgs = {}
@@ -677,9 +682,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     # Add some stats text
                     xPos = 0.65 - 0.4 * j
                     bbox = dict(edgecolor=color, linestyle="--", facecolor="none")
-                    statText = (
-                        f"S/N > {highThresh:0.4g} Stats ({self.magLabel} < {highStats.approxMag:0.4g})\n"
-                    )
+                    statText = f"S/N > {highThresh:0.4g} Stats ({magLabel} < {highStats.approxMag:0.4g})\n"
                     highStatsStr = (
                         f"Median: {highStats.median:0.4g}    "
                         + r"$\sigma_{MAD}$: "
@@ -691,7 +694,7 @@ class ScatterPlotWithTwoHists(PlotAction):
                     fig.text(xPos, 0.090, statText, bbox=bbox, transform=fig.transFigure, fontsize=6)
 
                     bbox = dict(edgecolor=color, linestyle=":", facecolor="none")
-                    statText = f"S/N > {lowThresh:0.4g} Stats ({self.magLabel} < {lowStats.approxMag:0.4g})\n"
+                    statText = f"S/N > {lowThresh:0.4g} Stats ({magLabel} < {lowStats.approxMag:0.4g})\n"
                     lowStatsStr = (
                         f"Median: {lowStats.median:0.4g}    "
                         + r"$\sigma_{MAD}$: "

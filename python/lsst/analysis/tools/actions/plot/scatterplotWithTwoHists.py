@@ -548,7 +548,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             sigMadYs = nanSigmaMad(ys)
             # plot lone median point if there's not enough data to measure more
             n_xs = np.count_nonzero(np.isfinite(xs))
-            if n_xs <= 1 or not (np.isfinite(sigMadYs) and sigMadYs > 0.0):
+            if n_xs <= 1 or not (np.isfinite(sigMadYs) and sigMadYs >= 0.0):
                 continue
             elif n_xs < min_n_xs_for_stats:
                 xs = [nanMedian(xs)]

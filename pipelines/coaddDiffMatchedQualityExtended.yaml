@@ -144,26 +144,6 @@ tasks:
       atools.matchedRefGaap1p0MagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefGaap1p0MagChi.produce.plot.yLims: lims_mag_chi
 
-      atools.matchedRefGaap3p0ColorDiff: MatchedRefCoaddDiffColorTool
-      atools.matchedRefGaap3p0ColorDiff.mag_y1: gaap3p0_err
-      atools.matchedRefGaap3p0ColorDiff.produce.plot.xLims: lims_mag_x
-      atools.matchedRefGaap3p0ColorDiff.produce.plot.yLims: lims_color_diff
-
-      atools.matchedRefGaap3p0ColorChi: MatchedRefCoaddChiColorTool
-      atools.matchedRefGaap3p0ColorChi.mag_y1: gaap3p0_err
-      atools.matchedRefGaap3p0ColorChi.produce.plot.xLims: lims_mag_x
-      atools.matchedRefGaap3p0ColorChi.produce.plot.yLims: lims_mag_chi
-
-      atools.matchedRefGaap3p0MagDiff: MatchedRefCoaddDiffMagTool
-      atools.matchedRefGaap3p0MagDiff.mag_y: gaap3p0_err
-      atools.matchedRefGaap3p0MagDiff.produce.plot.xLims: lims_mag_x
-      atools.matchedRefGaap3p0MagDiff.produce.plot.yLims: lims_mag_diff
-
-      atools.matchedRefGaap3p0MagChi: MatchedRefCoaddChiMagTool
-      atools.matchedRefGaap3p0MagChi.mag_y: gaap3p0_err
-      atools.matchedRefGaap3p0MagChi.produce.plot.xLims: lims_mag_x
-      atools.matchedRefGaap3p0MagChi.produce.plot.yLims: lims_mag_chi
-
       atools.matchedRefSersicColorDiff: MatchedRefCoaddDiffColorTool
       atools.matchedRefSersicColorDiff.mag_y1: sersic_err
       atools.matchedRefSersicColorDiff.produce.plot.xLims: lims_mag_x

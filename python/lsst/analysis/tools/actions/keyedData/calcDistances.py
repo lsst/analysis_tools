@@ -100,6 +100,7 @@ class CalcRelativeDistances(KeyedDataAction):
         distanceParams = {
             "rmsDistances": np.array([]),
             "separationResiduals": np.array([]),
+            "matchedVisits": np.array([]),
             "AMx": np.nan,
             "ADx": np.nan,
             "AFx": np.nan,
@@ -195,6 +196,7 @@ class CalcRelativeDistances(KeyedDataAction):
         matchedObsInd1 = []
         matchedObsInd2 = []
         matchedPairInd = []
+        matchedVisit = []
         for ind in range(len(i1)):
             objInd1 = i1[ind]
             objInd2 = i2[ind]
@@ -204,10 +206,12 @@ class CalcRelativeDistances(KeyedDataAction):
             matchedObsInd1.append(obsInd1[a])
             matchedObsInd2.append(obsInd2[b])
             matchedPairInd.append(np.full(len(a), ind))
+            matchedVisit.append(data[self.visitKey][obsInd1][a])
 
         matchedObsInd1 = np.concatenate(matchedObsInd1)
         matchedObsInd2 = np.concatenate(matchedObsInd2)
         matchedPairInd = np.concatenate(matchedPairInd)
+        matchedVisit = np.concatenate(matchedVisit)
 
         separations = sphDist(
             np.deg2rad(np.array(data[self.raKey][matchedObsInd1])),
@@ -244,7 +248,9 @@ class CalcRelativeDistances(KeyedDataAction):
         bad2 = nSep <= 2
         sepMean[bad2] = np.nan
         sepResiduals = separations - sepMean[matchedPairInd]
-        sepResiduals = sepResiduals[np.isfinite(sepResiduals)]
+        finiteSepResiduals = np.isfinite(sepResiduals)
+        sepResiduals = sepResiduals[finiteSepResiduals]
+        sepVisits = matchedVisit[finiteSepResiduals]
 
         # This is always going to be valid because we checked the number
         # of good pairs above.
@@ -264,6 +270,7 @@ class CalcRelativeDistances(KeyedDataAction):
 
         distanceParams["rmsDistances"] = (rmsDistances * u.radian).to(u.marcsec).value
         distanceParams["separationResiduals"] = absDiffSeparations.value
+        distanceParams["matchedVisits"] = sepVisits
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value
         distanceParams["AFx"] = AFx.value

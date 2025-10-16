@@ -77,6 +77,7 @@ class CalexpSummaryMetrics(AnalysisTool):
         "effTimePsfSigmaScale": "",
         "effTimeSkyBgScale": "",
         "effTimeZeroPointScale": "",
+        "magLim": "mag",
     }
 
     def setDefaults(self):

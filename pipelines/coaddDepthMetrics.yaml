@@ -1,0 +1,35 @@
+description: |
+  Tier1 plots and metrics to assess coadd quality.
+tasks:
+  analyzeCoaddDepthCore:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryTask
+    config:
+      connections.coaddName: template
+  coaddDepthMetricTract:
+    class: lsst.analysis.tools.tasks.CoaddDepthTableTractAnalysisTask
+    config:
+      connections.coaddName: template
+      connections.outputName: "template_coadd_depth_summary"
+      atools.coadd_depth_summary_metrics: CoaddQualityCheck
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityCheck
+  coaddDepthPlot:
+    class: lsst.analysis.tools.tasks.CoaddDepthSummaryPlotTask
+    config:
+      connections.coaddName: template
+      connections.outputName: "template"
+      atools.n_image: CoaddQualityPlot
+      python: |
+        from lsst.analysis.tools.atools import CoaddQualityPlot
+  makeCoaddDepthSummaryMetricTable:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "coadd_depth_summary_metrics"
+      connections.outputTableName: "coadd_depth_summary_metrics_table"
+      inputDataDimensions: ["skymap", "tract"]
+  coaddDepthSummaryMetricTableWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.inputName: "coadd_depth_summary_metrics_table"
+      connections.outputName: "template"
+      file: $ANALYSIS_TOOLS_DIR/config/coaddDepthMetricsWholeSkyPlot.py

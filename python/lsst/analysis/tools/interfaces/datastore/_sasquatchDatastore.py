@@ -169,6 +169,9 @@ class SasquatchDatastore(GenericBaseDatastore):
         # datastore records in registry, so return empty dict.
         return {}
 
+    def export_predicted_records(self, refs: Iterable[DatasetRef]) -> dict[str, DatastoreRecordData]:
+        return {}
+
     def addStoredItemInfo(self, refs: Iterable[DatasetRef], infos: Iterable[Any]) -> None:
         raise NotImplementedError()
 

@@ -365,3 +365,7 @@ limitingSurfaceBrightness:
     atoolsFile: limitingSurfaceBrightness.py
     description: |
         Standard deviation of sky objects in coadd, converted to AB mag / arcsec^2
+
+visitDetectorRepeatabilityMetrics_psfSigmaMed:
+    lowThreshold: 0
+    highThreshold: 5

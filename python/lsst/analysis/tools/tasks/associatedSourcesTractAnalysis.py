@@ -20,7 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalysisTask")
+__all__ = (
+    "AssociatedSourcesTractAnalysisConfig",
+    "AssociatedSourcesTractAnalysisTask",
+    "AssociatedSourcesSelectedTractAnalysisConfig",
+    "AssociatedSourcesSelectedTractAnalysisTask",
+)
 
 import astropy.time
 import astropy.units as u
@@ -37,7 +42,7 @@ from lsst.skymap import BaseSkyMap
 from smatch import Matcher
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
-
+from .selectedTractAnalysis import SelectTractConfig, SelectTractConnections
 
 class AssociatedSourcesTractAnalysisConnections(
     AnalysisBaseConnections,
@@ -329,3 +334,23 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
         self.putByBand(butlerQC, outputs, outputRefs)
+
+
+class AssociatedSourcesSelectedTractAnalysisConnections(
+    AssociatedSourcesTractAnalysisConnections,
+    SelectTractConnections,
+):
+    pass
+
+
+class AssociatedSourcesSelectedTractAnalysisConfig(
+    AssociatedSourcesTractAnalysisConfig,
+    SelectTractConfig,
+    pipelineConnections=AssociatedSourcesSelectedTractAnalysisConnections,
+):
+    pass
+
+
+class AssociatedSourcesSelectedTractAnalysisTask(AssociatedSourcesTractAnalysisTask):
+    ConfigClass = AssociatedSourcesSelectedTractAnalysisConfig
+    _DefaultName = "associatedSourcesSelectedTractAnalysisConfig"

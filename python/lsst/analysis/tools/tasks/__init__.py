@@ -37,5 +37,6 @@ from .sourceObjectTableAnalysis import *
 from .sourceTableVisitAnalysis import *
 from .trailedDiaSrcDetectorVisitAnalysis import *
 from .verifyBiasResultsAnalysis import *
+from .visitDetectorTractAnalysis import *
 from .wholeSkyAnalysis import *
 from .wholeTractImageAnalysis import *

@@ -21,14 +21,14 @@
 
 __all__ = ("DiaSkyPanel", "DiaSkyPlot")
 
-from typing import Mapping
+from typing import Mapping, Optional
 
 import matplotlib.pyplot as plt
 from lsst.pex.config import ConfigDictField, Field, ListField
 from matplotlib.figure import Figure
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
-from .plotUtils import PanelConfig
+from .plotUtils import PanelConfig, addPlotInfo
 
 
 class DiaSkyPanel(PanelConfig):
@@ -99,7 +99,12 @@ class DiaSkyPlot(PlotAction):
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         return self.makePlot(data, **kwargs)
 
-    def makePlot(self, data: KeyedData, **kwargs) -> Figure:
+    def makePlot(
+        self,
+        data: KeyedData,
+        plotInfo: Optional[Mapping[str, str]] = None,
+        **kwargs,
+    ) -> Figure:
         """Make an N-panel plot with locations of DiaSources or
         DiaObjects displayed in each panel.
 
@@ -111,15 +116,23 @@ class DiaSkyPlot(PlotAction):
         -------
         fig : `matplotlib.figure.Figure`
         """
+        if plotInfo is None:
+            plotInfo = {}
+
         if "figsize" in kwargs:
             figsize = kwargs.pop("figsize", "")
             fig = plt.figure(figsize=figsize, dpi=300)
         else:
             fig = plt.figure(figsize=(12, 9), dpi=300)
         axs = self._makeAxes(fig)
+
         for panel, ax in zip(self.panels.values(), axs):
             self._makePanel(data, panel, ax, **kwargs)
         plt.draw()
+
+        # Add useful information to the plot
+        fig = addPlotInfo(fig, plotInfo)
+
         return fig
 
     def _makeAxes(self, fig):

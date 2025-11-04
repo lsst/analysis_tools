@@ -38,14 +38,12 @@ class SimpleDiaPlot(AnalysisTool):
         self.process.buildActions.ras.vectorKey = "ra"
         self.process.buildActions.decs = LoadVector()
         self.process.buildActions.decs.vectorKey = "dec"
-        # TODO: update column name to 'dec' once column names are standardized,
-        # i.e., RFC-863
 
         self.produce.plot = DiaSkyPlot()
 
         self.produce.plot.panels["panel_main"] = DiaSkyPanel()
         self.produce.plot.panels["panel_main"].xlabel = "RA (deg)"
         self.produce.plot.panels["panel_main"].ylabel = "Dec (deg)"
-        self.produce.plot.panels["panel_main"].ra = "ras"
-        self.produce.plot.panels["panel_main"].dec = "decs"
+        self.produce.plot.panels["panel_main"].ras = ["ras"]
+        self.produce.plot.panels["panel_main"].decs = ["decs"]
         self.produce.plot.panels["panel_main"].rightSpinesVisible = False

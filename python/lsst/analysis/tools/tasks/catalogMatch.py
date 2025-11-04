@@ -128,7 +128,7 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     extraColumns = pexConfig.ListField[str](
         doc="Other catalog columns to persist to downstream tasks",
-        default=["x", "y", "patch", "ebv"],
+        default=["patch", "ebv"],
     )
 
     extraPerBandColumns = pexConfig.ListField[str](

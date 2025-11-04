@@ -151,7 +151,7 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_psfFlux_flag_target",
             "{band}_pixelFlags_saturatedCenter_target",
             "{band}_extendedness_flag_target",
-            "xy_flag_target",
+            "coord_flag_target",
         ]
         self.selectWhenTrue = ["detect_isPatchInner_target", "detect_isDeblendedSource_target"]
 
@@ -180,7 +180,7 @@ class CoaddPlotFlagSelector(FlagSelector):
             "{band}_psfFlux_flag",
             "{band}_pixelFlags_saturatedCenter",
             "{band}_extendedness_flag",
-            "xy_flag",
+            "coord_flag",
             "sky_object",
         ]
         self.selectWhenTrue = ["detect_isPatchInner", "detect_isDeblendedSource"]

@@ -49,34 +49,6 @@ tasks:
       atools.matchedRefCModelMagChi.produce.plot.xLims: lims_mag_x
       atools.matchedRefCModelMagChi.produce.plot.yLims: lims_mag_chi
 
-      atools.matchedRefPositionXDiff: MatchedRefCoaddDiffPositionTool
-      atools.matchedRefPositionXDiff.coord_meas: x
-      atools.matchedRefPositionXDiff.coord_ref: refcat_x
-      atools.matchedRefPositionXDiff.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionXDiff.produce.plot.yLims: lims_pos_diff
-      atools.matchedRefPositionXDiff.scale_factor: parameters.scale_pixel
-
-      atools.matchedRefPositionXChi: MatchedRefCoaddDiffPositionTool
-      atools.matchedRefPositionXChi.coord_meas: x
-      atools.matchedRefPositionXChi.coord_ref: refcat_x
-      atools.matchedRefPositionXChi.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionXChi.produce.plot.yLims: lims_pos_chi
-      atools.matchedRefPositionXChi.compute_chi: true
-
-      atools.matchedRefPositionYDiff: MatchedRefCoaddDiffPositionTool
-      atools.matchedRefPositionYDiff.coord_meas: y
-      atools.matchedRefPositionYDiff.coord_ref: refcat_y
-      atools.matchedRefPositionYDiff.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionYDiff.produce.plot.yLims: lims_pos_diff
-      atools.matchedRefPositionYDiff.scale_factor: parameters.scale_pixel
-
-      atools.matchedRefPositionYChi: MatchedRefCoaddDiffPositionTool
-      atools.matchedRefPositionYChi.coord_meas: y
-      atools.matchedRefPositionYChi.coord_ref: refcat_y
-      atools.matchedRefPositionYChi.produce.plot.xLims: lims_mag_x
-      atools.matchedRefPositionYChi.produce.plot.yLims: lims_pos_chi
-      atools.matchedRefPositionYChi.compute_chi: true
-
       atools.matchedRefPositionRaDiff: MatchedRefCoaddDiffPositionTool
       atools.matchedRefPositionRaDiff.coord_meas: coord_ra
       atools.matchedRefPositionRaDiff.coord_ref: refcat_ra

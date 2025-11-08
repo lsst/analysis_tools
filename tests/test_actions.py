@@ -486,7 +486,7 @@ class TestVectorSelectors(unittest.TestCase):
             "{band}_psfFlux_flag": [1],
             "{band}_pixelFlags_saturatedCenter": [3],
             "{band}_extendedness_flag": [5],
-            "xy_flag": [7],
+            "coord_flag": [7],
             "i_pixelFlags_edge": [13],
             "r_pixelFlags_edge": [15],
             "i_pixelFlags_nodata": [14],
@@ -553,7 +553,7 @@ class TestVectorSelectors(unittest.TestCase):
             "{band}_pixelFlags_saturatedCenter",
             "{band}_extendedness_flag",
             "sky_object",
-            "xy_flag",
+            "coord_flag",
             "detect_isPatchInner",
             "detect_isDeblendedSource",
         ]

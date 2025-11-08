@@ -177,7 +177,7 @@ class TestCatalogMatch(unittest.TestCase):
             "z_pixelFlags_saturatedCenter",
             "i_psfFlux_flag",
             "r_pixelFlags_saturatedCenter",
-            "xy_flag",
+            "coord_flag",
             "r_extendedness",
             "y_pixelFlags_saturatedCenter",
             "i_extendedness_flag",

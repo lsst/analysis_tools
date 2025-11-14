@@ -176,6 +176,7 @@ class CoaddPlotFlagSelector(FlagSelector):
         return cast(Vector, result)
 
     def setDefaults(self):
+        super().setDefaults()
         self.selectWhenFalse = [
             "{band}_psfFlux_flag",
             "{band}_pixelFlags_saturatedCenter",
@@ -193,6 +194,7 @@ class MatchingFlagSelector(CoaddPlotFlagSelector):
     """
 
     def setDefaults(self):
+        super().setDefaults()
         self.selectWhenFalse = []
         self.selectWhenTrue = ["detect_isPrimary"]
 
@@ -226,6 +228,7 @@ class VisitPlotFlagSelector(FlagSelector):
         return result
 
     def setDefaults(self):
+        super().setDefaults()
         self.selectWhenFalse = [
             "psfFlux_flag",
             "pixelFlags_saturatedCenter",
@@ -614,6 +617,7 @@ class ParentObjectSelector(FlagSelector):
     """Select only parent objects that are not sky objects."""
 
     def setDefaults(self):
+        super().setDefaults()
         # This selects all of the parents
         self.selectWhenFalse = [
             "detect_isDeblendedModelSource",
@@ -783,6 +787,7 @@ class InjectedGalaxySelector(InjectedClassSelector):
     """A selector for injected galaxies."""
 
     def setDefaults(self):
+        super().setDefaults()
         self.name_class = "galaxy"
         # Assumes not star == galaxy - if there are injected AGN or other
         # object classes, this will need to be updated
@@ -793,6 +798,7 @@ class InjectedStarSelector(InjectedClassSelector):
     """A selector for injected stars."""
 
     def setDefaults(self):
+        super().setDefaults()
         self.name_class = "star"
 
 

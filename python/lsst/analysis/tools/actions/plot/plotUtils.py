@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 import esutil
 import matplotlib
 import numpy as np
+import pandas as pd
 from lsst.geom import Box2D, SpherePoint, degrees
 from lsst.pex.config import Config, Field
 from matplotlib import cm, colors
@@ -392,21 +393,26 @@ def sortAllArrays(arrsToSort, sortArrayIndex=0):
 
     Parameters
     ----------
-    arrsToSort : `list` [`np.array`]
-        A list of arrays to be simultaneously sorted based on the array in
-        the list position given by ``sortArrayIndex`` (defaults to be the
-        first array in the list).
+    arrsToSort : `list` [`np.array`] | `list` [`pd.Series`]
+        A list of arrays or Series to be simultaneously sorted based on the
+        array in the list position given by ``sortArrayIndex`` (defaults to be
+        the first array in the list).
     sortArrayIndex : `int`, optional
         Zero-based index indicating the array on which to base the sorting.
 
     Returns
     -------
-    arrsToSort : `list` [`np.array`]
-        The list of arrays sorted on array in list index ``sortArrayIndex``.
+    arrsToSort : `list` [`np.array`] | `list` [`pd.Series`]
+        The list of arrays or Series (same type as the input) sorted on array
+        in list index ``sortArrayIndex``.
     """
     ids = extremaSort(arrsToSort[sortArrayIndex])
     for i, arr in enumerate(arrsToSort):
-        arrsToSort[i] = arr[ids]
+        if isinstance(arr, pd.Series):
+            arrsToSort[i] = arr.iloc[ids]
+        else:
+            arrsToSort[i] = arr[ids]
+
     return arrsToSort
 
 

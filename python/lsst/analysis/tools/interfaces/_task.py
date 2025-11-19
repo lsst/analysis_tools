@@ -35,6 +35,8 @@ __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTas
 
 import datetime
 import logging
+import pprint
+import traceback
 import warnings
 import weakref
 from collections.abc import Collection, Iterable
@@ -96,7 +98,13 @@ class PartialWorkFoundError(AlgorithmError):
 
     def __init__(self, caughtErrors) -> None:
         self._caughtErrors = caughtErrors
-        super().__init__(f"The following tasks have failed for the following reasons: {self._caughtErrors}")
+        errString = "These tasks have failed for the following reasons: "
+        for errName in caughtErrors.keys():
+            errString += errName + ": "
+            errString += pprint.pformat(caughtErrors[errName])
+            errString += ", "
+        errString = errString[:-2]
+        super().__init__(errString)
 
     @property
     def metadata(self) -> dict:
@@ -456,8 +464,10 @@ class AnalysisPipelineTask(PipelineTask):
                 kwargs["plotInfo"] = deepcopy(plotInfo)
                 try:
                     actionResult = action(data, **kwargs)
-                except Exception as e:
-                    caughtErrors[name] = str(e)
+                except Exception:
+                    tb = traceback.format_exc()
+                    caughtErrors[name] = tb
+
                     continue
                 metricAccumulate = []
                 for resultName, value in actionResult.items():

@@ -10,10 +10,6 @@ tasks:
       atools.e2Diff: E2DiffScatter  #  shapes.py
       atools.skyFluxStatisticMetric: SkyFluxStatisticMetric
       atools.skyFluxStatisticMetric.applyContext: CoaddContext
-      atools.parentDeblenderMetrics: ParentDeblenderMetrics
-      atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
-      atools.blendMetrics: BlendMetrics
-      atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
       atools.wPerpPSF: WPerpPSF
       atools.wPerpCModel: WPerpCModel
       atools.xPerpPSF: XPerpPSF
@@ -70,6 +66,19 @@ tasks:
       atools.sersicIndexVsSersicMag.applyContext: CoaddContext
       atools.coaddInputCount: CoaddInputCount
       atools.coaddPatchCount: CountPatches  #  counts.py
+      python: |
+        from lsst.analysis.tools.atools import *
+        from lsst.analysis.tools.contexts import *
+  analyzeObjectParentTableCore:
+    class: lsst.analysis.tools.tasks.ObjectTableTractAnalysisTask
+    config:
+      connections.data: object_parent
+      connections.inputName: object_parent
+      connections.outputName: objectParentTableCore
+      atools.parentDeblenderMetrics: ParentDeblenderMetrics
+      atools.skippedDeblenderMetrics: SkippedDeblenderMetrics
+      atools.blendMetrics: BlendMetrics
+      atools.isolatedDeblenderMetrics: IsolatedDeblenderMetrics
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

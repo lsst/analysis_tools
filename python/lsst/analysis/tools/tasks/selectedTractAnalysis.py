@@ -121,7 +121,6 @@ class SelectTractConnections(
                     continue
 
             # Get the relevant thresholds from the metricInfo file:
-            allInThreshold = True
             columnInfo = metricInfo[columnWithoutBand]
             if "{band}" not in self.config.thresholdColumn:
                 # Don't need to loop through bands:
@@ -148,9 +147,9 @@ class SelectTractConnections(
                         allInThreshold = False
                         continue
 
-            if allInThreshold:
-                adjuster.remove_quantum(dataId)
-                continue
+                if allInThreshold:
+                    adjuster.remove_quantum(dataId)
+                    continue
 
             # If got this far, then there is at least one quantum to do.
             noWorkFound = False

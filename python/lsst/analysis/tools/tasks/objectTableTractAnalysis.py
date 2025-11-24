@@ -24,6 +24,9 @@ __all__ = (
     "ObjectTableTractAnalysisConnections",
     "ObjectTableTractAnalysisConfig",
     "ObjectTableTractAnalysisTask",
+    "ObjectTableSelectedTractAnalysisConnections",
+    "ObjectTableSelectedTractAnalysisConfig",
+    "ObjectTableSelectedTractAnalysisTask",
 )
 
 import lsst.pex.config as pexConfig
@@ -31,6 +34,7 @@ from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
+from .selectedTractAnalysis import SelectTractConfig, SelectTractConnections
 
 
 class ObjectTableTractAnalysisConnections(
@@ -68,3 +72,23 @@ class ObjectTableTractAnalysisConfig(
 class ObjectTableTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = ObjectTableTractAnalysisConfig
     _DefaultName = "objectTableTractAnalysis"
+
+
+class ObjectTableSelectedTractAnalysisConnections(
+    ObjectTableTractAnalysisConnections,
+    SelectTractConnections,
+):
+    pass
+
+
+class ObjectTableSelectedTractAnalysisConfig(
+    ObjectTableTractAnalysisConfig,
+    SelectTractConfig,
+    pipelineConnections=ObjectTableSelectedTractAnalysisConnections,
+):
+    pass
+
+
+class ObjectTableSelectedTractAnalysisTask(ObjectTableTractAnalysisTask):
+    ConfigClass = ObjectTableSelectedTractAnalysisConfig
+    _DefaultName = "objectTableSelectedTractAnalysis"

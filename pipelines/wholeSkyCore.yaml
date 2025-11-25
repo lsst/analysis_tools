@@ -10,6 +10,17 @@ tasks:
     class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
     config:
       file: $ANALYSIS_TOOLS_DIR/config/objectTableCoreWholeSkyPlot.py
+  makeMetricTableObjectParentTableCore:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "objectParentTableCore_metrics"
+      connections.outputTableName: "objectParentTableCore_metricsTable"
+  objectParentTableCoreWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.inputName: "objectParentTableCore_metricsTable"
+      connections.outputName: "objectParentTableCore_wholeSky"
+      file: $ANALYSIS_TOOLS_DIR/config/objectParentTableCoreWholeSkyPlot.py
   makeMetricTableObjectTableCoreRefCatMatch:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:

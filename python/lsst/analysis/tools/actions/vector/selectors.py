@@ -616,10 +616,8 @@ class ParentObjectSelector(FlagSelector):
     def setDefaults(self):
         # This selects all of the parents
         self.selectWhenFalse = [
-            "detect_isDeblendedModelSource",
             "sky_object",
         ]
-        self.selectWhenTrue = ["detect_isPatchInner"]
 
 
 class ChildObjectSelector(RangeSelector):

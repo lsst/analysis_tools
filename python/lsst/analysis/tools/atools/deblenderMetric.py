@@ -72,13 +72,20 @@ class SkippedDeblenderMetrics(AnalysisTool):
         self.prep.selectors.parentSelector = ParentObjectSelector()
         self.prep.selectors.skippedSelector = FlagSelector()
         self.prep.selectors.skippedSelector.selectWhenTrue = ["deblend_skipped"]
-        self.prep.selectors.skippedSelector.selectWhenFalse = ["deblend_failed", "deblend_isolatedParent"]
+        self.prep.selectors.skippedSelector.selectWhenFalse = [
+            "deblend_failed",
+            "deblend_skipped_isolatedParent",
+        ]
 
         # Statistics for skipped blends
         self.process.calculateActions.numSkippedBlends = CountAction(vectorKey="parentObjectId")
-        self.process.calculateActions.numBlendParentTooBig = SumAction(vectorKey="deblend_parentTooBig")
-        self.process.calculateActions.numBlendTooManyPeaks = SumAction(vectorKey="deblend_tooManyPeaks")
-        self.process.calculateActions.numBlendTooManyMasked = SumAction(vectorKey="deblend_masked")
+        self.process.calculateActions.numBlendParentTooBig = SumAction(
+            vectorKey="deblend_skipped_parentTooBig"
+        )
+        self.process.calculateActions.numBlendTooManyPeaks = SumAction(
+            vectorKey="deblend_skipped_tooManyPeaks"
+        )
+        self.process.calculateActions.numBlendTooManyMasked = SumAction(vectorKey="deblend_skipped_masked")
 
         # Total number of skipped peaks
         self.process.calculateActions.numSkippedPeaks = SumAction(vectorKey="deblend_nPeaks")
@@ -111,12 +118,12 @@ class BlendMetrics(AnalysisTool):
         # Statistics for blended parents
         self.process.calculateActions.numBlends = CountAction(vectorKey="parentObjectId")
         self.process.calculateActions.meanBlendIterations = MeanAction(vectorKey="deblend_iterations")
-        self.process.calculateActions.meanBlendLogL = MeanAction(vectorKey="deblend_logL")
+        self.process.calculateActions.meanBlendChi2 = MeanAction(vectorKey="deblend_chi2")
 
         self.produce.metric.units = {
             "numBlends": "",
             "meanBlendIterations": "",
-            "meanBlendLogL": "",
+            "meanBlendChi2": "",
         }
 
 
@@ -138,12 +145,12 @@ class IsolatedDeblenderMetrics(AnalysisTool):
         # Statistics for isolated parent scarlet_lite models
         self.process.calculateActions.numIsolated = CountAction(vectorKey="parentObjectId")
         self.process.calculateActions.meanIsolatedIterations = MeanAction(vectorKey="deblend_iterations")
-        self.process.calculateActions.meanIsolatedLogL = MeanAction(vectorKey="deblend_logL")
+        self.process.calculateActions.meanIsolatedChi2 = MeanAction(vectorKey="deblend_chi2")
 
         self.produce.metric.units = {
             "numIsolated": "",
             "meanIsolatedIterations": "",
-            "meanIsolatedLogL": "",
+            "meanIsolatedChi2": "",
         }
 
 

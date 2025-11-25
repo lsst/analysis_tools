@@ -10,7 +10,7 @@ keysWithBand = [
     "coadd_depth_summary_metrics_depth_above_threshold_3_{band}_mean",
     "coadd_depth_summary_metrics_depth_above_threshold_5_{band}_mean",
     "coadd_depth_summary_metrics_depth_above_threshold_12_{band}_mean",
-  ]
+]
 
 for key in keysWithBand:
     atoolName = key.replace("_{band}", "")
@@ -19,7 +19,7 @@ for key in keysWithBand:
     atool = getattr(config.atools, atoolName)
     setattr(atool, "metric", key)
 
-    plot = getattr(getattr(atool, 'produce'), 'plot')
+    plot = getattr(getattr(atool, "produce"), "plot")
     setattr(plot, "showOutliers", False)
     setattr(plot, "showNaNs", False)
     setattr(plot, "labelTracts", True)

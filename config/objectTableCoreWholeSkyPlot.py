@@ -40,11 +40,6 @@ keys = [
     "wPerpPSF_wPerp_psfFlux_sigmaMAD",
     "yPerpPSF_yPerp_psfFlux_median",
     "yPerpPSF_yPerp_psfFlux_sigmaMAD",
-    "skippedDeblenderMetrics_numSkippedPeaks",
-    "skippedDeblenderMetrics_numSkippedBlends",
-    "skippedDeblenderMetrics_numBlendParentTooBig",
-    "skippedDeblenderMetrics_numBlendTooManyPeaks",
-    "skippedDeblenderMetrics_numBlendTooManyMasked",
 ]
 if hasattr(parameters, "objectTableCoreWholeSkyPlotKeys"):
     keys = parameters.objectTableCoreWholeSkyPlotKeys

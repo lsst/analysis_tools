@@ -328,7 +328,7 @@ class StellarLocusFitAction(KeyedDataAction):
             "bHW": 0.0,
             "nSigmaToClip1": 3.5,
             "nSigmaToClip2": 5.0,
-            "minObjectForFit": 4,
+            "minObjectForFit": 7,
         },
     )
 

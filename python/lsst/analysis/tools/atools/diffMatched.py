@@ -441,8 +441,7 @@ class MatchedRefCoaddDiffTool(MagnitudeXTool, MatchedRefCoaddTool):
         raise NotImplementedError("subclasses must implement get_key_flux_y")
 
     def setDefaults(self):
-        MagnitudeXTool.setDefaults(self)
-        MatchedRefCoaddTool.setDefaults(self)
+        super().setDefaults()
         self.mag_x = "ref_matched"
         self.prep.selectors.matched = MatchedObjectSelector()
 
@@ -462,10 +461,7 @@ class MatchedRefCoaddDiffPlot(MatchedRefCoaddDiffTool, MagnitudeScatterPlot):
         MagnitudeScatterPlot.finalize(self)
 
     def setDefaults(self):
-        # This will set no plot
-        MatchedRefCoaddDiffTool.setDefaults(self)
-        # This will set the plot
-        MagnitudeScatterPlot.setDefaults(self)
+        super().setDefaults()
         self.produce.plot.xLims = self.limits_x_mag_default
 
 
@@ -681,8 +677,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
             _set_field_config(self, name="mag_target", value=key_flux_meas)
 
     def setDefaults(self):
-        MagnitudeTool.setDefaults(self)
-        MatchedRefCoaddTool.setDefaults(self)
+        super().setDefaults()
 
         self.mag_bins_plot.mag_interval = 100
         self.mag_bins_plot.mag_width = 200

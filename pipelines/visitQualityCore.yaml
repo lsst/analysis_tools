@@ -80,6 +80,10 @@ tasks:
         final_psf_sigma: pixel
         astrometry_matches_count: ct
         photometry_matches_count: ct
+        bg_subtracted_skyPixel_instFlux_median: adu
+        bg_subtracted_skyPixel_instFlux_stdev: adu
+        bg_subtracted_skySource_flux_median: nJy
+        bg_subtracted_skySource_flux_stdev: nJy
       atools.calibrateImageMetadataMetrics.subTaskNames:
         numAvailStars: psf_measure_psf
         numGoodStars: psf_measure_psf

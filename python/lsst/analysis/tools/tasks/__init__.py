@@ -19,6 +19,7 @@ from .diffimTaskDetectorVisitMetricsAnalysis import *
 from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
 from .gatherResourceUsage import *
+from .genericTableAnalysis import *
 from .injectedObjectAnalysis import *
 from .makeMetricTable import *
 from .makeTractPostageStamp import *

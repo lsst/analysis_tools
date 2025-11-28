@@ -1,5 +1,6 @@
 from .amplifierCorrelation import *
 from .astrometricRepeatability import *
+from .astrometryMetrics import *
 from .calexpMetrics import *
 from .calibQuantityProfile import *
 from .calibration import *

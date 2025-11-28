@@ -19,6 +19,7 @@ from .diffimKernelQuiverPlotVisit import *
 from .diffimTaskDetectorVisitMetricsAnalysis import *
 from .diffimTaskDetectorVisitSpatiallySampledAnalysis import *
 from .diffMatchedAnalysis import *
+from .exposureCatalogAnalysis import *
 from .gatherResourceUsage import *
 from .injectedObjectAnalysis import *
 from .makeMetricTable import *

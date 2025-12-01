@@ -84,6 +84,7 @@ tasks:
         bg_subtracted_skyPixel_instFlux_stdev: adu
         bg_subtracted_skySource_flux_median: nJy
         bg_subtracted_skySource_flux_stdev: nJy
+        adaptive_threshold_value: ""
       atools.calibrateImageMetadataMetrics.subTaskNames:
         numAvailStars: psf_measure_psf
         numGoodStars: psf_measure_psf
@@ -92,5 +93,6 @@ tasks:
       atools.calibrateImageMetadataMetrics.newNames:
         numAvailStars: psf_available_star_count
         numGoodStars: psf_good_star_count
+        adaptive_threshold_value: final_adaptive_threshold_value
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool

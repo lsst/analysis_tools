@@ -1,0 +1,413 @@
+ #  PSF Metrics
+#  -----------
+#  E1 Metrics
+e1Diff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.03
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+e1Diff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.0
+    highThreshold: 0.02
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+e1Diff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The number of high SN stars used to calculate statistics in the g band
+e1Diff_g_lowSNStars_median:
+    lowThreshold: -0.0025
+    highThreshold: 0.0125
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+e1Diff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.0175
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+e1Diff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The number of low SN stars used to calculate statistics in the g band
+
+#  E2 Metrics
+e2Diff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.01
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+e2Diff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.01
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+e2Diff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The number of high SN stars used to calculate statistics in the g band
+e2Diff_g_lowSNStars_median:
+    lowThreshold: -0.0025
+    highThreshold: 0.0025
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+e2Diff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.0025
+    highThreshold: 0.0075
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+e2Diff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The number of low SN stars used to calculate statistics in the g band
+shapeSizeFractionalDiff_g_highSNStars_median:
+    lowThreshold: -0.01
+    highThreshold: 0.01
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+
+# Shape Size Metrics
+shapeSizeFractionalDiff_g_highSNStars_sigmaMad:
+    lowThreshold: 0.0
+    highThreshold: 0.02
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The sigma mad of the high SN stars for the difference between the e1 calculated from the moments and the psf moments
+shapeSizeFractionalDiff_g_highSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The number of high SN stars used to calculate statistics in the g band
+shapeSizeFractionalDiff_g_lowSNStars_median:
+    lowThreshold: -0.005
+    highThreshold: 0.005
+    divergent: true
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolFile: shapes.py
+    description: |
+        The median of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+shapeSizeFractionalDiff_g_lowSNStars_sigmaMad:
+    lowThreshold: 0.001
+    highThreshold: 0.009
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The sigma mad of the low SN stars for the difference between the e1 calculated from the moments and the psf moments
+shapeSizeFractionalDiff_g_lowSNStars_count:
+    lowThreshold: 0
+    highThreshold: 10000
+    divergent: false
+    plot: objectTableCore_g_e1Diff_ScatterPlotWithTwoHists
+    debugGroup: PSF
+    atoolsFile: shapes.py
+    description: |
+        The number of low SN stars used to calculate statistics in the g band
+
+#  Stellar Locus Metrics
+#  ---------------------
+yPerpPSF_yPerp_psfFlux_median:
+    lowThreshold: -4
+    highThreshold: 4
+    divergent: false
+    plot: objectTableCore_yPerpPSF_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the y perp stellar locus width for psf fluxes
+yPerpPSF_yPerp_psfFlux_sigmaMAD:
+    lowThreshold: 10
+    highThreshold: 25
+    divergent: False
+    plot: objectTableCore_yPerpPSF_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the y perp stellar locus width for psf fluxes
+wPerpPSFP_wPerp_psfFlux_median:
+    lowThreshold: -4
+    highThreshold: 4
+    divergent: false
+    plot: objectTableCore_wPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the w perp stellar locus width for psf fluxes
+wPerpPSFP_wPerp_psfFlux_sigmaMAD:
+    lowThreshold: 10
+    highThreshold: 25
+    divergent: false
+    plot: objectTableCore_wPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the w perp stellar locus width for psf fluxes
+xPerpPSFP_xPerp_psfFlux_median:
+    lowThreshold: -15
+    highThreshold: 15
+    divergent: false
+    plot: objectTableCore_xPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Median of the x perp stellar locus width for psf fluxes
+xPerpPSF_xPerp_psfFlux_sigmaMAD:
+    lowThreshold: 25
+    highThreshold: 80
+    divergent: false
+    plot: objectTableCore_xPerpPSFP_ColorColorFitPlot
+    debugGroup: stellarLocus
+    atoolsFile: stellarLocus.py
+    description: |
+        Sigma MAD of the x perp stellar locus width for psf fluxes
+
+#  Photometry Metrics
+#  ------------------
+psfCModelDiff_u:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+psfCModelDiff_g:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+psfCModelDiff_r:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+psfCModelDiff_i:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+psfCModelDiff_z:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+psfCModelDiff_y:
+    lowThreshold: -5
+    highThreshold: 5
+    divergent: True
+    plot: object_psfCModelScatter_ScatterPlotWithTwoHists
+    debugGroup: photom
+    atoolsFile: photometry.py
+    description: |
+        Difference between the PSF and CModel magnitude for stars
+
+#  Difference Imaging Metrics
+#  --------------------------
+# subtractImageTask metrics
+sciencePsfSize:
+    lowThreshold: 0.4
+    highThreshold: 3.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The FWHM of the science image PSF computed at its average position
+templatePsfSize:
+    lowThreshold: 0.4
+    highThreshold: 2.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The FWHM of the template image PSF computed at its average position
+templateCoveragePercent:
+    lowThreshold: 0.8
+    highThreshold: 1.0  # full coverage is ideal
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is covered by a template image
+diffimLimitingMagnitude:
+    lowThreshold: 10.0
+    highThreshold: 30.0
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The limiting magnitude of the difference image based on photometric zeropoint and average PSF FWHM
+scaleTemplateVarianceFactor:
+    lowThreshold: 0.9
+    highThreshold: 1.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The factor by which the template image variance plane was scaled
+scaleScienceVarianceFactor:
+    lowThreshold: 0.9
+    highThreshold: 1.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The factor by which the science image variance plane was scaled
+
+# detectAndMeasureTask metrics
+detected_mask_fraction:
+    lowThreshold: 0.01
+    highThreshold: 0.2  # higher is OK for crowded fields
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked DETECTED
+detected_negative_mask_fraction:
+    lowThreshold: 0.01
+    highThreshold: 0.2  # higher is OK for crowded fields
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked DETECTED_NEGATIVE
+streak_mask_fraction:
+    lowThreshold: 0  # it is OK if it is 0
+    highThreshold: 0.2
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        The fraction of the diffim that is masked STREAK
+residualFootprintRatioMean:
+    lowThreshold: 0
+    highThreshold: 0.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        Mean of the ratio of the absolute value of the difference image
+        (with the mean absolute value of the sky regions on the difference
+        image removed) to the science image, computed in the footprints
+        of stars detected on the science image.
+residualFootprintRatioStdev:
+    lowThreshold: 0
+    highThreshold: 0.1
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diffimMetadataMetrics.py
+    description: |
+        Stdev of residualFootprintRadioMean.
+
+# general diaSource metrics
+ratioGoodToAllDiaSources:
+    lowThreshold: 0.2
+    highThreshold: 0.8
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diaSourceMetrics.py
+    description: |
+        The ratio of numGoodDiaSources/numAllDiaSources, where numGoodDiaSources is the number of diaSources
+        that do not have known bad/quality flags set true
+diaSourcesGoodVsBadRatio:
+    lowThreshold: 0.2
+    highThreshold: 0.8
+    divergent: false
+    plot:
+    debugGroup: diffim
+    atoolsFile: diaSourceMetrics.py
+    description: |
+        The ratio of the number of diaSources with high reliability (>0.9)
+        over the number of diaSources with low reliability (<0.1)

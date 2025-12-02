@@ -89,6 +89,7 @@ tasks:
         astrom_offset_mean: arcsec
         astrom_offset_std: arcsec
         astrom_offset_median: arcsec
+        failed_deblend_source_count: ct
       atools.calibrateImageMetadataMetrics.subTaskNames:
         numAvailStars: psf_measure_psf
         numGoodStars: psf_measure_psf

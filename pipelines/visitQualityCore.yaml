@@ -85,6 +85,10 @@ tasks:
         bg_subtracted_skySource_flux_median: nJy
         bg_subtracted_skySource_flux_stdev: nJy
         adaptive_threshold_value: ""
+        initial_to_final_wcs: arcsec
+        astrom_offset_mean: arcsec
+        astrom_offset_std: arcsec
+        astrom_offset_median: arcsec
       atools.calibrateImageMetadataMetrics.subTaskNames:
         numAvailStars: psf_measure_psf
         numGoodStars: psf_measure_psf

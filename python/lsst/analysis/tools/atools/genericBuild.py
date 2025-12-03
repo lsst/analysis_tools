@@ -259,8 +259,8 @@ class MagnitudeTool(ObjectClassTool):
 
     fluxes_default = FluxesDefaultConfig(
         bulge_err=FluxConfig(
-            key_flux="{band}_bdFluxB",
-            key_flux_error="{band}_bdFluxBErr",
+            key_flux="{band}_cModel_devFlux",
+            key_flux_error="{band}_cModel_devFluxErr",
             name_flux="CModel Bulge",
             name_flux_short="bulge_cModel",
         ),
@@ -271,8 +271,8 @@ class MagnitudeTool(ObjectClassTool):
             name_flux_short="cModel",
         ),
         disk_err=FluxConfig(
-            key_flux="{band}_bdFluxD",
-            key_flux_error="{band}_bdFluxDErr",
+            key_flux="{band}_cModel_expFlux",
+            key_flux_error="{band}_cModel_expFluxErr",
             name_flux="CModel Disk",
             name_flux_short="disk_cModel",
         ),
@@ -537,10 +537,16 @@ class SizeTool(ObjectClassTool):
         default=True,
     )
     sizes_default = SizeDefaultConfig(
-        bulge=SizeConfig(key_size="{band}_bdReB", name_size="CModel Bulge $R_{eff}$", has_moments=False),
-        disk=SizeConfig(key_size="{band}_bdReD", name_size="CModel Disk $R_{eff}$", has_moments=False),
+        bulge=SizeConfig(
+            key_size="{band}_cModel_dev_reff_major", name_size="CModel Bulge $R_{eff}$", has_moments=False
+        ),
+        disk=SizeConfig(
+            key_size="{band}_cModel_exp_reff_major", name_size="CModel Disk $R_{eff}$", has_moments=False
+        ),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
-        sersic=SizeConfig(key_size="sersic_{suffix}", name_size="Sérsic $R_{eff}$"),
+        sersic=SizeConfig(
+            key_size="sersic_reff_major", name_size="Sérsic $R_{eff,major}$", has_moments=False
+        ),
         shape_slot=SizeConfig(key_size="shape_{suffix}", name_size="Shape slot radius"),
     )
     size_type = ChoiceField[str](

@@ -33,7 +33,7 @@ import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 import numpy as np
 import pandas as pd
-from astropy.table import Table, vstack
+from astropy.table import Table, join, vstack
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import AlgorithmError
 from lsst.pipe.base import connectionTypes as ct
@@ -165,6 +165,7 @@ class SourceObjectTableAnalysisConnections(
         "inputName": "sourceTable_visit",
         "inputCoaddName": "deep",
         "associatedSourcesInputName": "isolated_star_presources",
+        "associatedSourceIdsInputName": "isolated_star_presource_associations",
         "outputName": "sourceObjectTable",
     },
 ):
@@ -186,6 +187,16 @@ class SourceObjectTableAnalysisConnections(
         deferGraphConstraint=True,
     )
 
+    associatedSourceIds = ct.Input(
+        doc="Table containing unique ids for the associated sources",
+        name="{associatedSourceIdsInputName}",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        multiple=True,
+        dimensions=("instrument", "skymap", "tract"),
+        deferGraphConstraint=True,
+    )
+
     refCat = ct.Input(
         doc="Catalog of positions to use as reference.",
         name="objectTable",
@@ -197,9 +208,9 @@ class SourceObjectTableAnalysisConnections(
     )
     astrometricCorrectionCatalog = ct.Input(
         doc="Catalog containing proper motions and parallaxes.",
-        name="gbdesAstrometricFit_starCatalog",
-        storageClass="ArrowNumpyDict",
-        dimensions=("instrument", "skymap", "tract", "physical_filter"),
+        name="isolated_star_stellar_motions",
+        storageClass="ArrowAstropy",
+        dimensions=("instrument", "skymap", "tract"),
         multiple=True,
         deferLoad=True,
     )
@@ -289,9 +300,10 @@ class SourceObjectTableAnalysisConfig(
         default={
             "ra": "ra",
             "dec": "dec",
-            "pmRA": "pm_ra",
-            "pmDec": "pm_dec",
+            "pmRA": "raPM",
+            "pmDec": "decPM",
             "parallax": "parallax",
+            "isolated_star_id": "isolated_star_id",
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
@@ -313,6 +325,7 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
             dataId["visit"],
             inputs["data"],
             inputs["associatedSources"],
+            inputs["associatedSourceIds"],
             inputs["refCat"],
             inputs["visitTable"],
             inputs["astrometricCorrectionCatalog"],
@@ -329,7 +342,7 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         isolatedSources : `astropy.table.Table`
             Catalog of sources which will be modified in place with the
             astrometric corrections.
-        astrometricCorrectionCatalog : `pd.DataFrame`
+        astrometricCorrectionCatalog : `astropy.table.Table`
             Catalog with proper motion and parallax information.
         visitTable : `pd.DataFrame`
             Catalog containing the epoch for the visit corresponding to the
@@ -351,35 +364,41 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         # edge.
         targetEpochs[~np.isfinite(targetEpochs)] = sourceMjd
 
-        with Matcher(isolatedSources["coord_ra"], isolatedSources["coord_dec"]) as m:
-            idx, i1, i2, d = m.query_radius(
-                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["ra"]].to_numpy(),
-                astrometricCorrectionCatalog[self.config.astrometricCorrectionParameters["dec"]].to_numpy(),
-                self.config.correctionsMatchingRadius / 3600,
-                return_indices=True,
-            )
+        # Get the stellar motion catalog into the right format:
+        for key, value in self.config.astrometricCorrectionParameters.items():
+            astrometricCorrectionCatalog.rename_column(value, key)
+        astrometricCorrectionCatalog["ra"] *= u.degree
+        astrometricCorrectionCatalog["dec"] *= u.degree
+        astrometricCorrectionCatalog["pmRA"] *= u.mas / u.yr
+        astrometricCorrectionCatalog["pmDec"] *= u.mas / u.yr
+        astrometricCorrectionCatalog["parallax"] *= u.mas
 
-        params = self.config.astrometricCorrectionParameters
-        pmDf = Table(
-            {
-                "ra": astrometricCorrectionCatalog[params["ra"]].to_numpy() * u.degree,
-                "dec": astrometricCorrectionCatalog[params["dec"]].to_numpy() * u.degree,
-                "pmRA": astrometricCorrectionCatalog[params["pmRA"]].to_numpy() * u.mas / u.yr,
-                "pmDec": astrometricCorrectionCatalog[params["pmDec"]].to_numpy() * u.mas / u.yr,
-                "parallax": astrometricCorrectionCatalog[params["parallax"]].to_numpy() * u.mas,
-            }
+        joinedData = join(
+            isolatedSources[["isolated_star_id"]],
+            astrometricCorrectionCatalog,
+            keys="isolated_star_id",
+            join_type="left",
+            keep_order=True,
+            metadata_conflicts="silent",
         )
+        joinedData["MJD"] = astropy.time.Time(sourceMjd, format="mjd", scale="tai")
 
-        pmDf["MJD"] = astropy.time.Time(sourceMjd, format="mjd", scale="tai")
         raCorrection, decCorrection = calculate_apparent_motion(
-            pmDf[i2], astropy.time.Time(targetEpochs[i1], format="mjd", scale="tai")
+            joinedData, astropy.time.Time(targetEpochs, format="mjd", scale="tai")
         )
 
-        isolatedSources["coord_ra"][i1] -= raCorrection.value
-        isolatedSources["coord_dec"][i1] -= decCorrection.value
+        isolatedSources["coord_ra"] -= raCorrection.value
+        isolatedSources["coord_dec"] -= decCorrection.value
 
     def prepareAssociatedSources(
-        self, visit, data, associatedSourceRefs, refCats, visitTable, astrometricCorrectionCatalog
+        self,
+        visit,
+        data,
+        associatedSourceRefs,
+        associatedSourceIdRefs,
+        refCats,
+        visitTable,
+        astrometricCorrectionCatalog,
     ):
         """Match isolated sources with reference objects and shift the sources
         to the object epochs if `self.config.applyAstrometricCorrections` is
@@ -399,17 +418,27 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         visitTable : `pd.DataFrame`
             Catalog containing the epoch for the visit corresponding to the
             isolatedSources.
-        astrometricCorrectionCatalog : `pd.DataFrame`
+        astrometricCorrectionCatalog : `astropy.table.Table`
             Catalog with proper motion and parallax information.
         """
         isolatedSources = []
+        associatedSourceIds = {
+            ref.dataId["tract"]: ref.get(parameters={"columns": ["isolated_star_id"]})
+            for ref in associatedSourceIdRefs
+        }
         for associatedSourceRef in associatedSourceRefs:
+            tract = associatedSourceRef.dataId["tract"]
             associatedSources = associatedSourceRef.get(
-                parameters={"columns": ["visit", "source_row", "sourceId"]}
+                parameters={"columns": ["visit", "sourceId", "obj_index"]}
             )
+            index = associatedSources["obj_index"]
+            associatedSources["isolated_star_id"] = associatedSourceIds[tract]["isolated_star_id"][index]
+
             visit_sources = associatedSources[associatedSources["visit"] == visit]
             try:
-                isolatedSources.append(data.loc[visit_sources["sourceId"]])
+                visitData = data.loc[visit_sources["sourceId"]]
+                visitData["isolated_star_id"] = visit_sources["isolated_star_id"]
+                isolatedSources.append(visitData)
             except KeyError:
                 raise IndexMismatchError()
         isolatedSources = vstack(isolatedSources)
@@ -496,8 +525,8 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
                 pmCat = astrometricCorrectionCatalogRef.get(
                     parameters={"columns": self.config.astrometricCorrectionParameters.values()}
                 )
-                pmCats.append(pd.DataFrame(pmCat))
-            inputs["astrometricCorrectionCatalog"] = pd.concat(pmCats)
+                pmCats.append(pmCat)
+            inputs["astrometricCorrectionCatalog"] = vstack(pmCats, metadata_conflicts="silent")
         else:
             inputs["astrometricCorrectionCatalog"] = None
             inputs["visitTable"] = None

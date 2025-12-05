@@ -446,10 +446,10 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
         if len(isolatedSources) == 0:
             raise pipeBase.NoWorkFound(f"No isolated sources found for visit {visit}")
 
-        with Matcher(isolatedSources["coord_ra"], isolatedSources["coord_dec"]) as m:
+        with Matcher(np.asarray(isolatedSources["coord_ra"]), np.asarray(isolatedSources["coord_dec"])) as m:
             idx, isolatedMatchIndices, refMatchIndices, dists = m.query_radius(
-                refCats[self.config.ra_column].values,
-                refCats[self.config.dec_column].values,
+                np.asarray(refCats[self.config.ra_column]),
+                np.asarray(refCats[self.config.dec_column]),
                 self.config.refCatMatchingRadius / 3600.0,
                 return_indices=True,
             )

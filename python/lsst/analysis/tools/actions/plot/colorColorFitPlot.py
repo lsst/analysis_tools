@@ -290,14 +290,14 @@ class ColorColorFitPlot(PlotAction):
         # Try using a Gaussian KDE to get color bars showing number density. If
         # there are not enough points for KDE, use a constant color.
         zUsed = np.ones(np.sum(fitPoints))
-        if len(xyUsed.ravel()) > 0:
+        if len(xyUsed.ravel()) >= 2:
             try:
                 zUsed = scipy.stats.gaussian_kde(xyUsed)(xyUsed)
             except np.linalg.LinAlgError:
                 pass
 
         zNotUsed = np.ones(np.sum(~fitPoints & goodPoints))
-        if len(xyNotUsed.ravel()) > 0:
+        if len(xyNotUsed.ravel()) >= 2:
             try:
                 zNotUsed = scipy.stats.gaussian_kde(xyNotUsed)(xyNotUsed)
             except np.linalg.LinAlgError:

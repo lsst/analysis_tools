@@ -39,13 +39,13 @@ class AstrometryStatistics(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
-        self.process.calculateActions.minPixelScale = MinAction(vectorKey='pixelScale')
-        self.process.calculateActions.maxPixelScale = MaxAction(vectorKey='pixelScale')
-        self.process.calculateActions.FullRangePixelScale = FullRangeAction(vectorKey='pixelScale')
-        self.process.calculateActions.medianPixelScale = MedianAction(vectorKey='pixelScale')
-        self.process.calculateActions.sigmaMADPixelScale = SigmaMadAction(vectorKey='pixelScale')
-        self.process.calculateActions.meanPixelScale = MeanAction(vectorKey='pixelScale')
-        self.process.calculateActions.stdevPixelScale = StdevAction(vectorKey='pixelScale')
+        self.process.calculateActions.minPixelScale = MinAction(vectorKey="pixelScale")
+        self.process.calculateActions.maxPixelScale = MaxAction(vectorKey="pixelScale")
+        self.process.calculateActions.FullRangePixelScale = FullRangeAction(vectorKey="pixelScale")
+        self.process.calculateActions.medianPixelScale = MedianAction(vectorKey="pixelScale")
+        self.process.calculateActions.sigmaMADPixelScale = SigmaMadAction(vectorKey="pixelScale")
+        self.process.calculateActions.meanPixelScale = MeanAction(vectorKey="pixelScale")
+        self.process.calculateActions.stdevPixelScale = StdevAction(vectorKey="pixelScale")
 
         self.produce.metric.units = {
             "minPixelScale": "arcsec",

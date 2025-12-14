@@ -73,6 +73,8 @@ class CalexpSummaryMetrics(AnalysisTool):
         "psfApFluxDelta": "",
         "psfApCorrSigmaScaledDelta": "",
         "maxDistToNearestPsf": "pixel",
+        "starEMedian": "",
+        "starUnNormalizedEMedian": "",  # pixel**2
         "effTime": "s",
         "effTimePsfSigmaScale": "",
         "effTimeSkyBgScale": "",

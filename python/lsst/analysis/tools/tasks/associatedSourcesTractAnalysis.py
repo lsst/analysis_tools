@@ -26,13 +26,13 @@ import astropy.time
 import astropy.units as u
 import lsst.pex.config as pexConfig
 import numpy as np
-from astropy.table import join, vstack
+from astropy.table import Table, hstack
 from lsst.daf.butler import DatasetProvenance
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
-from lsst.geom import Box2D
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from scipy.spatial import KDTree
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -169,8 +169,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
-        for srcCat in sourceCatalogs:
-            DatasetProvenance.strip_provenance_from_flat_dict(srcCat.meta)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSourceIds.meta)
 
@@ -179,26 +177,53 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         index = associatedSources["obj_index"]
         associatedSources["isolated_star_id"] = associatedSourceIds["isolated_star_id"][index]
 
-        # Keep only sources with associations
-        sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
-        dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
+        trimmedSourceCatalogs = []
+        fullCatLen = 0
+        # It would be preferable to use astropy's built in functions
+        # but they are too slow so we have this wonderful masterpiece
+        # Which is still not fast but two thirds of the time is the butler get
+        reshapedAssocSources = associatedSources["sourceId"].reshape(len(associatedSources), 1)
+        colsNeeded = list(self.collectInputNames())
+        # Only get the columns needed for the source catalogues.
+        # The isolated_star_id and the obj_index are added later
+        # from other tables so remove these from the list. Also
+        # add the coord_ra and coord_dec as well because this bit
+        # of code needs it even if it isn't requested by a
+        # downstream atool.
+        if "isolated_star_id" in colsNeeded:
+            colsNeeded.remove("isolated_star_id")
+        if "obj_index" in colsNeeded:
+            colsNeeded.remove("obj_index")
+        colsNeeded += ["sourceId", "coord_ra", "coord_dec"]
+        for sourceCatalogRef in sourceCatalogs:
+            sourceCatalog = sourceCatalogRef.get(parameters={"columns": set(colsNeeded)})
+            DatasetProvenance.strip_provenance_from_flat_dict(sourceCatalog.meta)
+            reshapedSourceCat = sourceCatalog["sourceId"].reshape(len(sourceCatalog), 1)
+
+            tree = KDTree(reshapedSourceCat)
+            _, inds = tree.query(reshapedAssocSources, distance_upper_bound=0.1)
+            ids = inds < len(sourceCatalog)
+
+            # Keep only the sources in groups that are fully contained within
+            # the tract by matching to the associated sources table
+            trimmedSourceCatalogs.append(hstack([associatedSources[ids], sourceCatalog[inds[ids]]]))
+            fullCatLen += np.sum(ids)
+
+        columns = trimmedSourceCatalogs[0].columns
+        dtypes = trimmedSourceCatalogs[0].dtype
+        zeros = np.zeros((fullCatLen, len(columns)))
+        fullCat = Table(data=zeros, names=columns, dtype=dtypes)
+        n = 0
+        for trimmedSourceCatalog in trimmedSourceCatalogs:
+            fullCat[n : n + len(trimmedSourceCatalog)] = trimmedSourceCatalog
+            n += len(trimmedSourceCatalog)
 
         if astrometricCorrectionCatalog is not None:
-            self.applyAstrometricCorrections(dataJoined, astrometricCorrectionCatalog, visitTable)
+            self.applyAstrometricCorrections(fullCat, astrometricCorrectionCatalog, visitTable)
 
-        # Determine which sources are contained in tract
-        ra = np.radians(dataJoined["coord_ra"])
-        dec = np.radians(dataJoined["coord_dec"])
-        box, wcs = self.getBoxWcs(skymap, tract)
-        box = Box2D(box)
-        x, y = wcs.skyToPixelArray(ra, dec)
-        boxSelection = box.contains(x, y)
-
-        # Keep only the sources in groups that are fully contained within the
-        # tract
-        dataFiltered = dataJoined[boxSelection]
-
-        return dataFiltered
+        # Keep only finite ras and decs
+        keep = np.isfinite(fullCat["coord_ra"]) & np.isfinite(fullCat["coord_dec"])
+        return fullCat[keep]
 
     def applyAstrometricCorrections(self, dataJoined, astrometricCorrectionCatalog, visitTable):
         """Use proper motion/parallax catalogs to shift positions to median
@@ -228,13 +253,17 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         astrometricCorrectionCatalog["pmDec"] *= u.mas / u.yr
         astrometricCorrectionCatalog["parallax"] *= u.mas
 
-        dataWithPM = join(
-            dataJoined,
-            astrometricCorrectionCatalog,
-            keys="isolated_star_id",
-            join_type="left",
-            keep_order=True,
+        # Again using astropy join would have been great but this is four
+        # times faster
+        lenAstroCorrCat = len(astrometricCorrectionCatalog)
+        tree = KDTree(astrometricCorrectionCatalog["isolated_star_id"].reshape(lenAstroCorrCat, 1))
+        _, inds = tree.query(
+            dataJoined["isolated_star_id"].reshape(len(dataJoined), 1), distance_upper_bound=0.5
         )
+        ids = inds < lenAstroCorrCat
+
+        dataJoined.remove_columns(["ra", "dec"])
+        dataWithPM = hstack([dataJoined[ids], astrometricCorrectionCatalog[inds[ids]]])
 
         mjds = visitTable.loc[dataWithPM["visit"]]["expMidptMJD"]
         times = astropy.time.Time(mjds, format="mjd", scale="tai")
@@ -255,11 +284,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         for item in ["obj_index", "isolated_star_id"]:
             if item in names:
                 names.remove(item)
-
-        sourceCatalogs = []
-        for handle in inputs["sourceCatalogs"]:
-            sourceCatalogs.append(self.loadData(handle, names))
-        inputs["sourceCatalogs"] = sourceCatalogs
 
         if self.config.applyAstrometricCorrections:
             astrometricCorrections = inputs["astrometricCorrectionCatalog"].get(

@@ -33,6 +33,7 @@ from lsst.geom import Box2D
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+import time
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -169,36 +170,67 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
+        t0 = time.time()
         for srcCat in sourceCatalogs:
             DatasetProvenance.strip_provenance_from_flat_dict(srcCat.meta)
+        t1 = time.time()
+        print("After srcCat strip", t1 - t0)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSourceIds.meta)
+        t2 = time.time()
+        print("After assoc strip", t2 - t1)
 
         # associatedSource["obj_index"] refers to the corresponding index (row)
         # in associatedSourceIds.
         index = associatedSources["obj_index"]
         associatedSources["isolated_star_id"] = associatedSourceIds["isolated_star_id"][index]
+        t3 = time.time()
+        print("After ids", t3 - t2)
 
-        # Keep only sources with associations
-        sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
+        box, wcs = self.getBoxWcs(skymap, tract)
+        box = Box2D(box)
+        trimmedSourceCatalogs = []
+        for sourceCatalog in sourceCatalogs:
+            # Determine which sources are contained in tract
+            ra = np.radians(sourceCatalog["coord_ra"])
+            dec = np.radians(sourceCatalog["coord_dec"])
+            x, y = wcs.skyToPixelArray(ra, dec)
+            boxSelection = box.contains(x, y)
+
+            # Keep only the sources in groups that are fully contained within the
+            # tract
+            trimmedSourceCatalogs.append(sourceCatalog[boxSelection])
+
+        t4 = time.time()
+        print("After trimming", t4 - t3)
+        print(len(trimmedSourceCatalogs))
+        trimmedSourceCatalogs = trimmedSourceCatalogs[::10]
+        sourceCatalogStack = vstack(trimmedSourceCatalogs, join_type="exact")
+
+        #  Keep only sources with associations
+        #sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
+        t5 = time.time()
+        print("After vstack", t5 - t4)
         dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
 
+        t6 = time.time()
+        print("After join", t6 - t5)
         if astrometricCorrectionCatalog is not None:
             self.applyAstrometricCorrections(dataJoined, astrometricCorrectionCatalog, visitTable)
 
         # Determine which sources are contained in tract
-        ra = np.radians(dataJoined["coord_ra"])
-        dec = np.radians(dataJoined["coord_dec"])
-        box, wcs = self.getBoxWcs(skymap, tract)
-        box = Box2D(box)
-        x, y = wcs.skyToPixelArray(ra, dec)
-        boxSelection = box.contains(x, y)
+        #ra = np.radians(dataJoined["coord_ra"])
+        #dec = np.radians(dataJoined["coord_dec"])
+        #box, wcs = self.getBoxWcs(skymap, tract)
+        #box = Box2D(box)
+        #x, y = wcs.skyToPixelArray(ra, dec)
+        #boxSelection = box.contains(x, y)
 
-        # Keep only the sources in groups that are fully contained within the
-        # tract
-        dataFiltered = dataJoined[boxSelection]
+        # # Keep only the sources in groups that are fully contained within the
+        # # tract
+        #dataFiltered = dataJoined[boxSelection]
 
-        return dataFiltered
+        return dataJoined
 
     def applyAstrometricCorrections(self, dataJoined, astrometricCorrectionCatalog, visitTable):
         """Use proper motion/parallax catalogs to shift positions to median
@@ -220,6 +252,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             visitTable.set_index("visitId", inplace=True)
 
         # Get the stellar motion catalog into the right format:
+        t1 = time.time()
         for key, value in self.config.astrometricCorrectionParameters.items():
             astrometricCorrectionCatalog.rename_column(value, key)
         astrometricCorrectionCatalog["ra"] *= u.degree
@@ -228,6 +261,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         astrometricCorrectionCatalog["pmDec"] *= u.mas / u.yr
         astrometricCorrectionCatalog["parallax"] *= u.mas
 
+        t2 = time.time()
+        print("After units", t2 - t1)
         dataWithPM = join(
             dataJoined,
             astrometricCorrectionCatalog,
@@ -236,12 +271,20 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             keep_order=True,
         )
 
+        t3 = time.time()
+        print("After join", t3 - t2)
         mjds = visitTable.loc[dataWithPM["visit"]]["expMidptMJD"]
+        t4 = time.time()
+        print("After mjds", t4 - t3)
         times = astropy.time.Time(mjds, format="mjd", scale="tai")
         dataWithPM["MJD"] = times
         medianMJD = astropy.time.Time(np.median(mjds), format="mjd", scale="tai")
+        t5 = time.time()
+        print("After astropy.time.time", t5 - t4)
 
         raCorrection, decCorrection = calculate_apparent_motion(dataWithPM, medianMJD)
+        t6 = time.time()
+        print("After calculate apparent motion", t6 - t5)
 
         dataJoined["coord_ra"] = dataWithPM["coord_ra"] - raCorrection.value
         dataJoined["coord_dec"] = dataWithPM["coord_dec"] - decCorrection.value
@@ -282,6 +325,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         data = self.callback(inputs, dataId)
 
+        print("After callback")
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
+        print("After run")
         self.putByBand(butlerQC, outputs, outputRefs)

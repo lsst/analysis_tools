@@ -28,6 +28,9 @@ from ..actions.scalar import (
     MeanAction,
     StdevAction,
 )
+from ..actions.vector import DivideVector, AngularSeparation
+from ..actions.vector import DivideVector
+
 from ..interfaces import AnalysisTool
 
 __all__ = ("AstrometryStatistics",)
@@ -39,15 +42,40 @@ class AstrometryStatistics(AnalysisTool):
     def setDefaults(self):
         super().setDefaults()
 
+        self.process.buildActions.cornersep = AngularSeparation(raKey_A="raCorners_0",
+                                                                decKey_A="decCorners_0",
+                                                                raKey_B="raCorners_2",
+                                                                decKey_B="decCorners_2",
+                                                                outputUnit="arcminute")
+        self.process.buildActions.ratio = DivideVector()
+        self.process.buildActions.ratio.actionA = AngularSeparation(raKey_A="raCorners_0",
+                                                                    decKey_A="decCorners_0",
+                                                                    raKey_B="raCorners_2",
+                                                                    decKey_B="decCorners_2",
+                                                                    outputUnit="arcminute")
+        self.process.buildActions.ratio.actionB = AngularSeparation(raKey_A="raCorners_1",
+                                                                    decKey_A="decCorners_1",
+                                                                    raKey_B="raCorners_3",
+                                                                    decKey_B="decCorners_3",
+                                                                    outputUnit="arcminute")
+
+        self.process.calculateActions.minCornerSeparation = MinAction(vectorKey='cornersep')
+        self.process.calculateActions.maxCornerSeparation = MaxAction(vectorKey='cornersep')
+        self.process.calculateActions.minCornerSeparationRatio = MinAction(vectorKey='ratio')
+        self.process.calculateActions.maxCornerSeparationRatio = MaxAction(vectorKey='ratio')
         self.process.calculateActions.minPixelScale = MinAction(vectorKey="pixelScale")
         self.process.calculateActions.maxPixelScale = MaxAction(vectorKey="pixelScale")
-        self.process.calculateActions.FullRangePixelScale = FullRangeAction(vectorKey="pixelScale")
+        self.process.calculateActions.fullRangePixelScale = FullRangeAction(vectorKey="pixelScale")
         self.process.calculateActions.medianPixelScale = MedianAction(vectorKey="pixelScale")
         self.process.calculateActions.sigmaMADPixelScale = SigmaMadAction(vectorKey="pixelScale")
         self.process.calculateActions.meanPixelScale = MeanAction(vectorKey="pixelScale")
         self.process.calculateActions.stdevPixelScale = StdevAction(vectorKey="pixelScale")
 
         self.produce.metric.units = {
+            "minCornerSeparation": "arcmin",
+            "maxCornerSeparation": "arcmin",
+            "minCornerSeparationRatio": "",
+            "maxCornerSeparationRatio": "",
             "minPixelScale": "arcsec",
             "maxPixelScale": "arcsec",
             "medianPixelScale": "arcsec",

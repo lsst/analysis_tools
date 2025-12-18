@@ -22,6 +22,9 @@ from __future__ import annotations
 
 __all__ = ("GenericTableAnalysisConfig", "GenericTableAnalysisTask")
 
+import numpy as np
+from astropy.table import Column
+
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import connectionTypes as cT
 from lsst.skymap import BaseSkyMap
@@ -108,7 +111,12 @@ class GenericTableAnalysisTask(AnalysisPipelineTask):
         if storageClassName == "ArrowAstropy":
             data = super().loadData(handle)
         elif storageClassName == "ExposureCatalog":
-            data = handle.get()
+            data = handle.get().asAstropy()
+            for colname in list(data.columns.keys()):
+                if isinstance(data[colname][0], np.ndarray):
+                    for index in np.arange(len(data[colname][0])):
+                        values = [row[index] for row in data[colname]]
+                        data.add_column(Column(name=f'{colname}_{index}', data=values))
         else:
             raise ValueError(f"Unsupported input table storage class: {storageClassName}")
 

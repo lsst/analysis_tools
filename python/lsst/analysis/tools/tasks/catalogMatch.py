@@ -88,7 +88,7 @@ class CatalogMatchConfig(pipeBase.PipelineTaskConfig, pipelineConnections=Catalo
 
     epoch = pexConfig.Field[float](
         doc="Epoch to which reference objects are shifted.",
-        default=2015.0,
+        default=2024.9,
     )
 
     filterNames = pexConfig.ListField[str](

@@ -33,6 +33,7 @@ __all__ = (
 
 from typing import cast
 
+import numpy
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
@@ -90,16 +91,24 @@ class SingleValueRepacker(KeyedDataAction):
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
         repackedData = {}
-        uniquePanelKeys = list(set(data[self.panelKey]))
 
-        # Loop over data vector to repack information as it is expected.
+        if isinstance(data[self.panelKey], numpy.ma.MaskedArray):
+            good = ~data[self.panelKey].mask
+            uniquePanelKeys = numpy.unique(data[self.panelKey])
+            uniquePanelKeys = uniquePanelKeys.data[~uniquePanelKeys.mask].data
+        else:
+            good = numpy.ones(len(data[self.panelKey]), dtype=bool)
+            uniquePanelKeys = list(set(data[self.panelKey]))
+
+        # Loop over data vector to repack information as
+        # it is expected.
         for i in range(len(uniquePanelKeys)):
             repackedData[f"{uniquePanelKeys[i]}_x"] = []
             repackedData[f"{uniquePanelKeys[i]}"] = []
 
-        panelVec = cast(Vector, data[self.panelKey])
-        dataVec = cast(Vector, data[self.dataKey])
-        quantityVec = cast(Vector, data[self.quantityKey])
+        panelVec = cast(Vector, data[self.panelKey][good])
+        dataVec = cast(Vector, data[self.dataKey][good])
+        quantityVec = cast(Vector, data[self.quantityKey][good])
 
         for i in range(len(panelVec)):
             repackedData[f"{panelVec[i]}_x"].append(dataVec[i])

@@ -127,7 +127,10 @@ class ConsolidateResourceUsageTask(PipelineTask):
                 ).reset_index()
                 df["task"] = input_name.replace("_resource_usage", "")
                 df["quanta"] = len(ru_table)
-                df["integrated_runtime"] = ru_table["run_time"].sum()
+                df["integrated_runtime_hrs"] = ru_table["run_time"].sum() / 3600.0
+                # USDF nodes have 120 CPU and 480GiB RAM for ~4GiB per CPU
+                integrated = (ru_table["run_time"] * ru_table["memory"]).sum()
+                df["integrated_allocated_core_hrs"] = integrated / 4 / 1024**3 / 3600.0
 
                 quantiles.append(
                     df[
@@ -139,7 +142,8 @@ class ConsolidateResourceUsageTask(PipelineTask):
                             "init_time",
                             "run_time",
                             "wall_time",
-                            "integrated_runtime",
+                            "integrated_runtime_hrs",
+                            "integrated_allocated_core_hrs",
                         ]
                     ]
                 )
@@ -148,7 +152,6 @@ class ConsolidateResourceUsageTask(PipelineTask):
         full_quantiles["percentile"] = (full_quantiles["index"] * 100).astype(int)
         full_quantiles["percentile_name"] = "p" + full_quantiles["percentile"].astype(str).str.zfill(3)
         full_quantiles["memoryGB"] = full_quantiles["memory"] / 1024 / 1024 / 1024
-        full_quantiles["integrated_runtime_hrs"] = full_quantiles["integrated_runtime"] / 3600.0
         memoryGB = pd.pivot_table(
             full_quantiles, values="memoryGB", columns=["percentile_name"], index=["task"]
         ).add_prefix("mem_GB_")
@@ -170,7 +173,7 @@ class ConsolidateResourceUsageTask(PipelineTask):
             right_on="task",
         )
         memrun = pd.merge(
-            full_quantiles[["task", "quanta", "integrated_runtime_hrs"]]
+            full_quantiles[["task", "quanta", "integrated_runtime_hrs", "integrated_allocated_core_hrs"]]
             .drop_duplicates()
             .sort_values("task"),
             memrun,

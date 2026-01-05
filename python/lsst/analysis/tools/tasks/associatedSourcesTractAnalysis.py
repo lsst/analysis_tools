@@ -26,13 +26,14 @@ import astropy.time
 import astropy.units as u
 import lsst.pex.config as pexConfig
 import numpy as np
-from astropy.table import join, vstack
+from astropy.table import join, Table, vstack, hstack
 from lsst.daf.butler import DatasetProvenance
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.geom import Box2D
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from scipy.spatial import KDTree
 import time
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -187,50 +188,43 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         t3 = time.time()
         print("After ids", t3 - t2)
 
-        box, wcs = self.getBoxWcs(skymap, tract)
-        box = Box2D(box)
         trimmedSourceCatalogs = []
+        trimmedAssocSources = []
+        fullCatLen = 0
+        tree = KDTree(associatedSources["sourceId"].reshape(len(associatedSources), 1))
         for sourceCatalog in sourceCatalogs:
-            # Determine which sources are contained in tract
-            ra = np.radians(sourceCatalog["coord_ra"])
-            dec = np.radians(sourceCatalog["coord_dec"])
-            x, y = wcs.skyToPixelArray(ra, dec)
-            boxSelection = box.contains(x, y)
+            _, inds = tree.query(sourceCatalog["sourceId"].reshape(len(sourceCatalog), 1),
+                                distance_upper_bound=0.5)
+            ids = (inds < len(associatedSources))
 
             # Keep only the sources in groups that are fully contained within the
-            # tract
-            trimmedSourceCatalogs.append(sourceCatalog[boxSelection])
+            # tract by matching to the associated sources table
+            trimmedSourceCatalogs.append(hstack([sourceCatalog[ids], associatedSources[inds[ids]]]))
+            fullCatLen += np.sum(ids)
 
         t4 = time.time()
         print("After trimming", t4 - t3)
-        print(len(trimmedSourceCatalogs))
-        trimmedSourceCatalogs = trimmedSourceCatalogs[::10]
-        sourceCatalogStack = vstack(trimmedSourceCatalogs, join_type="exact")
+        columns = trimmedSourceCatalogs[0].columns
+        dtypes = trimmedSourceCatalogs[0].dtype
+        zeros = np.zeros((fullCatLen, len(columns)))
+        fullCat = Table(data=zeros, names=columns, dtype=dtypes)
+        n = 0
+        for sourceCatalog in trimmedSourceCatalogs:
+            fullCat[n:n+len(sourceCatalog)] = sourceCatalog
+            n += len(sourceCatalog)
 
         #  Keep only sources with associations
-        #sourceCatalogStack = vstack(sourceCatalogs, join_type="exact")
         t5 = time.time()
-        print("After vstack", t5 - t4)
-        dataJoined = join(sourceCatalogStack, associatedSources, keys="sourceId", join_type="inner")
+        print("After adding to cat", t5 - t4)
+        if astrometricCorrectionCatalog is not None:
+            self.applyAstrometricCorrections(fullCat, astrometricCorrectionCatalog, visitTable)
+
+        # Check for finite RA/Dec
+        keep = (np.isfinite(fullCat["coord_ra"]) & np.isfinite(fullCat["coord_dec"]))
 
         t6 = time.time()
-        print("After join", t6 - t5)
-        if astrometricCorrectionCatalog is not None:
-            self.applyAstrometricCorrections(dataJoined, astrometricCorrectionCatalog, visitTable)
-
-        # Determine which sources are contained in tract
-        #ra = np.radians(dataJoined["coord_ra"])
-        #dec = np.radians(dataJoined["coord_dec"])
-        #box, wcs = self.getBoxWcs(skymap, tract)
-        #box = Box2D(box)
-        #x, y = wcs.skyToPixelArray(ra, dec)
-        #boxSelection = box.contains(x, y)
-
-        # # Keep only the sources in groups that are fully contained within the
-        # # tract
-        #dataFiltered = dataJoined[boxSelection]
-
-        return dataJoined
+        print("After astrometric corrections", t6 - t5)
+        return fullCat
 
     def applyAstrometricCorrections(self, dataJoined, astrometricCorrectionCatalog, visitTable):
         """Use proper motion/parallax catalogs to shift positions to median

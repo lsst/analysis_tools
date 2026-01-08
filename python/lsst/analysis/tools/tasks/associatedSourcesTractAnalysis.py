@@ -294,8 +294,11 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
                 names.remove(item)
 
         sourceCatalogs = []
+        n = 0
         for handle in inputs["sourceCatalogs"]:
             sourceCatalogs.append(self.loadData(handle, names))
+            print(n, handle)
+            n += 1
         inputs["sourceCatalogs"] = sourceCatalogs
 
         if self.config.applyAstrometricCorrections:

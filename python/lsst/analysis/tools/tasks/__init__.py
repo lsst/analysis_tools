@@ -12,6 +12,7 @@ from .coaddDepthTableTractAnalysis import *
 from .diaFakesDetectorVisitAnalysis import *
 from .diaFakesVisitAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *
+from .diaObjectTractAnalysis import *
 from .diaSourceDetectorVisitAnalysis import *
 from .diaSourceTableTractAnalysis import *
 from .diffimKernelQuiverPlotVisit import *

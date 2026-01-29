@@ -10,6 +10,7 @@ from .coveragePlots import *
 from .deblenderMetric import *
 from .deltaSkyCorr import *
 from .diaFakeMetrics import *
+from .diaObjectPlot import *
 from .diaSolarSystemObjectMetrics import *
 from .diaSourceMetrics import *
 from .diaSourceTableTractMetrics import *

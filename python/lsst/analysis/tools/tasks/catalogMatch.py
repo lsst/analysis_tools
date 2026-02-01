@@ -366,7 +366,7 @@ class CatalogMatchTask(pipeBase.PipelineTask):
 
         return columns
 
-    def _loadRefCat(self, loaderTask, tractInfo):
+    def _loadRefCat(self, loaderTask, tractInfo, epoch=None):
         """Load the reference catalog that covers the
         catalog that is to be matched to.
 
@@ -376,6 +376,8 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             lsst.pipe.tasks.loadReferenceCatalog.loadReferenceCatalogTask
         `tractInfo` : lsst.skymap.tractInfo.ExplicitTractInfo
             The tract information to get the sky location from
+        `epoch` : `astropy.time.Time`
+            The epoch to which the reference catalog will be shifted.
 
         Returns
         -------
@@ -386,7 +388,8 @@ class CatalogMatchTask(pipeBase.PipelineTask):
         center = lsst.geom.SpherePoint(boundingCircle.getCenter())
         radius = boundingCircle.getOpeningAngle()
 
-        epoch = Time(self.config.epoch, format="decimalyear")
+        if epoch is None:
+            epoch = Time(self.config.epoch, format="decimalyear")
 
         # This is always going to return degrees.
         try:

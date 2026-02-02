@@ -31,6 +31,7 @@ import lsst.pex.config as pexConfig
 import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
+from astropy.time import Time
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
@@ -57,6 +58,14 @@ class AstrometricCatalogMatchConfig(
     bands = pexConfig.ListField[str](
         doc="The bands to persist downstream",
         default=["u", "g", "r", "i", "z", "y"],
+    )
+    extraPerBandColumns = pexConfig.ListField[str](
+        doc="Other columns to load that should be loaded for each band individually.",
+        default=["epoch"],
+    )
+    extraColumns = pexConfig.ListField[str](
+        doc="Other catalog columns to persist to downstream tasks",
+        default=["patch", "ebv", "refBand"],
     )
 
     def setDefaults(self):
@@ -91,7 +100,18 @@ class AstrometricCatalogMatchTask(CatalogMatchTask):
         )
 
         skymap = inputs.pop("skymap")
-        loadedRefCat = self._loadRefCat(loaderTask, skymap[tract])
+        # We cannot load the reference catalog at different epochs for each
+        # object. Instead use the median of the epochs corresponding to the
+        # reference band for each object.
+        refEpochs = np.array(
+            [
+                obj[obj["refBand"] + "_epoch"]
+                for obj in table
+                if not np.ma.is_masked(obj[obj["refBand"] + "_epoch"])
+            ]
+        )
+        epoch = Time(np.median(refEpochs), format="mjd")
+        loadedRefCat = self._loadRefCat(loaderTask, skymap[tract], epoch=epoch)
         outputs = self.run(targetCatalog=table, refCatalog=loadedRefCat, bands=self.config.bands)
 
         butlerQC.put(outputs, outputRefs)

@@ -26,6 +26,7 @@ from ..actions.plot.skyPlot import SkyPlot
 from ..actions.vector import LoadVector
 from ..actions.vector.selectors import ThresholdSelector
 from ..interfaces import AnalysisTool
+from ..actions.plot.calculateRange import MinMax
 
 
 class DiaObjectPlot(AnalysisTool):
@@ -52,3 +53,7 @@ class DiaObjectPlot(AnalysisTool):
         self.produce.plot.xAxisLabel = "R.A. (deg)"
         self.produce.plot.yAxisLabel = "Dec. (deg)"
         self.produce.plot.zAxisLabel = "Number of associated DiaSources"
+
+        self.produce.plot.colorbarRange = MinMax
+        self.produce.plot.plotOutlines = True
+        self.produce.plot.doBinning = False

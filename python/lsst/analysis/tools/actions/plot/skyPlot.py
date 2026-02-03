@@ -82,6 +82,12 @@ class SkyPlot(PlotAction):
         default=False,
     )
 
+    doBinning = Field[bool](
+        doc="Use nPointBinThresh to implement binning.",
+        optional=True,
+        default=True,
+    )
+
     colorbarRange = ConfigurableActionField[VectorAction](
         doc="Action to calculate the min and max of the colorbar range.",
         default=Med2Mad,
@@ -377,6 +383,12 @@ class SkyPlot(PlotAction):
                 showExtremeOutliers = False
             else:
                 showExtremeOutliers = self.showExtremeOutliers
+
+            if self.doBinning:
+                nPointBinThresh = 5000
+            else:  # Make a true scatter plot (plot all the points)
+                nPointBinThresh = len(xs)+1
+
             plotOut = plotProjectionWithBinning(
                 ax,
                 xs,
@@ -390,6 +402,7 @@ class SkyPlot(PlotAction):
                 vmin=minColorVal,
                 vmax=maxColorVal,
                 fixAroundZero=self.fixAroundZero,
+                nPointBinThresh=nPointBinThresh,
                 isSorted=True,
                 showExtremeOutliers=showExtremeOutliers,
             )

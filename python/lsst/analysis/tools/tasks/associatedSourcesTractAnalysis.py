@@ -262,7 +262,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         )
         ids = inds < lenAstroCorrCat
 
-        dataJoined.remove_columns(["ra", "dec"])
         dataWithPM = hstack([dataJoined[ids], astrometricCorrectionCatalog[inds[ids]]])
 
         mjds = visitTable.loc[dataWithPM["visit"]]["expMidptMJD"]

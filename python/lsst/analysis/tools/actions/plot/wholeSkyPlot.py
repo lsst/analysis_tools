@@ -27,6 +27,7 @@ import importlib.resources as importResources
 from typing import Mapping, Optional
 
 import lsst.analysis.tools
+import json
 import matplotlib.patheffects as pathEffects
 import numpy as np
 import yaml
@@ -50,6 +51,9 @@ from ...math import nanSigmaMad
 from ...utils import getTractCorners
 from .plotUtils import addPlotInfo
 
+
+class AnnotatedFigure(Figure):
+    metadata: dict
 
 class WholeSkyPlot(PlotAction):
     """Plots the on sky distribution of a parameter.
@@ -202,7 +206,7 @@ class WholeSkyPlot(PlotAction):
         data: KeyedData,
         plotInfo: Optional[Mapping[str, str]] = None,
         **kwargs,
-    ) -> Figure:
+    ) -> AnnotatedFigure:
         """Make a WholeSkyPlot of the given data.
 
         Parameters
@@ -511,11 +515,29 @@ class WholeSkyPlot(PlotAction):
         # Finalize plot appearance.
         ax.grid()
         ax.set_axisbelow(True)
-        fig = addPlotInfo(fig, plotInfo)
+        fig : AnnotatedFigure = addPlotInfo(fig, plotInfo)
         fig.subplots_adjust(left=0.08, right=0.92, top=0.8, bottom=0.17, wspace=0.05)
         titleText = self.zAxisLabel.format_map(kwargs)
         if "zUnit" in data and data["zUnit"] != "":
             titleText += f" ({data['zUnit']})"
         fig.suptitle("Metric: " + titleText, fontsize=20)
+
+        def make_patch_md(patch, value, ax):
+            path = ax.transData.transform_path(patch.get_path())
+            x_path = [int(x) for x in path.vertices[:,0].tolist()]
+            y_path = [int(y) for y in path.vertices[:,1].tolist()]
+            return {"min_x": min(x_path),
+                    "max_x": max(x_path),
+                    "min_y": min(y_path),
+                    "max_y": max(y_path),
+                    "value": f"{value}"
+                   }
+
+        patch_coordinate_entries = [make_patch_md(patch, tract, ax) for (patch, tract) in
+                                    zip(patches, tracts)]
+
+        fig.metadata = {
+            "label": "Tract",
+            "boxes": json.dumps(patch_coordinate_entries)}
 
         return fig

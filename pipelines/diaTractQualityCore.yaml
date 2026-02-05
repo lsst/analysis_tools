@@ -16,3 +16,18 @@ tasks:
       atools.streakDiaSourcePlot: PlotStreakDiaSources
       python: |
         from lsst.analysis.tools.atools import *
+  makeMetricTableDiaSourceTract:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+    - connections.metricBundleName: dia_source_metrics
+      connections.outputTableName: dia_source_metrics_table
+  diaSourceWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.inputName: dia_source_metrics_table
+      connections.outputName: dia_source_metrics
+      python: |
+        from lsst.analysis.tools.atools import WholeSkyPlotTool
+        config.atools.count_all = WholeSkyPlotTool
+        config.atools.count_all.metric = "NumDiaSources_numDiaSources"
+        config.atools.count_all.parameterizedBand = False

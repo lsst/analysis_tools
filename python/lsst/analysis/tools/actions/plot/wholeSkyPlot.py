@@ -24,6 +24,7 @@ from __future__ import annotations
 __all__ = ("WholeSkyPlot",)
 
 import importlib.resources as importResources
+import json
 from typing import Mapping, Optional
 
 import lsst.analysis.tools
@@ -49,6 +50,10 @@ from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanSigmaMad
 from ...utils import getTractCorners
 from .plotUtils import addPlotInfo
+
+
+class AnnotatedFigure(Figure):
+    metadata: dict
 
 
 class WholeSkyPlot(PlotAction):
@@ -202,7 +207,7 @@ class WholeSkyPlot(PlotAction):
         data: KeyedData,
         plotInfo: Optional[Mapping[str, str]] = None,
         **kwargs,
-    ) -> Figure:
+    ) -> AnnotatedFigure:
         """Make a WholeSkyPlot of the given data.
 
         Parameters
@@ -285,7 +290,7 @@ class WholeSkyPlot(PlotAction):
             mid_decs.append((corners[0][1] + corners[2][1]) / 2)
 
         # Setup figure.
-        fig = make_figure(dpi=300, figsize=(12, 3.5))
+        fig: AnnotatedFigure = make_figure(dpi=300, figsize=(12, 3.5))
         set_rubin_plotstyle()
         gs = gridspec.GridSpec(1, 4)
         ax = fig.add_subplot(gs[:3])
@@ -511,11 +516,48 @@ class WholeSkyPlot(PlotAction):
         # Finalize plot appearance.
         ax.grid()
         ax.set_axisbelow(True)
-        fig = addPlotInfo(fig, plotInfo)
+        addPlotInfo(fig, plotInfo)
         fig.subplots_adjust(left=0.08, right=0.92, top=0.8, bottom=0.17, wspace=0.05)
         titleText = self.zAxisLabel.format_map(kwargs)
         if "zUnit" in data and data["zUnit"] != "":
             titleText += f" ({data['zUnit']})"
         fig.suptitle("Metric: " + titleText, fontsize=20)
+
+        # This saves metadata in the PNG that allows the plot-navigator
+        # to provide tract numbers and metric values on mouseover.
+        #
+        # PNG metadata is a set of string keys and string values.
+        # The WholeSkyPlot stores two keys:
+        # - label: the string describing the regions ('tract')
+        # - boxes, JSON string of a list of per-region dictionaries,
+        # where each dictionary has fields:
+        # - min_x, max_x, min_y, max_y for the pixel coordinates of
+        #   the four corners of the region
+        # - id: the identifier of the region (e.g. tract number)
+        # - value: the region's metric, as a string.
+        #
+        def make_patch_md(patch, id_field, value, ax):
+            path = ax.transData.transform_path(patch.get_path())
+            x_path = [int(x) for x in path.vertices[:, 0].tolist()]
+            y_path = [int(y) for y in path.vertices[:, 1].tolist()]
+            return {
+                "min_x": min(x_path),
+                "max_x": max(x_path),
+                "min_y": min(y_path),
+                "max_y": max(y_path),
+                "id": f"{id_field}",
+                "value": f"{value:.3}",
+            }
+
+        # After ax.set_aspect(), the figure needs to be drawn for the axes
+        # transformations to be updated to the right values.
+        fig.canvas.draw_idle()
+
+        patch_coordinate_entries = [
+            make_patch_md(patch, tract, value, ax)
+            for (patch, tract, value) in zip(patches, tracts, colBarVals)
+        ]
+
+        fig.metadata = {"label": "Tract", "boxes": json.dumps(patch_coordinate_entries)}
 
         return fig

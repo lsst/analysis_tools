@@ -357,8 +357,6 @@ class SkyPlot(PlotAction):
                 colorVals[:] = 0
             minColorVal, maxColorVal = self.colorbarRange(colorVals)
 
-            if n_xs < 5:
-                continue
             if not self.plotOutlines or "tract" not in sumStats.keys():
                 minRa = np.min(xs)
                 maxRa = np.max(xs)
@@ -369,6 +367,8 @@ class SkyPlot(PlotAction):
                     maxRa += 1e-5  # There is no reason to pick this number in particular
                 if minDec == maxDec:
                     maxDec += 1e-5  # There is no reason to pick this number in particular
+            if n_xs < 5:
+                continue
 
             if self.publicationStyle:
                 showExtremeOutliers = False

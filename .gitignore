@@ -10,6 +10,7 @@ config.log
 *.pyc
 *_wrap.cc
 *Lib.py
+__pycache__/
 
 # Built by sconsUtils
 version.py
@@ -26,6 +27,7 @@ pytest_session.txt
 # IDEs
 .idea
 .vscode
+*.swp
 
 .DS_Store
 python/*.dist-info/

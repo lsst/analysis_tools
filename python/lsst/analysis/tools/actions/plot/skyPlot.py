@@ -335,7 +335,7 @@ class SkyPlot(PlotAction):
             if not self.publicationStyle:
                 bbox = dict(facecolor="#bab0ac", alpha=0.2, edgecolor="none")
                 ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xs, ys, colorValsAny, "viridis", "All"))
+            toPlotList.append((xs, ys, colorValsAny, "viridis", ""))
 
         # Corner plot of patches showing summary stat in each
         if self.plotOutlines:
@@ -443,7 +443,10 @@ class SkyPlot(PlotAction):
                 cax = fig.add_axes([axBbox.x1, axBbox.y0, 0.04, axBbox.y1 - axBbox.y0])
                 fig.colorbar(plotOut, cax=cax)
 
-            colorBarLabel = f"{self.zAxisLabel}: {label}"
+            if len(label) > 0:
+                colorBarLabel = f"{self.zAxisLabel}: {label}"
+            else:
+                colorBarLabel = f"{self.zAxisLabel}"
             text = cax.text(
                 0.5,
                 0.5,

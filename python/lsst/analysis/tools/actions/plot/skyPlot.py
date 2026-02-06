@@ -351,6 +351,9 @@ class SkyPlot(PlotAction):
             ys = ys[finite]
             colorVals = colorVals[finite]
             n_xs = len(xs)
+            if n_xs == 0:
+                continue
+
             # colorVal column is unusable so zero it out
             # This should be obvious on the plot
             if not any(np.isfinite(colorVals)):

@@ -78,6 +78,16 @@ class SkyPlot(PlotAction):
 
     plotName = Field[str](doc="The name for the plot.", optional=False)
 
+    alpha = Field[float](
+        doc="Transparency for scatter plot points.",
+        default=1.0,
+    )
+
+    scatPtSize = Field[float](
+        doc="Marker size for scatter plot points.",
+        default=7,
+    )
+
     fixAroundZero = Field[bool](
         doc="Fix the colorbar to be symmetric around zero.",
         default=False,
@@ -395,7 +405,13 @@ class SkyPlot(PlotAction):
             if self.doBinning:
                 nPointBinThresh = 5000
             else:  # Make a true scatter plot (plot all the points)
-                nPointBinThresh = len(xs)+1
+                nPointBinThresh = len(xs) + 1
+
+            # If transparency is being used, point edgecolor matches facecolor
+            if self.alpha == 1.0:
+                edgecolor = "white"
+            else:
+                edgecolor = "face"
 
             plotOut = plotProjectionWithBinning(
                 ax,
@@ -409,10 +425,13 @@ class SkyPlot(PlotAction):
                 maxDec,
                 vmin=minColorVal,
                 vmax=maxColorVal,
+                alpha=self.alpha,
+                edgecolor=edgecolor,
                 fixAroundZero=self.fixAroundZero,
                 nPointBinThresh=nPointBinThresh,
                 isSorted=True,
                 showExtremeOutliers=showExtremeOutliers,
+                scatPtSize=self.scatPtSize,
             )
             ax.set_aspect("equal")
             if not self.publicationStyle:

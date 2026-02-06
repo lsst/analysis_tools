@@ -242,6 +242,13 @@ class SkyPlot(PlotAction):
         """
 
         set_rubin_plotstyle()
+
+        # 'plotName' by default is constructed from the attribute specified in
+        # 'atools.<attribute>' in the pipeline YAML. If the atool sets
+        # self.produce.plot.plotName, it will override this default.
+        if self.plotName:
+            plotInfo["plotName"] = self.plotName
+
         fig = make_figure()
         ax = fig.add_subplot(111)
 

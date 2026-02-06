@@ -266,7 +266,10 @@ def parsePlotInfo(plotInfo: Mapping[str, str]) -> str:
     for band in plotInfo["bands"]:
         bandText += band + ", "
     bandsText = f", Bands: {bandText[:-2]}"
-    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+    if (photocalibDataset != "None") or (astroDataset != "None"):
+        infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+    else:
+        infoText = f"\n{run}{tableType}{dataIdText}{bandsText}"
 
     # Find S/N and mag keys, if present.
     snKeys = []

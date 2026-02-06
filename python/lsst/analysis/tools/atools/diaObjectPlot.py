@@ -22,11 +22,11 @@ from __future__ import annotations
 
 __all__ = ("DiaObjectPlot",)
 
-from ..actions.plot.skyPlot import SkyPlot
-from ..actions.vector import LoadVector
-from ..actions.vector.selectors import ThresholdSelector
-from ..interfaces import AnalysisTool
 from ..actions.plot.calculateRange import MinMax
+from ..actions.plot.skyPlot import SkyPlot
+from ..actions.vector import DownselectVector, LoadVector
+from ..actions.vector.selectors import FiniteSelector, ThresholdSelector
+from ..interfaces import AnalysisTool
 
 
 class DiaObjectPlot(AnalysisTool):
@@ -40,15 +40,26 @@ class DiaObjectPlot(AnalysisTool):
         self.process.buildActions.y = LoadVector(vectorKey="dec")
         self.process.buildActions.z = LoadVector(vectorKey="nDiaSources")
 
-        # statMask is required for SkyPlot, so just select everything
-        self.process.buildActions.statMask = ThresholdSelector()
-        self.process.buildActions.statMask.vectorKey = "nDiaSources"
-        self.process.buildActions.statMask.threshold = 0
-        self.process.buildActions.statMask.op = "gt"
+        # statMask is required for SkyPlot
+        # it computes the nanMedian and nanSigmaMad for the z array,
+        # with some selector applied
+        self.process.buildActions.statMask = FiniteSelector(vectorKey="nDiaSources")
+
+        # only plot diaObjects composed of 5 or fewer diaSources
+        self.process.filterActions.z = DownselectVector(vectorKey="z")
+        self.process.filterActions.z.selector = ThresholdSelector(
+            vectorKey="nDiaSources", op="le", threshold=5
+        )
+        self.process.filterActions.x = DownselectVector(
+            vectorKey="x", selector=self.process.filterActions.z.selector
+        )
+        self.process.filterActions.y = DownselectVector(
+            vectorKey="y", selector=self.process.filterActions.z.selector
+        )
 
         self.produce.plot = SkyPlot()
         self.produce.plot.plotTypes = ["any"]
-        self.produce.plot.plotName = "nDiaSourceCount"
+        self.produce.plot.plotName = "DiaObjects with 5 or fewer DiaSources"
 
         self.produce.plot.xAxisLabel = "R.A. (deg)"
         self.produce.plot.yAxisLabel = "Dec. (deg)"
@@ -57,3 +68,5 @@ class DiaObjectPlot(AnalysisTool):
         self.produce.plot.colorbarRange = MinMax
         self.produce.plot.plotOutlines = True
         self.produce.plot.doBinning = False
+        self.produce.plot.alpha = 0.2
+        self.produce.plot.scatPtSize = 3

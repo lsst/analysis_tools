@@ -230,7 +230,7 @@ xPerpPSF_xPerp_psfFlux_sigmaMAD:
 psfCModelDiff_u:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -239,7 +239,7 @@ psfCModelDiff_u:
 psfCModelDiff_g:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -248,7 +248,7 @@ psfCModelDiff_g:
 psfCModelDiff_r:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -257,7 +257,7 @@ psfCModelDiff_r:
 psfCModelDiff_i:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -266,7 +266,7 @@ psfCModelDiff_i:
 psfCModelDiff_z:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -275,7 +275,7 @@ psfCModelDiff_z:
 psfCModelDiff_y:
     lowThreshold: -5
     highThreshold: 5
-    divergent: True
+    divergent: true
     plot: object_psfCModelScatter_ScatterPlotWithTwoHists
     debugGroup: photom
     atoolsFile: photometry.py
@@ -411,3 +411,122 @@ diaSourcesGoodVsBadRatio:
     description: |
         The ratio of the number of diaSources with high reliability (>0.9)
         over the number of diaSources with low reliability (<0.1)
+
+# Ref Cat Match Metrics
+# ---------------------
+
+u_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+g_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+r_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+i_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+z_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+y_ref_photom_offset_coadd:
+    lowThreshold: -20
+    highThreshold: 20
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The difference between the measured magnitude and the reference magnitude
+
+u_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.
+g_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.
+r_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.
+i_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.
+z_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.
+y_ref_photom_offset_gradient:
+    lowThreshold: -0.001
+    highThreshold: 0.001
+    divergent: true
+    plot: object_ref_match_photom_targetRefCatDeltaCModelScatterPlot_ScatterPlotWithTwoHists
+    debugGroup: refCat
+    atoolsFile: refCatMatchPlots.py
+    description: |
+        The gradient of the medians of the difference between the measured magnitude and
+        the reference magnitude.

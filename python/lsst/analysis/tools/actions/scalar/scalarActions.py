@@ -40,6 +40,7 @@ __all__ = (
     "IqrHistAction",
     "DivideScalar",
     "RmsAction",
+    "MedianGradientAction",
 )
 
 import logging
@@ -48,6 +49,8 @@ from math import nan
 from typing import cast
 
 import numpy as np
+from scipy.optimize import curve_fit
+from scipy.stats import binned_statistic
 
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
@@ -456,3 +459,50 @@ class DivideScalar(ScalarAction):
                 return value
         else:
             return scalarA / scalarB
+
+
+class MedianGradientAction(ScalarAction):
+    """Calculate the gradient of a running median"""
+
+    lowerBinLimit = Field[float](doc="Percentile of data to start the bining at", default=5.0)
+    upperBinLimit = Field[float](doc="Percentile of data to end the binning at", default=95.0)
+    nBins = Field[int](doc="Number of bins to use for running median", default=50)
+    xsVectorKey = Field[str]("Key of Vector that gives the x location of the points.")
+    ysVectorKey = Field[str]("Key of the Vector to compute the statistic from.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.xsVectorKey, Vector), (self.ysVectorKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        """Return the gradient of the running median.
+
+        Parameters
+        ----------
+        data : `KeyedData`
+
+        Returns
+        -------
+        result : `Scalar`
+            The gradient of the running median
+        """
+
+        xs = _dataToArray(data[self.xsVectorKey.format(**kwargs)])
+        ys = _dataToArray(data[self.ysVectorKey.format(**kwargs)])
+
+        lowerLim = np.nanpercentile(xs, self.lowerBinLimit)
+        upperLim = np.nanpercentile(xs, self.upperBinLimit)
+
+        use = (xs > lowerLim) & (xs < upperLim) & np.isfinite(xs) & np.isfinite(ys)
+
+        if np.sum(use) > 2:
+            meds, binEdges, _ = binned_statistic(xs[use], ys[use], statistic="median", bins=self.nBins)
+        else:
+            return np.nan
+
+        def func(x, m, b):
+            return m * x + b
+
+        finiteMeds = np.isfinite(meds)
+        popt, _ = curve_fit(func, binEdges[:-1][finiteMeds], meds[finiteMeds])
+
+        return popt[0]

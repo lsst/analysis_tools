@@ -1,6 +1,6 @@
 None
 compurity test
-PhotoCalib: None, Astrometry: None[newline]Table: , Bands: r
+Table: , Bands: r
 
 
 r-band Reference Magnitude

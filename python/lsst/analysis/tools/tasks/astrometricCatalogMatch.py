@@ -173,6 +173,7 @@ class AstrometricCatalogMatchVisitConfig(
     )
 
     def setDefaults(self):
+        super().setDefaults()
         self.matchesRefCat = True
         self.idColumn = "sourceId"
         # sourceSelectorActions.sourceSelector is StarSelector

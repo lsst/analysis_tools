@@ -55,6 +55,7 @@ from ..actions.scalar.scalarActions import (
     FracThreshold,
     MeanAction,
     MedianAction,
+    MedianGradientAction,
     RmsAction,
     SigmaMadAction,
     StdevAction,
@@ -795,6 +796,9 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         # Calculate magnitude difference
         self.process.buildActions.srcRefMagdiffStars.col1 = "{band}_psfFlux_target"
         self.process.buildActions.srcRefMagdiffStars.col2 = "{band}_mag_ref"
+        self.process.buildActions.psfMag = ConvertFluxToMag(
+            vectorKey="{band}_psfFlux_target", returnMillimags=True
+        )
 
         self.applyContext(RefMatchContext)
 
@@ -807,6 +811,7 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
             "ref_photom_offset_sigmaMad": "{band}_ref_photom_offset_sigmaMad_coadd",
             "ref_photom_offset_rms": "{band}_ref_photom_offset_rms_coadd",
             "ref_photom_offset_nstars": "{band}_ref_photom_offset_nstars_coadd",
+            "ref_photom_offset_gradient": "{band}_ref_photom_offset_gradient_coadd",
         }
 
     def visitContext(self) -> None:
@@ -835,6 +840,8 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         self.process.buildActions.srcRefMagdiffStars.col2 = "mag_ref"
         self.process.buildActions.srcRefMagdiffStars.fluxUnits2 = "mag(AB)"
 
+        self.process.buildActions.psfMag = ConvertFluxToMag(vectorKey="psfFlux_target", returnMillimags=True)
+
         # Calculate median, std, sigmaMad, RMS, and number counts:
         self.process.calculateActions.ref_photom_offset = MedianAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_mean = MeanAction(vectorKey="srcRefMagdiffStars")
@@ -844,6 +851,9 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
         )
         self.process.calculateActions.ref_photom_offset_rms = RmsAction(vectorKey="srcRefMagdiffStars")
         self.process.calculateActions.ref_photom_offset_nstars = CountAction(vectorKey="srcRefMagdiffStars")
+        self.process.calculateActions.ref_photom_offset_gradient = MedianGradientAction(
+            xsVectorKey="psfMag", ysVectorKey="srcRefMagdiffStars"
+        )
 
         self.produce.metric.units = {
             "ref_photom_offset": "mmag",
@@ -852,4 +862,5 @@ class TargetRefCatDeltaPhotomMetrics(TargetRefCatDeltaMetrics):
             "ref_photom_offset_sigmaMad": "mmag",
             "ref_photom_offset_rms": "mmag",
             "ref_photom_offset_nstars": "ct",
+            "ref_photom_offset_gradient": "",
         }

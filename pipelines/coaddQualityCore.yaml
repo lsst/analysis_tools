@@ -154,14 +154,14 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
     config:
       binFactor: 16
-      doBinInnerBBox: True
+      doBinInnerBBox: true
   makeWholeTractImage:
     class: lsst.analysis.tools.tasks.WholeTractImageAnalysisTask
     config:
       connections.outputName: deep
-      atools.coaddImage: WholeTractImageTool # wholeTractImageTool.py
-      atools.clippedMask: WholeTractClippedMaskTool # wholeTractImageTool.py
-      atools.coaddImagePostageStamp: WholeTractPostageStampTool # wholeTractImageTool.py
+      atools.coaddImage: WholeTractImageTool  # wholeTractImageTool.py
+      atools.clippedMask: WholeTractClippedMaskTool  # wholeTractImageTool.py
+      atools.coaddImagePostageStamp: WholeTractPostageStampTool  # wholeTractImageTool.py
       python: |
         from lsst.analysis.tools.atools import *
   makeBinnedTemplateNImage:
@@ -178,7 +178,7 @@ tasks:
       connections.data: "goodSeeingCoadd_nImage_bin"
       connections.outputName: "goodSeeing"
       dataStorageClass: "ImageU"
-      atools.nImage: "WholeTractNImageTool" # wholeTractImageTool.py
+      atools.nImage: "WholeTractNImageTool"  # wholeTractImageTool.py
       python: |
         from lsst.analysis.tools.atools import *
   makeBinnedDeepNImage:
@@ -195,6 +195,6 @@ tasks:
       connections.data: "deepCoadd_nImage_bin"
       connections.outputName: "deep"
       dataStorageClass: "ImageU"
-      atools.nImage: "WholeTractNImageTool" # wholeTractImageTool.py
+      atools.nImage: "WholeTractNImageTool"  # wholeTractImageTool.py
       python: |
         from lsst.analysis.tools.atools import *

@@ -34,6 +34,20 @@ tasks:
       file: $ANALYSIS_TOOLS_DIR/config/objectTableCoreRefCatMatchWholeSkyPlot.py
       python: |
         from lsst.analysis.tools.atools import *
+  makeMetricTableObjectTableCoreRefCatMatchPhotom:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "object_ref_match_photom_metrics"
+      connections.outputTableName: "object_ref_match_photom_metrics_table"
+  objectTableCoreRefCatMatchPhotomWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.inputName: "object_ref_match_photom_metrics_table"
+      connections.outputName: "objectTableCoreRefCatMatchPhotom_wholeSky"
+      file: $ANALYSIS_TOOLS_DIR/config/objectTableCoreRefCatMatchPhotomWholeSkyPlot.py
+      python: |
+        from lsst.analysis.tools.atools import *
+
   makeMetricTableMatchedVisitCore:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:

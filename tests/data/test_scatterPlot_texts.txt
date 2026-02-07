@@ -4,7 +4,7 @@ S/N > 20 Stats (mag < 23.54)[newline]Median: -5.987    $\sigma_{MAD}$: 38.77    
 S/N > 50 Stats (mag < 22.23)[newline]Median: -1.679    $\sigma_{MAD}$: 12.26    N$_{points}$: 77
 S/N > 20 Stats (mag < 24.03)[newline]Median: -1.153    $\sigma_{MAD}$: 34.02    N$_{points}$: 425
 test
-test[newline]PhotoCalib: None, Astrometry: None[newline]Table: test, Bands: , S/N(analysisTools) > 20.0
+test[newline]Table: test, Bands: , S/N(analysisTools) > 20.0
 
 
 mag

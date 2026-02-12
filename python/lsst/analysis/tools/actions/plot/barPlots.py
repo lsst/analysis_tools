@@ -28,11 +28,12 @@ from typing import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Config, ConfigDictField, DictField, Field
-from lsst.utils.plotting import set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Rectangle
+
+from lsst.pex.config import Config, ConfigDictField, DictField, Field
+from lsst.utils.plotting import set_rubin_plotstyle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo

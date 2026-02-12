@@ -44,6 +44,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
 
 import matplotlib.pyplot as plt
+
 from lsst.verify import Measurement
 
 if TYPE_CHECKING:

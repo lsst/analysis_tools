@@ -40,6 +40,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from astropy.time import Time
+
 from lsst.daf.butler import Butler, DatasetRef, DatasetType
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import (

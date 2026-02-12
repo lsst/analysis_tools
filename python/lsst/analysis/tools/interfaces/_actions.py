@@ -44,8 +44,9 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterable
 
-import lsst.pex.config as pexConfig
 from healsparse.healSparseMap import HealSparseMap
+
+import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableAction, ConfigurableActionField
 
 from ..contexts import ContextApplier

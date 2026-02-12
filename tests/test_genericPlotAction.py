@@ -21,8 +21,9 @@
 
 from unittest import TestCase, main
 
-import lsst.utils.tests
 import matplotlib.pyplot as plt
+
+import lsst.utils.tests
 from lsst.analysis.tools.atools.genericPlotAction import StructPlotAction
 from lsst.analysis.tools.interfaces import AnalysisTool, JointAction, NoMetric, PlotAction
 

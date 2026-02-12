@@ -27,6 +27,7 @@ from typing import cast
 
 import numpy as np
 import scipy.odr as scipyODR
+
 from lsst.pex.config import DictField
 from lsst.pipe.base import Struct
 

@@ -29,11 +29,12 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.figure import Figure
+from matplotlib.ticker import FormatStrFormatter
+
 from lsst.afw.cameraGeom import FOCAL_PLANE, Camera, DetectorType
 from lsst.pex.config import Config, DictField, Field, ListField
 from lsst.skymap import BaseSkyMap
-from matplotlib.figure import Figure
-from matplotlib.ticker import FormatStrFormatter
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin

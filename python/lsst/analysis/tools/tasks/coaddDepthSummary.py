@@ -28,6 +28,7 @@ __all__ = (
 
 import numpy as np
 from astropy.table import Table
+
 from lsst.pex.config import ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base import connectionTypes as cT

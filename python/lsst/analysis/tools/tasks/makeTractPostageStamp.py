@@ -26,10 +26,11 @@ __all__ = (
 
 import copy
 
-import lsst.pipe.base as pipeBase
 import matplotlib.cm as cm
 import matplotlib.patheffects as pathEffects
 import numpy as np
+
+import lsst.pipe.base as pipeBase
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 from lsst.utils.plotting import make_figure

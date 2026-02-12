@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate, DeferredDatasetHandle
 
 from astropy.table import vstack
+
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 

@@ -28,11 +28,12 @@ from typing import Mapping, cast
 import matplotlib.patheffects as pathEffects
 import numpy as np
 import scipy.stats
-from lsst.pex.config import Field, ListField, RangeField
-from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.ndimage import median_filter
+
+from lsst.pex.config import Field, ListField, RangeField
+from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMean, nanMedian, nanSigmaMad

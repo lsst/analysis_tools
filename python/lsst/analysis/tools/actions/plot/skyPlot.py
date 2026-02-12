@@ -27,6 +27,9 @@ from typing import Mapping, Optional
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
+
 from lsst.pex.config import Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.utils.plotting import (
@@ -38,8 +41,6 @@ from lsst.utils.plotting import (
     stars_cmap,
     stars_color,
 )
-from matplotlib.figure import Figure
-from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector, VectorAction
 from ...math import nanMedian, nanSigmaMad

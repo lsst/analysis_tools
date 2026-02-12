@@ -37,6 +37,7 @@ from uuid import UUID, uuid4
 
 import numpy as np
 import requests
+
 from lsst.daf.butler import DatasetRef
 from lsst.resources import ResourcePath
 from lsst.utils.packages import getEnvironmentPackages

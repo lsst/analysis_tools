@@ -26,8 +26,9 @@ __all__ = ("XYPlot",)
 from typing import TYPE_CHECKING, Any, Mapping
 
 import matplotlib.pyplot as plt
-from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
 from matplotlib.ticker import SymmetricalLogLocator
+
+from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
 
 from ...interfaces import PlotAction, Vector
 from .plotUtils import addPlotInfo

@@ -20,8 +20,9 @@
 
 import unittest
 
-import lsst.utils.tests
 from astropy.table import Table
+
+import lsst.utils.tests
 from lsst.analysis.tools.atools import diaSourceMetrics as diaAtool
 
 

@@ -27,10 +27,16 @@ import importlib.resources as importResources
 import json
 from typing import Mapping, Optional
 
-import lsst.analysis.tools
 import matplotlib.patheffects as pathEffects
 import numpy as np
 import yaml
+from matplotlib import gridspec
+from matplotlib.collections import PatchCollection
+from matplotlib.colors import CenteredNorm
+from matplotlib.figure import Figure
+from matplotlib.patches import Patch, Polygon
+
+import lsst.analysis.tools
 from lsst.pex.config import ChoiceField, Field, ListField
 from lsst.utils.plotting import (
     accent_color,
@@ -40,11 +46,6 @@ from lsst.utils.plotting import (
     stars_cmap,
     stars_color,
 )
-from matplotlib import gridspec
-from matplotlib.collections import PatchCollection
-from matplotlib.colors import CenteredNorm
-from matplotlib.figure import Figure
-from matplotlib.patches import Patch, Polygon
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanSigmaMad

@@ -27,9 +27,10 @@ from typing import Mapping, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Field, ListField
 from matplotlib.figure import Figure
 from scipy.interpolate import CloughTocher2DInterpolator
+
+from lsst.pex.config import Field, ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo

@@ -30,6 +30,7 @@ import matplotlib.patheffects as mpl_path_effects
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization.mpl_normalize import ImageNormalize
+
 from lsst.pex.config import ChoiceField, Config, ConfigDictField, DictField, Field, ListField
 
 from ...interfaces import PlotAction, Vector

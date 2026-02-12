@@ -28,14 +28,15 @@ from typing import Mapping, Optional
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.afw.cameraGeom import FOCAL_PLANE, PIXELS, Camera
-from lsst.pex.config import ChoiceField, Field
 from matplotlib.collections import PatchCollection
 from matplotlib.figure import Figure
 from matplotlib.offsetbox import AnchoredText
 from matplotlib.patches import Polygon
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.stats import binned_statistic_2d, binned_statistic_dd
+
+from lsst.afw.cameraGeom import FOCAL_PLANE, PIXELS, Camera
+from lsst.pex.config import ChoiceField, Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMedian, nanMin, nanSigmaMad

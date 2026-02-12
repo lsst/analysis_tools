@@ -22,12 +22,13 @@
 import unittest
 
 import astropy.units as u
-import lsst.afw.table as afwTable
-import lsst.geom
-import lsst.skymap
 import numpy as np
 import pandas as pd
 from astropy.table import Table
+
+import lsst.afw.table as afwTable
+import lsst.geom
+import lsst.skymap
 from lsst.analysis.tools.tasks import AstrometricCatalogMatchConfig, AstrometricCatalogMatchTask
 from lsst.daf.base import PropertyList
 from lsst.meas.algorithms.testUtils import MockRefcatDataId

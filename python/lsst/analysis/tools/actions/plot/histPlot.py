@@ -27,9 +27,14 @@ import logging
 from collections import defaultdict
 from typing import Mapping
 
-import lsst.analysis.tools
 import numpy as np
 import yaml
+from matplotlib import cm
+from matplotlib.figure import Figure
+from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Rectangle
+
+import lsst.analysis.tools
 from lsst.pex.config import (
     ChoiceField,
     Config,
@@ -41,10 +46,6 @@ from lsst.pex.config import (
     ListField,
 )
 from lsst.utils.plotting import get_multiband_plot_colors, make_figure, set_rubin_plotstyle
-from matplotlib import cm
-from matplotlib.figure import Figure
-from matplotlib.gridspec import GridSpec
-from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from ...math import nanMax, nanMedian, nanMin, sigmaMad

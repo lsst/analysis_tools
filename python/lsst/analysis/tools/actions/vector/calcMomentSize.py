@@ -23,6 +23,7 @@ from __future__ import annotations
 __all__ = ("CalcMomentSize",)
 
 import numpy as np
+
 from lsst.pex.config import Field, FieldValidationError
 from lsst.pex.config.choiceField import ChoiceField
 

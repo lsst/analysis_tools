@@ -28,23 +28,24 @@ __all__ = (
 import logging
 from typing import Mapping, Union
 
-import lsst.pex.config as pexConfig
-import lsst.sphgeom as sphgeom
 import matplotlib.patheffects as mpl_path_effects
 import numpy as np
 import skyproj
 from healsparse.healSparseMap import HealSparseMap
+from matplotlib import cm, rc_context
+from matplotlib.figure import Figure
+from matplotlib.legend_handler import HandlerTuple
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1.axes_size import AxesX, AxesY, Fraction
+
+import lsst.pex.config as pexConfig
+import lsst.sphgeom as sphgeom
 from lsst.analysis.tools.tasks.propertyMapAnalysis import (
     PerTractPropertyMapAnalysisConfig,
     SurveyWidePropertyMapAnalysisConfig,
 )
 from lsst.skymap.tractInfo import ExplicitTractInfo
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-from matplotlib import cm, rc_context
-from matplotlib.figure import Figure
-from matplotlib.legend_handler import HandlerTuple
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mpl_toolkits.axes_grid1.axes_size import AxesX, AxesY, Fraction
 
 from ...interfaces import KeyedData, PlotAction
 

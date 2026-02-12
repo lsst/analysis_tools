@@ -28,6 +28,7 @@ from typing import Any, Mapping, cast
 
 import astropy.units as apu
 from healsparse import HealSparseMap
+
 from lsst.pex.config import ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.dictField import DictField

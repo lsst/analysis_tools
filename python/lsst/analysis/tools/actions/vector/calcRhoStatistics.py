@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any, Mapping, cast
 import numpy as np
 import treecorr  # type: ignore[import]
 from deprecated.sphinx import deprecated
+
 from lsst.meas.algorithms.treecorrUtils import TreecorrConfig as TreecorrConfigNew
 from lsst.pex.config import ChoiceField, ConfigField, Field
 

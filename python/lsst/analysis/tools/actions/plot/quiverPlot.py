@@ -27,8 +27,9 @@ from typing import Mapping, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Field
 from matplotlib.figure import Figure
+
+from lsst.pex.config import Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from .plotUtils import addPlotInfo

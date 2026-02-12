@@ -25,10 +25,11 @@ import shutil
 import tempfile
 import unittest
 
-import lsst.utils.tests
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.plot import CompletenessHist
 from lsst.analysis.tools.actions.plot.plotUtils import get_and_remove_figure_text
 from lsst.analysis.tools.math import divide, sqrt

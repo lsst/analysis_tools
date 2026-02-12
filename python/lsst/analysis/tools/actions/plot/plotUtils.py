@@ -27,12 +27,13 @@ from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
 import esutil
 import matplotlib
 import numpy as np
-from lsst.geom import Box2D, SpherePoint, degrees
-from lsst.pex.config import Config, Field
 from matplotlib import cm, colors
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.stats import binned_statistic_2d
+
+from lsst.geom import Box2D, SpherePoint, degrees
+from lsst.pex.config import Config, Field
 
 from ...math import nanMedian, nanSigmaMad
 

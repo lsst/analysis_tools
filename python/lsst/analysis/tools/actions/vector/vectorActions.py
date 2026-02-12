@@ -45,6 +45,7 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 

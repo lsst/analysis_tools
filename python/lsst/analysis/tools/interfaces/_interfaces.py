@@ -39,9 +39,10 @@ from typing import Any, Iterable, Mapping, MutableMapping, Protocol, TypeAlias, 
 
 import numpy as np
 from healsparse import HealSparseMap
-from lsst.verify import Measurement
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
+
+from lsst.verify import Measurement
 
 
 @runtime_checkable

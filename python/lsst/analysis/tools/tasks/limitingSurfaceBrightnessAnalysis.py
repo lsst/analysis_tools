@@ -32,6 +32,7 @@ import logging
 
 import numpy as np
 from astropy.table import Table
+
 from lsst.afw.math import StatisticsControl, makeStatistics, stringToStatisticsProperty
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct

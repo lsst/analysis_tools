@@ -26,6 +26,7 @@ __all__ = (
 )
 
 import numpy as np
+
 from lsst.pipe.base import Struct
 from lsst.pipe.base import connectionTypes as cT
 from lsst.skymap import BaseSkyMap

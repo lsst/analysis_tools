@@ -22,10 +22,11 @@
 __all__ = ("PhotometricCatalogMatchConfig", "PhotometricCatalogMatchTask")
 
 
-import lsst.geom
-import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table
+
+import lsst.geom
+import lsst.pipe.base as pipeBase
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 
 from ..actions.vector import StarSelector, VisitPlotFlagSelector

@@ -31,6 +31,8 @@ import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import ImageNormalize
+from matplotlib.figure import Figure
+
 from lsst.pex.config import (
     ChoiceField,
     Field,
@@ -40,7 +42,6 @@ from lsst.pex.config import (
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.skymap import BaseSkyMap
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-from matplotlib.figure import Figure
 
 from ...interfaces import (
     KeyedData,

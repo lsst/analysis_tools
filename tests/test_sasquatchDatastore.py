@@ -25,6 +25,7 @@ import unittest
 from unittest.mock import patch
 
 import astropy.units as u
+
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
 from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher

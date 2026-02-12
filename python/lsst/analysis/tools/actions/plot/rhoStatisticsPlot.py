@@ -26,8 +26,9 @@ __all__ = ("RhoStatisticsPlot",)
 from typing import Any, Iterable, Mapping
 
 import numpy as np
-from lsst.pex.config import ConfigDictField
 from matplotlib.figure import Figure
+
+from lsst.pex.config import ConfigDictField
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo

@@ -55,6 +55,7 @@ import operator
 from typing import Optional, cast
 
 import numpy as np
+
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 

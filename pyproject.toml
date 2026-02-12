@@ -13,10 +13,14 @@ write_to = "python/lsst/analysis/tools/version.py"
 [tool.ruff]
 line-length = 110
 target-version = "py313"
+exclude = [
+    "__init__.py",
+]
 
 [tool.ruff.lint]
 select = [
     "E",  # pycodestyle
+    "W",  # pycodestyle
     "I",  # isort
 ]
 

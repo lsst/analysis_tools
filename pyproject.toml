@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 110
-target-version = ["py310"]
+target-version = ["py313"]
 
 [tool.isort]
 profile = "black"
@@ -12,7 +12,7 @@ write_to = "python/lsst/analysis/tools/version.py"
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["I"]

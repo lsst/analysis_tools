@@ -496,7 +496,7 @@ class MatrixPlot(PlotAction):
                 if labels is not None:
                     # Create a lookup for positions to labels.
                     positions_labels_lookup = {
-                        p: l if p in major_tick_values else "" for p, l in zip(positions, labels)
+                        p: lbl if p in major_tick_values else "" for p, lbl in zip(positions, labels)
                     }
                     # Generate labels for major ticks, leaving blanks for
                     # non-major positions.
@@ -506,7 +506,9 @@ class MatrixPlot(PlotAction):
                     ]
                     # Generate labels for minor ticks, excluding those
                     # designated as major.
-                    minor_labels = ["" if p in major_tick_values else l for p, l in zip(positions, labels)]
+                    minor_labels = [
+                        "" if p in major_tick_values else lbl for p, lbl in zip(positions, labels)
+                    ]
 
                     # Apply labels to major ticks if any exist.
                     if any(e for e in major_labels if e):

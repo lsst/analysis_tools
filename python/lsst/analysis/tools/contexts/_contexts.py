@@ -20,10 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-"""This is a module where concrete Contexts should be defined. These should
-be a subclass of `Context`, and should contain a description of what the
-context is for as it's docstring.
-"""
 __all__ = (
     "VisitContext",
     "CoaddContext",
@@ -33,6 +29,11 @@ __all__ = (
 )
 
 from ._baseContext import Context
+
+"""This is a module where concrete Contexts should be defined. These should
+be a subclass of `Context`, and should contain a description of what the
+context is for as it's docstring.
+"""
 
 
 class VisitContext(Context):

@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ("SasquatchDispatchPartialFailure", "SasquatchDispatchFailure", "SasquatchDispatcher")
 
-"""Sasquatch datastore"""
 import calendar
 import datetime
 import json
@@ -47,10 +46,11 @@ from ...utils import http_client
 if TYPE_CHECKING:
     from .. import MetricMeasurementBundle
 
+"""Sasquatch datastore"""
 
 log = logging.getLogger(__name__)
 
-# Constants assocated with SasquatchDispatcher
+# Constants associated with SasquatchDispatcher
 PARTITIONS = 1
 REPLICATION_FACTOR = 3
 

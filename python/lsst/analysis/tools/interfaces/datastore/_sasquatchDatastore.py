@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ("SasquatchDatastore",)
 
-"""Sasquatch datastore"""
 import logging
 import os
 from collections.abc import Collection, Iterable, Mapping, Sequence
@@ -42,6 +41,7 @@ if TYPE_CHECKING:
     from lsst.daf.butler import Config, DatasetProvenance, DatasetType, LookupKey
     from lsst.daf.butler.registry.interfaces import DatasetIdRef, DatastoreRegistryBridgeManager
 
+"""Sasquatch datastore"""
 
 log = logging.getLogger(__name__)
 

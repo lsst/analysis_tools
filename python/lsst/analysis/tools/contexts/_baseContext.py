@@ -20,10 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-"""This is a module which defines all the implementation details for the
-`Context` base class.
-"""
-
 __all__ = ("ContextMeta", "Context", "ContextType", "ContextApplier")
 
 from functools import partial, update_wrapper
@@ -33,6 +29,10 @@ from lsst.pex.config.configurableActions import ConfigurableActionStruct
 
 if TYPE_CHECKING:
     from ..interfaces import AnalysisAction
+
+"""This is a module which defines all the implementation details for the
+`Context` base class.
+"""
 
 
 class GetterStandin:

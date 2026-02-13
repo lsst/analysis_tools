@@ -26,7 +26,8 @@ __all__ = (
     "MakeBinnedCoaddTask",
 )
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import lsst.pipe.base as pipeBase
 from lsst.daf.butler import DataCoordinate

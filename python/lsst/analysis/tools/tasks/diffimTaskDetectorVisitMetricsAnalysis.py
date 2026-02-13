@@ -22,9 +22,10 @@ from __future__ import annotations
 
 __all__ = ("DiffimDetectorVisitMetricsAnalysisConfig", "DiffimDetectorVisitMetricsAnalysisTask")
 
-import lsst.pex.config
 import pandas as pd
 from deprecated.sphinx import deprecated
+
+import lsst.pex.config
 from lsst.pipe.base import NoWorkFound, connectionTypes
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask

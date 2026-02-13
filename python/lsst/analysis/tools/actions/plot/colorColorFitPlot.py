@@ -23,16 +23,18 @@ from __future__ import annotations
 
 __all__ = ("ColorColorFitPlot",)
 
-from typing import Mapping, cast
+from collections.abc import Mapping
+from typing import cast
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
 import scipy.stats
-from lsst.pex.config import Field, ListField, RangeField
-from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from scipy.ndimage import median_filter
+
+from lsst.pex.config import Field, ListField, RangeField
+from lsst.utils.plotting import make_figure, set_rubin_plotstyle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMean, nanMedian, nanSigmaMad
@@ -280,7 +282,7 @@ class ColorColorFitPlot(PlotAction):
         if not self.publicationStyle:
             # Add some useful information to the plot.
             bbox = dict(alpha=0.9, facecolor="white", edgecolor="none")
-            infoText = "N Total: {}\nN Used: {}".format(sum(goodPoints), sum(fitPoints))
+            infoText = f"N Total: {sum(goodPoints)}\nN Used: {sum(fitPoints)}"
             ax.text(0.04, 0.97, infoText, color="k", transform=ax.transAxes, fontsize=7, bbox=bbox, va="top")
 
         # Calculate the point density for the Used and NotUsed subsamples.
@@ -458,12 +460,12 @@ class ColorColorFitPlot(PlotAction):
 
         # Add a histogram.
         axHist.set_ylabel("Number", fontsize=7)
-        axHist.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
+        axHist.set_xlabel(f"Distance to Line Fit ({statsUnitStr})", fontsize=7)
         axHist.tick_params(labelsize=7)
         nSigToPlot = 3.5
         axHist.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
         lineMedian = axHist.axvline(
-            medDists, color="k", lw=1, alpha=0.5, label="Median: {:0.2f} {}".format(medDists, statsUnitStr)
+            medDists, color="k", lw=1, alpha=0.5, label=f"Median: {medDists:0.2f} {statsUnitStr}"
         )
         lineMad = axHist.axvline(
             medDists + madDists,
@@ -471,7 +473,7 @@ class ColorColorFitPlot(PlotAction):
             ls="--",
             lw=1,
             alpha=0.5,
-            label=r"$\sigma_{MAD}$" + ": {:0.2f} {}".format(madDists, statsUnitStr),
+            label=r"$\sigma_{MAD}$" + f": {madDists:0.2f} {statsUnitStr}",
         )
         axHist.axvline(medDists - madDists, color="k", ls="--", lw=1, alpha=0.5)
         lineRms = axHist.axvline(
@@ -480,7 +482,7 @@ class ColorColorFitPlot(PlotAction):
             ls=":",
             lw=1,
             alpha=0.3,
-            label="RMS: {:0.2f} {}".format(rmsDists, statsUnitStr),
+            label=f"RMS: {rmsDists:0.2f} {statsUnitStr}",
         )
         axHist.axvline(meanDists - rmsDists, color="k", ls=":", lw=1, alpha=0.3)
         if self.doPlotRedBlueHists:
@@ -490,7 +492,7 @@ class ColorColorFitPlot(PlotAction):
                 ls=":",
                 lw=1.0,
                 alpha=0.5,
-                label="blueMed: {:0.2f}".format(blueMedDists),
+                label=f"blueMed: {blueMedDists:0.2f}",
             )
             lineRedMedian = axHist.axvline(
                 redMedDists,
@@ -498,7 +500,7 @@ class ColorColorFitPlot(PlotAction):
                 ls=":",
                 lw=1.0,
                 alpha=0.5,
-                label="redMed: {:0.2f}".format(redMedDists),
+                label=f"redMed: {redMedDists:0.2f}",
             )
             linesForLegend = [lineMedian, lineMad, lineRms, lineBlueMedian, lineRedMedian]
         else:
@@ -548,7 +550,7 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.plot(xSorted, yRunMedian, "w", lw=1.8)
             axLowerRight.plot(xSorted, yRunMedian, c="#595959", ls="-", lw=1.1, label="Running Median")
             axLowerRight.set_ylim(-2.5 * madDists, 2.5 * madDists)
-            axLowerRight.set_ylabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=7)
+            axLowerRight.set_ylabel(f"Distance to Line Fit ({statsUnitStr})", fontsize=7)
             axLowerRight.legend(fontsize=4, loc="upper right", handlelength=1.0)
             # Add colorbars.
             cbAx = fig.add_axes([0.915, 0.11, 0.014, 0.34])
@@ -586,7 +588,7 @@ class ColorColorFitPlot(PlotAction):
             axLowerRight.contour(
                 xEdges[:-1] + xBinWidth / 2, yEdges[:-1] + yBinWidth / 2, H.T, levels=7, cmap=newBlues
             )
-            axLowerRight.set_xlabel("Distance to Line Fit ({})".format(statsUnitStr), fontsize=8)
+            axLowerRight.set_xlabel(f"Distance to Line Fit ({statsUnitStr})", fontsize=8)
             axLowerRight.set_ylabel(self.magLabel, fontsize=8)
             axLowerRight.set_xlim(meanDists - nSigToPlot * madDists, meanDists + nSigToPlot * madDists)
         axLowerRight.tick_params(labelsize=6)

@@ -22,11 +22,12 @@ import os
 import unittest
 
 import healsparse as hsp
-import lsst.utils.tests
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import skyproj
+
+import lsst.utils.tests
 from lsst.analysis.tools.atools.healSparsePropertyMap import (
     PerTractPropertyMapTool,
     SurveyWidePropertyMapTool,

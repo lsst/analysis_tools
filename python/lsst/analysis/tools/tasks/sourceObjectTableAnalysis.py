@@ -29,15 +29,16 @@ __all__ = (
 
 import astropy.time
 import astropy.units as u
-import lsst.pex.config as pexConfig
-import lsst.pipe.base as pipeBase
 import numpy as np
 import pandas as pd
 from astropy.table import Table, join, vstack
+from smatch import Matcher
+
+import lsst.pex.config as pexConfig
+import lsst.pipe.base as pipeBase
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import AlgorithmError
 from lsst.pipe.base import connectionTypes as ct
-from smatch import Matcher
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 

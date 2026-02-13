@@ -23,8 +23,9 @@ __all__ = ("CalcRelativeDistances",)
 import astropy.units as u
 import esutil
 import numpy as np
-from lsst.pex.config import Field
 from smatch import Matcher
+
+from lsst.pex.config import Field
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Vector
 

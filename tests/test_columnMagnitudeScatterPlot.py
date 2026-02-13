@@ -21,8 +21,9 @@
 
 from unittest import TestCase, main
 
-import lsst.utils.tests
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.atools.columnMagnitudeScatterPlot import ColumnMagnitudeScatterPlot
 from lsst.analysis.tools.math import sqrt
 

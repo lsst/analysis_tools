@@ -26,6 +26,7 @@ import copy
 from typing import Any
 
 import numpy as np
+
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 

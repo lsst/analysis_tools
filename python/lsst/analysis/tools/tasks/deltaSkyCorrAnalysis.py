@@ -31,6 +31,7 @@ __all__ = (
 import logging
 
 import numpy as np
+
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections
 from lsst.pipe.base.connectionTypes import Input, Output

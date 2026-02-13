@@ -48,6 +48,7 @@ import inspect
 from abc import abstractmethod
 
 import astropy.units as u
+
 import lsst.pex.config as pexConfig
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField

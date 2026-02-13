@@ -27,11 +27,13 @@ __all__ = (
 )
 
 import logging
-from typing import TYPE_CHECKING, Any, Mapping, cast
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import treecorr  # type: ignore[import]
 from deprecated.sphinx import deprecated
+
 from lsst.meas.algorithms.treecorrUtils import TreecorrConfig as TreecorrConfigNew
 from lsst.pex.config import ChoiceField, ConfigField, Field
 

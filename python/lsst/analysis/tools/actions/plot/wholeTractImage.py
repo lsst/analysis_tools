@@ -23,7 +23,7 @@ from __future__ import annotations
 
 __all__ = ("WholeTractImage",)
 
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.cm as cm
 import matplotlib.patches as patches
@@ -31,6 +31,8 @@ import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import ImageNormalize
+from matplotlib.figure import Figure
+
 from lsst.pex.config import (
     ChoiceField,
     Field,
@@ -40,7 +42,6 @@ from lsst.pex.config import (
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.skymap import BaseSkyMap
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-from matplotlib.figure import Figure
 
 from ...interfaces import (
     KeyedData,
@@ -173,7 +174,7 @@ class WholeTractImage(PlotAction):
         data: KeyedData,
         tractId: int,
         skymap: BaseSkyMap,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> Figure:
         """Make a figure displaying the input pixel data.

@@ -39,12 +39,13 @@ __all__ = (
 )
 
 import logging
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+
 from lsst.pex.config import DictField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField, ConfigurableActionStructField
 
@@ -108,7 +109,7 @@ class MultiCriteriaDownselectVector(VectorAction):
             yield from action.getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        mask: Optional[Vector] = None
+        mask: Vector | None = None
         for selector in self.selectors:
             subMask = selector(data, **kwargs)
             if mask is None:

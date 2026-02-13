@@ -20,8 +20,9 @@
 
 import unittest
 
-import lsst.utils.tests
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.keyedData.stellarLocusFit import _stellarLocusFit, perpDistance
 from lsst.analysis.tools.actions.plot.plotUtils import shorten_list
 

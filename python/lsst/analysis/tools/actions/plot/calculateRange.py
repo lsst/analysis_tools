@@ -37,6 +37,7 @@ from astropy.visualization import (
     LinearStretch,
     PercentileInterval,
 )
+
 from lsst.pex.config import Field
 
 from ...interfaces import Tensor, TensorAction, Vector, VectorAction

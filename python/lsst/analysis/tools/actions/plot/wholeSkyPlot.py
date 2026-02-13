@@ -25,12 +25,18 @@ __all__ = ("WholeSkyPlot",)
 
 import importlib.resources as importResources
 import json
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
-import lsst.analysis.tools
 import matplotlib.patheffects as pathEffects
 import numpy as np
 import yaml
+from matplotlib import gridspec
+from matplotlib.collections import PatchCollection
+from matplotlib.colors import CenteredNorm
+from matplotlib.figure import Figure
+from matplotlib.patches import Patch, Polygon
+
+import lsst.analysis.tools
 from lsst.pex.config import ChoiceField, Field, ListField
 from lsst.utils.plotting import (
     accent_color,
@@ -40,11 +46,6 @@ from lsst.utils.plotting import (
     stars_cmap,
     stars_color,
 )
-from matplotlib import gridspec
-from matplotlib.collections import PatchCollection
-from matplotlib.colors import CenteredNorm
-from matplotlib.figure import Figure
-from matplotlib.patches import Patch, Polygon
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanSigmaMad
@@ -205,7 +206,7 @@ class WholeSkyPlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> AnnotatedFigure:
         """Make a WholeSkyPlot of the given data.
@@ -432,7 +433,7 @@ class WholeSkyPlot(PlotAction):
             upperLim = highThreshold + 0.5 * widthThreshold
             lowerLim = lowThreshold - 0.5 * widthThreshold
             ax1.set_xlim(lowerLim, upperLim)
-            numOutside = np.sum(((data["z"] > upperLim) | (data["z"] < lowerLim)))
+            numOutside = np.sum((data["z"] > upperLim) | (data["z"] < lowerLim))
             ax1.set_title("Outside plot limits: " + str(numOutside))
 
         else:

@@ -23,6 +23,7 @@ from __future__ import annotations
 __all__ = ("DiffimMetadataMetricTool",)
 
 from deprecated.sphinx import deprecated
+
 from lsst.pex.config import DictField
 
 from ..actions.scalar import ValueAction

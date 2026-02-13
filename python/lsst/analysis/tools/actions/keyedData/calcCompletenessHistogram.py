@@ -24,8 +24,9 @@ __all__ = ("CalcCompletenessHistogramAction", "MagnitudeCompletenessConfig")
 
 import copy
 
-import lsst.pex.config as pexConfig
 import numpy as np
+
+import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema

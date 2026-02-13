@@ -26,6 +26,7 @@ import matplotlib.cm as mplcm
 import matplotlib.pyplot as plt
 import numpy as np
 import skyproj  # Eli's matplotlib + astronomical projections library
+
 from lsst.daf.butler import Butler
 from lsst.geom import SpherePoint, degrees
 from lsst.sphgeom import Box, ConvexPolygon, LonLat

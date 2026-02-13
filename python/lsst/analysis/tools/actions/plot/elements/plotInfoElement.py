@@ -23,7 +23,8 @@ from __future__ import annotations
 
 __all__ = ("PlotInfoElement",)
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.transforms as transforms
 

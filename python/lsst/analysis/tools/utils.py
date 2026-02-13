@@ -30,9 +30,10 @@ from contextlib import contextmanager
 
 import numpy as np
 import requests
-from lsst.geom import Box2D
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
+
+from lsst.geom import Box2D
 
 
 def getTractCorners(skymap, tractId):

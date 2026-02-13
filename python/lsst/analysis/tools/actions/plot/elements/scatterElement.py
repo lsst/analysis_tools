@@ -30,8 +30,9 @@ from lsst.pex.config import Field
 from ....interfaces import PlotElement
 
 if TYPE_CHECKING:
-    from lsst.analysis.tools.interfaces import KeyedData
     from matplotlib.axes import Axes
+
+    from lsst.analysis.tools.interfaces import KeyedData
 
 
 class ScatterElement(PlotElement):

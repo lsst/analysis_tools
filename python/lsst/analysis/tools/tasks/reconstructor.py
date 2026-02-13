@@ -22,7 +22,8 @@ from __future__ import annotations
 
 __all__ = ("reconstructAnalysisTools", "getPlotDatasetTypeNames")
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Any
 
 from lsst.pipe.base.connections import PipelineTaskConnections, iterConnections
 from lsst.pipe.base.connectionTypes import BaseConnection

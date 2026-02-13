@@ -28,6 +28,7 @@ __all__ = (
 )
 
 import numpy as np
+
 from lsst.pex.config import Field, ListField
 
 from ..actions.scalar import CountAction, FracThreshold

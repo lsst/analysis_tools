@@ -25,8 +25,9 @@ from typing import cast
 from unittest import TestCase, main
 
 import astropy.units as apu
-import lsst.utils.tests
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.scalar import MeanAction, MedianAction
 from lsst.analysis.tools.contexts import Context
 from lsst.analysis.tools.interfaces import (

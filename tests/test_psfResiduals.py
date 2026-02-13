@@ -22,8 +22,9 @@
 import unittest
 
 import galsim
-import lsst.utils.tests
 import numpy as np
+
+import lsst.utils.tests
 from lsst.afw.geom import Quadrupole
 from lsst.analysis.tools.actions.vector import CalcE, CalcE1, CalcE2, CalcEDiff, CalcMomentSize
 from lsst.pex.config import FieldValidationError

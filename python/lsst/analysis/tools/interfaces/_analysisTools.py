@@ -24,10 +24,10 @@ from __future__ import annotations
 __all__ = ("AnalysisTool",)
 
 from collections import ChainMap
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping
 from functools import wraps
 from operator import attrgetter
-from typing import Callable, Iterable, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import lsst.pex.config as pexConfig
 from lsst.obs.base import Instrument

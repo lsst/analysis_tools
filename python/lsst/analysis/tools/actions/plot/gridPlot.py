@@ -27,9 +27,10 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.gridspec import GridSpec
+
 from lsst.pex.config import Config, ConfigDictField, DictField, Field, ListField
 from lsst.pex.config.configurableActions import ConfigurableActionField
-from matplotlib.gridspec import GridSpec
 
 from ...interfaces import PlotAction, PlotElement
 

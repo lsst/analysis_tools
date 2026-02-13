@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ("SasquatchDispatchPartialFailure", "SasquatchDispatchFailure", "SasquatchDispatcher")
 
-"""Sasquatch datastore"""
 import calendar
 import datetime
 import json
@@ -37,6 +36,7 @@ from uuid import UUID, uuid4
 
 import numpy as np
 import requests
+
 from lsst.daf.butler import DatasetRef
 from lsst.resources import ResourcePath
 from lsst.utils.packages import getEnvironmentPackages
@@ -46,10 +46,11 @@ from ...utils import http_client
 if TYPE_CHECKING:
     from .. import MetricMeasurementBundle
 
+"""Sasquatch datastore"""
 
 log = logging.getLogger(__name__)
 
-# Constants assocated with SasquatchDispatcher
+# Constants associated with SasquatchDispatcher
 PARTITIONS = 1
 REPLICATION_FACTOR = 3
 
@@ -156,7 +157,7 @@ def _tag2VersionTime(productStr: str) -> tuple[str, float]:
     if len(times) == 0:
         raise ValueError("Could not find any tags corresponding to dates")
     minTime = min(times)
-    minTime.replace(tzinfo=datetime.timezone.utc)
+    minTime.replace(tzinfo=datetime.UTC)
     return version, minTime.timestamp()
 
 

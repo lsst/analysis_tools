@@ -23,6 +23,7 @@ import tempfile
 import unittest
 
 import astropy.units as u
+
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.bin.verifyToSasquatch import _bundle_metrics
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle

@@ -21,11 +21,12 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import numpy as np
+from urllib3.response import HTTPResponse
+
 import lsst.skymap as skyMap
 import lsst.utils.tests
-import numpy as np
 from lsst.analysis.tools.utils import getPatchCorners, getTractCorners, http_client
-from urllib3.response import HTTPResponse
 
 
 class TestTractPatchUtils(lsst.utils.tests.TestCase):

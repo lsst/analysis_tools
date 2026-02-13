@@ -324,6 +324,11 @@ class SourceObjectTableAnalysisConfig(
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
+    raiseIfNoMatches = pexConfig.Field(
+        dtype=bool,
+        default=True,
+        doc="Raise NoMatchesFound error if there are no matches between the source and object catalogs.",
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -473,7 +478,7 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
 
         matchIS = isolatedSources[isolatedMatchIndices]
 
-        if len(matchIS) == 0:
+        if len(matchIS) == 0 and self.config.raiseIfNoMatches:
             raise NoMatchError(len(isolatedSources), len(refCats))
 
         # Apply proper motions and parallaxes to visit sources.

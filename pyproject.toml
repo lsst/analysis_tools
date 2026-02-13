@@ -15,11 +15,14 @@ line-length = 110
 target-version = "py313"
 exclude = [
     "__init__.py",
+    "config",  # TODO: remove * imports on DM-54154
+    "doc",
 ]
 
 [tool.ruff.lint]
 select = [
     "E",  # pycodestyle
+    "F",  # pyflakes
     "W",  # pycodestyle
     "I",  # isort
 ]

@@ -27,6 +27,9 @@ select = [
     "UP",  # pyupgrade
     "I",  # isort
 ]
+extend-select = [
+    "RUF100", # Warn about unused noqa
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["lsst"]

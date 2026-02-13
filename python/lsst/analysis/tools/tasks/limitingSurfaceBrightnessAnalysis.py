@@ -30,9 +30,9 @@ __all__ = (
 
 import logging
 
-import lsst.afw.math as afwMath
 import numpy as np
 from astropy.table import Table
+from lsst.afw.math import StatisticsControl, makeStatistics, stringToStatisticsProperty
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
 from lsst.pipe.base.connectionTypes import Input, Output
@@ -236,13 +236,18 @@ class LimitingSurfaceBrightnessTask(PipelineTask):
             isImage = source_catalogue[idKey] == dataId[idKey]
             isSky = source_catalogue[skyKey] > 0
             skySources = source_catalogue[isImage & isSky][band + "ap%02dFlux" % (self.config.apertureSize)]
+            # Some patches contain no detections
+            if len(skySources) == 0:
+                muLim = np.nan
+                limiting_surface_brightness_table.add_row([dataId[idKey], muLim])
+                continue
 
             # Derive the clipped standard deviation of sky sources in nJy
             nPix = np.pi * self.config.apertureSize**2  # Number of pixels within the circular aperture
-            ctrl = afwMath.StatisticsControl(3, 3)
+            ctrl = StatisticsControl(3, 3)
             ctrl.setNanSafe(True)
-            statistic = afwMath.stringToStatisticsProperty("STDEVCLIP")
-            sigSkySources = afwMath.makeStatistics(skySources / nPix, statistic, ctrl).getValue()
+            statistic = stringToStatisticsProperty("STDEVCLIP")
+            sigSkySources = makeStatistics(skySources / nPix, statistic, ctrl).getValue()
 
             # Derive limiting surface brightness.  3sigma, on 10"x10" scales
             pixScaleRatio = np.sqrt(pxScale**2 / (nPix * pxScale**2))
@@ -281,6 +286,7 @@ class LimitingSurfaceBrightnessAnalysisConnections(
             deferLoad=self.data.deferLoad,
             dimensions=frozenset(sorted(config.inputDataDimensions)),
         )
+        self.dimensions.update(frozenset(sorted(config.inputDataDimensions)))
 
 
 class LimitingSurfaceBrightnessAnalysisConfig(

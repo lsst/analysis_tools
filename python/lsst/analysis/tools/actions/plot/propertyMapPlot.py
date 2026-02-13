@@ -26,7 +26,7 @@ __all__ = (
 )
 
 import logging
-from typing import Mapping, Union
+from collections.abc import Mapping
 
 import matplotlib.patheffects as mpl_path_effects
 import numpy as np
@@ -221,7 +221,7 @@ class PerTractPropertyMapPlot(PlotAction):
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
         plotConfig: PerTractPropertyMapAnalysisConfig,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
         **kwargs,
     ) -> Mapping[str, Figure]:
         self._validateInput(data, tractInfo, plotConfig, plotInfo)
@@ -232,7 +232,7 @@ class PerTractPropertyMapPlot(PlotAction):
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
         plotConfig: PerTractPropertyMapAnalysisConfig,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
     ) -> None:
         """Validate the input data."""
 
@@ -283,7 +283,7 @@ class PerTractPropertyMapPlot(PlotAction):
     def addPlotInfo(
         self,
         fig: Figure,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
         toolName: str,
     ) -> Figure:
         """Add useful information to the plot.
@@ -352,7 +352,7 @@ class PerTractPropertyMapPlot(PlotAction):
         data: KeyedData,
         tractInfo: ExplicitTractInfo,
         plotConfig: PerTractPropertyMapAnalysisConfig,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
     ) -> Mapping[str, Figure]:
         """Make the survey property map plot.
 
@@ -792,7 +792,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
         self,
         data: KeyedData,
         plotConfig: SurveyWidePropertyMapAnalysisConfig,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
         **kwargs,
     ) -> Mapping[str, Figure]:
         return self.makePlot(data, plotConfig, plotInfo)
@@ -800,7 +800,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
     def addPlotInfo(
         self,
         fig: Figure,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
         toolName: str,
     ) -> Figure:
         """Add useful information to the plot.
@@ -869,7 +869,7 @@ class SurveyWidePropertyMapPlot(PlotAction):
         self,
         data: KeyedData,
         plotConfig: SurveyWidePropertyMapAnalysisConfig,
-        plotInfo: Mapping[str, Union[Mapping[str, str], str, int]],
+        plotInfo: Mapping[str, Mapping[str, str] | str | int],
     ) -> Figure:
         """Make the survey property map plot.
 

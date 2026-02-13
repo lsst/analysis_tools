@@ -23,7 +23,7 @@ from __future__ import annotations
 __all__ = ("InterpolateDetectorMetricPlot",)
 
 import logging
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,7 +70,7 @@ class InterpolateDetectorMetricPlot(PlotAction):
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure] | Figure:
         return self.makePlot(data, **kwargs)
 
-    def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None, **kwargs) -> Figure:
+    def makePlot(self, data: KeyedData, plotInfo: Mapping[str, str] | None = None, **kwargs) -> Figure:
         """Makes a plot of a smooth interpolation of randomly
         sampled metrics in the image domain.
 
@@ -155,7 +155,8 @@ class InterpolateDetectorMetricPlot(PlotAction):
             if np.count_nonzero(dataSelector) < 4:
                 # Need at least four valid points for the interpolation.
                 ax.set_aspect("equal", "box")
-                ax.set_title(metricName + "[%s]" % zlabel)
+                ax.set_title(f"{metricName}[{zlabel}]")
+
                 continue
 
             dataX = data["x"][dataSelector]
@@ -169,7 +170,7 @@ class InterpolateDetectorMetricPlot(PlotAction):
             ax.scatter(dataX, dataY, s=10, facecolor="silver", edgecolor="black")
             _ = fig.colorbar(pc, shrink=0.7, location="right", fraction=0.07)
             ax.set_aspect("equal", "box")
-            ax.set_title(metricName + "[%s]" % zlabel)
+            ax.set_title(f"{metricName}[{zlabel}]")
 
         for iax in range(axes.size - n_plots):
             axes.flatten()[-(iax + 1)].remove()

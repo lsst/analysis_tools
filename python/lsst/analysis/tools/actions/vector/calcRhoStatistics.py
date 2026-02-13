@@ -27,7 +27,8 @@ __all__ = (
 )
 
 import logging
-from typing import TYPE_CHECKING, Any, Mapping, cast
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import treecorr  # type: ignore[import]

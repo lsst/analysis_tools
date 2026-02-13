@@ -34,8 +34,9 @@ __all__ = (
 )
 
 from abc import ABCMeta
+from collections.abc import Iterable, Mapping, MutableMapping
 from numbers import Number
-from typing import Any, Iterable, Mapping, MutableMapping, Protocol, TypeAlias, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 from healsparse import HealSparseMap
@@ -132,8 +133,8 @@ PlotTypes = Figure
 KeyedResults = Mapping[str, PlotTypes | Measurement]
 """A mapping of the return types for an analysisTool."""
 
-MetricResultType: TypeAlias = Mapping[str, Measurement] | Measurement
+type MetricResultType = Mapping[str, Measurement] | Measurement
 """A type alias for the return type of a MetricAction."""
 
-PlotResultType: TypeAlias = Mapping[str, PlotTypes] | PlotTypes
+type PlotResultType = Mapping[str, PlotTypes] | PlotTypes
 """A type alias for the return type of a PlotAction."""

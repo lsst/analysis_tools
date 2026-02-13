@@ -29,7 +29,7 @@ __all__ = (
     "KeyedDataUnitAccessAction",
 )
 
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -119,7 +119,7 @@ class KeyedDataSelectorAction(KeyedDataAction):
         return ((column, Vector | Scalar) for column in self.vectorKeys)  # type: ignore
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        mask: Optional[np.ndarray] = None
+        mask: np.ndarray | None = None
         for selector in self.selectors:
             subMask = selector(data, **kwargs)
             if mask is None:

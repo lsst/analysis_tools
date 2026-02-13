@@ -21,7 +21,7 @@
 
 __all__ = ("DiaSkyPanel", "DiaSkyPlot")
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure

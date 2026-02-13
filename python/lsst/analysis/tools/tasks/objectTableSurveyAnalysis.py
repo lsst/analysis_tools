@@ -22,7 +22,8 @@ from __future__ import annotations
 __all__ = ("ObjectTableSurveyAnalysisTask",)
 
 
-from typing import TYPE_CHECKING, Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from lsst.daf.butler import DataCoordinate, DeferredDatasetHandle

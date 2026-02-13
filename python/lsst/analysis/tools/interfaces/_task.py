@@ -28,9 +28,9 @@ import pprint
 import traceback
 import warnings
 import weakref
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Iterable, Mapping, MutableMapping
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 

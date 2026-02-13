@@ -27,7 +27,8 @@ __all__ = [
     "PerTractPropertyMapAnalysisTask",
 ]
 
-from typing import Any, Mapping, Union
+from collections.abc import Mapping
+from typing import Any
 
 from lsst.daf.butler import DataCoordinate
 from lsst.pex.config import ChoiceField, DictField, Field, ListField
@@ -121,7 +122,7 @@ class PerTractPropertyMapAnalysisTask(AnalysisPipelineTask):
 
     def parsePlotInfo(
         self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionNames: list[str]
-    ) -> Mapping[str, Union[Mapping[str, str], str, int]]:
+    ) -> Mapping[str, Mapping[str, str] | str | int]:
         """Parse the inputs and dataId to get the information needed to add to
         the figure.
 
@@ -278,7 +279,7 @@ class SurveyWidePropertyMapAnalysisTask(AnalysisPipelineTask):
 
     def parsePlotInfo(
         self, inputs: Mapping[str, Any], dataId: DataCoordinate | None, connectionNames: list[str]
-    ) -> Mapping[str, Union[Mapping[str, str], str, int]]:
+    ) -> Mapping[str, Mapping[str, str] | str | int]:
         """Parse the inputs and dataId to get the information needed to add to
         the figure.
 

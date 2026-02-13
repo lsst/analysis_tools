@@ -157,7 +157,7 @@ def _tag2VersionTime(productStr: str) -> tuple[str, float]:
     if len(times) == 0:
         raise ValueError("Could not find any tags corresponding to dates")
     minTime = min(times)
-    minTime.replace(tzinfo=datetime.timezone.utc)
+    minTime.replace(tzinfo=datetime.UTC)
     return version, minTime.timestamp()
 
 

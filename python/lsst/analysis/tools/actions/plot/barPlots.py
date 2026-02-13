@@ -24,7 +24,7 @@ __all__ = ("BarPanel", "BarPlot")
 
 import operator as op
 from collections import defaultdict
-from typing import Mapping
+from collections.abc import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np

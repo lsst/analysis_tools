@@ -41,8 +41,9 @@ __all__ = (
 
 import warnings
 from abc import abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from healsparse.healSparseMap import HealSparseMap
 

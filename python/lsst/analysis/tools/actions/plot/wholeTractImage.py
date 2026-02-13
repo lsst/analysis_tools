@@ -23,7 +23,7 @@ from __future__ import annotations
 
 __all__ = ("WholeTractImage",)
 
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.cm as cm
 import matplotlib.patches as patches
@@ -174,7 +174,7 @@ class WholeTractImage(PlotAction):
         data: KeyedData,
         tractId: int,
         skymap: BaseSkyMap,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> Figure:
         """Make a figure displaying the input pixel data.

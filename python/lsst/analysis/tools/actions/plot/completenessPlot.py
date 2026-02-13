@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import numpy as np
 from matplotlib.figure import Figure

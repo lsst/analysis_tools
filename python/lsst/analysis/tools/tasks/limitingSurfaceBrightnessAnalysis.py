@@ -236,7 +236,7 @@ class LimitingSurfaceBrightnessTask(PipelineTask):
             skyKey = "sky_source" if "detector" in dataId else "sky_object"
             isImage = source_catalogue[idKey] == dataId[idKey]
             isSky = source_catalogue[skyKey] > 0
-            skySources = source_catalogue[isImage & isSky][band + "ap%02dFlux" % (self.config.apertureSize)]
+            skySources = source_catalogue[isImage & isSky][f"{band}ap{self.config.apertureSize:02d}Flux"]
             # Some patches contain no detections
             if len(skySources) == 0:
                 muLim = np.nan

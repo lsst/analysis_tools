@@ -801,7 +801,7 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         if args.output_run is None:
             if args.output is None:
                 raise ValueError("At least one of --output or --output-run options is required.")
-            args.output_run = "{}/{}".format(args.output, Instrument.makeCollectionTimestamp())
+            args.output_run = f"{args.output}/{Instrument.makeCollectionTimestamp()}"
 
         butler = Butler(args.repo, collections=args.collections)
         builder = cls(

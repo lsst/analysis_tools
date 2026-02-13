@@ -25,7 +25,7 @@ __all__ = ("WholeSkyPlot",)
 
 import importlib.resources as importResources
 import json
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
@@ -206,7 +206,7 @@ class WholeSkyPlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> AnnotatedFigure:
         """Make a WholeSkyPlot of the given data.
@@ -433,7 +433,7 @@ class WholeSkyPlot(PlotAction):
             upperLim = highThreshold + 0.5 * widthThreshold
             lowerLim = lowThreshold - 0.5 * widthThreshold
             ax1.set_xlim(lowerLim, upperLim)
-            numOutside = np.sum(((data["z"] > upperLim) | (data["z"] < lowerLim)))
+            numOutside = np.sum((data["z"] > upperLim) | (data["z"] < lowerLim))
             ax1.set_title("Outside plot limits: " + str(numOutside))
 
         else:

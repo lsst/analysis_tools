@@ -22,8 +22,9 @@ from __future__ import annotations
 
 __all__ = ("ContextMeta", "Context", "ContextType", "ContextApplier")
 
+from collections.abc import Callable, Iterable
 from functools import partial, update_wrapper
-from typing import TYPE_CHECKING, Callable, Iterable, Union, cast, overload
+from typing import TYPE_CHECKING, cast, overload
 
 from lsst.pex.config.configurableActions import ConfigurableActionStruct
 
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 
 class GetterStandin:
-    def __init__(self, base: Union[Context, ContextMeta]):
+    def __init__(self, base: Context | ContextMeta):
         self.base = base
 
     def __call__(self) -> Iterable[ContextMeta]:
@@ -175,7 +176,7 @@ class ContextMeta(type):
         return ctx
 
     @staticmethod
-    def _makeStr(obj: Union[Context, ContextMeta]) -> str:
+    def _makeStr(obj: Context | ContextMeta) -> str:
         ctxs = list(obj.getContexts())
         if len(ctxs) == 1:
             return ctxs[0].__name__
@@ -231,7 +232,7 @@ class Context(metaclass=ContextMeta):
         return ctx
 
 
-ContextType = Union[Context, type[Context]]
+type ContextType = Context | type[Context]
 """A type alias to use in contexts where either a Context type or instance
 should be accepted (which is most places)
 """

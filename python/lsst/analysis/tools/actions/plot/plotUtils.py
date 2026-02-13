@@ -22,7 +22,8 @@ from __future__ import annotations
 
 __all__ = ("PanelConfig", "sortAllArrays")
 
-from typing import TYPE_CHECKING, Iterable, List, Mapping, Tuple
+from collections.abc import Iterable, Mapping
+from typing import TYPE_CHECKING
 
 import esutil
 import matplotlib
@@ -153,7 +154,7 @@ def generateSummaryStatsVisit(cat, colName, visitSummaryTable):
 
 
 # Inspired by matplotlib.testing.remove_ticks_and_titles
-def get_and_remove_axis_text(ax) -> Tuple[List[str], List[np.ndarray]]:
+def get_and_remove_axis_text(ax) -> tuple[list[str], list[np.ndarray]]:
     """Remove text from an Axis and its children and return with line points.
 
     Parameters
@@ -711,7 +712,7 @@ def plotProjectionWithBinning(
                 # Find the most extreme 15% of points. The list is ordered
                 # by the distance from the median, this is just the
                 # head/tail 15% of points.
-                extremes = int(np.floor((len(xs) / 100)) * 85)
+                extremes = int(np.floor(len(xs) / 100) * 85)
                 plotOut = ax.scatter(
                     xs[extremes:],
                     ys[extremes:],

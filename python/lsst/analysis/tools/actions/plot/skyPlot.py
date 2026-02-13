@@ -23,7 +23,7 @@ from __future__ import annotations
 
 __all__ = ("SkyPlot",)
 
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
@@ -158,11 +158,11 @@ class SkyPlot(PlotAction):
         sigMad = nanSigmaMad(arr)
 
         statsText = (
-            "Median: {:0.2f}\n".format(med)
+            f"Median: {med:0.2f}\n"
             + r"$\sigma_{MAD}$: "
-            + "{:0.2f}\n".format(sigMad)
+            + f"{sigMad:0.2f}\n"
             + r"n$_{points}$: "
-            + "{}".format(numPoints)
+            + f"{numPoints}"
         )
 
         return med, sigMad, statsText
@@ -170,8 +170,8 @@ class SkyPlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotInfo: Optional[Mapping[str, str]] = None,
-        sumStats: Optional[Mapping] = None,
+        plotInfo: Mapping[str, str] | None = None,
+        sumStats: Mapping | None = None,
         **kwargs,
     ) -> Figure:
         """Make a skyPlot of the given data.
@@ -404,7 +404,7 @@ class SkyPlot(PlotAction):
                 cax = fig.add_axes([axBbox.x1, axBbox.y0, 0.04, axBbox.y1 - axBbox.y0])
                 fig.colorbar(plotOut, cax=cax)
 
-            colorBarLabel = "{}: {}".format(self.zAxisLabel, label)
+            colorBarLabel = f"{self.zAxisLabel}: {label}"
             text = cax.text(
                 0.5,
                 0.5,

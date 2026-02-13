@@ -23,7 +23,8 @@ from __future__ import annotations
 
 __all__ = ("RhoStatisticsPlot",)
 
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -86,8 +87,7 @@ class RhoStatisticsPlot(PlotAction):
 
     def getOutputNames(self) -> Iterable[str]:
         # Docstring inherited
-        for key in self.rhoPlots.keys():
-            yield key
+        yield from self.rhoPlots.keys()
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure]:
         self._validateInput(data)

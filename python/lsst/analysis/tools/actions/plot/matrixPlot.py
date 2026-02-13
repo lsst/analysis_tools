@@ -23,7 +23,8 @@ from __future__ import annotations
 
 __all__ = ("MatrixPlot",)
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import astropy.visualization as apViz
 import matplotlib.patheffects as mpl_path_effects

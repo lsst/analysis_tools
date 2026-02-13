@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("StructPlotAction",)
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from lsst.pex.config import Config
 from lsst.pex.config.configurableActions import ConfigurableActionStructField

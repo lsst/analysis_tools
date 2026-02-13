@@ -222,7 +222,7 @@ class ScatterPlotWithTwoHistsTaskTestCase(lsst.utils.tests.TestCase):
             with open(filename_texts_ref, "w") as f:
                 f.writelines(f"{text.strip().replace(newline, newline_replace)}\n" for text in texts)
 
-        with open(filename_texts_ref, "r") as f:
+        with open(filename_texts_ref) as f:
             texts_ref = set(x.strip() for x in f.readlines())
         texts_set = set(x.strip().replace(newline, newline_replace) for x in texts)
 

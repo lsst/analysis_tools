@@ -82,6 +82,12 @@ tasks:
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *
+  makeObjectParentMetricTable:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "object_parent_metrics"
+      connections.outputTableName: "object_parent_metrics_table"
+      inputDataDimensions: ["skymap", "tract"]
   analyzeObjectTableSurveyCore:
     class: lsst.analysis.tools.tasks.ObjectTableSurveyAnalysisTask
     config:

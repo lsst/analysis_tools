@@ -24,6 +24,7 @@ select = [
     "E",  # pycodestyle
     "F",  # pyflakes
     "W",  # pycodestyle
+    "UP",  # pyupgrade
     "I",  # isort
 ]
 

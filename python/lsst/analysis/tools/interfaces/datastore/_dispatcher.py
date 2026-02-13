@@ -113,7 +113,10 @@ def _tag2VersionTime(productStr: str) -> tuple[str, float]:
     """
     times: list[datetime.datetime] = []
     version = productStr.split()[0]
-    tags: str = re.findall("[(](.*)[)]", productStr)[0]
+    pattern_match = re.findall("[(](.*)[)]", productStr)
+    if len(pattern_match) == 0:
+        raise ValueError(f"Could not find any tags in product string {productStr}")
+    tags: str = pattern_match[0]
     for tag in tags.split():
         numDots = tag.count(".")
         numUnder = tag.count("_")
@@ -361,16 +364,18 @@ class SasquatchDispatcher:
         bundle : `MetricMeasurementBundle`
             The bundled metrics
         """
-        package_version, package_timestamp = "", 0.0
-        if ref_package := getattr(bundle, "reference_package", ""):
-            ref_package = bundle.reference_package
-            packages = getEnvironmentPackages(True)
-            if package_info := packages.get(ref_package):
-                try:
-                    package_version, package_timestamp = _tag2VersionTime(package_info)
-                except ValueError:
-                    # Could not extract package timestamp leaving empty
-                    pass
+        ref_package, package_version, package_timestamp = "", "", 0.0
+        # This should only attempt to resolve a reference package if
+        # it is to be used to determine the timestamp.
+        if getattr(bundle, "timestamp_version", None) == "reference_package_timestamp":
+            if ref_package := getattr(bundle, "reference_package", ""):
+                packages = getEnvironmentPackages(True)
+                if package_info := packages.get(ref_package):
+                    try:
+                        package_version, package_timestamp = _tag2VersionTime(package_info)
+                    except ValueError:
+                        # Could not extract package timestamp leaving empty
+                        pass
         # explicit handle if None was set in the bundle for the package
         meta["reference_package"] = ref_package or ""
         meta["reference_package_version"] = package_version

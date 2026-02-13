@@ -7,6 +7,9 @@ profile = "black"
 line_length = 110
 known_first_party = ["lsst"]
 
+[tool.pydocstyle]
+convention = "numpy"
+
 [tool.lsst_versions]
 write_to = "python/lsst/analysis/tools/version.py"
 
@@ -33,3 +36,9 @@ extend-select = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["lsst"]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 79
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

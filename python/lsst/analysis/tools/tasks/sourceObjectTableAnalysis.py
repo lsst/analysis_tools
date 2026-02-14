@@ -57,6 +57,23 @@ class IndexMismatchError(AlgorithmError):
         return {}
 
 
+class NoMatchError(AlgorithmError):
+    """Raised if there are no matches between the source and reference
+    catalogs. This can happen if areas of the source or reference image were
+    not processed successfully."""
+
+    def __init__(self, targetCatalogSize, refCatalogSize) -> None:
+        self._metadata = {"targetCatalogSize": targetCatalogSize, "refCatalogSize": refCatalogSize}
+        super().__init__("No matches were made between the source and reference catalogs.")
+
+    @property
+    def metadata(self) -> dict:
+        for key, value in self._metadata.items():
+            if not isinstance(value, int | float | str):
+                raise TypeError(f"{key} is of type {type(value)}, but only (int, float, str) are allowed.")
+        return self._metadata
+
+
 class ObjectEpochTableConnections(
     pipeBase.PipelineTaskConnections,
     dimensions=("tract", "skymap"),
@@ -307,6 +324,11 @@ class SourceObjectTableAnalysisConfig(
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
+    raiseIfNoMatches = pexConfig.Field(
+        dtype=bool,
+        default=True,
+        doc="Raise NoMatchesFound error if there are no matches between the source and object catalogs.",
+    )
 
     def setDefaults(self):
         super().setDefaults()
@@ -455,6 +477,10 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
             )
 
         matchIS = isolatedSources[isolatedMatchIndices]
+
+        if len(matchIS) == 0 and self.config.raiseIfNoMatches:
+            raise NoMatchError(len(isolatedSources), len(refCats))
+
         # Apply proper motions and parallaxes to visit sources.
         if self.config.applyAstrometricCorrections:
             refCatEpochs = refCats[self.config.epoch_column].iloc[refMatchIndices]
@@ -531,7 +557,11 @@ class SourceObjectTableAnalysisTask(AnalysisPipelineTask):
             inputs["astrometricCorrectionCatalog"] = None
             inputs["visitTable"] = None
 
-        allCat = self.callback(inputs, dataId)
+        try:
+            allCat = self.callback(inputs, dataId)
+        except pipeBase.AlgorithmError as e:
+            error = pipeBase.AnnotatedPartialOutputsError.annotate(e, self, log=self.log)
+            raise error from e
 
         outputs = self.run(data=allCat, bands=band, plotInfo=plotInfo)
         butlerQC.put(outputs, outputRefs)

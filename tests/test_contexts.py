@@ -144,6 +144,7 @@ class TestAnalysisTool(AnalysisTool):
     __test__ = False  # Tell pytest that this is *not* a test suite
 
     def setDefaults(self) -> None:
+        super().setDefaults()
         self.prep = TestAction1()
         self.process = TestAction2()
         self.produce = TestAction3()

@@ -24,10 +24,12 @@ __all__ = ("BasePrep", "BaseProcess", "BaseMetricAction", "BaseProduce")
 
 import logging
 from collections import abc
-from typing import Any, Mapping, cast
+from collections.abc import Mapping
+from typing import Any, cast
 
 import astropy.units as apu
 from healsparse import HealSparseMap
+
 from lsst.pex.config import ListField
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.dictField import DictField

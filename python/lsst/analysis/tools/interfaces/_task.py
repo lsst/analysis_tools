@@ -20,17 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-"""Base class implementation for the classes needed in creating `PipelineTasks`
-which execute `AnalysisTools`.
-
-The classes defined in this module have all the required behaviors for
-defining, introspecting, and executing `AnalysisTools` against an input dataset
-type.
-
-Subclasses of these tasks should specify specific datasets to consume in their
-connection classes and should specify a unique name
-"""
-
 __all__ = ("AnalysisBaseConnections", "AnalysisBaseConfig", "AnalysisPipelineTask")
 
 import datetime
@@ -39,11 +28,12 @@ import pprint
 import traceback
 import warnings
 import weakref
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Iterable, Mapping, MutableMapping
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Mapping, MutableMapping, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
+
 from lsst.verify import Measurement
 
 if TYPE_CHECKING:
@@ -70,6 +60,17 @@ from ._actions import JointAction, MetricAction, NoMetric
 from ._analysisTools import AnalysisTool
 from ._interfaces import KeyedData, PlotTypes
 from ._metricMeasurementBundle import MetricMeasurementBundle
+
+"""Base class implementation for the classes needed in creating `PipelineTasks`
+which execute `AnalysisTools`.
+
+The classes defined in this module have all the required behaviors for
+defining, introspecting, and executing `AnalysisTools` against an input dataset
+type.
+
+Subclasses of these tasks should specify specific datasets to consume in their
+connection classes and should specify a unique name
+"""
 
 # TODO: This rcParams modification is a temporary solution, hiding
 # a matplotlib warning indicating too many figures have been opened.
@@ -206,8 +207,7 @@ class AnalysisBaseConnections(
             name = f"{outputName}_{name}"
             if name in self.outputs or name in existingNames:
                 raise NameError(
-                    f"Plot with name {name} conflicts with existing connection"
-                    " are two plots named the same?"
+                    f"Plot with name {name} conflicts with existing connection are two plots named the same?"
                 )
 
             if action.parameterizedBand and "band" not in self.dimensions:

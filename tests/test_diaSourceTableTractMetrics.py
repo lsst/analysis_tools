@@ -20,9 +20,10 @@
 
 import unittest
 
-import lsst.utils.tests
 import matplotlib.pyplot as plt
 from astropy.table import Table
+
+import lsst.utils.tests
 from lsst.analysis.tools.atools import diaSourceTableTractMetrics as diaAtool
 
 

@@ -24,11 +24,20 @@ from __future__ import annotations
 __all__ = ("ScatterPlotStatsAction", "ScatterPlotWithTwoHists")
 
 import math
-from typing import Mapping, NamedTuple, Optional, cast
+from collections.abc import Mapping
+from typing import NamedTuple, cast
 
 import matplotlib.colors
 import matplotlib.patheffects as pathEffects
 import numpy as np
+from matplotlib import gridspec
+from matplotlib.axes import Axes
+from matplotlib.collections import PolyCollection
+from matplotlib.figure import Figure
+from matplotlib.path import Path
+from matplotlib.ticker import LogFormatterMathtext, NullFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.pex.config.listField import ListField
@@ -40,13 +49,6 @@ from lsst.utils.plotting import (
     stars_cmap,
     stars_color,
 )
-from matplotlib import gridspec
-from matplotlib.axes import Axes
-from matplotlib.collections import PolyCollection
-from matplotlib.figure import Figure
-from matplotlib.path import Path
-from matplotlib.ticker import LogFormatterMathtext, NullFormatter
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, PlotAction, Scalar, ScalarType, Vector
 from ...math import nanMedian, nanSigmaMad
@@ -444,7 +446,7 @@ class ScatterPlotWithTwoHists(PlotAction):
 
     def _scatterPlot(
         self, data: KeyedData, fig: Figure, gs: gridspec.GridSpec, **kwargs
-    ) -> tuple[Axes, Optional[PolyCollection]]:
+    ) -> tuple[Axes, PolyCollection | None]:
         suf_x = self.suffix_x
         suf_y = self.suffix_y
         suf_stat = self.suffix_stat
@@ -605,7 +607,7 @@ class ScatterPlotWithTwoHists(PlotAction):
             yBinsOut.append(yBins)
             countsYs = np.sum(counts, axis=1)
 
-            ids = np.where((countsYs > binThresh))[0]
+            ids = np.where(countsYs > binThresh)[0]
             xEdgesPlot = xEdges[ids][1:]
             xEdges = xEdges[ids]
 
@@ -915,7 +917,7 @@ class ScatterPlotWithTwoHists(PlotAction):
         figure: Figure,
         gs: gridspec.Gridspec,
         ax: Axes,
-        histIm: Optional[PolyCollection],
+        histIm: PolyCollection | None,
         **kwargs,
     ) -> None:
         suf_y = self.suffix_y

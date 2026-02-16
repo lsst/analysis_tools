@@ -20,13 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import numpy as np
+from matplotlib.figure import Figure
+
 from lsst.pex.config import ChoiceField, Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 from lsst.utils.plotting import make_figure, set_rubin_plotstyle
-from matplotlib.figure import Figure
 
 from ...actions.keyedData import CalcCompletenessHistogramAction
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar

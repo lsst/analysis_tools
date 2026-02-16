@@ -25,6 +25,7 @@ __all__ = ("LoadHealSparseMap",)
 from typing import cast
 
 from healsparse.healSparseMap import HealSparseMap
+
 from lsst.pex.config import Field
 
 from ...interfaces import HealSparseMapAction, KeyedData, KeyedDataSchema

@@ -24,9 +24,10 @@ from __future__ import annotations
 import os
 from unittest import main
 
-import lsst.utils.tests
 import numpy as np
 import pandas as pd
+
+import lsst.utils.tests
 from lsst.analysis.tools.tasks import (
     ConsolidateResourceUsageConfig,
     ConsolidateResourceUsageTask,

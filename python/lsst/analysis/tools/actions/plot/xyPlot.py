@@ -23,11 +23,13 @@ from __future__ import annotations
 
 __all__ = ("XYPlot",)
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
-from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
 from matplotlib.ticker import SymmetricalLogLocator
+
+from lsst.pex.config import ChoiceField, DictField, Field, FieldValidationError
 
 from ...interfaces import PlotAction, Vector
 from .plotUtils import addPlotInfo

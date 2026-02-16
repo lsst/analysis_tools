@@ -23,13 +23,15 @@ from __future__ import annotations
 
 __all__ = ("MatrixPlot",)
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import astropy.visualization as apViz
 import matplotlib.patheffects as mpl_path_effects
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization.mpl_normalize import ImageNormalize
+
 from lsst.pex.config import ChoiceField, Config, ConfigDictField, DictField, Field, ListField
 
 from ...interfaces import PlotAction, Vector
@@ -495,7 +497,7 @@ class MatrixPlot(PlotAction):
                 if labels is not None:
                     # Create a lookup for positions to labels.
                     positions_labels_lookup = {
-                        p: l if p in major_tick_values else "" for p, l in zip(positions, labels)
+                        p: lbl if p in major_tick_values else "" for p, lbl in zip(positions, labels)
                     }
                     # Generate labels for major ticks, leaving blanks for
                     # non-major positions.
@@ -505,7 +507,9 @@ class MatrixPlot(PlotAction):
                     ]
                     # Generate labels for minor ticks, excluding those
                     # designated as major.
-                    minor_labels = ["" if p in major_tick_values else l for p, l in zip(positions, labels)]
+                    minor_labels = [
+                        "" if p in major_tick_values else lbl for p, lbl in zip(positions, labels)
+                    ]
 
                     # Apply labels to major ticks if any exist.
                     if any(e for e in major_labels if e):

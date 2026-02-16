@@ -25,10 +25,11 @@ __all__ = (
     "MakeMetricTableTask",
 )
 
-import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy import units as u
 from astropy.table import Table
+
+import lsst.pipe.base as pipeBase
 from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap

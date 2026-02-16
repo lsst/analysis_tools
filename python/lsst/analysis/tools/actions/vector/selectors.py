@@ -52,9 +52,10 @@ __all__ = (
 )
 
 import operator
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
+
 from lsst.pex.config import Field
 from lsst.pex.config.listField import ListField
 
@@ -114,7 +115,7 @@ class FlagSelector(VectorAction):
 
         if not self.selectWhenFalse and not self.selectWhenTrue:
             raise RuntimeError("No column keys specified")
-        results: Optional[Vector] = None
+        results: Vector | None = None
 
         for flag in self.selectWhenFalse:  # type: ignore
             temp = np.array(data[flag.format(**kwargs)] == 0)
@@ -156,7 +157,7 @@ class CoaddPlotFlagSelector(FlagSelector):
         self.selectWhenTrue = ["detect_isPatchInner_target", "detect_isDeblendedSource_target"]
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result: Optional[Vector] = None
+        result: Vector | None = None
         bands: tuple[str, ...]
         match kwargs:
             case {"band": band} if not self.bands and self.bands == []:
@@ -216,7 +217,7 @@ class VisitPlotFlagSelector(FlagSelector):
         ]
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result: Optional[Vector] = None
+        result: Vector | None = None
         temp = super().__call__(data, **kwargs)
         if result is not None:
             result &= temp  # type: ignore
@@ -356,7 +357,7 @@ class SnSelector(SelectorBase):
             A mask of the objects that satisfy the given
             S/N cut.
         """
-        mask: Optional[Vector] = None
+        mask: Vector | None = None
         bands: tuple[str, ...]
         match kwargs:
             case {"band": band} if not self.bands and self.bands == []:
@@ -381,9 +382,9 @@ class SnSelector(SelectorBase):
             else:
                 mask = temp
 
-        plotLabelStr = "({}) > {:.1f}".format(bandStr, self.threshold)
+        plotLabelStr = f"({bandStr}) > {self.threshold:.1f}"
         if self.maxSN < 1e5:
-            plotLabelStr += " & < {:.1f}".format(self.maxSN)
+            plotLabelStr += f" & < {self.maxSN:.1f}"
 
         if self.plotLabelKey == "" or self.plotLabelKey is None:
             self._addValueToPlotInfo(plotLabelStr, plotLabelKey="S/N", **kwargs)
@@ -406,7 +407,7 @@ class SkyObjectSelector(FlagSelector):
         yield from super().getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result: Optional[Vector] = None
+        result: Vector | None = None
         bands: tuple[str, ...]
         match kwargs:
             case {"band": band} if not self.bands and self.bands == []:
@@ -441,7 +442,7 @@ class SkySourceSelector(FlagSelector):
         yield from super().getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result: Optional[Vector] = None
+        result: Vector | None = None
         temp = super().__call__(data, **(kwargs))
         if result is not None:
             result &= temp  # type: ignore
@@ -465,7 +466,7 @@ class GoodDiaSourceSelector(FlagSelector):
         yield from super().getInputSchema()
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        result: Optional[Vector] = None
+        result: Vector | None = None
         temp = super().__call__(data, **(kwargs))
         if result is not None:
             result &= temp  # type: ignore
@@ -592,7 +593,7 @@ class BandSelector(VectorAction):
         return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        bands: Optional[tuple[str, ...]]
+        bands: tuple[str, ...] | None
         match kwargs:
             case {"band": band} if not self.bands and self.bands == []:
                 bands = (band,)
@@ -681,7 +682,7 @@ class MagSelector(SelectorBase):
         result : `Vector`
             A mask of the objects that satisfy the given magnitude cut.
         """
-        mask: Optional[Vector] = None
+        mask: Vector | None = None
         bands: tuple[str, ...]
         match kwargs:
             case {"band": band} if not self.bands and self.bands == []:
@@ -708,12 +709,12 @@ class MagSelector(SelectorBase):
 
         plotLabelStr = ""
         if self.maxMag < 100:
-            plotLabelStr += "({}) < {:.1f}".format(bandStr, self.maxMag)
+            plotLabelStr += f"({bandStr}) < {self.maxMag:.1f}"
         if self.minMag > -100:
             if bandStr in plotLabelStr:
-                plotLabelStr += " & < {:.1f}".format(self.minMag)
+                plotLabelStr += f" & < {self.minMag:.1f}"
             else:
-                plotLabelStr += "({}) < {:.1f}".format(bandStr, self.minMag)
+                plotLabelStr += f"({bandStr}) < {self.minMag:.1f}"
         if self.plotLabelKey == "" or self.plotLabelKey is None:
             self._addValueToPlotInfo(plotLabelStr, plotLabelKey="Mag", **kwargs)
         else:

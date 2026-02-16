@@ -23,19 +23,20 @@ from __future__ import annotations
 
 __all__ = ("FocalPlanePlot", "FocalPlaneGeometryPlot")
 
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.patheffects as pathEffects
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.afw.cameraGeom import FOCAL_PLANE, PIXELS, Camera
-from lsst.pex.config import ChoiceField, Field
 from matplotlib.collections import PatchCollection
 from matplotlib.figure import Figure
 from matplotlib.offsetbox import AnchoredText
 from matplotlib.patches import Polygon
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.stats import binned_statistic_2d, binned_statistic_dd
+
+from lsst.afw.cameraGeom import FOCAL_PLANE, PIXELS, Camera
+from lsst.pex.config import ChoiceField, Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMedian, nanMin, nanSigmaMad
@@ -121,11 +122,11 @@ class FocalPlanePlot(PlotAction):
         sigMad = nanSigmaMad(arr)
 
         statsText = (
-            "Median: {:0.2f}\n".format(med)
+            f"Median: {med:0.2f}\n"
             + r"$\sigma_{MAD}$: "
-            + "{:0.2f}\n".format(sigMad)
+            + f"{sigMad:0.2f}\n"
             + r"n$_{points}$: "
-            + "{}".format(numPoints)
+            + f"{numPoints}"
         )
 
         return med, sigMad, statsText
@@ -150,7 +151,7 @@ class FocalPlanePlot(PlotAction):
         self,
         data: KeyedData,
         camera: Camera,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> Figure:
         """Prep the catalogue and then make a focalPlanePlot of the given
@@ -336,7 +337,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         self,
         data: KeyedData,
         camera: Camera,
-        plotInfo: Optional[Mapping[str, str]] = None,
+        plotInfo: Mapping[str, str] | None = None,
         **kwargs,
     ) -> Figure:
         """Prep the catalogue and then make a focalPlanePlot of the given

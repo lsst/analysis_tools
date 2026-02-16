@@ -40,6 +40,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from astropy.time import Time
+
 from lsst.daf.butler import Butler, DatasetRef, DatasetType
 from lsst.pex.config import Field, ListField
 from lsst.pipe.base import (
@@ -800,7 +801,7 @@ class ResourceUsageQuantumGraphBuilder(QuantumGraphBuilder):
         if args.output_run is None:
             if args.output is None:
                 raise ValueError("At least one of --output or --output-run options is required.")
-            args.output_run = "{}/{}".format(args.output, Instrument.makeCollectionTimestamp())
+            args.output_run = f"{args.output}/{Instrument.makeCollectionTimestamp()}"
 
         butler = Butler(args.repo, collections=args.collections)
         builder = cls(

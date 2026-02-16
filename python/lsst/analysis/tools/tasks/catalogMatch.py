@@ -22,16 +22,17 @@
 __all__ = ("CatalogMatchConfig", "CatalogMatchTask")
 
 
-import lsst.geom
-import lsst.pex.config as pexConfig
-import lsst.pipe.base as pipeBase
 import numpy as np
 from astropy.table import Table, hstack, vstack
 from astropy.time import Time
+from smatch import Matcher
+
+import lsst.geom
+import lsst.pex.config as pexConfig
+import lsst.pipe.base as pipeBase
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pipe.tasks.loadReferenceCatalog import LoadReferenceCatalogTask
 from lsst.skymap import BaseSkyMap
-from smatch import Matcher
 
 from ..actions.vector import (
     CoaddPlotFlagSelector,

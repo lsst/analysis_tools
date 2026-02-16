@@ -21,10 +21,11 @@
 
 import unittest
 
-import lsst.utils.tests
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.plot.matrixPlot import GuideLinesConfig, MatrixPlot
 from lsst.analysis.tools.actions.vector.vectorActions import LoadVector
 from lsst.analysis.tools.interfaces import AnalysisTool

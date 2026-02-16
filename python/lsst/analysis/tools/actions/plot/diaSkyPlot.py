@@ -21,11 +21,12 @@
 
 __all__ = ("DiaSkyPanel", "DiaSkyPlot")
 
-from typing import Mapping
+from collections.abc import Mapping
 
 import matplotlib.pyplot as plt
-from lsst.pex.config import ConfigDictField, Field, ListField
 from matplotlib.figure import Figure
+
+from lsst.pex.config import ConfigDictField, Field, ListField
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import PanelConfig

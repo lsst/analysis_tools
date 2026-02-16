@@ -25,6 +25,7 @@ import unittest
 from unittest.mock import patch
 
 import astropy.units as u
+
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
 from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher
@@ -87,7 +88,7 @@ class SasquatchDatastoreTest(unittest.TestCase):
         bundle.timestamp_version = "explicit_timestamp:20230728T165102Z"
         meta = {}
         dispatcher._handleTimes(meta, bundle, "localRun")
-        dt = datetime.datetime(2023, 7, 28, 16, 51, 2, tzinfo=datetime.timezone.utc)
+        dt = datetime.datetime(2023, 7, 28, 16, 51, 2, tzinfo=datetime.UTC)
         self.assertEqual(meta["timestamp"], dt.timestamp())
 
 

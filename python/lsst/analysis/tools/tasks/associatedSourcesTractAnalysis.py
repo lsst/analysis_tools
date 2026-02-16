@@ -24,15 +24,16 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 
 import astropy.time
 import astropy.units as u
-import lsst.pex.config as pexConfig
 import numpy as np
 from astropy.table import Table, hstack
+from scipy.spatial import KDTree
+
+import lsst.pex.config as pexConfig
 from lsst.daf.butler import DatasetProvenance
 from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
-from scipy.spatial import KDTree
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 

@@ -20,7 +20,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 __all__ = ("DiffimDetectorVisitSpatiallySampledPlotsConfig", "DiffimDetectorVisitSpatiallySampledPlotsTask")
 

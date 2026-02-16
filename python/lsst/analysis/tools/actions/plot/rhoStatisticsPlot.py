@@ -23,11 +23,13 @@ from __future__ import annotations
 
 __all__ = ("RhoStatisticsPlot",)
 
-from typing import Any, Iterable, Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import numpy as np
-from lsst.pex.config import ConfigDictField
 from matplotlib.figure import Figure
+
+from lsst.pex.config import ConfigDictField
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from .plotUtils import addPlotInfo
@@ -85,8 +87,7 @@ class RhoStatisticsPlot(PlotAction):
 
     def getOutputNames(self) -> Iterable[str]:
         # Docstring inherited
-        for key in self.rhoPlots.keys():
-            yield key
+        yield from self.rhoPlots.keys()
 
     def __call__(self, data: KeyedData, **kwargs) -> Mapping[str, Figure]:
         self._validateInput(data)

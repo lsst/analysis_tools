@@ -24,10 +24,11 @@ __all__ = (
     "MakeDiffimKernelQuiverPlotVisitTask",
 )
 
-import lsst.pex.config
-import lsst.pipe.base as pipeBase
 import matplotlib.pyplot as plt
 import numpy as np
+
+import lsst.pex.config
+import lsst.pipe.base as pipeBase
 from lsst.obs.lsst import LsstCam
 from lsst.pipe.base import connectionTypes
 

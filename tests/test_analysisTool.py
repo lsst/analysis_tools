@@ -21,12 +21,12 @@
 
 from unittest import TestCase, main
 
-import lsst.pex.config as pexConfig
-import lsst.utils.tests
-
 # This is needed to work around a bug with pyproj when it is imported
 # inside a function, in this case through a pipeline
 import skyproj  # noqa: F401
+
+import lsst.pex.config as pexConfig
+import lsst.utils.tests
 from lsst.analysis.tools.interfaces import AnalysisTool
 
 

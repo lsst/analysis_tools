@@ -22,9 +22,10 @@
 import unittest
 
 import astropy.units as u
-import lsst.utils.tests
 import numpy as np
 import pandas as pd
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.keyedData.calcDistances import CalcRelativeDistances
 from lsst.analysis.tools.actions.scalar import (
     ApproxFloor,

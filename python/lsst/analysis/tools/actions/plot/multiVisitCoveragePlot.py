@@ -23,17 +23,19 @@ from __future__ import annotations
 __all__ = ("MultiVisitCoveragePlot",)
 
 import logging
-from typing import List, Mapping, Optional, cast
+from collections.abc import Mapping
+from typing import cast
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.figure import Figure
+from matplotlib.ticker import FormatStrFormatter
+
 from lsst.afw.cameraGeom import FOCAL_PLANE, Camera, DetectorType
 from lsst.pex.config import Config, DictField, Field, ListField
 from lsst.skymap import BaseSkyMap
-from matplotlib.figure import Figure
-from matplotlib.ticker import FormatStrFormatter
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from ...math import nanMax, nanMean, nanMedian, nanMin
@@ -145,7 +147,7 @@ class MultiVisitCoveragePlot(PlotAction):
         ],
     )
     parametersToPlotList = ListField[str](
-        doc="List of paramters to plot. They are plotted along rows and the columns "
+        doc="List of parameters to plot. They are plotted along rows and the columns "
         "plot these parameters for each band.",
         default=[
             "psfSigma",
@@ -180,7 +182,7 @@ class MultiVisitCoveragePlot(PlotAction):
     raDecLimitsDict = DictField[str, float](
         doc="A dict mapping the RA/Dec limits to apply to the plot. Set to `None` to use "
         "base limits on the default or the other config options. The dict must contain "
-        "the keys raMin, ramax, decMin, decMax, e.g. "
+        "the keys raMin, raMax, decMin, decMax, e.g. "
         'raDecLimitsDict = {"raMin": 0, "raMax": 360, "decMin": -90, "decMax": 90}. '
         "Not compatible with ``trimToTract`` or ``tractsToPlotList`` (i.e. the latter two "
         "will be ignored if the dict is not `None`).",
@@ -238,11 +240,11 @@ class MultiVisitCoveragePlot(PlotAction):
     def makePlot(
         self,
         data: KeyedData,
-        plotInfo: Optional[Mapping[str, str]] = None,
-        camera: Optional[Camera] = None,
-        skymap: Optional[BaseSkyMap] = None,
-        calibrateConfig: Optional[Config] = None,
-        makeWarpConfig: Optional[Config] = None,
+        plotInfo: Mapping[str, str] | None = None,
+        camera: Camera | None = None,
+        skymap: BaseSkyMap | None = None,
+        calibrateConfig: Config | None = None,
+        makeWarpConfig: Config | None = None,
         **kwargs,
     ) -> Figure:
         """Make an Nband x Nparameter panel multi-visit coverage plot.
@@ -333,7 +335,7 @@ class MultiVisitCoveragePlot(PlotAction):
             for det in camera:  # type: ignore
                 if det.getType() == DetectorType.SCIENCE:
                     detFpDict[det.getId()] = det.getCenter(FOCAL_PLANE)
-            log.info("Number of SCIENCE detectors in {} camera = {}".format(cameraName, len(detFpDict)))
+            log.info(f"Number of SCIENCE detectors in {cameraName} camera = {len(detFpDict)}")
             xFpList = []
             yFpList = []
             for det in data["detector"]:  # type: ignore
@@ -347,7 +349,7 @@ class MultiVisitCoveragePlot(PlotAction):
             xCorners, yCorners = zip(*corners)
             xScatLen = 0.4 * (nanMax(xCorners) - nanMin(xCorners))
             yScatLen = 0.4 * (nanMax(yCorners) - nanMin(yCorners))
-            tractList: List[int] = []
+            tractList: list[int] = []
         elif self.projection == "raDec":
             xKey = "ra"
             yKey = "decl"
@@ -361,10 +363,10 @@ class MultiVisitCoveragePlot(PlotAction):
                 ras = data["ra"]
                 decs = data["decl"]
                 tractList = list(set(skymap.findTractIdArray(ras, decs, degrees=True)))  # type: ignore
-            log.info("List of tracts overlapping data:  {}".format(tractList))
+            log.info(f"List of tracts overlapping data:  {tractList}")
             tractLimitsDict = self._getTractLimitsDict(skymap, tractList)
         else:
-            raise ValueError("Unknown projection: {}".format(self.projection))
+            raise ValueError(f"Unknown projection: {self.projection}")
 
         perTract = True if self.tractsToPlotList is not None and self.projection == "raDec" else False
 
@@ -373,15 +375,14 @@ class MultiVisitCoveragePlot(PlotAction):
             nData = len(cast(Vector, data[list(data.keys())[0]]))
             if nData == 0:
                 raise RuntimeError(
-                    "No data to plot. Did your tract selection of "
-                    f"{self.tractsToPlotList} remove all data?"
+                    f"No data to plot. Did your tract selection of {self.tractsToPlotList} remove all data?"
                 )
 
         if self.doScatterInRaDec:
             raRange = max(cast(Vector, data["ra"])) - min(cast(Vector, data["ra"]))
             decRange = max(cast(Vector, data["decl"])) - min(cast(Vector, data["decl"]))
             scatRad = max(0.05 * max(raRange, decRange), 0.12)  # min is of order of an LSSTCam detector
-            log.info("Scattering data in RA/Dec within radius {:.3f} (deg)".format(scatRad))
+            log.info(f"Scattering data in RA/Dec within radius {scatRad:.3f} (deg)")
 
         dataDf = pd.DataFrame(data)
         nDataId = len(dataDf)
@@ -396,14 +397,14 @@ class MultiVisitCoveragePlot(PlotAction):
         missingBandList = list(set(dataBandList) - set(self.sortedFullBandList))
         if len(missingBandList) > 0:
             log.warning(
-                "The band(s) {} are not included in self.sortedFullBandList. Please add them so "
-                "they get sorted properly (namely by wavelength). For now, they will just be "
+                f"The band(s) {missingBandList} are not included in self.sortedFullBandList. Please add them "
+                "so they get sorted properly (namely by wavelength). For now, they will just be "
                 "appended to the end of the list of those that could be sorted. You may also "
                 "wish to give them entries in self.bandLabelColorList to specify the label color "
-                "(otherwise, if not present, it defaults to teal).".format(missingBandList)
+                "(otherwise, if not present, it defaults to teal)."
             )
             bandList.extend(missingBandList)
-        log.info("Sorted list of existing bands: {}".format(bandList))
+        log.info(f"Sorted list of existing bands: {bandList}")
 
         ptSize = min(5, max(0.3, 600.0 / ((nDataId / len(bandList)) ** 0.5)))
         if self.doScatterInRaDec:
@@ -445,7 +446,7 @@ class MultiVisitCoveragePlot(PlotAction):
             nDataIdBand = len(dataBand)
             nVisitBand = len(set(dataBand["visitId"]))
             if nDataIdBand < 2:
-                log.warning("Fewer than 2 points to plot for {}. Skipping...".format(band))
+                log.warning(f"Fewer than 2 points to plot for {band}. Skipping...")
                 continue
 
             for zKey in self.parametersToPlotList:
@@ -486,8 +487,8 @@ class MultiVisitCoveragePlot(PlotAction):
 
             if band not in self.bandLabelColorDict:
                 log.warning(
-                    "The band {} is not included in the bandLabelColorList config. Please add it "
-                    "to specify the label color (otherwise, it defaults to teal).".format(band)
+                    f"The band {band} is not included in the bandLabelColorList config. Please add it "
+                    "to specify the label color (otherwise, it defaults to teal)."
                 )
             color = self.bandLabelColorDict[band] if band in self.bandLabelColorDict else "teal"
             fontDict = {"fontsize": 5, "color": color}
@@ -520,12 +521,12 @@ class MultiVisitCoveragePlot(PlotAction):
                     else:
                         cmap.set_under("black")
 
-                titleStr = "band: {} nVisit: {} nData: {}".format(band, nVisitBand, nDataIdBand)
+                titleStr = f"band: {band} nVisit: {nVisitBand} nData: {nDataIdBand}"
 
                 ax = axes[iRow, iCol] if axes.ndim > 1 else axes[max(iRow, iCol)]
-                ax.set_title("{}".format(titleStr), loc="left", fontdict=fontDict, pad=2)
-                ax.set_xlabel("{} ({})".format(xLabel, self.unitsDict[xKey]), labelpad=0)
-                ax.set_ylabel("{} ({})".format(yLabel, self.unitsDict[yKey]), labelpad=1)
+                ax.set_title(f"{titleStr}", loc="left", fontdict=fontDict, pad=2)
+                ax.set_xlabel(f"{xLabel} ({self.unitsDict[xKey]})", labelpad=0)
+                ax.set_ylabel(f"{yLabel} ({self.unitsDict[yKey]})", labelpad=1)
                 ax.set_aspect("equal")
                 ax.tick_params("x", labelrotation=45, pad=0)
 
@@ -539,12 +540,10 @@ class MultiVisitCoveragePlot(PlotAction):
                             detId = int(det.getId())
                             perDetData = dataBand[dataBand["detector"] == detId]
                             if len(perDetData) < 1:
-                                log.debug("No data to plot for detector {}. Skipping...".format(detId))
+                                log.debug(f"No data to plot for detector {detId}. Skipping...")
                                 continue
                             if sum(np.isfinite(perDetData[zKey])) < 1:
-                                log.debug(
-                                    "No finited data to plot for detector {}. Skipping...".format(detId)
-                                )
+                                log.debug(f"No finited data to plot for detector {detId}. Skipping...")
                                 continue
                             pcm = plotProjectionWithBinning(
                                 ax,
@@ -766,11 +765,11 @@ class MultiVisitCoveragePlot(PlotAction):
                 if zKey not in self.unitsDict:
                     if iRow == 0 and iCol == 0:
                         log.warning(
-                            "Data column {} does not have an entry in unitsDict config.  Units "
-                            "will not be included in the colorbar text.".format(zKey)
+                            f"Data column {zKey} does not have an entry in unitsDict config.  Units "
+                            "will not be included in the colorbar text."
                         )
                 elif len(self.unitsDict[zKey]) > 0:
-                    cbLabel = "{} ({})".format(zKey, self.unitsDict[zKey])
+                    cbLabel = f"{zKey} ({self.unitsDict[zKey]})"
 
                 cb.set_label(
                     cbLabel,
@@ -781,9 +780,9 @@ class MultiVisitCoveragePlot(PlotAction):
                 )
 
         runName = plotInfo["run"]  # type: ignore
-        supTitle = "{} {} nVisit: {} nData: {}".format(runName, cameraName, nVisit, nDataId)
+        supTitle = f"{runName} {cameraName} nVisit: {nVisit} nData: {nDataId}"
         if nCol == 1:
-            supTitle = "{} {}\n nVisit: {} nData: {}".format(runName, cameraName, nVisit, nDataId)
+            supTitle = f"{runName} {cameraName}\n nVisit: {nVisit} nData: {nDataId}"
         fig.suptitle(supTitle, fontsize=4 + nCol, ha="center")
 
         return fig

@@ -23,13 +23,15 @@ from __future__ import annotations
 
 __all__ = ("CoaddDepthPlot",)
 
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
-from lsst.skymap.tractInfo import ExplicitTractInfo
-from lsst.utils.plotting import publication_plots, set_rubin_plotstyle
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
+
+from lsst.skymap.tractInfo import ExplicitTractInfo
+from lsst.utils.plotting import publication_plots, set_rubin_plotstyle
 
 from ...interfaces import PlotAction, Vector
 from .plotUtils import addPlotInfo

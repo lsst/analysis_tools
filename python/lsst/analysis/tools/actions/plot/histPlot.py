@@ -25,11 +25,16 @@ __all__ = ("HistPanel", "HistPlot", "HistStatsPanel")
 import importlib.resources as importResources
 import logging
 from collections import defaultdict
-from typing import Mapping
+from collections.abc import Mapping
 
-import lsst.analysis.tools
 import numpy as np
 import yaml
+from matplotlib import cm
+from matplotlib.figure import Figure
+from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Rectangle
+
+import lsst.analysis.tools
 from lsst.pex.config import (
     ChoiceField,
     Config,
@@ -41,10 +46,6 @@ from lsst.pex.config import (
     ListField,
 )
 from lsst.utils.plotting import get_multiband_plot_colors, make_figure, set_rubin_plotstyle
-from matplotlib import cm
-from matplotlib.figure import Figure
-from matplotlib.gridspec import GridSpec
-from matplotlib.patches import Rectangle
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Vector
 from ...math import nanMax, nanMedian, nanMin, sigmaMad
@@ -61,10 +62,10 @@ class HistStatsPanel(Config):
     customize the HistPlot stats panel.
 
     - The ListField parameter a dict to specify names of 3 stat columns accepts
-      latex formating
+      latex formatting
 
     - The other parameters (stat1, stat2, stat3) are lists of strings that
-      specify vector keys correspoinding to scalar values computed in the
+      specify vector keys corresponding to scalar values computed in the
       prep/process/produce steps of an analysis tools plot/metric configurable
       action. There should be one key for each group in the HistPanel.
 
@@ -77,7 +78,7 @@ class HistStatsPanel(Config):
     This is intended to be used as a configuration of the HistPlot/HistPanel
     class.
 
-    If no HistStatsPanel is specified then the default behavor persists where
+    If no HistStatsPanel is specified then the default behavior persists where
     the stats panel shows N / median / sigma_mad for each group in the panel.
     """
 
@@ -187,20 +188,18 @@ class HistPanel(Config):
     def validate(self):
         super().validate()
         if self.rangeType == "percentile" and self.lowerRange < 0.0 or self.upperRange > 100.0:
-            msg = (
-                "For rangeType %s, ranges must obey: lowerRange >= 0 and upperRange <= 100." % self.rangeType
-            )
+            msg = f"For rangeType {self.rangeType}, ranges must obey: lowerRange >= 0 and upperRange <= 100."
             raise FieldValidationError(self.__class__.rangeType, self, msg)
         if self.rangeType == "sigmaMad" and self.lowerRange < 0.0:
             msg = (
-                "For rangeType %s, lower range must obey: lowerRange >= 0 (the lower range is "
-                "set as median - lowerRange*sigmaMad." % self.rangeType
+                f"For rangeType {self.rangeType}, lower range must obey: "
+                "lowerRange >= 0 (the lower range is set as median - lowerRange*sigmaMad)."
             )
             raise FieldValidationError(self.__class__.rangeType, self, msg)
         if self.rangeType == "fixed" and (self.upperRange - self.lowerRange) == 0.0:
             msg = (
-                "For rangeType %s, lower and upper ranges must differ (i.e. must obey: "
-                "upperRange - lowerRange != 0)." % self.rangeType
+                f"For rangeType {self.rangeType}, lower and upper ranges must differ (i.e. must obey: "
+                "upperRange - lowerRange != 0)."
             )
             raise FieldValidationError(self.__class__.rangeType, self, msg)
         if self.histDensity and self.referenceValue is None:
@@ -236,7 +235,10 @@ class HistPlot(PlotAction):
         # table is a dict that needs: x, y, run, skymap, filter, tract,
 
     def makePlot(
-        self, data: KeyedData, plotInfo: Mapping[str, str] = None, **kwargs  # type: ignore
+        self,
+        data: KeyedData,
+        plotInfo: Mapping[str, str] = None,
+        **kwargs,  # type: ignore
     ) -> Figure:
         """Make an N-panel plot with a user-configurable number of histograms
         displayed in each panel.
@@ -551,8 +553,8 @@ class HistPlot(PlotAction):
             panel_range = [minMed - lowerRange * maxMad, maxMed + upperRange * maxMad]
             if panel_range[1] - panel_range[0] == 0:
                 log.info(
-                    "NOTE: panel_range for {} based on med/sigMad was 0. Computing using "
-                    "percentile range instead.".format(panel)
+                    f"NOTE: panel_range for {panel} based on med/sigMad was 0. Computing using "
+                    "percentile range instead."
                 )
                 panel_range = self._getPercentilePanelRange(data, panel)
         elif rangeType == "fixed":
@@ -597,10 +599,10 @@ class HistPlot(PlotAction):
         else:
             if self.panels[panel].refRelativeToMedian:
                 reference_value = self.panels[panel].referenceValue + meds[0]
-                reference_label = "${{\\mu_{{ref}}}}$: {:10.3F}".format(reference_value)
+                reference_label = f"${{\\mu_{{ref}}}}$: {reference_value:10.3F}"
             else:
                 reference_value = self.panels[panel].referenceValue
-                reference_label = "${{\\mu_{{ref}}}}$: {:10.3F}".format(reference_value)
+                reference_label = f"${{\\mu_{{ref}}}}$: {reference_value:10.3F}"
             ax2.axvline(reference_value, ls="-", lw=1, c="black", zorder=0, label=reference_label)
         if (
             self.panels[panel].histDensity

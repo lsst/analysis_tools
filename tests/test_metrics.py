@@ -22,8 +22,9 @@ from __future__ import annotations
 
 from unittest import TestCase, main
 
-import lsst.utils.tests
 import numpy as np
+
+import lsst.utils.tests
 from lsst.analysis.tools.actions.vector import ConstantValue, MultiplyVector
 from lsst.analysis.tools.atools import (
     MagnitudeTool,

@@ -23,12 +23,13 @@ from __future__ import annotations
 __all__ = ("QuiverPlot",)
 
 import logging
-from typing import Mapping, Optional
+from collections.abc import Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from lsst.pex.config import Field
 from matplotlib.figure import Figure
+
+from lsst.pex.config import Field
 
 from ...interfaces import KeyedData, KeyedDataSchema, PlotAction, Scalar, Vector
 from .plotUtils import addPlotInfo
@@ -81,7 +82,7 @@ class QuiverPlot(PlotAction):
         self._validateInput(data, **kwargs)
         return self.makePlot(data, **kwargs)
 
-    def makePlot(self, data: KeyedData, plotInfo: Optional[Mapping[str, str]] = None, **kwargs) -> Figure:
+    def makePlot(self, data: KeyedData, plotInfo: Mapping[str, str] | None = None, **kwargs) -> Figure:
 
         quiverConf = {
             "pivot": "mid",

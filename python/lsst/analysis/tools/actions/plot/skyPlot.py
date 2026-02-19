@@ -78,9 +78,25 @@ class SkyPlot(PlotAction):
 
     plotName = Field[str](doc="The name for the plot.", optional=False)
 
+    alpha = Field[float](
+        doc="Transparency for scatter plot points.",
+        default=1.0,
+    )
+
+    scatPtSize = Field[float](
+        doc="Marker size for scatter plot points.",
+        default=7,
+    )
+
     fixAroundZero = Field[bool](
         doc="Fix the colorbar to be symmetric around zero.",
         default=False,
+    )
+
+    doBinning = Field[bool](
+        doc="Spatially bin the data? Extreme outliers can be shown using" " `showExtremeOutliers`.",
+        optional=True,
+        default=True,
     )
 
     colorbarRange = ConfigurableActionField[VectorAction](
@@ -236,6 +252,13 @@ class SkyPlot(PlotAction):
         """
 
         set_rubin_plotstyle()
+
+        # 'plotName' by default is constructed from the attribute specified in
+        # 'atools.<attribute>' in the pipeline YAML. If the atool sets
+        # self.produce.plot.plotName, it will override this default.
+        if self.plotName:
+            plotInfo["plotName"] = self.plotName
+
         fig = make_figure()
         ax = fig.add_subplot(111)
 
@@ -312,7 +335,7 @@ class SkyPlot(PlotAction):
             if not self.publicationStyle:
                 bbox = dict(facecolor="#bab0ac", alpha=0.2, edgecolor="none")
                 ax.text(0.8, 0.91, anyStatsText, transform=fig.transFigure, fontsize=8, bbox=bbox)
-            toPlotList.append((xs, ys, colorValsAny, "viridis", "All"))
+            toPlotList.append((xs, ys, colorValsAny, "viridis", ""))
 
         # Corner plot of patches showing summary stat in each
         if self.plotOutlines:
@@ -378,6 +401,18 @@ class SkyPlot(PlotAction):
                 showExtremeOutliers = False
             else:
                 showExtremeOutliers = self.showExtremeOutliers
+
+            if self.doBinning:
+                nPointBinThresh = 5000
+            else:  # Make a true scatter plot (plot all the points)
+                nPointBinThresh = len(xs) + 1
+
+            # If transparency is being used, point edgecolor matches facecolor
+            if self.alpha == 1.0:
+                edgecolor = "white"
+            else:
+                edgecolor = "face"
+
             plotOut = plotProjectionWithBinning(
                 ax,
                 xs,
@@ -390,9 +425,13 @@ class SkyPlot(PlotAction):
                 maxDec,
                 vmin=minColorVal,
                 vmax=maxColorVal,
+                alpha=self.alpha,
+                edgecolor=edgecolor,
                 fixAroundZero=self.fixAroundZero,
+                nPointBinThresh=nPointBinThresh,
                 isSorted=True,
                 showExtremeOutliers=showExtremeOutliers,
+                scatPtSize=self.scatPtSize,
             )
             ax.set_aspect("equal")
             if not self.publicationStyle:
@@ -404,7 +443,10 @@ class SkyPlot(PlotAction):
                 cax = fig.add_axes([axBbox.x1, axBbox.y0, 0.04, axBbox.y1 - axBbox.y0])
                 fig.colorbar(plotOut, cax=cax)
 
-            colorBarLabel = f"{self.zAxisLabel}: {label}"
+            if len(label) > 0:
+                colorBarLabel = f"{self.zAxisLabel}: {label}"
+            else:
+                colorBarLabel = f"{self.zAxisLabel}"
             text = cax.text(
                 0.5,
                 0.5,

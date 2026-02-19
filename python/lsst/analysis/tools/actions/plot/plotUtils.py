@@ -266,7 +266,10 @@ def parsePlotInfo(plotInfo: Mapping[str, str]) -> str:
     for band in plotInfo["bands"]:
         bandText += band + ", "
     bandsText = f", Bands: {bandText[:-2]}"
-    infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+    if (photocalibDataset != "None") or (astroDataset != "None"):
+        infoText = f"\n{run}{datasetsUsed}{tableType}{dataIdText}{bandsText}"
+    else:
+        infoText = f"\n{run}{tableType}{dataIdText}{bandsText}"
 
     # Find S/N and mag keys, if present.
     snKeys = []
@@ -629,6 +632,8 @@ def plotProjectionWithBinning(
     vmax=None,
     showExtremeOutliers=True,
     scatPtSize=7,
+    edgecolor="white",
+    alpha=1.0,
 ):
     """Plot color-mapped data in projection and with binning when appropriate.
 
@@ -665,6 +670,10 @@ def plotProjectionWithBinning(
         most extreme values.
     scatPtSize : `float`, optional
         The point size to use if just plotting a regular scatter plot.
+    edgecolor : `str`, optional
+        The edge color to use for the scatter plot points. Default white.
+    alpha : `float`, optional
+        The transparency or alpha to use for scatter plot points. Default 1.0.
 
     Returns
     -------
@@ -721,8 +730,9 @@ def plotProjectionWithBinning(
                     cmap=cmap,
                     vmin=vmin,
                     vmax=vmax,
-                    edgecolor="white",
+                    edgecolor=edgecolor,
                     linewidths=lw,
+                    alpha=alpha,
                 )
     else:
         plotOut = ax.scatter(
@@ -733,7 +743,8 @@ def plotProjectionWithBinning(
             s=scatPtSize,
             vmin=vmin,
             vmax=vmax,
-            edgecolor="white",
+            edgecolor=edgecolor,
             linewidths=0.2,
+            alpha=alpha,
         )
     return plotOut

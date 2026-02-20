@@ -33,6 +33,7 @@ __all__ = (
     "FracThreshold",
     "MaxAction",
     "MinAction",
+    "FullRangeAction",
     "FracInRange",
     "FracNan",
     "SumAction",
@@ -282,6 +283,16 @@ class MinAction(ScalarFromVectorAction):
     def __call__(self, data: KeyedData, **kwargs) -> Scalar:
         mask = self.getMask(**kwargs)
         return nanMin(_dataToArray(data[self.vectorKey.format(**kwargs)])[mask])
+
+
+class FullRangeAction(ScalarFromVectorAction):
+    """Returns the full range (i.e., max-min) of the given data."""
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        mask = self.getMask(**kwargs)
+        return nanMax(_dataToArray(data[self.vectorKey.format(**kwargs)][mask])) - nanMin(
+            _dataToArray(data[self.vectorKey.format(**kwargs)][mask])
+        )
 
 
 class FracInRange(ScalarFromVectorAction):

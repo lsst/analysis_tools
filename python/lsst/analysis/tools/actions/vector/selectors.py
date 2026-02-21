@@ -616,8 +616,11 @@ class ParentObjectSelector(FlagSelector):
 
     def setDefaults(self):
         # This selects all of the parents
+        # parentObjectId excludes subParents.
+        # This works because FlagSelector identifies False as 0.
         self.selectWhenFalse = [
             "sky_object",
+            "parentObjectId",
         ]
 
 

@@ -22,13 +22,15 @@ from __future__ import annotations
 
 __all__ = ("ParentDeblenderMetrics", "SkippedDeblenderMetrics", "BlendMetrics", "IsolatedDeblenderMetrics")
 
-from ..actions.scalar.scalarActions import CountAction, MeanAction, SumAction
+from ..actions.scalar.scalarActions import CountAction, DivideScalar, MeanAction, SumAction
+from ..actions.vector.mathActions import AddVector, SubtractVector
 from ..actions.vector.selectors import (
     ChildObjectSelector,
     FlagSelector,
     ParentObjectSelector,
     ThresholdSelector,
 )
+from ..actions.vector.vectorActions import LoadVector
 from ..interfaces import AnalysisTool
 
 
@@ -41,6 +43,15 @@ class ParentDeblenderMetrics(AnalysisTool):
         # Only select parents
         self.prep.selectors.parentSelector = ParentObjectSelector()
 
+        # Subtract the number of children+isolated from the number of peaks
+        # to get the number of peakDropouts. Ideally, this should be zero.
+        self.process.buildActions.peakDropouts = SubtractVector()
+        self.process.buildActions.peakDropouts.actionA = LoadVector(vectorKey="deblend_nPeaks")
+        self.process.buildActions.peakDropouts.actionB = AddVector(
+            actionA=LoadVector(vectorKey="deblend_nChild"),
+            actionB=LoadVector(vectorKey="deblend_skipped_isolatedParent"),
+        )
+
         # Statistics for parent blends
         self.process.calculateActions.numParents = CountAction(vectorKey="parentObjectId")
         self.process.calculateActions.numDeblendFailed = SumAction(vectorKey="deblend_failed")
@@ -48,8 +59,17 @@ class ParentDeblenderMetrics(AnalysisTool):
 
         # Total number of detected peaks
         self.process.calculateActions.numDetectedPeaks = SumAction(vectorKey="deblend_nPeaks")
+
         # Total number of deblended children
         self.process.calculateActions.numDeblendedChildren = SumAction(vectorKey="deblend_nChild")
+
+        # Total number of peak dropouts
+        self.process.calculateActions.numPeakDropouts = SumAction(vectorKey="peakDropouts")
+
+        # Total number of peak dropouts as proportion of total number of peaks
+        self.process.calculateActions.propPeakDropouts = DivideScalar()
+        self.process.calculateActions.propPeakDropouts.actionA = SumAction(vectorKey="peakDropouts")
+        self.process.calculateActions.propPeakDropouts.actionB = SumAction(vectorKey="deblend_nPeaks")
 
         self.produce.metric.units = {
             "numParents": "",
@@ -57,6 +77,8 @@ class ParentDeblenderMetrics(AnalysisTool):
             "numIncompleteData": "",
             "numDetectedPeaks": "",
             "numDeblendedChildren": "",
+            "numPeakDropouts": "",
+            "propPeakDropouts": "",
         }
 
 

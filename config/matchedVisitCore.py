@@ -22,11 +22,15 @@ config.atools.stellarAstrometricResidualStdDevDec = StellarAstrometricResidualSt
 config.atools.stellarAstrometricRepeatability1 = AstrometricRelativeRepeatability
 config.atools.stellarAstrometricRepeatability1.xValue = 1
 config.atools.stellarAstrometricRepeatability1.process.calculateActions.rms.annulus = 5
+config.atools.stellarAstrometricRepeatability1.process.calculateActions.rms.groupKey = "isolated_star_id"
 config.atools.stellarAstrometricRepeatability2 = AstrometricRelativeRepeatability
 config.atools.stellarAstrometricRepeatability2.xValue = 2
 config.atools.stellarAstrometricRepeatability2.process.calculateActions.rms.annulus = 20
+config.atools.stellarAstrometricRepeatability2.process.calculateActions.rms.groupKey = "isolated_star_id"
 config.atools.stellarAstrometricRepeatability3 = AstrometricRelativeRepeatability
 config.atools.stellarAstrometricRepeatability3.xValue = 3
 config.atools.stellarAstrometricRepeatability3.process.calculateActions.rms.annulus = 200
 config.atools.stellarAstrometricRepeatability3.process.calculateActions.rms.threshAD = 30
+config.atools.stellarAstrometricRepeatability3.process.calculateActions.rms.groupKey = "isolated_star_id"
+
 config.addOutputNamePrefix = True

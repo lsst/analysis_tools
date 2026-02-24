@@ -22,10 +22,12 @@ from __future__ import annotations
 
 __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalysisTask")
 
+import dataclasses
+
 import astropy.time
 import astropy.units as u
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, vstack
 from scipy.spatial import KDTree
 
 import lsst.pex.config as pexConfig
@@ -34,6 +36,7 @@ from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from lsst.sphgeom import HealpixPixelization
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -108,6 +111,18 @@ class AssociatedSourcesTractAnalysisConnections(
             self.inputs.remove("astrometricCorrectionCatalog")
             self.inputs.remove("visitTable")
 
+        if self.config.healpix is not None:
+            self.dimensions.remove("tract")
+            self.dimensions.remove("skymap")
+            healpixName = f"healpix{self.config.healpix}"
+            self.dimensions.add(healpixName)
+            self.associatedSources = dataclasses.replace(self.associatedSources, multiple=True)
+            self.associatedSourceIds = dataclasses.replace(self.associatedSourceIds, multiple=True)
+            self.metrics = dataclasses.replace(self.metrics, dimensions=("instrument", healpixName))
+            self.astrometricCorrectionCatalog = dataclasses.replace(
+                self.astrometricCorrectionCatalog, multiple=True
+            )
+
 
 class AssociatedSourcesTractAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=AssociatedSourcesTractAnalysisConnections
@@ -130,6 +145,13 @@ class AssociatedSourcesTractAnalysisConfig(
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
+    healpix = pexConfig.Field(
+        dtype=int,
+        doc="Run using all visits overlapping a healpix pixel with this order instead of a tract. Order 3 "
+        "corresponds to pixels with angular size of 7.329 degrees.",
+        optional=True,
+        default=None,
+    )
 
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
@@ -147,8 +169,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     def callback(self, inputs, dataId):
         """Callback function to be used with reconstructor."""
         return self.prepareAssociatedSources(
-            inputs["skyMap"],
-            dataId["tract"],
+            # inputs["skyMap"],
+            # dataId["tract"],
             inputs["sourceCatalogs"],
             inputs["associatedSources"],
             inputs["associatedSourceIds"],
@@ -158,8 +180,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
     def prepareAssociatedSources(
         self,
-        skymap,
-        tract,
+        # skymap,
+        # tract,
         sourceCatalogs,
         associatedSources,
         associatedSourceIds,
@@ -278,6 +300,10 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)
 
+        if self.config.healpix:
+            pixelization = HealpixPixelization(self.config.healpix)
+            healpixRegion = pixelization.pixel(butlerQC.quantum.dataId["healpix3"])
+
         # Load specified columns from source catalogs
         names = self.collectInputNames()
         names |= {"sourceId", "coord_ra", "coord_dec"}
@@ -285,27 +311,83 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             if item in names:
                 names.remove(item)
 
-        if self.config.applyAstrometricCorrections:
-            astrometricCorrections = inputs["astrometricCorrectionCatalog"].get(
-                parameters={"columns": self.config.astrometricCorrectionParameters.values()}
-            )
-            inputs["astrometricCorrectionCatalog"] = astrometricCorrections
+        if self.config.healpix:
+            astrometricCorrectionsDict = {
+                ref.dataId["tract"]: ref for ref in inputs["astrometricCorrectionCatalog"]
+            }
+            associatedSourcesDict = {ref.dataId["tract"]: ref for ref in inputs["associatedSources"]}
+            associatedSourceIdsDict = {ref.dataId["tract"]: ref for ref in inputs["associatedSourceIds"]}
+            noSources = True
+            data = []
+
+            plotInfo = {
+                "run": inputs["astrometricCorrectionCatalog"][0].ref.run,
+                "tableName": inputs["astrometricCorrectionCatalog"][0].ref.datasetType.name,
+            }
+            plotInfo.update(butlerQC.quantum.dataId.mapping)
+            for tract in list(astrometricCorrectionsDict.keys())[:3]:
+                print(tract)
+                tractInputs = {}
+                if self.config.applyAstrometricCorrections:
+                    astrometricCorrections = astrometricCorrectionsDict[tract].get(
+                        parameters={"columns": self.config.astrometricCorrectionParameters.values()}
+                    )
+                    tractInputs["astrometricCorrectionCatalog"] = astrometricCorrections
+                    tractInputs["visitTable"] = inputs["visitTable"]
+                else:
+                    tractInputs["astrometricCorrectionCatalog"] = None
+                    tractInputs["visitTable"] = None
+
+                dataId = butlerQC.quantum.dataId
+
+                # TODO: make key used for object index configurable
+                tractInputs["associatedSources"] = self.loadData(
+                    associatedSourcesDict[tract], ["obj_index", "sourceId"]
+                )
+                tractInputs["associatedSourceIds"] = self.loadData(
+                    associatedSourceIdsDict[tract], ["isolated_star_id"]
+                )
+
+                tractInputs["sourceCatalogs"] = inputs["sourceCatalogs"]
+
+                if len(tractInputs["associatedSources"]) != 0:
+                    noSources = False
+                    tractData = self.callback(tractInputs, dataId)
+                    inRegion = healpixRegion.contains(
+                        tractData["coord_ra"] * np.pi / 180, tractData["coord_dec"] * np.pi / 180
+                    )
+                    data.append(tractData[inRegion])
+                    print(len(tractData), inRegion.sum())
+            if noSources:
+                raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
+            data = vstack(data)
         else:
-            inputs["astrometricCorrectionCatalog"] = None
-            inputs["visitTable"] = None
+            if self.config.applyAstrometricCorrections:
+                astrometricCorrections = inputs["astrometricCorrectionCatalog"].get(
+                    parameters={"columns": self.config.astrometricCorrectionParameters.values()}
+                )
+                inputs["astrometricCorrectionCatalog"] = astrometricCorrections
+            else:
+                inputs["astrometricCorrectionCatalog"] = None
+                inputs["visitTable"] = None
 
-        dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")
+            dataId = butlerQC.quantum.dataId
+            plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")
 
-        # TODO: make key used for object index configurable
-        inputs["associatedSources"] = self.loadData(inputs["associatedSources"], ["obj_index", "sourceId"])
-        inputs["associatedSourceIds"] = self.loadData(inputs["associatedSourceIds"], ["isolated_star_id"])
+            # TODO: make key used for object index configurable
+            inputs["associatedSources"] = self.loadData(
+                inputs["associatedSources"], ["obj_index", "sourceId"]
+            )
+            inputs["associatedSourceIds"] = self.loadData(inputs["associatedSourceIds"], ["isolated_star_id"])
 
-        if len(inputs["associatedSources"]) == 0:
-            raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
+            if len(inputs["associatedSources"]) == 0:
+                raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
 
-        data = self.callback(inputs, dataId)
+            data = self.callback(inputs, dataId)
+        import ipdb
 
+        ipdb.set_trace()
+        print("Starting calc")
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
         self.putByBand(butlerQC, outputs, outputRefs)

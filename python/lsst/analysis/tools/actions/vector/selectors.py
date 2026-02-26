@@ -78,7 +78,7 @@ class SelectorBase(VectorAction):
                 raise RuntimeError(f"No plotLabelKey provided for value {value}, so can't add to plotInfo")
 
 
-class FlagSelector(VectorAction):
+class FlagSelector(SelectorBase):
     """The base flag selector to use to select valid sources for QA."""
 
     selectWhenFalse = ListField[str](

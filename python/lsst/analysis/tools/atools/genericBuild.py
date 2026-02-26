@@ -277,6 +277,12 @@ class MagnitudeTool(ObjectClassTool):
             name_flux="CModel Disk",
             name_flux_short="disk_cModel",
         ),
+        exponential_err=FluxConfig(
+            key_flux="{band}_exponentialFlux",
+            key_flux_error="{band}_exponentialFluxErr",
+            name_flux="Exponential",
+            name_flux_short="exp",
+        ),
         gaap1p0_err=FluxConfig(
             key_flux="{band}_gaap1p0Flux",
             key_flux_error="{band}_gaap1p0FluxErr",

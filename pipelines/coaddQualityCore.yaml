@@ -45,6 +45,22 @@ tasks:
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-3, 2)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+      atools.exponentialSizeVsExponentialMag: SizeMagnitudePlot
+      atools.exponentialSizeVsExponentialMag.is_covariance: false
+      atools.exponentialSizeVsExponentialMag.mag_x: "exponential_err"
+      atools.exponentialSizeVsExponentialMag.size_type: "singleColumnSize"
+      atools.exponentialSizeVsExponentialMag.size_y: "exponential"
+      atools.exponentialSizeVsExponentialMag.produce.plot.xLims: (17, 29)
+      atools.exponentialSizeVsExponentialMag.produce.plot.yLims: (-3, 2)
+      atools.exponentialSizeVsExponentialMag.applyContext: CoaddContext
+      atools.exponentialSizeVsSersicMag: SizeMagnitudePlot
+      atools.exponentialSizeVsSersicMag.is_covariance: false
+      atools.exponentialSizeVsSersicMag.mag_x: "sersic_err"
+      atools.exponentialSizeVsSersicMag.size_type: "singleColumnSize"
+      atools.exponentialSizeVsSersicMag.size_y: "exponential"
+      atools.exponentialSizeVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.exponentialSizeVsSersicMag.produce.plot.yLims: (-3, 2)
+      atools.exponentialSizeVsSersicMag.applyContext: CoaddContext
       atools.sersicSizeVsSersicMag: SizeMagnitudePlot
       atools.sersicSizeVsSersicMag.is_covariance: false
       atools.sersicSizeVsSersicMag.mag_x: "sersic_err"

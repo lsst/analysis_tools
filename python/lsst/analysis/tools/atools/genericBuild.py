@@ -117,6 +117,7 @@ class FluxesDefaultConfig(Config):
     psf_err = ConfigField[FluxConfig](doc="PSF model magnitude with errors")
     ref_matched = ConfigField[FluxConfig](doc="Reference catalog magnitude")
     sersic_err = ConfigField[FluxConfig](doc="Sersic total magnitude with errors")
+    exponential_err = ConfigField[FluxConfig](doc="Exponential total magnitude with errors")
 
 
 class ObjectSelector(ThresholdSelector):
@@ -503,8 +504,9 @@ class SizeConfig(Config):
 class SizeDefaultConfig(Config):
     bulge = ConfigField[SizeConfig](doc="Bulge model size config.")
     disk = ConfigField[SizeConfig](doc="Disk model size config.")
+    exponential = ConfigField[SizeConfig](doc="Exponential model effective radius config")
     moments = ConfigField[SizeConfig](doc="Second moments size config.")
-    sersic = ConfigField[SizeConfig](doc="Sersic effective radius config")
+    sersic = ConfigField[SizeConfig](doc="Sersic model effective radius config")
     shape_slot = ConfigField[SizeConfig](doc="Shape slot size config.")
 
 
@@ -546,6 +548,9 @@ class SizeTool(ObjectClassTool):
             key_size="{band}_cModel_exp_reff_major",
             name_size="CModel Disk $R_{eff,major}$",
             has_moments=False,
+        ),
+        exponential=SizeConfig(
+            key_size="exponential_reff_major", name_size="Exponential $R_{eff,major}$", has_moments=False
         ),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
         sersic=SizeConfig(

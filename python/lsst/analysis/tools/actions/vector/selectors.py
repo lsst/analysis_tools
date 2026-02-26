@@ -90,8 +90,8 @@ class FlagSelector(SelectorBase):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)
-        return ((col, Vector) for col in allCols)
+        yield from ((key, Vector) for key in self.selectWhenFalse)
+        yield from ((key, Vector) for key in self.selectWhenTrue)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags

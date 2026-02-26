@@ -486,7 +486,7 @@ class SizeConfig(Config):
         doc="Name of the size (e.g. for axis labels).",
     )
     scale_size = Field[float](
-        default=0.2,
+        default=1.0,
         doc="Factor to scale sizes (multiply) by.",
     )
     unit_size = Field[str](

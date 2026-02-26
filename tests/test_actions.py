@@ -543,10 +543,7 @@ class TestVectorSelectors(unittest.TestCase):
 
     def testCoaddPlotFlagSelector(self):
         # Test defaults
-        # Bands needs to be set to something otherwise it
-        # will crash as the default value looks it up
-        # elsewhere.
-        selector = CoaddPlotFlagSelector(bands=["i"])
+        selector = CoaddPlotFlagSelector()
         keys = [
             "{band}_psfFlux_flag",
             "{band}_pixelFlags_saturatedCenter",
@@ -557,6 +554,9 @@ class TestVectorSelectors(unittest.TestCase):
             "detect_isDeblendedSource",
         ]
         self._checkSchema(selector, keys)
+        # Specifying a band will format all keys containing band
+        selector.bands = ["i"]
+        self._checkSchema(selector, [key.format(band=selector.bands[0]) for key in keys])
 
         result = selector(self.data)
         truth = np.ones(self.size, dtype=bool)
@@ -566,11 +566,12 @@ class TestVectorSelectors(unittest.TestCase):
 
         # Test bands override
         selector = CoaddPlotFlagSelector(
-            bands=["i", "r"],
             selectWhenFalse=["{band}_psfFlux_flag"],
             selectWhenTrue=["detect_isDeblendedSource"],
         )
         self._checkSchema(selector, ["{band}_psfFlux_flag", "detect_isDeblendedSource"])
+        selector.bands = ["i", "r"]
+        self._checkSchema(selector, ["i_psfFlux_flag", "r_psfFlux_flag", "detect_isDeblendedSource"])
         result = selector(self.data)
         truth = np.ones(self.size, dtype=bool)
         for bit in (1, 11):

@@ -145,7 +145,14 @@ class CoaddPlotFlagSelector(FlagSelector):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from super().getInputSchema()
+        if self.bands:
+            for key, dtype in super().getInputSchema():
+                if "{band}" in key:
+                    yield from ((key.format(band=band), dtype) for band in self.bands)
+                else:
+                    yield key, dtype
+        else:
+            yield from super().getInputSchema()
 
     def refMatchContext(self):
         self.selectWhenFalse = [

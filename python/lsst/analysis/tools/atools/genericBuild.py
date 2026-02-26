@@ -538,10 +538,14 @@ class SizeTool(ObjectClassTool):
     )
     sizes_default = SizeDefaultConfig(
         bulge=SizeConfig(
-            key_size="{band}_cModel_dev_reff_major", name_size="CModel Bulge $R_{eff}$", has_moments=False
+            key_size="{band}_cModel_dev_reff_major",
+            name_size="CModel Bulge $R_{eff,major}$",
+            has_moments=False,
         ),
         disk=SizeConfig(
-            key_size="{band}_cModel_exp_reff_major", name_size="CModel Disk $R_{eff}$", has_moments=False
+            key_size="{band}_cModel_exp_reff_major",
+            name_size="CModel Disk $R_{eff,major}$",
+            has_moments=False,
         ),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
         sersic=SizeConfig(

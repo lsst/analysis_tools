@@ -1,3 +1,4 @@
+from .actionMagnitudeScatterPlot import *
 from .amplifierCorrelation import *
 from .astrometricRepeatability import *
 from .calexpMetrics import *

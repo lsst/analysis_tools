@@ -18,6 +18,7 @@ from .diaSourceTableTractMetrics import *
 from .diaSpatialMetricsPlots import *
 from .diffimMetadataMetrics import *
 from .diffMatched import *
+from .ellipticityMagnitude import *
 from .fluxMetrics import *
 from .genericBuild import *
 from .genericMetricAction import *

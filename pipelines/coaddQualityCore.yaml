@@ -61,6 +61,14 @@ tasks:
       atools.exponentialSizeVsSersicMag.produce.plot.xLims: (17, 29)
       atools.exponentialSizeVsSersicMag.produce.plot.yLims: (-3, 2)
       atools.exponentialSizeVsSersicMag.applyContext: CoaddContext
+      atools.exponentialEllipticityVsExponentialMag: ExponentialEllipticityMagnitudePlot
+      atools.exponentialEllipticityVsExponentialMag.mag_x: "exponential_err"
+      atools.exponentialEllipticityVsExponentialMag.produce.plot.xLims: (17, 29)
+      atools.exponentialEllipticityVsExponentialMag.selector_galaxy.vectorKey: "griz_model_extendedness"
+      atools.exponentialEllipticityVsExponentialMag.selector_galaxy.extendedness_minimum: 0.3
+      atools.exponentialEllipticityVsExponentialMag.selector_star.vectorKey: "griz_model_extendedness"
+      atools.exponentialEllipticityVsExponentialMag.selector_star.extendedness_maximum: 0.3
+      atools.exponentialEllipticityVsExponentialMag.applyContext: CoaddContext
       atools.sersicSizeVsSersicMag: SizeMagnitudePlot
       atools.sersicSizeVsSersicMag.is_covariance: false
       atools.sersicSizeVsSersicMag.mag_x: "sersic_err"
@@ -69,6 +77,14 @@ tasks:
       atools.sersicSizeVsSersicMag.produce.plot.xLims: (17, 29)
       atools.sersicSizeVsSersicMag.produce.plot.yLims: (-3, 2)
       atools.sersicSizeVsSersicMag.applyContext: CoaddContext
+      atools.sersicEllipticityVsSersicMag: SersicEllipticityMagnitudePlot
+      atools.sersicEllipticityVsSersicMag.mag_x: "sersic_err"
+      atools.sersicEllipticityVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.sersicEllipticityVsSersicMag.selector_galaxy.vectorKey: "griz_model_extendedness"
+      atools.sersicEllipticityVsSersicMag.selector_galaxy.extendedness_minimum: 0.3
+      atools.sersicEllipticityVsSersicMag.selector_star.vectorKey: "griz_model_extendedness"
+      atools.sersicEllipticityVsSersicMag.selector_star.extendedness_maximum: 0.3
+      atools.sersicEllipticityVsSersicMag.applyContext: CoaddContext
       atools.sersicIndexVsSersicMag: ColumnMagnitudeScatterPlot
       atools.sersicIndexVsSersicMag.mag_x: "sersic_err"
       atools.sersicIndexVsSersicMag.key_y: "sersic_index"

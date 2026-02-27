@@ -36,6 +36,7 @@ class ActionMagnitudeScatterPlot(MagnitudeScatterPlot):
     """A MagnitudeScatterPlot with a single column value on the y axis."""
 
     action_vector = ConfigurableActionField[VectorAction](
+        default=None,
         doc="The VectorAction returning data to plot",
     )
     key_y = Field[str](default=None, doc="Key of derived column to plot on the y axis")
@@ -53,6 +54,7 @@ class ActionMagnitudeScatterPlot(MagnitudeScatterPlot):
         if hasattr(self.process.filterActions, self.get_name_attr_values(classes[0])):
             return
         super().finalize()
+        self.validate()
 
         attr_column = f"get_{self.key_y}"
         setattr(self.process.buildActions, attr_column, self.action_vector)

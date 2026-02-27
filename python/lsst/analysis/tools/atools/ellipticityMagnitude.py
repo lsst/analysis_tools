@@ -40,7 +40,7 @@ class EllipticityMagnitudePlotBase(ActionMagnitudeScatterPlot):
 class ExponentialEllipticityMagnitudePlot(EllipticityMagnitudePlotBase):
     def setDefaults(self):
         super().setDefaults()
-        self.action_column = SubtractVector(
+        self.action_vector = SubtractVector(
             actionA=ConstantValue(value=1),
             actionB=DivideVector(
                 actionA=LoadVector(vectorKey="exponential_reff_minor"),
@@ -54,7 +54,7 @@ class ExponentialEllipticityMagnitudePlot(EllipticityMagnitudePlotBase):
 class SersicEllipticityMagnitudePlot(EllipticityMagnitudePlotBase):
     def setDefaults(self):
         super().setDefaults()
-        self.action_column = SubtractVector(
+        self.action_vector = SubtractVector(
             actionA=ConstantValue(value=1),
             actionB=DivideVector(
                 actionA=LoadVector(vectorKey="sersic_reff_minor"),

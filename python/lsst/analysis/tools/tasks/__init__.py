@@ -9,6 +9,7 @@ from .ccdVisitTableAnalysis import *
 from .coaddDepthSummary import *
 from .coaddDepthSummaryPlot import *
 from .coaddDepthTableTractAnalysis import *
+from .coaddInputAnalysis import *
 from .diaFakesDetectorVisitAnalysis import *
 from .diaFakesVisitAnalysis import *
 from .diaObjectDetectorVisitAnalysis import *

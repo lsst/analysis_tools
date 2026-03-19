@@ -1,0 +1,997 @@
+#####################################################################
+# Metric descriptions and types.
+# This is an unsorted list of metric descriptions and types.
+# (task class, atool, metricName) uniquely defines a metric.
+# This file is referred-to when building metricInformation.yaml files.
+###################################################################### 
+
+lsst.analysis.tools.tasks.metadataAnalysis.DatasetMetadataAnalysisTask:
+  atools:
+    isrAmpInterfaceOffsetMetadataMetric:
+      'LSST ISR AMPOFFSET INTERFACEOFFSET':
+        metricTypes: calibs
+        description: The per-amplifier interface offset (pedestal) extracted directly
+          from the postISRCCD image metadata, measuring the flux offset in ADU at
+          the boundary between adjacent amplifiers as computed by the ISR amp-offset
+          correction step. One value is stored per amplifier per detector.
+lsst.analysis.tools.tasks.metadataExposureDetectorAnalysis.MetadataExposureDetectorAnalysisTask:
+  atools:
+    isrAmpOffsetMetadataMetric:
+      AMPOFFSET_PEDESTALS:
+        metricTypes: calibs
+        description: The per-amplifier pedestal offset in ADU computed by the ISR
+          ampOffset subtask, extracted from the ISR task metadata. This measures the
+          additive flux offset that was applied to each amplifier to bring inter-amplifier
+          boundaries into agreement.
+lsst.analysis.tools.tasks.metadataAnalysis.TaskMetadataAnalysisTask:
+  atools:
+    calibrateImageMetadataMetrics:
+      initial_psf_positive_footprint_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of positive source footprints detected in the initial PSF 
+          detection pass during calibrateImage processing (count).
+      initial_psf_negative_footprint_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of negative source footprints detected in the initial PSF
+          detection pass during calibrateImage processing (count).
+      initial_psf_positive_peak_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of positive peaks found within the positive footprints
+          detected during the initial PSF detection pass (count).
+      initial_psf_negative_peak_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of negative peaks found within the negative footprints
+          detected during the initial PSF detection pass (count).
+      simple_psf_positive_footprint_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of positive source footprints detected in the simplified
+          (second-pass) PSF detection step during calibrateImage processing (count).
+      simple_psf_negative_footprint_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of negative source footprints detected in the simplified
+          PSF detection step (count).
+      simple_psf_positive_peak_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of positive peaks found within the positive footprints
+          of the simplified PSF detection step (count).
+      simple_psf_negative_peak_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of negative peaks found within the negative footprints
+          of the simplified PSF detection step (count).
+      bad_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as BAD (permanently bad pixels
+          or columns) in the calibrated image mask, expressed as a dimensionless fraction
+          of total pixels.
+      cr_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as cosmic rays (CR) in the
+          calibrated image mask.
+      crosstalk_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as affected by electronic
+          crosstalk in the calibrated image mask.
+      detected_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as DETECTED (part of a positive
+          detected source footprint) in the calibrated image mask.
+      detected_negative_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as DETECTED_NEGATIVE (part
+          of a negative detected source footprint) in the calibrated image mask.
+      edge_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as EDGE (near the edge of
+          the detector or a bad region boundary) in the calibrated image mask.
+      intrp_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as INTRP (interpolated over,
+          e.g., due to bad columns or saturated pixels) in the calibrated image mask.
+      no_data_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as NO_DATA (no valid data
+          available, e.g., outside the detector footprint) in the calibrated image
+          mask.
+      sat_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as SAT (saturated) in the
+          calibrated image mask.
+      suspect_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels flagged as SUSPECT (unreliable data,
+          e.g., near the non-linearity regime) in the calibrated image mask.
+      unmaskednan_mask_fraction:
+        metricTypes:
+        - visit
+        - mask
+        description: Fraction of detector pixels that contain NaN values but were
+          not masked by any other mask plane, indicating unexpected numerical failures.
+      psf_available_star_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of candidate PSF stars available for PSF model fitting
+          (before quality cuts) in the measure_psf subtask, renamed from numAvailStars
+          (count).
+      psf_good_star_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of stars successfully used in the final PSF model fit
+          after quality cuts in the measure_psf subtask, renamed from numGoodStars
+          (count).
+      sky_footprint_count:
+        metricTypes:
+        - visit
+        - sky
+        - counts
+        description: Number of sky source footprints detected and used for sky background
+          estimation in the star_sky_sources subtask (count).
+      post_deblend_source_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Total number of sources remaining in the catalog after the deblending
+          step has separated blended parents into individual child sources (count).
+      star_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Number of sources classified as stars (point sources) in the
+          calibrated source catalog (count).
+      saturated_source_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Number of sources that are flagged as saturated in the calibrated
+          source catalog (count).
+      bad_source_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Number of sources flagged as bad (e.g., on bad pixels, interpolated
+          regions, or other quality failures) in the calibrated source catalog (count).
+      cosmic_ray_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Number of cosmic rays identified and repaired by the psf_repair
+          subtask during calibrateImage processing (count).
+      matched_psf_star_count:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of PSF stars that were successfully matched to the reference
+          catalog during PSF model fitting (count).
+      final_psf_sigma:
+        metricTypes:
+        - visit
+        - psf
+        description: Gaussian sigma of the final fitted PSF model in pixels, characterizing
+          the PSF size after the full calibration pipeline has run.
+      astrometry_matches_count:
+        metricTypes:
+        - visit
+        - astrometry
+        - counts
+        description: Number of sources successfully matched to the astrometric reference
+          catalog during the astrometric calibration step (count).
+      photometry_matches_count:
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of sources successfully matched to the photometric reference
+          catalog during the photometric calibration step (count).
+      bg_subtracted_skyPixel_instFlux_median:
+        metricTypes:
+        - visit
+        - sky
+        description: Median instrumental flux (in ADU) of sky pixels after background
+          subtraction, providing a measure of the residual sky level in the calibrated
+          image.
+      bg_subtracted_skyPixel_instFlux_stdev:
+        metricTypes:
+        - visit
+        - sky
+        description: Standard deviation of the instrumental flux (in ADU) of sky pixels
+          after background subtraction, measuring the noise level of the residual
+          sky.
+      bg_subtracted_skySource_flux_median:
+        metricTypes:
+        - visit
+        - sky
+        description: Median flux (in nJy) of sky sources after background subtraction,
+          providing a calibrated measure of the residual sky background level.
+      bg_subtracted_skySource_flux_stdev:
+        metricTypes:
+        - visit
+        - sky
+        description: Standard deviation of flux (in nJy) of sky sources after background
+          subtraction, measuring the scatter in the calibrated residual sky.
+      final_adaptive_threshold_value:
+        metricTypes: visit
+        description: The final adaptive detection threshold value used in the last
+          detection pass, renamed from adaptive_threshold_value. This threshold is
+          determined adaptively from the image noise and controls which pixels are
+          considered detections.
+      initial_to_final_wcs:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Angular offset in arcseconds between the initial (input) WCS
+          and the final astrometrically calibrated WCS, measuring how much the pointing
+          solution was corrected during calibration.
+      astrom_offset_mean:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Mean astrometric offset in arcseconds between matched sources
+          and the reference catalog positions, after astrometric calibration.
+      astrom_offset_std:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Standard deviation of astrometric offsets in arcseconds between
+          matched sources and the reference catalog positions, after astrometric calibration.
+      astrom_offset_median:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Median astrometric offset in arcseconds between matched sources
+          and the reference catalog positions, after astrometric calibration.
+      failed_deblend_source_count:
+        metricTypes:
+        - visit
+        - counts
+        description: Number of sources for which the deblender failed to produce a
+          valid result, leaving them unprocessed or flagged (count).
+lsst.analysis.tools.tasks.calexpSummaryAnalysis.CalexpSummaryAnalysisTask:
+  atools:
+    calexpSummaryMetrics:
+      psfSigma:
+        metricTypes:
+        - visit
+        - psf
+        description: Gaussian sigma of the PSF model in pixels, read from the calexp
+          summary statistics. This characterizes the seeing/PSF width for the exposure.
+      psfArea:
+        metricTypes:
+        - visit
+        - psf
+        description: Effective area of the PSF model in pixel^2 (stored as dimensionless),
+          computed from the PSF model shape. Relates to the PSF solid angle.
+      psfIxx:
+        metricTypes:
+        - visit
+        - psf
+        description: Second moment Ixx of the PSF model in pixel^2 (stored as dimensionless),
+          describing the PSF shape along the x-axis.
+      psfIyy:
+        metricTypes:
+        - visit
+        - psf
+        description: Second moment Iyy of the PSF model in pixel^2 (stored as dimensionless),
+          describing the PSF shape along the y-axis.
+      psfIxy:
+        metricTypes:
+        - visit
+        - psf
+        description: Cross-moment Ixy of the PSF model in pixel^2 (stored as dimensionless),
+          describing the PSF ellipticity orientation.
+      ra:
+        metricTypes: visit
+        description: Right ascension of the exposure boresight center in degrees.
+      dec:
+        metricTypes: visit
+        description: Declination of the exposure boresight center in degrees.
+      pixelScale:
+        metricTypes: visit
+        description: Pixel scale of the exposure in arcseconds per pixel (stored as
+          dimensionless due to compound unit limitation).
+      zenithDistance:
+        metricTypes: visit
+        description: Zenith distance (angle from zenith) of the exposure center at
+          the time of observation, in degrees.
+      expTime:
+        metricTypes: visit
+        description: Exposure time of the visit in seconds.
+      zeroPoint:
+        metricTypes:
+        - visit
+        - photometry
+        description: Photometric zero point of the calibrated exposure in AB magnitudes
+          (mag such that a source with flux 1 count/s has this magnitude).
+      skyBg:
+        metricTypes:
+        - visit
+        - sky
+        description: Sky background level in electrons, as estimated and subtracted
+          from the exposure.
+      skyNoise:
+        metricTypes:
+        - visit
+        - sky
+        description: RMS noise of the sky background in electrons, characterizing
+          the per-pixel noise level.
+      meanVar:
+        metricTypes:
+        - visit
+        - sky
+        description: Mean variance of the calibrated image pixels in electron^2 (stored
+          as dimensionless due to compound unit limitation), used as a noise estimate.
+      astromOffsetMean:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Mean angular offset in arcseconds between detected sources and
+          the astrometric reference catalog positions, characterizing the residual
+          astrometric accuracy of the exposure.
+      astromOffsetStd:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Standard deviation of angular offsets in arcseconds between detected
+          sources and the astrometric reference catalog positions.
+      nPsfStar:
+        metricTypes:
+        - visit
+        - psf
+        - counts
+        description: Number of stars used to build the PSF model for this exposure
+          (count).
+      psfStarDeltaE1Median:
+        metricTypes:
+        - visit
+        - psf
+        description: Median difference between the e1 ellipticity component of stars
+          and the PSF model e1, measured on PSF stars (dimensionless). A measure of
+          PSF model accuracy in the e1 direction.
+      psfStarDeltaE2Median:
+        metricTypes:
+        - visit
+        - psf
+        description: Median difference between the e2 ellipticity component of stars
+          and the PSF model e2, measured on PSF stars (dimensionless). A measure of
+          PSF model accuracy in the e2 direction.
+      psfStarDeltaE1Scatter:
+        metricTypes:
+        - visit
+        - psf
+        description: Scatter (robust RMS) of the difference between stellar e1 and
+          PSF model e1, measured on PSF stars (dimensionless). A measure of PSF model
+          precision in the e1 direction.
+      psfStarDeltaE2Scatter:
+        metricTypes:
+        - visit
+        - psf
+        description: Scatter (robust RMS) of the difference between stellar e2 and
+          PSF model e2, measured on PSF stars (dimensionless). A measure of PSF model
+          precision in the e2 direction.
+      psfStarDeltaSizeMedian:
+        metricTypes:
+        - visit
+        - psf
+        description: Median difference between the size (trace radius) of stars and
+          the PSF model size, measured on PSF stars in pixels. A measure of PSF model
+          size accuracy.
+      psfStarDeltaSizeScatter:
+        metricTypes:
+        - visit
+        - psf
+        description: Scatter (robust RMS) of the difference between stellar size and
+          PSF model size, measured on PSF stars in pixels. A measure of PSF model
+          size precision.
+      psfStarScaledDeltaSizeScatter:
+        metricTypes:
+        - visit
+        - psf
+        description: Scatter of the fractional size difference (star size / PSF size
+          - 1) measured on PSF stars, scaled to be dimensionless. A normalized measure
+          of PSF size model precision.
+      psfTraceRadiusDelta:
+        metricTypes:
+        - visit
+        - psf
+        description: The maximum variation in PSF trace radius across the focal plane
+          in pixels, measuring the spatial uniformity of the PSF size model.
+      psfApFluxDelta:
+        metricTypes:
+        - visit
+        - psf
+        description: The absolute difference (max - min) in PSF aperture flux values
+          evaluated across the focal plane on a grid, measuring the spatial variation
+          in PSF aperture flux.
+      psfApCorrSigmaScaledDelta:
+        metricTypes:
+        - visit
+        - psf
+        description: The variation in the PSF aperture correction scaled by the sigma
+          of the correction (dimensionless), measuring spatial consistency of the
+          aperture correction model.
+      maxDistToNearestPsf:
+        metricTypes:
+        - visit
+        - psf
+        description: Maximum distance in pixels from any point in the image to the
+          nearest PSF candidate star, characterizing the spatial coverage of the PSF
+          model.
+      starEMedian:
+        metricTypes:
+        - visit
+        - psf
+        description: Median ellipticity magnitude of stars (normalized, dimensionless),
+          characterizing the typical ellipticity of point sources in the exposure.
+      starUnNormalizedEMedian:
+        metricTypes:
+        - visit
+        - psf
+        description: Median un-normalized ellipticity magnitude sqrt((Ixx - Iyy)^2
+          + (2*Ixy)^2) of stars in pixel^2 (stored as dimensionless), providing an
+          alternative measure of stellar shape in the exposure.
+      effTime:
+        metricTypes:
+        - visit
+        - depth
+        description: Effective exposure time in seconds, accounting for degraded image
+          quality (seeing, sky background, and throughput) relative to a reference
+          set of conditions.
+      effTimePsfSigmaScale:
+        metricTypes:
+        - visit
+        - depth
+        - psf
+        description: Scaling factor applied to effTime due to the PSF size (dimensionless).
+          Values less than 1 indicate worse-than-reference seeing that reduces the
+          effective depth.
+      effTimeSkyBgScale:
+        metricTypes:
+        - visit
+        - depth
+        - sky
+        description: Scaling factor applied to effTime due to the sky background level
+          (dimensionless). Values less than 1 indicate a brighter-than-reference sky
+          that reduces effective depth.
+      effTimeZeroPointScale:
+        metricTypes:
+        - visit
+        - depth
+        - photometry
+        description: Scaling factor applied to effTime due to the photometric throughput
+          (dimensionless). Values less than 1 indicate lower-than-reference throughput
+          that reduces effective depth.
+      magLim:
+        metricTypes:
+        - visit
+        - depth
+        description: Estimated 5-sigma point-source limiting magnitude in AB magnitudes
+          for the exposure, combining PSF size, sky background, and photometric throughput.
+lsst.analysis.tools.tasks.sourceTableVisitAnalysis.SourceTableVisitAnalysisTask:
+  atools:
+    skyFluxVisitStatisticMetric:
+      medianSky:
+        metricTypes:
+        - visit
+        - sky
+        description: Median 9-pixel aperture flux (ap09Flux) in nJy measured on sky
+          sources in the sourceTable_visit, characterizing the central tendency of
+          the per-visit background flux distribution.
+      meanSky:
+        metricTypes:
+        - visit
+        - sky
+        description: Mean 9-pixel aperture flux (ap09Flux) in nJy measured on sky
+          sources in the sourceTable_visit.
+      stdevSky:
+        metricTypes:
+        - visit
+        - sky
+        description: Standard deviation of the 9-pixel aperture flux (ap09Flux) in
+          nJy measured on sky sources in the sourceTable_visit.
+      sigmaMADSky:
+        metricTypes:
+        - visit
+        - sky
+        description: Robust scatter (sigma MAD) of the 9-pixel aperture flux (ap09Flux)
+          in nJy measured on sky sources in the sourceTable_visit.
+lsst.analysis.tools.tasks.associatedSourcesTractAnalysis.AssociatedSourcesTractAnalysisTask:
+  atools:
+    modelPhotRepStarSn5to10:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated Gaussian flux
+          (gaussianFlux) measurements in millimagnitudes for stars with per-group
+          S/N between 5 and 10 in the specified band, measuring photometric repeatability
+          in a low-S/N regime.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual Gaussian flux measurements
+          that deviate by more than 15 mmag from the per-star median, for stars with
+          S/N between 5 and 10 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 5 and 10 used in the Gaussian
+          flux photometric repeatability calculation for the specified band.
+    modelPhotRepStarSn10to20:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated Gaussian flux
+          (gaussianFlux) measurements in millimagnitudes for stars with per-group
+          S/N between 10 and 20 in the specified band, measuring photometric repeatability
+          in a moderate-S/N regime.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual Gaussian flux measurements
+          that deviate by more than 15 mmag from the per-star median, for stars with
+          S/N between 10 and 20 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 10 and 20 used in the Gaussian
+          flux photometric repeatability calculation for the specified band.
+    modelPhotRepStarSn20to40:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated Gaussian flux
+          (gaussianFlux) measurements in millimagnitudes for stars with per-group
+          S/N between 20 and 40 in the specified band.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual Gaussian flux measurements
+          that deviate by more than 15 mmag from the per-star median, for stars with
+          S/N between 20 and 40 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 20 and 40 used in the Gaussian
+          flux photometric repeatability calculation for the specified band.
+    modelPhotRepStarSn40to80:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated Gaussian flux
+          (gaussianFlux) measurements in millimagnitudes for stars with per-group
+          S/N between 40 and 80 in the specified band.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual Gaussian flux measurements
+          that deviate by more than 15 mmag from the per-star median, for stars with
+          S/N between 40 and 80 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 40 and 80 used in the Gaussian
+          flux photometric repeatability calculation for the specified band.
+    psfPhotRepStarSn5to10:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated PSF flux measurements
+          in millimagnitudes for stars with per-group S/N between 5 and 10 in the
+          specified band, measuring photometric repeatability in a low-S/N regime.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual PSF flux measurements that
+          deviate by more than 15 mmag from the per-star median, for stars with S/N
+          between 5 and 10 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 5 and 10 used in the PSF flux
+          photometric repeatability calculation for the specified band.
+    psfPhotRepStarSn10to20:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated PSF flux measurements
+          in millimagnitudes for stars with per-group S/N between 10 and 20 in the
+          specified band.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual PSF flux measurements that
+          deviate by more than 15 mmag from the per-star median, for stars with S/N
+          between 10 and 20 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 10 and 20 used in the PSF flux
+          photometric repeatability calculation for the specified band.
+    psfPhotRepStarSn20to40:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated PSF flux measurements
+          in millimagnitudes for stars with per-group S/N between 20 and 40 in the
+          specified band.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual PSF flux measurements that
+          deviate by more than 15 mmag from the per-star median, for stars with S/N
+          between 20 and 40 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 20 and 40 used in the PSF flux
+          photometric repeatability calculation for the specified band.
+    psfPhotRepStarSn40to80:
+      '{band}_stellarPhotRepeatStdev':
+        metricTypes:
+        - visit
+        - photometry
+        description: Median per-object standard deviation of repeated PSF flux measurements
+          in millimagnitudes for stars with per-group S/N between 40 and 80 in the
+          specified band.
+      '{band}_stellarPhotRepeatOutlierFraction':
+        metricTypes:
+        - visit
+        - photometry
+        description: Fraction (in percent) of individual PSF flux measurements that
+          deviate by more than 15 mmag from the per-star median, for stars with S/N
+          between 40 and 80 in the specified band.
+      '{band}_ct':
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars with S/N between 40 and 80 used in the PSF flux
+          photometric repeatability calculation for the specified band.
+lsst.analysis.tools.tasks.objectTableTractAnalysis.ObjectTableTractAnalysisTask:
+  atools:
+    validPsfFluxMetric:
+      '{band}_validFracColumn':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Fraction (in percent) of objects in the specified band coadd object
+          table with PSF flux values that fall within the range [0.1, 1e9] nJy, indicating
+          numerically valid and physically plausible flux measurements.
+      '{band}_nanFracColumn':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Fraction (in percent) of objects in the specified band coadd object
+          table with NaN PSF flux values, measuring the rate of missing or failed
+          PSF flux measurements.
+    validCmodelFluxMetric:
+      '{band}_validFracColumn':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Fraction (in percent) of objects in the specified band coadd object
+          table with CModel flux values that fall within the range [0.1, 1e9] nJy,
+          indicating numerically valid and physically plausible flux measurements.
+      '{band}_nanFracColumn':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Fraction (in percent) of objects in the specified band coadd object
+          table with NaN CModel flux values, measuring the rate of missing or failed
+          CModel flux measurements.
+lsst.analysis.tools.tasks.refCatObjectPhotometricAnalysis.RefCatObjectPhotometricAnalysisTask:
+  atools:
+    photomDiffMetrics:
+      '{band}_ref_photom_offset_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Median photometric offset in millimagnitudes between PSF magnitudes
+          of bright stars in the specified band coadd object table and the reference
+          catalog, after applying coadd-context quality cuts (stars, mag 17-21.5,
+          S/N > 200).
+      '{band}_ref_photom_offset_mean_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Mean photometric offset in millimagnitudes between PSF magnitudes
+          of bright stars in the specified band coadd object table and the reference
+          catalog.
+      '{band}_ref_photom_offset_stdev_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Standard deviation in millimagnitudes of the photometric offsets
+          between PSF magnitudes of bright stars in the specified band coadd and the
+          reference catalog.
+      '{band}_ref_photom_offset_sigmaMad_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Robust scatter (sigma MAD) in millimagnitudes of the photometric
+          offsets between PSF magnitudes of bright stars in the specified band coadd
+          and the reference catalog.
+      '{band}_ref_photom_offset_rms_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: RMS of the photometric offsets in millimagnitudes between PSF
+          magnitudes of bright stars in the specified band coadd and the reference catalog.
+      '{band}_ref_photom_offset_nstars_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        - counts
+        description: Number of stars used in the photometric offset calculation between
+          the specified band coadd object table and the reference catalog.
+      '{band}_ref_photom_offset_gradient_coadd':
+        metricTypes:
+        - coadd
+        - photometry
+        description: Median gradient (dimensionless) of the photometric offset as
+          a function of PSF magnitude for bright stars in the specified band coadd, indicating
+          any magnitude-dependent photometric bias.
+lsst.analysis.tools.tasks.refCatObjectAnalysis.RefCatObjectAnalysisTask:
+  atools:
+    astromDiffMetrics:
+      '{band}_AA1_RA_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Median astrometric offset in RA (RA*cos(Dec), in milliarcseconds)
+          between bright stars in the specified band coadd object table and the reference
+          catalog, for stars with magnitude 17-21.5.
+      '{band}_AA1_sigmaMad_RA_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the RA astrometric
+          offsets between bright stars in the specified band coadd object table and the
+          reference catalog.
+      '{band}_AA1_Dec_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Median astrometric offset in Dec (in milliarcseconds) between
+          bright stars in the specified band coadd object table and the reference catalog,
+          for stars with magnitude 17-21.5.
+      '{band}_AA1_sigmaMad_Dec_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the Dec astrometric
+          offsets between bright stars in the specified band coadd object table and the
+          reference catalog.
+      '{band}_AA1_tot_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Median total angular separation in milliarcseconds between bright
+          stars in the specified band coadd object table and the reference catalog (computed
+          using full spherical geometry), for stars with magnitude 17-21.5.
+      '{band}_AA1_sigmaMad_tot_coadd':
+        metricTypes:
+        - coadd
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the total angular
+          separations between bright stars in the specified band coadd object table and
+          the reference catalog.
+lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask:
+  atools:
+    astromDiffMetrics:
+      AA1_RA:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Median astrometric offset in RA (RA*cos(Dec), in milliarcseconds)
+          between bright stars in the visit-level source catalog and the astrometric
+          reference catalog, for stars with magnitude 17-21.5 in the visit context
+          (no band prefix).
+      AA1_sigmaMad_RA:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the RA astrometric
+          offsets between bright visit-level sources and the astrometric reference
+          catalog.
+      AA1_Dec:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Median astrometric offset in Dec (in milliarcseconds) between
+          bright stars in the visit-level source catalog and the astrometric reference
+          catalog, for stars with magnitude 17-21.5.
+      AA1_sigmaMad_Dec:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the Dec astrometric
+          offsets between bright visit-level sources and the astrometric reference
+          catalog.
+      AA1_tot:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Median total angular separation in milliarcseconds between bright
+          stars in the visit-level source catalog and the astrometric reference catalog
+          (computed using full spherical geometry), for stars with magnitude 17-21.5.
+      AA1_sigmaMad_tot:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Robust scatter (sigma MAD, in milliarcseconds) of the total angular
+          separations between bright visit-level sources and the astrometric reference
+          catalog.
+lsst.analysis.tools.tasks.refCatSourcePhotometricAnalysis.RefCatSourcePhotometricAnalysisTask:
+  atools:
+    photomDiffMetrics:
+      ref_photom_offset:
+        metricTypes:
+        - visit
+        - photometry
+        description: Median photometric offset in millimagnitudes between PSF magnitudes
+          of bright stars in the visit-level source catalog and the photometric reference
+          catalog, after applying visit-context quality cuts (stars, mag 17-21.5,
+          S/N > 200; no band prefix).
+      ref_photom_offset_mean:
+        metricTypes:
+        - visit
+        - photometry
+        description: Mean photometric offset in millimagnitudes between PSF magnitudes
+          of bright visit-level stars and the photometric reference catalog.
+      ref_photom_offset_stdev:
+        metricTypes:
+        - visit
+        - photometry
+        description: Standard deviation in millimagnitudes of the photometric offsets
+          between PSF magnitudes of bright visit-level stars and the photometric reference
+          catalog.
+      ref_photom_offset_sigmaMad:
+        metricTypes:
+        - visit
+        - photometry
+        description: Robust scatter (sigma MAD) in millimagnitudes of the photometric
+          offsets between PSF magnitudes of bright visit-level stars and the photometric
+          reference catalog.
+      ref_photom_offset_rms:
+        metricTypes:
+        - visit
+        - photometry
+        description: RMS of the photometric offsets in millimagnitudes between PSF
+          magnitudes of bright visit-level stars and the photometric reference catalog.
+      ref_photom_offset_nstars:
+        metricTypes:
+        - visit
+        - photometry
+        - counts
+        description: Number of stars used in the photometric offset calculation between
+          the visit-level source catalog and the photometric reference catalog.
+      ref_photom_offset_gradient:
+        metricTypes:
+        - visit
+        - photometry
+        description: Median gradient (dimensionless) of the photometric offset as
+          a function of PSF magnitude for bright visit-level stars, indicating any
+          magnitude-dependent photometric bias.
+lsst.analysis.tools.tasks.sourceObjectTableAnalysis.SourceObjectTableAnalysisTask:
+  atools:
+    astromColorDiffMetrics:
+      AB1_RA:
+        metricTypes:
+        - visit
+        - astrometry
+        description: RMS astrometric offset in RA (RA*cos(Dec), in milliarcseconds)
+          between bright isolated stars in the visit-level source catalog and their
+          matched coadd object positions, for stars with magnitude 17-21.5. This is
+          the AB1 metric measuring absolute astrometric accuracy in the RA direction
+          against the object catalog.
+      ABF1_RA:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Fraction (in percent) of visit-to-object RA astrometric separations
+          that deviate by more than 20 mas from the median, measuring the outlier
+          rate of absolute astrometric accuracy in the RA direction (ABF1 metric).
+      AB1_Dec:
+        metricTypes:
+        - visit
+        - astrometry
+        description: RMS astrometric offset in Dec (in milliarcseconds) between bright
+          isolated stars in the visit-level source catalog and their matched coadd
+          object positions, for stars with magnitude 17-21.5.
+      ABF1_Dec:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Fraction (in percent) of visit-to-object Dec astrometric separations
+          that deviate by more than 20 mas from the median, measuring the outlier
+          rate of absolute astrometric accuracy in the Dec direction.
+      AB1_tot:
+        metricTypes:
+        - visit
+        - astrometry
+        description: RMS total angular separation in milliarcseconds between bright
+          isolated stars in the visit-level source catalog and their matched coadd
+          object positions (using full spherical geometry), for stars with magnitude
+          17-21.5.
+      ABF1_tot:
+        metricTypes:
+        - visit
+        - astrometry
+        description: Fraction (in percent) of total visit-to-object angular separations
+          exceeding 20 mas, measuring the outlier rate of absolute astrometric accuracy
+          in total angular separation.

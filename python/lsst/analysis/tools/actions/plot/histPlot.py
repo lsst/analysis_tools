@@ -664,14 +664,20 @@ class HistPlot(PlotAction):
         # set up new legend handles and labels
         legend_handles = [empty] + handles + ([empty] * 3 * len(handles)) + ([empty] * 3)
 
+        def format_stat(x):
+            if isinstance(x, int):
+                return str(x) if abs(x) <= 9999 else f"{x:.2e}"
+            else:
+                return f"{x:.2f}" if abs(x) < 999 else f"{x:.2e}"
+
         legend_labels = (
             ([""] * (len(handles) + 1))
             + [stats_dict["statLabels"][0]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat1"]]
+            + [format_stat(x) for x in stats_dict["stat1"]]
             + [stats_dict["statLabels"][1]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat2"]]
+            + [format_stat(x) for x in stats_dict["stat2"]]
             + [stats_dict["statLabels"][2]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat3"]]
+            + [format_stat(x) for x in stats_dict["stat3"]]
         )
         # Replace "e+0" with "e" and "e-0" with "e-" to save space.
         legend_labels = [label.replace("e+0", "e") for label in legend_labels]

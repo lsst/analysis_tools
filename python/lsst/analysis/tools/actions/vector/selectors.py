@@ -399,7 +399,7 @@ class SkyObjectSelector(FlagSelector):
 
     bands = ListField[str](
         doc="The bands to apply the flags in, takes precedence if band supplied in kwargs",
-        default=["i"],
+        default=[],
     )
 
     def getInputSchema(self) -> KeyedDataSchema:

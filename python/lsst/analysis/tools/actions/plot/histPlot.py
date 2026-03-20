@@ -224,6 +224,16 @@ class HistPlot(PlotAction):
         "A number of custom color maps are also defined: `newtab10`, `bright`, `vibrant`.",
         default="rubin",
     )
+    panelsPerRow = Field[int](
+        doc="Maximum number of histogram panels to place in each row. Set to 1 to stack panels vertically.",
+        default=2,
+    )
+
+    def validate(self):
+        super().validate()
+        if self.panelsPerRow < 1:
+            msg = "panelsPerRow must be at least 1."
+            raise FieldValidationError(self.__class__.panelsPerRow, self, msg)
 
     def getInputSchema(self) -> KeyedDataSchema:
         for panel in self.panels:  # type: ignore
@@ -348,7 +358,7 @@ class HistPlot(PlotAction):
         if num_panels <= 1:
             ncols = 1
         else:
-            ncols = 2
+            ncols = min(self.panelsPerRow, num_panels)
         nrows = int(np.ceil(num_panels / ncols))
 
         gs = GridSpec(nrows, ncols, left=0.12, right=0.88, bottom=0.1, top=0.88, wspace=0.41, hspace=0.45)

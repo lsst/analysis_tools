@@ -487,7 +487,7 @@ class HistPlot(PlotAction):
                     nHist += 1
 
             if nHist > 0:
-                ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
+                ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False, borderaxespad=1.1)
             ax.set_xlim(panel_range)
             # The following accommodates spacing for ranges with large numbers
             # but small-ish dynamic range (example use case: RA 300-301).
@@ -634,7 +634,9 @@ class HistPlot(PlotAction):
             if ax2.get_ylim()[1] < 1.05 * y_max:
                 ax.set_ylim(ax.get_ylim()[0], 1.05 * y_max)
                 ax2.set_ylim(ax.get_ylim())
-        ax2.legend(fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False)
+        ax2.legend(
+            fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False, borderaxespad=1.1
+        )
 
         return ax
 

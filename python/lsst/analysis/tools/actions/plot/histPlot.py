@@ -302,14 +302,14 @@ class HistPlot(PlotAction):
         nth_panel = len(self.panels)
         nth_col = ncols
         nth_row = nrows - 1
-        label_font_size = max(6, 10 - nrows)
+        label_font_size = max(6, 10 - ((len(self.panels) + 1) // 2))
         for panel, ax in zip(self.panels, axs):
             nth_panel -= 1
             nth_col = ncols - 1 if nth_col == 0 else nth_col - 1
             if nth_panel == 0 and nrows * ncols - len(self.panels) > 0:
                 nth_col -= 1
             # Set font size for legend based on number of panels being plotted.
-            legend_font_size = max(4, int(7 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
+            legend_font_size = max(4, int(7 - len(self.panels[panel].hists) / 2 - len(self.panels) / 4))
             nums, meds, mads, stats_dict = self._makePanel(
                 data,
                 panel,

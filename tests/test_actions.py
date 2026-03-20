@@ -627,11 +627,11 @@ class TestVectorSelectors(unittest.TestCase):
         np.testing.assert_array_equal(result, truth)
 
     def testSkyObjectSelector(self):
-        # Test default
+        # Test with kwargs
         selector = SkyObjectSelector()
         keys = ["{band}_pixelFlags_edge", "{band}_pixelFlags_nodata", "sky_object"]
         self._checkSchema(selector, keys)
-        result = selector(self.data)
+        result = selector(self.data, bands=["i"])
         truth = np.zeros(self.size, dtype=bool)
         truth[15] = 1
         truth[17] = 1

@@ -191,7 +191,7 @@ class ColorError(VectorAction):
 
 
 class ConvertFluxToMag(VectorAction):
-    """Turn nano janskies into magnitudes."""
+    """Turn nanojanskys into magnitudes."""
 
     vectorKey = Field[str](doc="Key of flux vector to convert to mags")
     fluxUnit = Field[str](doc="Astropy unit of flux vector", default="nJy")
@@ -231,7 +231,7 @@ class MagDiff(VectorAction):
     -----
     The flux columns need to be in units (specifiable in
     the fluxUnits1 and 2 config options) that can be converted
-    to janskies. This action doesn't have any calibration
+    to janskys. This action doesn't have any calibration
     information and assumes that the fluxes are already
     calibrated.
     """
@@ -269,12 +269,12 @@ class ExtinctionCorrectedMagDiff(VectorAction):
     )
     ebvCol = Field[str](doc="E(B-V) Column Name", default="ebv")
     band1 = Field[str](
-        doc="Optional band for magDiff.col1. Supercedes column name prefix",
+        doc="Optional band for magDiff.col1. Supersedes column name prefix",
         optional=True,
         default=None,
     )
     band2 = Field[str](
-        doc="Optional band for magDiff.col2. Supercedes column name prefix",
+        doc="Optional band for magDiff.col2. Supersedes column name prefix",
         optional=True,
         default=None,
     )
@@ -301,7 +301,7 @@ class ExtinctionCorrectedMagDiff(VectorAction):
         for band in (col1Band, col2Band):
             if band not in self.extinctionCoeffs:
                 _LOG.warning(
-                    "%s band not found in coefficients dictionary: %s" " Not applying extinction correction",
+                    "%s band not found in coefficients dictionary: %s. Not applying extinction correction",
                     band,
                     self.extinctionCoeffs,
                 )
@@ -420,7 +420,7 @@ class IsMatchedObjectSameClass(VectorAction):
         doc="The key of the boolean field selecting observed galaxies",
     )
     key_is_target_star = Field[str](
-        doc="The key of the boolean field selecting observed starss",
+        doc="The key of the boolean field selecting observed stars",
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:

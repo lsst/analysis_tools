@@ -330,7 +330,7 @@ class SnSelector(SelectorBase):
         doc="Suffix to add to fluxType to specify uncertainty column", default="Err"
     )
     bands = ListField[str](
-        doc="The bands to apply the signal to noise cut in." "Takes precedence if bands passed to call",
+        doc="The bands to apply the signal to noise cut in. Takes precedence if bands passed to call",
         default=[],
     )
 
@@ -745,7 +745,7 @@ class InjectedClassSelector(InjectedObjectSelector):
         default="ref_source_type",
     )
     key_injection_flag = Field[str](
-        doc="Key for the field indicating that the object was not injected" " (per band)",
+        doc="Key for the field indicating that the object was not injected (per band)",
         default="ref_{band}_injection_flag",
     )
     name_class = Field[str](

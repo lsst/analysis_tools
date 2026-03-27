@@ -313,8 +313,10 @@ class JointAction(AnalysisAction):
         return JointResults(plots, metrics)
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from self.metric.getInputSchema()
-        yield from self.plot.getInputSchema()
+        if not isinstance(self.metric, NoMetric):
+            yield from self.metric.getInputSchema()
+        if not isinstance(self.plot, NoPlot):
+            yield from self.plot.getInputSchema()
 
     def getOutputNames(self, config: pexConfig.Config | None = None) -> Iterable[str]:
         """Returns a list of names that will be used as keys if this action's

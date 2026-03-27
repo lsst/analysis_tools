@@ -83,8 +83,6 @@ class SelectorBase(VectorAction):
                 raise RuntimeError(f"No plotLabelKey provided for value {value}, so can't add to plotInfo")
 
 
-<<<<<<< HEAD
-=======
 class CompositeSelector(SelectorBase):
     """A selector that applies and/or to the results of given selectors."""
 
@@ -111,7 +109,6 @@ class CompositeSelector(SelectorBase):
         return mask
 
 
->>>>>>> 6823856 (Add CompositeSelector)
 class FlagSelector(SelectorBase):
     """The base flag selector to use to select valid sources for QA."""
 

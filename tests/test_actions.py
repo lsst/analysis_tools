@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from itertools import chain
 
 import astropy.units as u
 import numpy as np
@@ -63,7 +64,6 @@ from lsst.analysis.tools.actions.vector.selectors import (
     AllSelector,
     CoaddPlotFlagSelector,
     FlagSelector,
-    AllSelector,
     GalaxySelector,
     RangeSelector,
     SetSelector,
@@ -576,13 +576,17 @@ class TestVectorSelectors(unittest.TestCase):
         np.testing.assert_array_equal(result, truth)
 
         # Test bands override
-        selector = CoaddPlotFlagSelector(
-            selectWhenFalse=["{band}_psfFlux_flag"],
-            selectWhenTrue=["detect_isDeblendedSource"],
+        bands = ["i", "r"]
+        selectWhenFalse = ["{band}_psfFlux_flag"]
+        selectWhenTrue = ["detect_isDeblendedSource"]
+        selector = CoaddPlotFlagSelector(selectWhenFalse=selectWhenFalse, selectWhenTrue=selectWhenTrue)
+        schema = selectWhenFalse + selectWhenTrue
+        self._checkSchema(selector, schema)
+        selector.bands = bands
+        schema = chain.from_iterable(
+            ([k.format(band=band) for band in bands] if "{band}" in k else [k]) for k in schema
         )
-        self._checkSchema(selector, ["{band}_psfFlux_flag", "detect_isDeblendedSource"])
-        selector.bands = ["i", "r"]
-        self._checkSchema(selector, ["i_psfFlux_flag", "r_psfFlux_flag", "detect_isDeblendedSource"])
+        self._checkSchema(selector, schema)
         result = selector(self.data)
         truth = np.ones(self.size, dtype=bool)
         for bit in (1, 11):

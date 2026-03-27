@@ -188,8 +188,6 @@ class CompletenessHist(PlotAction):
         interval = self.action.bins.mag_width / 1000.0
         x_err = interval / 2.0
 
-        counts_all = data[names["count"]]
-
         if self.publicationStyle:
             lineTuples = (
                 (data[names["completeness"]], False, "k", "Completeness"),
@@ -251,7 +249,7 @@ class CompletenessHist(PlotAction):
                     x=x,
                     y=y,
                     xerr=x_err if do_err else None,
-                    yerr=1.0 / np.sqrt(counts_all + 1) if do_err else None,
+                    yerr=1.0 / np.sqrt(plot_data["counts"] + 1) if do_err else None,
                     capsize=0,
                     color=color,
                     label=label,

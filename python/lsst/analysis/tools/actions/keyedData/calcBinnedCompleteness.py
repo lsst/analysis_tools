@@ -233,8 +233,8 @@ class CalcBinnedCompletenessAction(KeyedDataAction):
                 The minimum magnitude of the bin selector.
         """
         results = {}
-        mask_ref = self.selector_range_ref(data)
-        mask_target = self.selector_range_target(data)
+        mask_ref = np.asarray(self.selector_range_ref(data) == True)  # noqa: E712
+        mask_target = np.asarray(self.selector_range_target(data) == True)  # noqa: E712
         mask = copy.copy(mask) if mask else None
         for mask_sub, key_new in ((mask_ref, self.key_mask_ref), (mask_target, self.key_mask_target)):
             if key_new:
@@ -243,10 +243,10 @@ class CalcBinnedCompletenessAction(KeyedDataAction):
         results[self.name_mask_ref] = mask_ref
         results[self.name_mask_target] = mask_target
 
-        n_ref = np.sum(mask_ref)
+        n_ref = np.sum(mask_ref == True)  # noqa: E712
         n_target = np.sum(mask_target)
         mask_any = mask_ref | mask_target
-        matched = data[self.key_match_distance] >= 0
+        matched = np.asarray(data[self.key_match_distance] >= 0)
         if mask:
             matched = matched[mask]
             mask_ref = mask_ref[mask]

@@ -320,7 +320,7 @@ class RangeSelector(SelectorBase):
             A mask of the rows with values within the specified range.
         """
         values = cast(Vector, data[self.vectorKey])
-        mask = (values >= self.minimum) & (values < self.maximum)
+        mask = np.asarray((values >= self.minimum) & (values < self.maximum))
 
         return cast(Vector, mask)
 
@@ -365,11 +365,11 @@ class SetSelector(SelectorBase):
         result : `Vector`
             A mask of the rows with values in the specified set.
         """
-        mask = np.zeros_like(data[self.vectorKeys[0]], dtype=bool)
+        mask = np.zeros(len(data[self.vectorKeys[0]]), dtype=bool)
         for key in self.vectorKeys:
             values = cast(Vector, data[key])
             for compare in self.values:
-                mask |= values == compare
+                mask |= np.asarray(values == compare)
 
         return cast(Vector, mask)
 
@@ -675,7 +675,7 @@ class ThresholdSelector(SelectorBase):
         return ((self.vectorKey, Vector),)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
-        mask = getattr(operator, self.op)(data[self.vectorKey], self.threshold)
+        mask = np.asarray(getattr(operator, self.op)(data[self.vectorKey], self.threshold))
         return cast(Vector, mask)
 
 

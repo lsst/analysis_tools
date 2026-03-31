@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 import treecorr  # type: ignore[import]
 
-from lsst.meas.algorithms.treecorrUtils import TreecorrConfig as TreecorrConfigNew
+from lsst.meas.algorithms.treecorrUtils import TreecorrConfig
 from lsst.pex.config import ChoiceField, ConfigField, Field
 
 from ...interfaces import KeyedData, KeyedDataAction, Vector
@@ -160,13 +160,13 @@ class CalcRhoStatistics(KeyedDataAction):
         },
     )
 
-    treecorr = ConfigField[TreecorrConfigNew](
+    treecorr = ConfigField[TreecorrConfig](
         doc="TreeCorr configuration",
     )
 
     def setDefaults(self):
         super().setDefaults()
-        self.treecorr = TreecorrConfigNew()
+        self.treecorr = TreecorrConfig()
         self.treecorr.sep_units = "arcmin"
         self.treecorr.max_sep = 100.0
 

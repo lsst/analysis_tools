@@ -238,11 +238,11 @@ class TestVectorActions(unittest.TestCase):
         letters = ("A", "B")
         bands = ("r", "i")
         actions = {
-            f"action{letters[num]}": LoadVector(vectorKey=f"{{band{num+1}}}_vector")
+            f"action{letters[num]}": LoadVector(vectorKey=f"{{band{num + 1}}}_vector")
             for num in range(num_vectors)
         }
         action = ActionType(**actions, **kwargs)
-        kwargs_bands = {f"band{num+1}": bands[num] for num in range(num_vectors)}
+        kwargs_bands = {f"band{num + 1}": bands[num] for num in range(num_vectors)}
         result = action(self.data, **kwargs_bands)
         self._checkSchema(action, [action.vectorKey for action in actions.values()])
         if compare_exact:
@@ -448,8 +448,7 @@ class TestVectorRhoStats(unittest.TestCase):
     # Needed for testCalcRhoStatistics.
     @staticmethod
     def getMatrixElements(size, e1, e2):
-        # puting guards just in case e1 or e2 are
-        # supprior to 1, but unlikely.
+        # putting guards just in case e1 or e2 are superior to 1, but unlikely.
         if abs(e1) >= 1:
             e1 = 0
         if abs(e2) >= 1:
@@ -463,7 +462,6 @@ class TestVectorRhoStats(unittest.TestCase):
         return [L[0, 0], L[1, 1], L[0, 1]]
 
     def testCalcRhoStatistics(self):
-
         # just check if runs
         rho = CalcRhoStatistics()
         rho.treecorr.nbins = 21
@@ -629,11 +627,11 @@ class TestVectorSelectors(unittest.TestCase):
         np.testing.assert_array_equal(result, truth)
 
     def testSkyObjectSelector(self):
-        # Test default
+        # Test with kwargs
         selector = SkyObjectSelector()
         keys = ["{band}_pixelFlags_edge", "{band}_pixelFlags_nodata", "sky_object"]
         self._checkSchema(selector, keys)
-        result = selector(self.data)
+        result = selector(self.data, bands=["i"])
         truth = np.zeros(self.size, dtype=bool)
         truth[15] = 1
         truth[17] = 1

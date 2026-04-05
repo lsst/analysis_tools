@@ -1,0 +1,30 @@
+# Instrument-specific bin definitions for threshold stratification.
+# Used by compute_thresholds.py to assign each visit to a stratum.
+#
+# galactic_latitude: based on |b| of the visit boresight pointing.
+# seeing: PSF FWHM in arcsec, derived from visitSummary (psfSigma * pixelScale * 2.3548).
+# sky_brightness: sky background in electrons, from visitSummary (skyBg).
+#
+# Note: deep drilling fields (DDFs) are not yet handled — they require
+# identification from the visit footprint rather than galactic latitude.
+# This will be added in a future ticket.
+
+galactic_latitude:
+  edges: [0, 20, 90]
+  labels:
+    - galactic_plane    # |b| < 20 deg
+    - high_latitude     # |b| >= 20 deg
+
+seeing:
+  edges: [0.0, 0.7, 1.0, 10.0]
+  labels:
+    - good      # FWHM < 0.7 arcsec
+    - moderate  # 0.7 <= FWHM < 1.0 arcsec
+    - poor      # FWHM >= 1.0 arcsec
+
+sky_brightness:
+  edges: [0, 1000, 5000, 1.0e9]
+  labels:
+    - dark    # skyBg < 1000 electrons
+    - grey    # 1000 <= skyBg < 5000 electrons
+    - bright  # skyBg >= 5000 electrons

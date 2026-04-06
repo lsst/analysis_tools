@@ -224,6 +224,16 @@ class HistPlot(PlotAction):
         "A number of custom color maps are also defined: `newtab10`, `bright`, `vibrant`.",
         default="rubin",
     )
+    panelsPerRow = Field[int](
+        doc="Maximum number of histogram panels to place in each row. Set to 1 to stack panels vertically.",
+        default=2,
+    )
+
+    def validate(self):
+        super().validate()
+        if self.panelsPerRow < 1:
+            msg = "panelsPerRow must be at least 1."
+            raise FieldValidationError(self.__class__.panelsPerRow, self, msg)
 
     def getInputSchema(self) -> KeyedDataSchema:
         for panel in self.panels:  # type: ignore
@@ -292,14 +302,14 @@ class HistPlot(PlotAction):
         nth_panel = len(self.panels)
         nth_col = ncols
         nth_row = nrows - 1
-        label_font_size = max(6, 10 - nrows)
+        label_font_size = max(6, 10 - ((len(self.panels) + 1) // 2))
         for panel, ax in zip(self.panels, axs):
             nth_panel -= 1
             nth_col = ncols - 1 if nth_col == 0 else nth_col - 1
             if nth_panel == 0 and nrows * ncols - len(self.panels) > 0:
                 nth_col -= 1
             # Set font size for legend based on number of panels being plotted.
-            legend_font_size = max(4, int(7 - len(self.panels[panel].hists) / 2 - nrows // 2))  # type: ignore
+            legend_font_size = max(4, int(7 - len(self.panels[panel].hists) / 2 - len(self.panels) / 4))
             nums, meds, mads, stats_dict = self._makePanel(
                 data,
                 panel,
@@ -348,7 +358,7 @@ class HistPlot(PlotAction):
         if num_panels <= 1:
             ncols = 1
         else:
-            ncols = 2
+            ncols = min(self.panelsPerRow, num_panels)
         nrows = int(np.ceil(num_panels / ncols))
 
         gs = GridSpec(nrows, ncols, left=0.12, right=0.88, bottom=0.1, top=0.88, wspace=0.41, hspace=0.45)
@@ -477,7 +487,7 @@ class HistPlot(PlotAction):
                     nHist += 1
 
             if nHist > 0:
-                ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False)
+                ax.legend(fontsize=legend_font_size, loc="upper left", frameon=False, borderaxespad=1.1)
             ax.set_xlim(panel_range)
             # The following accommodates spacing for ranges with large numbers
             # but small-ish dynamic range (example use case: RA 300-301).
@@ -624,7 +634,9 @@ class HistPlot(PlotAction):
             if ax2.get_ylim()[1] < 1.05 * y_max:
                 ax.set_ylim(ax.get_ylim()[0], 1.05 * y_max)
                 ax2.set_ylim(ax.get_ylim())
-        ax2.legend(fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False)
+        ax2.legend(
+            fontsize=legend_font_size, handlelength=1.5, loc="upper right", frameon=False, borderaxespad=1.1
+        )
 
         return ax
 
@@ -652,14 +664,20 @@ class HistPlot(PlotAction):
         # set up new legend handles and labels
         legend_handles = [empty] + handles + ([empty] * 3 * len(handles)) + ([empty] * 3)
 
+        def format_stat(x):
+            if isinstance(x, int):
+                return str(x) if abs(x) <= 9999 else f"{x:.2e}"
+            else:
+                return f"{x:.2f}" if abs(x) < 999 else f"{x:.2e}"
+
         legend_labels = (
             ([""] * (len(handles) + 1))
             + [stats_dict["statLabels"][0]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat1"]]
+            + [format_stat(x) for x in stats_dict["stat1"]]
             + [stats_dict["statLabels"][1]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat2"]]
+            + [format_stat(x) for x in stats_dict["stat2"]]
             + [stats_dict["statLabels"][2]]
-            + [f"{x:.3g}" if abs(x) > 0.01 else f"{x:.2e}" for x in stats_dict["stat3"]]
+            + [format_stat(x) for x in stats_dict["stat3"]]
         )
         # Replace "e+0" with "e" and "e-0" with "e-" to save space.
         legend_labels = [label.replace("e+0", "e") for label in legend_labels]

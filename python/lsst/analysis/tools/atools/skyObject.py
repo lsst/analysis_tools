@@ -68,6 +68,7 @@ class SkyObjectHistPlot(AnalysisTool):
         self.process.buildActions.hist_gaap1p0_sn = CalcSn(fluxType="{band}_gaap1p0Flux")
 
         self.produce.plot = HistPlot()
+        self.produce.plot.panelsPerRow = 1
 
         self.produce.plot.panels["panel_flux"] = HistPanel()
         self.produce.plot.panels["panel_flux"].label = "Flux (nJy)"

@@ -126,9 +126,9 @@ class CoaddQualityCheck(AnalysisTool):
     )
 
     threshold_list = ListField(
-        default=[1, 3, 5, 12],
+        default=[1, 2, 3, 5, 12],
         dtype=int,
-        doc="The n_image pixel value thresholds.",
+        doc="The n_image pixel value thresholds, in ascending order.",
     )
 
     quantile_list = ListField(

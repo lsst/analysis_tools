@@ -1897,7 +1897,7 @@ tasks:
             bright stars in the specified band coadd object table and the reference
             catalog (computed using full spherical geometry), for stars with magnitude
             17-21.5.
-          sided: two
+          sided: one
         '{band}_AA1_sigmaMad_tot_coadd':
           units: mas
           metricTypes:
@@ -1956,7 +1956,7 @@ tasks:
             bright stars in the visit-level source catalog and the astrometric reference
             catalog (computed using full spherical geometry), for stars with magnitude
             17-21.5.
-          sided: two
+          sided: one
         AA1_sigmaMad_tot:
           units: mas
           metricTypes:

@@ -1,0 +1,34 @@
+# Pipeline-specific threshold overrides for LSSTCam/DRP.
+#
+# Metrics listed here bypass MAD-based threshold computation in
+# compute_thresholds.py and use the fixed values specified below instead.
+# Any entry whose task_name, atool, or metric_name is not recognised in the
+# pipeline will be silently ignored.
+#
+# Structure:
+#   <task_name>:          # pipeline-assigned task label (not the class name)
+#     <atool>:
+#       <metric_name>:    # template form, e.g. {band}_saturated_fraction
+#         method: fixed
+#         upper: <value>          # scalar applies to all bands
+#         lower: <value>          # optional; omit for one-sided metrics
+#
+# Band-specific values can be supplied as a dict instead of a scalar:
+#   upper: {u: 0.7, g: 0.6, r: 0.5, i: 0.5, z: 0.5, y: 0.6}
+# Any band present in the pipeline but absent from the dict will be skipped
+# with a warning.
+
+# Example 1: uniform threshold across all bands
+someTaskLabel:
+  someTool:
+    '{band}_saturated_fraction':
+      method: fixed
+      upper: 0.5
+
+# Example 2: band-specific thresholds
+anotherTaskLabel:
+  anotherTool:
+    '{band}_bright_object_fraction':
+      method: fixed
+      upper: {u: 0.7, g: 0.6, r: 0.5, i: 0.5, z: 0.5, y: 0.6}
+      lower: {u: 0.0, g: 0.0, r: 0.0, i: 0.0, z: 0.0, y: 0.0}

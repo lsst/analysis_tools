@@ -49,7 +49,6 @@ from __future__ import annotations
 import argparse
 import logging
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -120,6 +119,35 @@ def load_bins(instrument: str) -> dict:
     bins_path = THRESHOLDS_DIR / instrument / "bins.yaml"
     with open(bins_path) as file:
         return yaml.safe_load(file)
+
+
+def load_threshold_overrides(instrument: str, pipeline_stem: str) -> dict:
+    """Load pipeline-specific threshold overrides if present.
+
+    Overrides allow fixed or otherwise bespoke thresholds to be specified for
+    a subset of metrics, bypassing MAD-based computation.  The file is optional;
+    if absent, all thresholds are computed from data.
+
+    Parameters
+    ----------
+    instrument
+        Instrument name matching a subdirectory of ``thresholds/``.
+    pipeline_stem
+        Pipeline YAML stem (e.g. ``DRP`` for ``DRP.yaml``).
+
+    Returns
+    -------
+    dict
+        Parsed content of ``<instrument>/<pipeline_stem>_threshold-overrides.yaml``,
+        or an empty dict if the file does not exist.
+        Structure: ``task_name → atool → template_metric_name → override_spec``.
+    """
+    path = THRESHOLDS_DIR / instrument / f"{pipeline_stem}_threshold-overrides.yaml"
+    if not path.exists():
+        return {}
+    log.info("Loading threshold overrides from %s.", path)
+    with open(path) as f:
+        return yaml.safe_load(f) or {}
 
 
 def extract_task_metrics(config_dict: dict) -> dict[str, dict[str, list[str]]]:
@@ -315,8 +343,8 @@ def compute_bin_thresholds(
     values: list[float],
     sided: str,
     n_mad: float,
-) -> tuple[float, float, float | None, float] | None:
-    """Compute median, MAD, and thresholds for one stratum.
+) -> tuple[float | None, float] | None:
+    """Compute MAD-based thresholds for one stratum.
 
     Parameters
     ----------
@@ -329,7 +357,7 @@ def compute_bin_thresholds(
 
     Returns
     -------
-    tuple of (median, mad, lower, upper) or None
+    tuple of (lower, upper) or None
         ``lower`` is ``None`` for one-sided metrics.  Returns ``None`` if no
         finite values remain.
     """
@@ -338,11 +366,10 @@ def compute_bin_thresholds(
     if len(arr) == 0:
         return None
     median = float(np.median(arr))
-    m = mad(arr)
-    half_width = n_mad * MAD_SCALE * m
+    half_width = n_mad * MAD_SCALE * mad(arr)
     upper = median + half_width
     lower = (median - half_width) if sided == "two" else None
-    return median, m, lower, upper
+    return lower, upper
 
 
 # Main
@@ -378,6 +405,11 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite an existing threshold CSV. Without this flag the script aborts if the output file already exists.",
+    )
+    parser.add_argument(
         "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
     )
     args = parser.parse_args()
@@ -397,9 +429,17 @@ def main() -> int:
         else THRESHOLDS_DIR / instrument / pipeline_path.with_suffix(".csv").name
     )
 
+    if out_csv.exists() and not args.force:
+        log.error(
+            "Output CSV already exists: %s\nPass --force to overwrite.",
+            out_csv,
+        )
+        return 1
+
     # Load supporting data
     metric_descs = load_metric_properties(METRIC_DESCRIPTIONS_PATH)
     bins = load_bins(instrument)
+    overrides = load_threshold_overrides(instrument, pipeline_path.stem)
 
     gal_lat_edges: list[float] = bins["galactic_latitude"]["edges"]
     gal_lat_labels: list[str] = bins["galactic_latitude"]["labels"]
@@ -464,6 +504,51 @@ def main() -> int:
     task_name_to_class = {
         info["task_name"]: info["task_class"] for info in table_info.values()
     }
+
+    # Expand override entries using band lists from the task config, producing a
+    # flat lookup keyed by (task_name, atool, expanded_metric_name) with scalar
+    # upper/lower values ready for direct use in the threshold computation loop.
+    task_name_to_atools = {
+        info["task_name"]: info["atools"] for info in table_info.values()
+    }
+    override_lookup: dict[tuple[str, str, str], dict] = {}
+    for ov_task_name, ov_atools_dict in overrides.items():
+        if ov_task_name not in task_name_to_atools:
+            log.warning("Override task_name '%s' not found in pipeline — skipping.", ov_task_name)
+            continue
+        task_atools = task_name_to_atools[ov_task_name]
+        for ov_atool, ov_metrics_dict in ov_atools_dict.items():
+            for template, spec in ov_metrics_dict.items():
+                bands = task_atools.get(ov_atool, {}).get(template, [])
+                expansions = [(template.format(band=b), b) for b in bands] if bands else [(template, None)]
+                for expanded, band in expansions:
+                    upper_spec = spec.get("upper")
+                    lower_spec = spec.get("lower")
+                    if isinstance(upper_spec, dict):
+                        if band not in upper_spec:
+                            log.warning(
+                                "Band '%s' missing from upper override for %s/%s — skipping.",
+                                band, ov_atool, template,
+                            )
+                            continue
+                        upper = float(upper_spec[band])
+                    else:
+                        upper = float(upper_spec) if upper_spec is not None else None
+                    if isinstance(lower_spec, dict):
+                        if band not in lower_spec:
+                            log.warning(
+                                "Band '%s' missing from lower override for %s/%s — skipping.",
+                                band, ov_atool, template,
+                            )
+                            continue
+                        lower = float(lower_spec[band])
+                    else:
+                        lower = float(lower_spec) if lower_spec is not None else None
+                    override_lookup[(ov_task_name, ov_atool, expanded)] = {
+                        "upper": upper, "lower": lower,
+                    }
+    if override_lookup:
+        log.info("Loaded %d threshold override(s).", len(override_lookup))
 
     # All values kept in memory: exact median/MAD needs the full distribution,
     # and the PDF report needs the raw values.  Revisit if memory becomes a bottleneck.
@@ -547,7 +632,6 @@ def main() -> int:
         "Computing thresholds for %d (metric, stratum) combinations.", len(data)
     )
     rows: list[dict] = []
-    now = datetime.now(timezone.utc).isoformat()
 
     for (
         task_name, atool, metric_name, gal_lat_bin
@@ -559,26 +643,27 @@ def main() -> int:
                 atool, metric_name, gal_lat_bin, n,
             )
 
-        task_class = task_name_to_class[task_name]
-        template = metric_templates.get((task_name, atool, metric_name), metric_name)
-        desc = metric_descs.get((task_class, atool, template), {})
-        sided = desc.get("sided", "one")
+        override = override_lookup.get((task_name, atool, metric_name))
+        if override is not None:
+            lower = override["lower"]
+            upper = override["upper"]
+            is_override = True
+        else:
+            task_class = task_name_to_class[task_name]
+            template = metric_templates.get((task_name, atool, metric_name), metric_name)
+            desc = metric_descs.get((task_class, atool, template), {})
+            sided = desc.get("sided", "one")
 
-        result = compute_bin_thresholds(values, sided, args.n_mad)
-        if result is None:
-            log.warning(
-                "%s / %s [b=%s]: no finite values — skipping.",
-                atool, metric_name, gal_lat_bin,
-            )
-            continue
+            result = compute_bin_thresholds(values, sided, args.n_mad)
+            if result is None:
+                log.warning(
+                    "%s / %s [b=%s]: no finite values — skipping.",
+                    atool, metric_name, gal_lat_bin,
+                )
+                continue
 
-        median, m, lower, upper = result
-
-        if m == 0.0:
-            log.warning(
-                "%s / %s [b=%s]: MAD=0 — all values identical?",
-                atool, metric_name, gal_lat_bin,
-            )
+            lower, upper = result
+            is_override = False
 
         rows.append({
             "task_name": task_name,
@@ -587,11 +672,9 @@ def main() -> int:
             "gal_lat_bin": gal_lat_bin,
             "lower": lower,
             "upper": upper,
-            "median": median,
-            "mad": m,
             "n_values": n,
             "tier1_fraction": args.tier1_fraction,
-            "computed_at": now,
+            "is_override": is_override,
         })
 
 
@@ -603,14 +686,6 @@ def main() -> int:
         log.error("%d rows have a NaN upper threshold.", n_nan_upper)
 
     two_sided_mask = df["lower"].notna()
-    if two_sided_mask.any():
-        n_nan_lower = int(df.loc[two_sided_mask, "lower"].isna().sum())
-        if n_nan_lower:
-            log.error("%d two-sided rows have a NaN lower threshold.", n_nan_lower)
-
-    n_zero_mad = int((df["mad"] == 0.0).sum())
-    if n_zero_mad:
-        log.warning("%d rows have MAD=0.", n_zero_mad)
 
     n_unknown = int((df["gal_lat_bin"] == "unknown").sum())
     if n_unknown:
@@ -619,11 +694,13 @@ def main() -> int:
             n_unknown,
         )
 
+    n_overrides = int(df["is_override"].sum())
     log.info(
-        "Validation complete: %d rows total, %d two-sided, %d one-sided.",
+        "Validation complete: %d rows total, %d two-sided, %d one-sided, %d overrides.",
         len(df),
         int(two_sided_mask.sum()),
         int((~two_sided_mask).sum()),
+        n_overrides,
     )
 
 

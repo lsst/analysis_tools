@@ -269,10 +269,22 @@ def _render_page(
             trows = thresh_df.loc[tmask]
             if not trows.empty:
                 row = trows.iloc[0]
-                ax.axvline(row["median"], color=colour, lw=1.2, ls="-")
                 ax.axvline(row["upper"], color=colour, lw=1.0, ls="--")
                 if pd.notna(row["lower"]):
                     ax.axvline(row["lower"], color=colour, lw=1.0, ls="--")
+                if row.get("is_override", False):
+                    trans = blended_transform_factory(ax.transData, ax.transAxes)
+                    ax.text(
+                        row["upper"], 0.5, "Override",
+                        transform=trans, fontsize=4, rotation=90,
+                        va="center", ha="left", color=colour, clip_on=True,
+                    )
+                    if pd.notna(row["lower"]):
+                        ax.text(
+                            row["lower"], 0.5, "Override",
+                            transform=trans, fontsize=4, rotation=90,
+                            va="center", ha="right", color=colour, clip_on=True,
+                        )
 
             ax.tick_params(labelsize=5)
             if units:
@@ -338,6 +350,8 @@ def generate_report(
     """
     metric_descs = load_metric_descriptions(METRIC_DESCRIPTIONS_PATH)
     thresh_df = pd.read_csv(thresholds_path)
+    if "is_override" not in thresh_df.columns:
+        thresh_df["is_override"] = False
     values_df = pd.read_parquet(values_path)
 
     # Build a description lookup keyed by (task_name, atool, expanded_metric_name).

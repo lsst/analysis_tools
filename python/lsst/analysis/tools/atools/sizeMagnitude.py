@@ -20,11 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from ..actions.vector import CoaddPlotFlagSelector, VisitPlotFlagSelector
-from .genericBuild import ExtendednessTool, SizeTool
+from .genericBuild import SizeTool
 from .genericProduce import MagnitudeScatterPlot
 
 
-class SizeMagnitudePlot(ExtendednessTool, SizeTool, MagnitudeScatterPlot):
+class SizeMagnitudePlot(SizeTool, MagnitudeScatterPlot):
     def coaddContext(self) -> None:
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.flagSelector.bands = []

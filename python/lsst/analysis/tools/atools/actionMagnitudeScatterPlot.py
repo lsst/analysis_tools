@@ -21,15 +21,19 @@
 
 from __future__ import annotations
 
-__all__ = ("ActionMagnitudeScatterPlot",)
+__all__ = ("ActionMagnitudeScatterPlot", "SingleColumnMagnitudeScatterPlot")
+
+import logging
 
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
-from ..actions.vector import DownselectVector
+from ..actions.vector import DownselectVector, LoadVector
 from ..actions.vector.selectors import CoaddPlotFlagSelector, VectorSelector, VisitPlotFlagSelector
 from ..interfaces import VectorAction
 from .genericProduce import MagnitudeScatterPlot
+
+_LOG = logging.getLogger(__name__)
 
 
 class ActionMagnitudeScatterPlot(MagnitudeScatterPlot):
@@ -68,3 +72,25 @@ class ActionMagnitudeScatterPlot(MagnitudeScatterPlot):
                     selector=VectorSelector(vectorKey=self.get_name_attr_selector(object_class)),
                 ),
             )
+
+
+class SingleColumnMagnitudeScatterPlot(ActionMagnitudeScatterPlot):
+    """A magnitude scatter plot loading a single column."""
+
+    _default_vectorKey = "__SingleColumnMagnitudeScatterPlot__default"
+
+    def setDefaults(self):
+        super().setDefaults()
+        # Unfortunately, this can't be left None because validate will get
+        # called before finalize
+        self.action_vector = LoadVector(vectorKey=self._default_vectorKey)
+
+    def finalize(self):
+        if not isinstance(self.action_vector, LoadVector):
+            _LOG.warning(
+                f"{self.action_vector=} should be an instance of LoadVector but is not; if it has no "
+                f"vectorKey attribute, this action may fail."
+            )
+        if self.action_vector.vectorKey == self._default_vectorKey:
+            self.action_vector.vectorKey = self.key_y
+        super().finalize()

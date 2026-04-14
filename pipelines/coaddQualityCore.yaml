@@ -85,7 +85,7 @@ tasks:
       atools.sersicEllipticityVsSersicMag.selector_star.vectorKey: "griz_model_extendedness"
       atools.sersicEllipticityVsSersicMag.selector_star.extendedness_maximum: 0.3
       atools.sersicEllipticityVsSersicMag.applyContext: CoaddContext
-      atools.sersicIndexVsSersicMag: ColumnMagnitudeScatterPlot
+      atools.sersicIndexVsSersicMag: SingleColumnMagnitudeScatterPlot
       atools.sersicIndexVsSersicMag.mag_x: "sersic_err"
       atools.sersicIndexVsSersicMag.key_y: "sersic_index"
       atools.sersicIndexVsSersicMag.produce.plot.yAxisLabel: "Sérsic index"

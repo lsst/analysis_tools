@@ -418,6 +418,10 @@ class MagnitudeTool(ObjectClassTool):
         name_mag_is_none = name_mag is None
         if name_mag_is_none:
             name_mag = getattr(self, attr)
+            if name_mag is None:
+                raise RuntimeError(
+                    f"{self=}.{attr=} cannot be None. If this is a config field, it must be set."
+                )
             complete = name_mag in self.fluxes
         else:
             complete = hasattr(self, attr)

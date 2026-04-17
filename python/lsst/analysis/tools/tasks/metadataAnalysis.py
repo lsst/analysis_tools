@@ -24,6 +24,8 @@ __all__ = (
     "MetadataAnalysisConfig",
     "DatasetMetadataAnalysisTask",
     "TaskMetadataAnalysisTask",
+    "AggregatedTaskMetadataAnalysisConfig",
+    "AggregatedTaskMetadataAnalysisTask",
 )
 
 from lsst.pex.config import Field, ListField
@@ -194,3 +196,125 @@ class TaskMetadataAnalysisTask(AnalysisPipelineTask):
             raise UpstreamFailureNoWorkFound(
                 f"None of the specified metrics were found in the {taskName} metadata"
             )
+
+
+class AggregatedTaskMetadataAnalysisConnections(
+    AnalysisBaseConnections,
+    dimensions={},
+    defaultTemplates={"inputName": "", "outputName": "", "storageClass": "TaskMetadata"},
+):
+    def __init__(self, *, config=None):
+        """Customize the connections for aggregating task metadata across
+        multiple inputs.
+
+        Parameters
+        ----------
+        config : `AggregatedTaskMetadataAnalysisConfig`
+            Configuration for this connection.
+        """
+        super().__init__(config=config)
+
+        self.data = connectionTypes.Input(
+            doc="Task metadata to aggregate across additional dimensions.",
+            name=config.connections.inputName,
+            storageClass=config.connections.storageClass,
+            deferLoad=True,
+            dimensions=frozenset(config.inputDataDimensions),
+            multiple=True,
+        )
+
+        self.dimensions.update(frozenset(config.outputDimensions))
+
+
+class AggregatedTaskMetadataAnalysisConfig(
+    AnalysisBaseConfig,
+    pipelineConnections=AggregatedTaskMetadataAnalysisConnections,
+):
+    inputDataDimensions = ListField(
+        default=["instrument", "visit", "detector"],
+        dtype=str,
+        doc="Dimensions of the input task metadata datasets.",
+    )
+    outputDimensions = ListField(
+        default=["instrument", "visit"],
+        dtype=str,
+        doc="Dimensions of the output metric bundle. Also this task's dimensions.",
+    )
+
+
+class AggregatedTaskMetadataAnalysisTask(AnalysisPipelineTask):
+    ConfigClass = AggregatedTaskMetadataAnalysisConfig
+    _DefaultName = "aggregatedTaskMetadataAnalysis"
+
+    def _collectData(self, handles, taskName):
+        """Collect metric vectors from a list of deferred dataset handles.
+
+        Parameters
+        ----------
+        handles : `list`
+            Deferred dataset handles that return the task metadata.
+        taskName : `str`
+            The name of the task, used as the top-level key in the metadata.
+
+        Returns
+        -------
+        data : `dict` [`str`, `list` [`float`]]
+            Mapping from metric name to list of per-input values.
+
+        Raises
+        ------
+        lsst.pipe.base.UpstreamFailureNoWorkFound
+            If no data could be collected from any input, or if any requested
+            metric is absent from all inputs.
+        """
+        data: dict[str, list[float]] = {}
+        for handle in handles:
+            metadata = handle.get().to_dict()
+            if not metadata:
+                continue
+            for fieldName in self.config.atools.fieldNames:
+                atool = getattr(self.config.atools, fieldName)
+                if not hasattr(atool, "metrics"):
+                    continue
+                subTaskNames = getattr(atool, "subTaskNames", None) or {}
+                for metric in atool.metrics.keys():
+                    if metric in subTaskNames:
+                        taskFullName = f"{taskName}:{subTaskNames[metric]}"
+                    else:
+                        taskFullName = taskName
+                    value = metadata.get(taskFullName, {}).get(metric)
+                    if value is not None:
+                        data.setdefault(metric, []).append(float(value))
+
+        if not data:
+            raise UpstreamFailureNoWorkFound(f"No metadata entries found for {taskName}.")
+
+        missing = []
+        for fieldName in self.config.atools.fieldNames:
+            atool = getattr(self.config.atools, fieldName)
+            if hasattr(atool, "metrics"):
+                for metric in atool.metrics:
+                    if metric not in data:
+                        missing.append(metric)
+        if missing:
+            raise UpstreamFailureNoWorkFound(
+                f"The following metrics were not found in any input for {taskName}: "
+                + ", ".join(f"{m!r}" for m in missing)
+            )
+
+        return data
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        dataId = butlerQC.quantum.dataId
+        inputs = butlerQC.get(inputRefs)
+
+        # This task never produces plots; pass None so parsePlotInfo returns
+        # empty table/run strings rather than trying to dereference a list.
+        plotInfo = self.parsePlotInfo(None, dataId)
+
+        taskName = inputRefs.data[0].datasetType.name
+        taskName = taskName[: taskName.find("_")]
+
+        data = self._collectData(inputs["data"], taskName)
+        outputs = self.run(data=data, plotInfo=plotInfo)
+        butlerQC.put(outputs, outputRefs)

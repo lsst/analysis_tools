@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "AggregatedTaskMetadataMetricTool",
     "DatasetMetadataMetricTool",
     "TaskMetadataMetricTool",
 )
@@ -115,5 +116,59 @@ class TaskMetadataMetricTool(MetadataMetricTool):
             )
         self.produce.metric.units = dict(self.metrics.items())
 
+        if self.newNames is not None:
+            self.produce.metric.newNames = dict(self.newNames.items())
+
+
+class AggregatedTaskMetadataMetricTool(MetadataMetricTool):
+    """Tool to compute aggregate statistics from task metadata across
+    multiple inputs.
+    """
+
+    taskName = Field[str](
+        doc="The name of the task to extract metadata from.",
+        default=None,
+    )
+
+    subTaskNames = DictField[str, str](
+        doc="The names of subtasks to extract metadata from. "
+        "If the metric name is identified as one of the keys, then "
+        "the corresponding value is taken as the subTask metadata "
+        "from which to extract metadata.",
+        default=None,
+        optional=True,
+    )
+
+    aggregationUnits = DictField[str, str](
+        doc="Fixed units for specific aggregations, keyed by aggregation name "
+            "(the suffix after the metric name, e.g. 'ct' or 'frac'). "
+            "Overrides the source metric's unit for that aggregation.",
+        default={},
+        optional=True,
+    )
+
+    def finalize(self):
+        # Attribute names can't contain spaces, but metadata metric names
+        # might. Remove any spaces from names.
+        valid_metric_names = {self.makeValidAttributeName(k): v for k, v in self.metrics.items()}
+        units = {}
+        # This is the same as looping over the metric names, but it also
+        # provides the aggregator name at the same time which is needed
+        # for post-aggregation unit lookup.
+        for name, action in self.process.calculateActions.items():
+            vector_key = getattr(action, "vectorKey", None)
+            if vector_key is not None:
+                valid_vector_key = self.makeValidAttributeName(vector_key)
+                if valid_vector_key not in valid_metric_names:
+                    raise ValueError(
+                        f"Action {name!r} has vectorKey {vector_key!r} which is "
+                        f"not in metrics: {list(self.metrics.keys())}"
+                    )
+                agg_name = name[len(valid_vector_key) + 1:]
+                if self.aggregationUnits and agg_name in self.aggregationUnits:
+                    units[name] = self.aggregationUnits[agg_name]
+                else:
+                    units[name] = valid_metric_names[valid_vector_key]
+        self.produce.metric.units = units
         if self.newNames is not None:
             self.produce.metric.newNames = dict(self.newNames.items())

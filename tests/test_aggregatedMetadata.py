@@ -52,7 +52,7 @@ def _make_tool(metrics, aggregation_units=None, subtask_names=None):
         A finalized tool.
     """
     tool = AggregatedTaskMetadataMetricTool()
-    tool.taskName = "myTask"
+    tool.taskName = "test"
     tool.metrics = metrics
     if subtask_names is not None:
         tool.subTaskNames = subtask_names
@@ -87,17 +87,17 @@ def _make_task(metrics, subtask_names=None):
         A configured task.
     """
     config = AggregatedTaskMetadataAnalysisConfig()
-    config.connections.inputName = "myTask_metadata"
-    config.connections.outputName = "myTask_metadata_agg"
-    config.atools.myTool = AggregatedTaskMetadataMetricTool
-    config.atools.myTool.taskName = "myTask"
-    config.atools.myTool.metrics = metrics
+    config.connections.inputName = "test_metadata"
+    config.connections.outputName = "test_metadata_agg"
+    config.atools.testTool = AggregatedTaskMetadataMetricTool
+    config.atools.testTool.taskName = "test"
+    config.atools.testTool.metrics = metrics
     if subtask_names is not None:
-        config.atools.myTool.subTaskNames = subtask_names
+        config.atools.testTool.subTaskNames = subtask_names
 
     action = MedianAction()
     action.vectorKey = next(iter(metrics))
-    config.atools.myTool.process.calculateActions.metric_median = action
+    config.atools.testTool.process.calculateActions.metric_median = action
 
     return AggregatedTaskMetadataAnalysisTask(config=config)
 
@@ -179,7 +179,7 @@ class TestAggregatedTaskMetadataMetricToolFinalize(TestCase):
         that doesn't correspond to any configured metric.
         """
         tool = AggregatedTaskMetadataMetricTool()
-        tool.taskName = "myTask"
+        tool.taskName = "test"
         tool.metrics = {"nStars": "ct"}
 
         known_action = MedianAction()
@@ -235,26 +235,24 @@ class TestAggregatedTaskMetadataAnalysisTask(TestCase):
         task = _make_task({"nStars": "ct"})
         handles = _make_handles([{}, {}, {}])
         with self.assertRaises(UpstreamFailureNoWorkFound):
-            task._collectData(handles, "myTask")
+            task._collectData(handles, "test")
 
     def testPartialInputsAccepted(self):
         """Inputs missing a metric in some (but not all) detectors are fine."""
         task = _make_task({"nStars": "ct"})
-        # One input lacks nStars — it should be silently skipped.
+        # One input lacks nStars — its value should be NaN.
         handles = _make_handles(
             [
-                {"myTask": {"nStars": 10.0}},
-                {"myTask": {}},
-                {"myTask": {"nStars": 30.0}},
+                {"test": {"nStars": 10.0}},
+                {"test": {}},
+                {"test": {"nStars": 30.0}},
             ]
         )
-        data = task._collectData(handles, "myTask")
+        data = task._collectData(handles, "test")
         self.assertEqual(len(data["nStars"]), 3)
-        self.assertIn(10.0, data["nStars"])
-        self.assertIn(30.0, data["nStars"])
-        # Verify values are collected as-is, not transformed.
-        self.assertAlmostEqual(min(data["nStars"]), 10.0)
-        self.assertAlmostEqual(max(data["nStars"]), 30.0)
+        self.assertEqual(data["nStars"][0], 10.0)
+        self.assertTrue(np.isnan(data["nStars"][1]))
+        self.assertEqual(data["nStars"][2], 30.0)
 
     def testSubTaskNamesRespected(self):
         """Metrics in subtasks should be found under the correct key."""
@@ -264,11 +262,11 @@ class TestAggregatedTaskMetadataAnalysisTask(TestCase):
         )
         handles = _make_handles(
             [
-                {"myTask:repair": {"cosmicRayCount": 5.0}},
-                {"myTask:repair": {"cosmicRayCount": 8.0}},
+                {"test:repair": {"cosmicRayCount": 5.0}},
+                {"test:repair": {"cosmicRayCount": 8.0}},
             ]
         )
-        data = task._collectData(handles, "myTask")
+        data = task._collectData(handles, "test")
         self.assertIn("cosmicRayCount", data)
         self.assertEqual(len(data["cosmicRayCount"]), 2)
 
@@ -279,12 +277,12 @@ class TestAggregatedTaskMetadataAnalysisTask(TestCase):
         task = _make_task({"nSatrs": "ct"})  # typo: nSatrs instead of nStars
         handles = _make_handles(
             [
-                {"myTask": {"nStars": 10.0}},
-                {"myTask": {"nStars": 20.0}},
+                {"test": {"nStars": 10.0}},
+                {"test": {"nStars": 20.0}},
             ]
         )
         with self.assertRaises(UpstreamFailureNoWorkFound):
-            task._collectData(handles, "myTask")
+            task._collectData(handles, "test")
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

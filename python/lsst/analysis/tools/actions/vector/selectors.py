@@ -78,7 +78,7 @@ class SelectorBase(VectorAction):
                 raise RuntimeError(f"No plotLabelKey provided for value {value}, so can't add to plotInfo")
 
 
-class FlagSelector(VectorAction):
+class FlagSelector(SelectorBase):
     """The base flag selector to use to select valid sources for QA."""
 
     selectWhenFalse = ListField[str](
@@ -90,8 +90,8 @@ class FlagSelector(VectorAction):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        allCols = list(self.selectWhenFalse) + list(self.selectWhenTrue)
-        return ((col, Vector) for col in allCols)
+        yield from ((key, Vector) for key in self.selectWhenFalse)
+        yield from ((key, Vector) for key in self.selectWhenTrue)
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Select on the given flags
@@ -145,7 +145,14 @@ class CoaddPlotFlagSelector(FlagSelector):
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
-        yield from super().getInputSchema()
+        if self.bands:
+            for key, dtype in super().getInputSchema():
+                if "{band}" in key:
+                    yield from ((key.format(band=band), dtype) for band in self.bands)
+                else:
+                    yield key, dtype
+        else:
+            yield from super().getInputSchema()
 
     def refMatchContext(self):
         self.selectWhenFalse = [

@@ -24,7 +24,7 @@ tasks:
       atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
       atools.shapeSizeDetRadiusVsCmodelMag.size_y: "shape_slot"
       atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.xLims: (17, 29)
-      atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.yLims: (-4, 3)
+      atools.shapeSizeDetRadiusVsCmodelMag.produce.plot.yLims: (-3, 2)
       atools.shapeSizeDetRadiusVsCmodelMag.applyContext: CoaddContext
       atools.shapeSizeDetRadiusVsPsfMag: SizeMagnitudePlot
       atools.shapeSizeDetRadiusVsPsfMag.size_type: "determinantRadius"
@@ -36,27 +36,56 @@ tasks:
       atools.cModelBulgeSizeVsCmodelBulgeMag.mag_x: "bulge_err"
       atools.cModelBulgeSizeVsCmodelBulgeMag.size_y: "bulge"
       atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.xLims: (17, 29)
-      atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.yLims: (-4, 3)
+      atools.cModelBulgeSizeVsCmodelBulgeMag.produce.plot.yLims: (-3, 2)
       atools.cModelBulgeSizeVsCmodelBulgeMag.applyContext: CoaddContext
       atools.cModelDiskSizeVsCmodelDiskMag: SizeMagnitudePlot
       atools.cModelDiskSizeVsCmodelDiskMag.size_type: "singleColumnSize"
       atools.cModelDiskSizeVsCmodelDiskMag.mag_x: "disk_err"
       atools.cModelDiskSizeVsCmodelDiskMag.size_y: "disk"
       atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.xLims: (17, 29)
-      atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-4, 3)
+      atools.cModelDiskSizeVsCmodelDiskMag.produce.plot.yLims: (-3, 2)
       atools.cModelDiskSizeVsCmodelDiskMag.applyContext: CoaddContext
+      atools.exponentialSizeVsExponentialMag: SizeMagnitudePlot
+      atools.exponentialSizeVsExponentialMag.is_covariance: false
+      atools.exponentialSizeVsExponentialMag.mag_x: "exponential_err"
+      atools.exponentialSizeVsExponentialMag.size_type: "singleColumnSize"
+      atools.exponentialSizeVsExponentialMag.size_y: "exponential"
+      atools.exponentialSizeVsExponentialMag.produce.plot.xLims: (17, 29)
+      atools.exponentialSizeVsExponentialMag.produce.plot.yLims: (-3, 2)
+      atools.exponentialSizeVsExponentialMag.applyContext: CoaddContext
+      atools.exponentialSizeVsSersicMag: SizeMagnitudePlot
+      atools.exponentialSizeVsSersicMag.is_covariance: false
+      atools.exponentialSizeVsSersicMag.mag_x: "sersic_err"
+      atools.exponentialSizeVsSersicMag.size_type: "singleColumnSize"
+      atools.exponentialSizeVsSersicMag.size_y: "exponential"
+      atools.exponentialSizeVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.exponentialSizeVsSersicMag.produce.plot.yLims: (-3, 2)
+      atools.exponentialSizeVsSersicMag.applyContext: CoaddContext
+      atools.exponentialEllipticityVsExponentialMag: ExponentialEllipticityMagnitudePlot
+      atools.exponentialEllipticityVsExponentialMag.mag_x: "exponential_err"
+      atools.exponentialEllipticityVsExponentialMag.produce.plot.xLims: (17, 29)
+      atools.exponentialEllipticityVsExponentialMag.selector_galaxy.vectorKey: "griz_model_extendedness"
+      atools.exponentialEllipticityVsExponentialMag.selector_galaxy.extendedness_minimum: 0.3
+      atools.exponentialEllipticityVsExponentialMag.selector_star.vectorKey: "griz_model_extendedness"
+      atools.exponentialEllipticityVsExponentialMag.selector_star.extendedness_maximum: 0.3
+      atools.exponentialEllipticityVsExponentialMag.applyContext: CoaddContext
       atools.sersicSizeVsSersicMag: SizeMagnitudePlot
-      atools.sersicSizeVsSersicMag.config_moments.xx: "reff_x"
-      atools.sersicSizeVsSersicMag.config_moments.yy: "reff_y"
-      atools.sersicSizeVsSersicMag.config_moments.xy: "rho"
       atools.sersicSizeVsSersicMag.is_covariance: false
       atools.sersicSizeVsSersicMag.mag_x: "sersic_err"
-      atools.sersicSizeVsSersicMag.size_type: "determinantRadius"
+      atools.sersicSizeVsSersicMag.size_type: "singleColumnSize"
       atools.sersicSizeVsSersicMag.size_y: "sersic"
       atools.sersicSizeVsSersicMag.produce.plot.xLims: (17, 29)
-      atools.sersicSizeVsSersicMag.produce.plot.yLims: (-4, 3)
+      atools.sersicSizeVsSersicMag.produce.plot.yLims: (-3, 2)
       atools.sersicSizeVsSersicMag.applyContext: CoaddContext
-      atools.sersicIndexVsSersicMag: ColumnMagnitudeScatterPlot
+      atools.sersicEllipticityVsSersicMag: SersicEllipticityMagnitudePlot
+      atools.sersicEllipticityVsSersicMag.mag_x: "sersic_err"
+      atools.sersicEllipticityVsSersicMag.produce.plot.xLims: (17, 29)
+      atools.sersicEllipticityVsSersicMag.selector_galaxy.vectorKey: "griz_model_extendedness"
+      atools.sersicEllipticityVsSersicMag.selector_galaxy.extendedness_minimum: 0.3
+      atools.sersicEllipticityVsSersicMag.selector_star.vectorKey: "griz_model_extendedness"
+      atools.sersicEllipticityVsSersicMag.selector_star.extendedness_maximum: 0.3
+      atools.sersicEllipticityVsSersicMag.applyContext: CoaddContext
+      atools.sersicIndexVsSersicMag: SingleColumnMagnitudeScatterPlot
       atools.sersicIndexVsSersicMag.mag_x: "sersic_err"
       atools.sersicIndexVsSersicMag.key_y: "sersic_index"
       atools.sersicIndexVsSersicMag.produce.plot.yAxisLabel: "Sérsic index"

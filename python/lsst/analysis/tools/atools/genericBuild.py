@@ -117,6 +117,7 @@ class FluxesDefaultConfig(Config):
     psf_err = ConfigField[FluxConfig](doc="PSF model magnitude with errors")
     ref_matched = ConfigField[FluxConfig](doc="Reference catalog magnitude")
     sersic_err = ConfigField[FluxConfig](doc="Sersic total magnitude with errors")
+    exponential_err = ConfigField[FluxConfig](doc="Exponential total magnitude with errors")
 
 
 class ObjectSelector(ThresholdSelector):
@@ -276,6 +277,12 @@ class MagnitudeTool(ObjectClassTool):
             name_flux="CModel Disk",
             name_flux_short="disk_cModel",
         ),
+        exponential_err=FluxConfig(
+            key_flux="{band}_exponentialFlux",
+            key_flux_error="{band}_exponentialFluxErr",
+            name_flux="Exponential",
+            name_flux_short="exp",
+        ),
         gaap1p0_err=FluxConfig(
             key_flux="{band}_gaap1p0Flux",
             key_flux_error="{band}_gaap1p0FluxErr",
@@ -411,6 +418,10 @@ class MagnitudeTool(ObjectClassTool):
         name_mag_is_none = name_mag is None
         if name_mag_is_none:
             name_mag = getattr(self, attr)
+            if name_mag is None:
+                raise RuntimeError(
+                    f"{self=}.{attr=} cannot be None. If this is a config field, it must be set."
+                )
             complete = name_mag in self.fluxes
         else:
             complete = hasattr(self, attr)
@@ -486,7 +497,7 @@ class SizeConfig(Config):
         doc="Name of the size (e.g. for axis labels).",
     )
     scale_size = Field[float](
-        default=0.2,
+        default=1.0,
         doc="Factor to scale sizes (multiply) by.",
     )
     unit_size = Field[str](
@@ -503,8 +514,9 @@ class SizeConfig(Config):
 class SizeDefaultConfig(Config):
     bulge = ConfigField[SizeConfig](doc="Bulge model size config.")
     disk = ConfigField[SizeConfig](doc="Disk model size config.")
+    exponential = ConfigField[SizeConfig](doc="Exponential model effective radius config")
     moments = ConfigField[SizeConfig](doc="Second moments size config.")
-    sersic = ConfigField[SizeConfig](doc="Sersic effective radius config")
+    sersic = ConfigField[SizeConfig](doc="Sersic model effective radius config")
     shape_slot = ConfigField[SizeConfig](doc="Shape slot size config.")
 
 
@@ -538,10 +550,17 @@ class SizeTool(ObjectClassTool):
     )
     sizes_default = SizeDefaultConfig(
         bulge=SizeConfig(
-            key_size="{band}_cModel_dev_reff_major", name_size="CModel Bulge $R_{eff}$", has_moments=False
+            key_size="{band}_cModel_dev_reff_major",
+            name_size="CModel Bulge $R_{eff,major}$",
+            has_moments=False,
         ),
         disk=SizeConfig(
-            key_size="{band}_cModel_exp_reff_major", name_size="CModel Disk $R_{eff}$", has_moments=False
+            key_size="{band}_cModel_exp_reff_major",
+            name_size="CModel Disk $R_{eff,major}$",
+            has_moments=False,
+        ),
+        exponential=SizeConfig(
+            key_size="exponential_reff_major", name_size="Exponential $R_{eff,major}$", has_moments=False
         ),
         moments=SizeConfig(key_size="{band}_i{suffix}", name_size="Second moment radius"),
         sersic=SizeConfig(

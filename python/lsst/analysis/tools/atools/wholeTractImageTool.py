@@ -25,7 +25,10 @@ __all__ = (
     "WholeTractClippedMaskTool",
     "WholeTractPostageStampTool",
     "WholeTractNImageTool",
+    "WholeTractMaskFractionTool",
 )
+
+from lsst.pex.config import ListField
 
 from ..actions.plot.calculateRange import Linear, MinMax
 from ..actions.plot.wholeTractImage import WholeTractImage
@@ -95,3 +98,18 @@ class WholeTractNImageTool(AnalysisTool):
         self.produce.plot.noDataColor = "white"
         self.produce.plot.noDataValue = 0
         self.produce.plot.vmaxFloor = 10
+
+
+class WholeTractMaskFractionTool(AnalysisTool):
+    """Aggregates per-patch mask plane pixel fractions across a tract."""
+
+    parameterizedBand = False
+
+    maskPlanes = ListField[str](
+        doc="Mask plane names to aggregate fractions for. NO_DATA is always included.",
+        default=[],
+    )
+
+    def finalize(self):
+        super().finalize()
+        self.produce.metric.units = {name: "" for name, _ in self.process.calculateActions.items()}

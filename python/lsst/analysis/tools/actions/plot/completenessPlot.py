@@ -56,10 +56,10 @@ class CompletenessHist(PlotAction):
     )
     legendLocation = Field[str](doc="Legend position within main plot", default="lower left")
     mag_ref_label = Field[str](
-        doc="Label for the completeness x axis.", default="{band}-band Reference Magnitude"
+        doc="Label for the completeness x axis.", default="{band}-band {name_flux} Magnitude"
     )
     mag_target_label = Field[str](
-        doc="Label for the purity x axis.", default="{band}-band Measured Magnitude"
+        doc="Label for the purity x axis.", default="{band}-band {name_flux} Magnitude"
     )
     object_label = Field[str](doc="Label for measured objects", default="Object")
     reference_label = Field[str](doc="Label for reference objects", default="Reference")
@@ -202,19 +202,21 @@ class CompletenessHist(PlotAction):
                 (data[names["completeness_good_match"]], False, self.color_right, "Correct Class"),
             )
 
-        mag_ref_label = self.mag_ref_label
-        if "{band}" in mag_ref_label:
-            mag_ref_label = mag_ref_label.format(band=band)
-        mag_target_label = self.mag_target_label
-        if "{band}" in mag_target_label:
-            mag_target_label = mag_target_label.format(band=band)
+        # If the user left the name_flux template in the label value
+        # but never formatted it, apply a sensible generic default
+        mag_labels = {
+            "ref": (self.mag_ref_label, "Reference"),
+            "target": (self.mag_target_label, "Measured"),
+        }
+        for key, (label, name_flux_default) in mag_labels.items():
+            mag_labels[key] = label.format(band=band, name_flux=name_flux_default)
 
         plots = {
             "Completeness": {
                 "count_type": self.reference_label,
                 "counts": data[names["count_ref"]],
                 "lines": lineTuples,
-                "xlabel": mag_ref_label,
+                "xlabel": mag_labels["ref"],
             },
         }
         if self.show_purity:
@@ -226,7 +228,7 @@ class CompletenessHist(PlotAction):
                     (data[names["purity_bad_match"]], False, self.color_wrong, "Incorrect class"),
                     (data[names["purity_good_match"]], False, self.color_right, "Correct class"),
                 ),
-                "xlabel": mag_target_label,
+                "xlabel": mag_labels["target"],
             }
 
         # idx == 0 should be completeness; update this if that assumption

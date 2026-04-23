@@ -43,5 +43,6 @@ from .skyObject import *
 from .skySource import *
 from .sources import *
 from .stellarLocus import *
+from .skyBrightnessPrecision import *
 from .wholeSkyPlotTool import *
 from .wholeTractImageTool import *

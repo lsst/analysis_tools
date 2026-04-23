@@ -20,14 +20,22 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CoaddInputCount", "CoaddQualityCheck", "CoaddQualityPlot")
+__all__ = ("CoaddInputCount", "CoaddQualityCheck", "CoaddQualityPlot", "CoaddInputFraction")
 
 from lsst.pex.config import ListField
 
 from ..actions.plot.calculateRange import MinMax
 from ..actions.plot.coaddDepthPlot import CoaddDepthPlot
 from ..actions.plot.skyPlot import SkyPlot
-from ..actions.scalar.scalarActions import MeanAction, MedianAction, SigmaMadAction, StdevAction
+from ..actions.scalar.scalarActions import (
+    CountAction,
+    DivideScalar,
+    MeanAction,
+    MedianAction,
+    SigmaMadAction,
+    StdevAction,
+    SumAction,
+)
 from ..actions.vector import BandSelector, CoaddPlotFlagSelector, DownselectVector, LoadVector, SnSelector
 from ..interfaces import AnalysisTool
 
@@ -213,3 +221,46 @@ class CoaddQualityPlot(AnalysisTool):
         self.process.buildActions.pixels = LoadVector(vectorKey="pixels")
 
         self.produce.plot = CoaddDepthPlot()
+
+
+class CoaddInputFraction(AnalysisTool):
+    """Metrics quantifying the number of images that overlap a patch,
+    the number that actually made it into the coadd, and the ratio
+    of the two (as a fraction).
+    """
+
+    parameterizedBand: bool = False
+
+    def setDefaults(self):
+        super().setDefaults()
+
+        # The number of entries is the number of potential raws:
+        self.process.calculateActions.rawCount = CountAction(vectorKey="inCoadd")
+        self.process.calculateActions.overlapCount = SumAction(vectorKey="patchOverlap")
+        self.process.calculateActions.inVisitSummaryCount = SumAction(vectorKey="visitSummaryRecord")
+        self.process.calculateActions.inCoaddCount = SumAction(vectorKey="inCoadd")
+
+        self.process.calculateActions.inVisitSummaryFraction = DivideScalar(
+            actionA=SumAction(vectorKey="visitSummaryRecord"),
+            actionB=CountAction(vectorKey="inCoadd"),
+        )
+
+        self.process.calculateActions.overlapFraction = DivideScalar(
+            actionA=SumAction(vectorKey="patchOverlap"),
+            actionB=CountAction(vectorKey="inCoadd"),
+        )
+
+        self.process.calculateActions.inCoaddFraction = DivideScalar(
+            actionA=SumAction(vectorKey="inCoadd"),
+            actionB=CountAction(vectorKey="inCoadd"),
+        )
+
+        self.produce.metric.units = {
+            "rawCount": "ct",
+            "inVisitSummaryCount": "ct",
+            "overlapCount": "ct",
+            "inCoaddCount": "ct",
+            "inVisitSummaryFraction": "",
+            "overlapFraction": "",
+            "inCoaddFraction": "",
+        }

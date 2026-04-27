@@ -74,7 +74,6 @@ class WholeSkyPlot(PlotAction):
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
-    autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     colorBarMin = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarMax = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarRange = Field[float](
@@ -404,7 +403,6 @@ class WholeSkyPlot(PlotAction):
                 )
 
         ax.set_aspect("equal")
-        axPos = ax.get_position()
         ax1 = fig.add_axes([0.73, 0.25, 0.20, 0.47])
 
         if np.sum(np.isfinite(data["z"])) > 0:

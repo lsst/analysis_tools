@@ -7,6 +7,7 @@ from lsst.analysis.tools.atools import WholeSkyPlotTool
 # Keys with band:
 keysWithBand = [
     "coadd_depth_summary_metrics_depth_above_threshold_1_{band}_mean",
+    "coadd_depth_summary_metrics_depth_above_threshold_2_{band}_mean",
     "coadd_depth_summary_metrics_depth_above_threshold_3_{band}_mean",
     "coadd_depth_summary_metrics_depth_above_threshold_5_{band}_mean",
     "coadd_depth_summary_metrics_depth_above_threshold_12_{band}_mean",

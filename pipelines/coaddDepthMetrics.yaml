@@ -24,7 +24,7 @@ tasks:
   makeCoaddDepthSummaryMetricTable:
     class: lsst.analysis.tools.tasks.MakeMetricTableTask
     config:
-      connections.metricBundleName: "coadd_depth_summary_metrics"
+      connections.metricBundleName: "template_coadd_depth_summary_metrics"
       connections.outputTableName: "coadd_depth_summary_metrics_table"
       inputDataDimensions: ["skymap", "tract"]
   coaddDepthSummaryMetricTableWholeSkyPlot:

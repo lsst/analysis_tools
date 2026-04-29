@@ -58,7 +58,7 @@ class CoaddDepthSummaryConnections(
 
 class CoaddDepthSummaryConfig(PipelineTaskConfig, pipelineConnections=CoaddDepthSummaryConnections):
     threshold_list = ListField(
-        default=[1, 3, 5, 12],
+        default=[1, 2, 3, 5, 12],
         dtype=int,
         doc="The n_image pixel value thresholds, in ascending order.",
     )
@@ -105,7 +105,7 @@ class CoaddDepthSummaryTask(PipelineTask):
             for threshold in self.config.threshold_list:
                 # Calculate the percentage of the image with an image depth
                 # above the given threshold.
-                stat = np.sum(n_image.array > threshold) * 100 / (n_image.getHeight() * n_image.getWidth())
+                stat = np.sum(n_image.array >= threshold) * 100 / (n_image.getHeight() * n_image.getWidth())
                 band_patch_stats.append(stat)
 
             stats.append(band_patch_stats)

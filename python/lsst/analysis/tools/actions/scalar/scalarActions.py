@@ -36,6 +36,7 @@ __all__ = (
     "FracInRange",
     "FracNan",
     "SumAction",
+    "WeightedMeanAction",
     "MedianHistAction",
     "IqrHistAction",
     "DivideScalar",
@@ -101,6 +102,26 @@ class MeanAction(ScalarFromVectorAction):
         mean = nanMean(values) if values.size else np.nan
 
         return mean
+
+
+class WeightedMeanAction(ScalarAction):
+    """Calculates the weighted mean of a vector using a second vector as
+    weights."""
+
+    vectorKey = Field[str]("Key of Vector of values to compute the weighted mean of.")
+    weightsKey = Field[str]("Key of Vector of weights.")
+
+    def getInputSchema(self) -> KeyedDataSchema:
+        return ((self.vectorKey, Vector), (self.weightsKey, Vector))
+
+    def __call__(self, data: KeyedData, **kwargs) -> Scalar:
+        values = _dataToArray(data[self.vectorKey.format(**kwargs)])
+        weights = _dataToArray(data[self.weightsKey.format(**kwargs)])
+        valid = ~np.isnan(values)
+        total_weight = np.sum(weights[valid])
+        if total_weight == 0:
+            return cast(Scalar, np.nan)
+        return cast(Scalar, np.sum(values[valid] * weights[valid]) / total_weight)
 
 
 class StdevAction(ScalarFromVectorAction):

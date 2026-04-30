@@ -34,6 +34,7 @@ from lsst.analysis.tools.actions.scalar import (
     MedianAction,
     SigmaMadAction,
     StdevAction,
+    WeightedMeanAction,
 )
 from lsst.analysis.tools.actions.vector import (
     CalcBinnedStatsAction,
@@ -95,10 +96,13 @@ class TestScalarActions(unittest.TestCase):
             "z": mask.reshape((10, 10)),
         }
 
-    def _testScalarActionAlmostEqual(self, cls, truth, maskedTruth):
-        action = cls(vectorKey="{band}_y")
+    def _testScalarActionAlmostEqual(self, cls, truth, maskedTruth, **kwargs):
+        action = cls(vectorKey="{band}_y", **kwargs)
         schema = [col for col, colType in action.getInputSchema()]
-        self.assertEqual(schema, ["{band}_y"])
+        if isinstance(action, WeightedMeanAction):
+            self.assertEqual(schema, ["{band}_y", kwargs["weightsKey"]])
+        else:
+            self.assertEqual(schema, ["{band}_y"])
 
         result = action(self.data, band="i")
         self.assertAlmostEqual(result, truth)
@@ -129,6 +133,11 @@ class TestScalarActions(unittest.TestCase):
 
     def testApproxFloorAction(self):
         self._testScalarActionAlmostEqual(ApproxFloor, 9216.0, 2352.5)
+
+    def testWeightedMeanAction(self):
+        self._testScalarActionAlmostEqual(
+            WeightedMeanAction, 6003.42828813228, 1473.3447052907393, weightsKey="{band}_y"
+        )
 
 
 class TestVectorActions(unittest.TestCase):

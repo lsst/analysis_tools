@@ -83,6 +83,7 @@ class CoaddDepthSummaryTask(PipelineTask):
         t = Table()
         bands = []
         patches = []
+        means = []
         medians = []
         stdevs = []
         stats = []
@@ -93,11 +94,13 @@ class CoaddDepthSummaryTask(PipelineTask):
             data_id = n_image_handle.dataId
             band = str(data_id.band.name)
             patch = int(data_id.patch.id)
+            mean = np.nanmean(n_image.array)
             median = np.nanmedian(n_image.array)
             stdev = np.nanstd(n_image.array)
 
             bands.append(band)
             patches.append(patch)
+            means.append(mean)
             medians.append(median)
             stdevs.append(stdev)
 
@@ -121,10 +124,10 @@ class CoaddDepthSummaryTask(PipelineTask):
         quantile_col_names = [f"depth_{q}_percentile" for q in self.config.quantile_list]
 
         # Construct the Astropy table
-        data = [patches, bands, medians, stdevs] + list(zip(*stats)) + list(zip(*quantiles))
-        names = ["patch", "band", "medians", "stdevs"] + threshold_col_names + quantile_col_names
+        data = [patches, bands, means, medians, stdevs] + list(zip(*stats)) + list(zip(*quantiles))
+        names = ["patch", "band", "mean", "median", "stdevs"] + threshold_col_names + quantile_col_names
         dtype = (
-            ["int", "str", "float", "float"]
+            ["int", "str", "float", "int", "float"]
             + ["float" for x in range(len(list(zip(*stats))))]
             + ["int" for y in range(len(list(zip(*quantiles))))]
         )

@@ -25,6 +25,7 @@ __all__ = (
     "WholeSkyAnalysisTask",
 )
 
+from lsst.pex.config import ListField
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 
@@ -37,7 +38,7 @@ class WholeSkyAnalysisConnections(
     defaultTemplates={"outputName": "objectTableCore_wholeSky", "inputName": "objectTableCore_metricsTable"},
 ):
     data = ct.Input(
-        doc="Tract based object table to load from the butler",
+        doc="Tract based table to load from the butler",
         name="{inputName}",
         storageClass="ArrowAstropy",
         deferLoad=True,
@@ -51,9 +52,40 @@ class WholeSkyAnalysisConnections(
         dimensions=("skymap",),
     )
 
+    def __init__(self, *, config=None):
+        """Customize the dimensions of the inputs/outputs for a specific
+        instance. This enables it to be dynamically set at runtime,
+        allowing the task to work with different datasets.
+
+        Parameters
+        ----------
+        config : `WholeSkyAnalysisConfig`
+            A config for `WholeSkyAnalysisConfig`.
+        """
+        super().__init__(config=config)
+        if config.inputDimensions:
+            self.data = ct.Input(
+                name=self.data.name,
+                doc=self.data.doc,
+                storageClass=self.data.storageClass,
+                dimensions=frozenset(sorted(config.outputDimensions)),
+                deferLoad=self.data.deferLoad,
+                multiple=self.data.multiple,
+            )
+
+        if config.outputDimensions:
+            self.dimensions.clear()
+            self.dimensions.update(frozenset(sorted(config.outputDimensions)))
+
 
 class WholeSkyAnalysisConfig(AnalysisBaseConfig, pipelineConnections=WholeSkyAnalysisConnections):
-    pass
+    inputDimensions = ListField[str](
+        default=(),
+        doc=("Override the dimensions of the input data. "),
+    )
+    outputDimensions = ListField[str](
+        default=(), doc=("Override the dimensions of the output data." "Also overrides the task dimensions.")
+    )
 
 
 class WholeSkyAnalysisTask(AnalysisPipelineTask):

@@ -19,12 +19,56 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging
+
+from deprecated.sphinx import deprecated
+
 from ..actions.vector import CoaddPlotFlagSelector, VisitPlotFlagSelector
 from .genericBuild import SizeTool
 from .genericProduce import MagnitudeScatterPlot
 
+logging.basicConfig()
+_LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.WARNING)
+
 
 class SizeMagnitudePlot(SizeTool, MagnitudeScatterPlot):
+
+    _parameterizedBand: bool = True
+
+    # TODO: Remove the getter and setting in DM-54864.
+    # Instead, just convert _parameterizedBand to parameterizedBand.
+    @property
+    def parameterizedBand(self) -> bool:
+        return self._parameterizedBand
+
+    @parameterizedBand.setter
+    def parameterizedBand(self, value: bool) -> None:
+        _LOG.info(
+            "Setting 'parameterizedBand' of a `SizeMagnitudePlot' is a no-op. "
+            "If you see this message, it is likely because you are trying "
+            "to read older version of configs with newer versions of the "
+            "LSST Science Pipelines."
+        )
+
+    # TODO: Remove the getter and setter in DM-54864.
+    @property
+    @deprecated(reason="This is no longer used.", version="v31")
+    def extendedness(self) -> None:
+        """A config-like attribute for backward compatibility.
+
+        This does not do anything but enable reading old configs.
+        """
+
+    @extendedness.setter
+    def extendedness(self, value: str) -> None:
+        _LOG.info(
+            "Setting 'extendedness' of a `SizeMagnitudePlot' is a no-op. "
+            "If you see this message, it is likely because you are trying "
+            "to read older version of configs with newer versions of the "
+            "LSST Science Pipelines."
+        )
+
     def coaddContext(self) -> None:
         self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
         self.prep.selectors.flagSelector.bands = []

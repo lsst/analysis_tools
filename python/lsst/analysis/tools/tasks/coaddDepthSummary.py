@@ -27,7 +27,7 @@ __all__ = (
 
 
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, join
 
 from lsst.pex.config import ListField
 from lsst.pipe.base import PipelineTask, PipelineTaskConfig, PipelineTaskConnections, Struct
@@ -39,7 +39,16 @@ class CoaddDepthSummaryConnections(
     dimensions=("tract", "skymap"),
     defaultTemplates={"coaddName": ""},  # set as either deep or template in the pipeline
 ):
-    data = cT.Input(
+    mask_data = cT.Input(
+        doc="Coadd to load from the butler.",
+        name="{coaddName}_coadd.mask",
+        storageClass="MaskX",
+        multiple=True,
+        dimensions=("tract", "patch", "band", "skymap"),
+        deferLoad=True,
+    )
+
+    n_image_data = cT.Input(
         doc="Coadd n_image to load from the butler (pixel values are the number of input images).",
         name="{coaddName}_coadd_n_image",
         storageClass="ImageU",
@@ -80,16 +89,49 @@ class CoaddDepthSummaryTask(PipelineTask):
         butlerQC.put(outputs, outputRefs)
 
     def run(self, inputs):
-        t = Table()
-        bands = []
-        patches = []
+        # Calculate coadd metrics.
+        coadd_bands = []
+        coadd_patches = []
+        chip_gap_percents = []
+
+        for mask_handle in inputs["mask_data"]:
+            mask = mask_handle.get()
+            data_id = mask_handle.dataId
+            band = str(data_id.band.name)
+            patch = int(data_id.patch.id)
+
+            coadd_bands.append(band)
+            coadd_patches.append(patch)
+
+            no_data = mask.getPlaneBitMask("NO_DATA")
+            rejected = mask.getPlaneBitMask("REJECTED")
+            mask_array = mask.array
+
+            # Calculate pixels that are NO_DATA but not REJECTED.
+            no_data_flag = (mask_array & no_data) != 0
+            rejected_flag = (mask_array & rejected) != 0
+
+            chip_gap_percent = ((no_data_flag & ~rejected_flag).sum() * 100
+                                / (mask.getHeight() * mask.getWidth()))
+
+            chip_gap_percents.append(chip_gap_percent)
+
+        # Construct the Astropy table for coadd information.
+        data = [coadd_patches, coadd_bands, chip_gap_percents]
+        names = ["patch", "band", "chip_gap_percent"]
+        dtype = ["int", "str", "float"]
+        coadd_table = Table(data=data, names=names, dtype=dtype)
+
+        # Calculate n_image metrics.
+        n_image_bands = []
+        n_image_patches = []
         means = []
         medians = []
         stdevs = []
         stats = []
         quantiles = []
 
-        for n_image_handle in inputs["data"]:
+        for n_image_handle in inputs["n_image_data"]:
             n_image = n_image_handle.get()
             data_id = n_image_handle.dataId
             band = str(data_id.band.name)
@@ -98,8 +140,8 @@ class CoaddDepthSummaryTask(PipelineTask):
             median = np.nanmedian(n_image.array)
             stdev = np.nanstd(n_image.array)
 
-            bands.append(band)
-            patches.append(patch)
+            n_image_bands.append(band)
+            n_image_patches.append(patch)
             means.append(mean)
             medians.append(median)
             stdevs.append(stdev)
@@ -113,8 +155,7 @@ class CoaddDepthSummaryTask(PipelineTask):
 
             stats.append(band_patch_stats)
 
-            # Calculate the quantiles for image depth
-            # across the whole n_image array.
+            # Calculate the quantiles for image depth across n_image array.
             quantile = list(np.percentile(n_image.array, q=self.config.quantile_list))
             quantiles.append(quantile)
 
@@ -123,13 +164,24 @@ class CoaddDepthSummaryTask(PipelineTask):
         ]
         quantile_col_names = [f"depth_{q}_percentile" for q in self.config.quantile_list]
 
-        # Construct the Astropy table
-        data = [patches, bands, means, medians, stdevs] + list(zip(*stats)) + list(zip(*quantiles))
-        names = ["patch", "band", "mean", "median", "stdevs"] + threshold_col_names + quantile_col_names
+        # Construct the Astropy table for n_image information.
+        data = (
+            [n_image_patches, n_image_bands, means, medians, stdevs]
+            + list(zip(*stats))
+            + list(zip(*quantiles))
+        )
+        names = (
+            ["patch", "band", "mean", "median", "stdevs"]
+            + threshold_col_names
+            + quantile_col_names
+        )
         dtype = (
-            ["int", "str", "float", "int", "float"]
+            ["int", "str", "float", "float", "float"]
             + ["float" for x in range(len(list(zip(*stats))))]
             + ["int" for y in range(len(list(zip(*quantiles))))]
         )
-        t = Table(data=data, names=names, dtype=dtype)
-        return Struct(statTable=t)
+        n_image_table = Table(data=data, names=names, dtype=dtype)
+
+        # Combine tables.
+        combined_table = join(coadd_table, n_image_table, keys=["patch", "band"])
+        return Struct(statTable=combined_table)

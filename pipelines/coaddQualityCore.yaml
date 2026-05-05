@@ -193,6 +193,12 @@ tasks:
       atools.coaddImagePostageStamp: WholeTractPostageStampTool  # wholeTractImageTool.py
       python: |
         from lsst.analysis.tools.atools import *
+  aggregateDeepCoaddMaskFractions:
+    class: lsst.analysis.tools.tasks.WholeTractMaskFractionAnalysisTask
+    config:
+      connections.data: deepCoadd_calexp_bin
+      connections.outputName: deepCoadd_tract_mask_fraction # Will be appended with _metrics
+      file: $ANALYSIS_TOOLS_DIR/config/wholeTractMaskFractionMetrics.py
   makeBinnedTemplateNImage:
     class: lsst.analysis.tools.tasks.MakeBinnedCoaddTask
     config:
@@ -227,3 +233,9 @@ tasks:
       atools.nImage: "WholeTractNImageTool"  # wholeTractImageTool.py
       python: |
         from lsst.analysis.tools.atools import *
+  aggregateTemplateCoaddMaskFractions:
+    class: lsst.analysis.tools.tasks.WholeTractMaskFractionAnalysisTask
+    config:
+      connections.data: goodSeeingCoadd_bin
+      connections.outputName: goodSeeingCoadd_tract_mask_fraction # Will be appended with _metrics
+      file: $ANALYSIS_TOOLS_DIR/config/wholeTractMaskFractionMetrics.py

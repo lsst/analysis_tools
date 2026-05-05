@@ -8,10 +8,13 @@ from lsst.analysis.tools.actions.scalar import (
     MinAction,
     WeightedMeanAction,
 )
+from lsst.analysis.tools.atools import WholeTractMaskFractionTool
+
+config.atools.full_tract = WholeTractMaskFractionTool
 
 aggregations = {"min": MinAction, "max": MaxAction, "mean": MeanAction, "ct": CountAction}
 
-for plane in config.atools.full_tract.maskPlanes:
+for plane in config.maskPlanes:
     for agg_name, agg_cls in aggregations.items():
         # Mask fractions of whole patches:
         action = agg_cls()

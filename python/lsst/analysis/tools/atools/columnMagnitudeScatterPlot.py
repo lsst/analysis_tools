@@ -23,16 +23,58 @@ from __future__ import annotations
 
 __all__ = ("ColumnMagnitudeScatterPlot",)
 
+import logging
+
+from deprecated.sphinx import deprecated
+
 from lsst.pex.config import Field
 
 from ..actions.vector import DownselectVector, LoadVector, Log10Vector
 from ..actions.vector.selectors import CoaddPlotFlagSelector, VectorSelector, VisitPlotFlagSelector
-from .genericBuild import ExtendednessTool
 from .genericProduce import MagnitudeScatterPlot
 
+logging.basicConfig()
+_LOG = logging.getLogger(__name__)
+_LOG.setLevel(logging.WARNING)
 
-class ColumnMagnitudeScatterPlot(ExtendednessTool, MagnitudeScatterPlot):
+
+class ColumnMagnitudeScatterPlot(MagnitudeScatterPlot):
     """A MagnitudeScatterPlot with a single column value on the y axis."""
+
+    _parameterizedBand: bool = True
+
+    # TODO: Remove the getter and setting in DM-54864.
+    # Instead, just convert _parameterizedBand to parameterizedBand.
+    @property
+    def parameterizedBand(self) -> bool:
+        return self._parameterizedBand
+
+    @parameterizedBand.setter
+    def parameterizedBand(self, value: bool) -> None:
+        _LOG.info(
+            "Setting 'parameterizedBand' of a `ColumnMagnitudeScatterPlot' is a no-op. "
+            "If you see this message, it is likely because you are trying "
+            "to read older version of configs with newer versions of the "
+            "LSST Science Pipelines."
+        )
+
+    # TODO: Remove the getter and setter in DM-54864.
+    @property
+    @deprecated(reason="This is no longer used.", version="v31")
+    def extendedness(self) -> None:
+        """A config-like attribute for backward compatibility.
+
+        This does not do anything but enable reading old configs.
+        """
+
+    @extendedness.setter
+    def extendedness(self, value: str) -> None:
+        _LOG.info(
+            "Setting 'extendedness' of a `ColumnMagnitudeScatterPlot' is a no-op. "
+            "If you see this message, it is likely because you are trying "
+            "to read older version of configs with newer versions of the "
+            "LSST Science Pipelines."
+        )
 
     key_y = Field[str](default=None, doc="Key of column to plot on the y axis")
     log10_y = Field[bool](default=False, doc="Whether to plot log10 of the values on the y axis")

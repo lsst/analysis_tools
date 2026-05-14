@@ -60,3 +60,33 @@ tasks:
       connections.inputName: "matchedVisitCore_metricsTable"
       connections.outputName: "matchedVisitCore_wholeSky"
       file: $ANALYSIS_TOOLS_DIR/config/matchedVisitCoreWholeSkyPlot.py
+  makeAggregatedDeepCoaddMaskFractionsTable:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "deepCoadd_tract_mask_fraction_metrics"
+      connections.outputTableName: "deepCoadd_tract_mask_fraction_metricsTable"
+      inputDataDimensions: ["skymap", "tract", "band"]
+      outputTableDimensions: ["skymap", "band"]
+  aggregatedDeepCoaddMaskFractionsWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.data: "deepCoadd_tract_mask_fraction_metricsTable"
+      connections.outputName: "deepCoadd"
+      inputDimensions: ["skymap", "band"]
+      outputDimensions: ["skymap", "band"]
+      file: $ANALYSIS_TOOLS_DIR/config/aggregatedMaskFractionsWholeSkyPlot.py
+  makeAggregatedTemplateCoaddMaskFractionsTable:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "goodSeeingCoadd_tract_mask_fraction_metrics"
+      connections.outputTableName: "goodSeeingCoadd_tract_mask_fraction_metricsTable"
+      inputDataDimensions: ["skymap", "tract", "band"]
+      outputTableDimensions: ["skymap", "band"]
+  aggregatedTemplateCoaddMaskFractionsWholeSkyPlot:
+    class: lsst.analysis.tools.tasks.WholeSkyAnalysisTask
+    config:
+      connections.data: "goodSeeingCoadd_tract_mask_fraction_metricsTable"
+      connections.outputName: "goodSeeingCoadd"
+      inputDimensions: ["skymap", "band"]
+      outputDimensions: ["skymap", "band"]
+      file: $ANALYSIS_TOOLS_DIR/config/aggregatedMaskFractionsWholeSkyPlot.py

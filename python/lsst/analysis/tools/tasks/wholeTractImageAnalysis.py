@@ -227,6 +227,15 @@ class WholeTractMaskFractionAnalysisConfig(
             "VIGNETTED",
         ],
     )
+    doUnionAcrossBands = Field[bool](
+        doc=(
+            "If True, compute mask plane fractions as the union across all input bands: "
+            "a pixel is counted as flagged if it is flagged in any band, and as valid "
+            "if it has data in at least one band.  Requires outputDimensions to be set "
+            "to a value that excludes 'band' (e.g. ['skymap', 'tract'])."
+        ),
+        default=False,
+    )
 
 
 class WholeTractMaskFractionAnalysisTask(AnalysisPipelineTask):
@@ -246,25 +255,31 @@ class WholeTractMaskFractionAnalysisTask(AnalysisPipelineTask):
         plotInfo = self.parsePlotInfo(None, dataId)
 
         handles = inputs["data"]
-
         all_planes = set(self.config.maskPlanes) | {"NO_DATA"}
 
-        keyedData = self._computeMaskFractions(handles, all_planes)
+        bands = sorted({str(h.dataId["band"]) for h in handles}) if self.config.doUnionAcrossBands \
+            else dataId["band"]
 
-        outputs = self.run(data=keyedData, plotInfo=plotInfo, bands=dataId["band"])
+        keyedData = self._computeMaskFractions(handles, all_planes)
+        outputs = self.run(data=keyedData, plotInfo=plotInfo, bands=bands)
         self.putByBand(butlerQC, outputs, outputRefs)
 
     def _computeMaskFractions(self, handles, all_planes):
-        """Compute per-patch mask plane fractions across a set of patch
-        handles.
+        """Compute per-patch mask plane fractions, optionally as the union
+        across bands.
+
+        When ``doUnionAcrossBands`` is False (default), each handle is treated
+        independently (one band per patch).  When True, handles are grouped by
+        patch and mask arrays are OR-ed across bands: a pixel is flagged if
+        flagged in any band, and valid if it has data in at least one band.
 
         Parameters
         ----------
         handles : `list`
-            Deferred dataset handles, one per patch. Each must return an
-            exposure-like object with a ``getMask()`` method.
+            Deferred dataset handles.  Each must return an exposure-like object
+            with a ``getMask()`` method.
         all_planes : `set` [`str`]
-            Mask plane names to compute fractions for. Must include
+            Mask plane names to compute fractions for.  Must include
             ``"NO_DATA"``.
 
         Returns
@@ -274,34 +289,55 @@ class WholeTractMaskFractionAnalysisTask(AnalysisPipelineTask):
             and ``"{plane}_valid_data_fraction"``, plus
             ``"valid_data_pixel_count"``.
         """
-        fractions: defaultdict[str, list[float]] = defaultdict(lambda: [float("nan")] * len(handles))
-        valid_data_pixel_counts: list[int] = [float("nan")] * len(handles)
+        by_patch: defaultdict[Any, list] = defaultdict(list)
+        for handle in handles:
+            by_patch[handle.dataId["patch"]].append(handle)
+        patches = sorted(by_patch.keys())
 
-        for i, handle in enumerate(handles):
-            exp = handle.get()
-            mask = exp.getMask()
-            arr = mask.array
+        fractions: defaultdict[str, list[float]] = defaultdict(lambda: [float("nan")] * len(patches))
+        valid_data_pixel_counts: list[int] = [float("nan")] * len(patches)
 
-            no_data_bit = mask.getPlaneBitMask("NO_DATA")
-            valid_data = (arr & no_data_bit) == 0
+        for i, patch in enumerate(patches):
+            no_data_mask = None
+            plane_flagged: dict[str, np.ndarray] = {}
+            total = None
 
-            total = arr.size
-            n_valid_data = int(np.sum(valid_data))
-            valid_data_pixel_counts[i] = n_valid_data
-            for plane in all_planes:
-                try:
-                    bit = mask.getPlaneBitMask(plane)
-                except InvalidParameterError:
-                    continue
-                flagged = (arr & bit) != 0
+            for handle in by_patch[patch]:
+                exp = handle.get()
+                mask = exp.getMask()
+                arr = mask.array
+                if total is None:
+                    total = arr.size
+
+                no_data_bit = mask.getPlaneBitMask("NO_DATA")
+                no_data = (arr & no_data_bit) != 0
+                # AND across bands: valid = has data in at least one band.
+                no_data_mask = no_data if no_data_mask is None else (no_data_mask & no_data)
+
+                for plane in all_planes:
+                    if plane == "NO_DATA":
+                        continue
+                    try:
+                        bit = mask.getPlaneBitMask(plane)
+                    except InvalidParameterError:
+                        continue
+                    flagged = (arr & bit) != 0
+                    # OR across bands: flagged if flagged in any band.
+                    if plane in plane_flagged:
+                        plane_flagged[plane] |= flagged
+                    else:
+                        plane_flagged[plane] = flagged.copy()
+
+            valid_data = ~no_data_mask
+            n_valid = int(np.sum(valid_data))
+            valid_data_pixel_counts[i] = n_valid
+            fractions["NO_DATA_fraction"][i] = float(np.sum(no_data_mask)) / total
+
+            for plane, flagged in plane_flagged.items():
                 fractions[f"{plane}_fraction"][i] = float(np.sum(flagged)) / total
-                if plane != "NO_DATA":
-                    value = (
-                        float(np.sum(flagged & valid_data)) / n_valid_data
-                        if n_valid_data > 0
-                        else float("nan")
-                    )
-                    fractions[f"{plane}_valid_data_fraction"][i] = value
+                fractions[f"{plane}_valid_data_fraction"][i] = (
+                    float(np.sum(flagged & valid_data)) / n_valid if n_valid > 0 else float("nan")
+                )
 
         keyedData = {k: np.array(v) for k, v in fractions.items() if v}
         keyedData["valid_data_pixel_count"] = np.array(valid_data_pixel_counts)

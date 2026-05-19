@@ -116,6 +116,9 @@ class CellCoaddPsfSurveyTask(PipelineTask):
         NaN when the psfWeightFraction dataset is absent.
     ``inexact_psf``
         Whether the INEXACT_PSF mask bit is set at the centre pixel (bool).
+    ``inexact_psf_frac``
+        Fraction of inner-bbox pixels with the INEXACT_PSF mask bit set (float).
+        0 means no pixels are flagged; 1 means all are.
     ``coverage``
         Median number of input images over the inner bbox (float).
         NaN when the n_image dataset is absent.
@@ -201,6 +204,7 @@ class CellCoaddPsfSurveyTask(PipelineTask):
                         pwf = float(finite.mean())
 
                 inexact_psf = bool(int(mask[center_i]) & inexact_psf_bit)
+                inexact_psf_frac = float((mask[inner].array & inexact_psf_bit).astype(bool).mean())
 
                 coverage = np.nan
                 if n_image is not None:
@@ -218,14 +222,16 @@ class CellCoaddPsfSurveyTask(PipelineTask):
                         "pwf": pwf,
                         "coverage": coverage,
                         "inexact_psf": inexact_psf,
+                        "inexact_psf_frac": inexact_psf_frac,
                     }
                 )
 
         if not rows:
             table = Table(
                 names=["patch", "cell_ix", "cell_iy",
-                       "psf_ixx", "psf_iyy", "psf_ixy", "psf_sigma", "pwf", "coverage", "inexact_psf"],
-                dtype=["i4", "i4", "i4", "f8", "f8", "f8", "f8", "f8", "f8", "bool"],
+                       "psf_ixx", "psf_iyy", "psf_ixy", "psf_sigma", "pwf", "coverage",
+                       "inexact_psf", "inexact_psf_frac"],
+                dtype=["i4", "i4", "i4", "f8", "f8", "f8", "f8", "f8", "f8", "bool", "f8"],
             )
         else:
             table = Table(rows=rows)

@@ -48,6 +48,15 @@ class CellCoaddPsfSurveyConnections(
         multiple=True,
         deferLoad=True,
     )
+    nImage = cT.Input(
+        doc="Number-of-input-images plane for the cell coadd, used to measure per-cell coverage.",
+        name="{coaddName}_coadd_n_image",
+        storageClass="ImageU",
+        dimensions=("tract", "patch", "band", "skymap"),
+        multiple=True,
+        deferLoad=True,
+        minimum=0,
+    )
     psfWeightFraction = cT.Input(
         doc="Per-cell PSF weight fraction image (temporary diagnostic output from "
             "AssembleCellCoaddTask). Absent when do_psf_weight_fraction_image is False.",
@@ -107,6 +116,9 @@ class CellCoaddPsfSurveyTask(PipelineTask):
         NaN when the psfWeightFraction dataset is absent.
     ``inexact_psf``
         Whether the INEXACT_PSF mask bit is set at the centre pixel (bool).
+    ``coverage``
+        Median number of input images over the inner bbox (float).
+        NaN when the n_image dataset is absent.
     """
 
     ConfigClass = CellCoaddPsfSurveyConfig
@@ -116,14 +128,16 @@ class CellCoaddPsfSurveyTask(PipelineTask):
         sky_map = butlerQC.get(inputRefs.skyMap)
         coadd_handles = butlerQC.get(inputRefs.coadd)
         pwf_handles = butlerQC.get(inputRefs.psfWeightFraction)
+        n_image_handles = butlerQC.get(inputRefs.nImage)
 
         pwf_by_patch = {int(h.dataId["patch"]): h for h in pwf_handles}
+        n_image_by_patch = {int(h.dataId["patch"]): h for h in n_image_handles}
 
         tract_id = butlerQC.quantum.dataId["tract"]
-        result = self.run(coadd_handles, pwf_by_patch, sky_map, tract_id)
+        result = self.run(coadd_handles, pwf_by_patch, n_image_by_patch, sky_map, tract_id)
         butlerQC.put(result, outputRefs)
 
-    def run(self, coadd_handles, pwf_by_patch, sky_map, tract_id):
+    def run(self, coadd_handles, pwf_by_patch, n_image_by_patch, sky_map, tract_id):
         """Build the per-cell PSF metrics table.
 
         Parameters
@@ -134,6 +148,10 @@ class CellCoaddPsfSurveyTask(PipelineTask):
             Deferred handles for the per-patch ``psfWeightFraction`` ImageF
             datasets, keyed by sequential patch index.  Empty when the dataset
             is not available.
+        n_image_by_patch : `dict` [`int`, `DeferredDatasetHandle`]
+            Deferred handles for the per-patch ``n_image`` ImageU datasets,
+            keyed by sequential patch index.  Empty when the dataset is not
+            available.
         sky_map : `BaseSkyMap`
             Sky map providing patch and cell geometry.
         tract_id : `int`
@@ -156,7 +174,8 @@ class CellCoaddPsfSurveyTask(PipelineTask):
             except Exception:
                 inexact_psf_bit = 0
 
-            pwf_image = pwf_by_patch[patch_id].get() if patch_id in pwf_by_patch else None
+            pwf_image    = pwf_by_patch[patch_id].get()    if patch_id in pwf_by_patch    else None
+            n_image      = n_image_by_patch[patch_id].get() if patch_id in n_image_by_patch else None
 
             sky_info = makeSkyInfo(sky_map, tractId=tract_id, patchId=patch_id)
 
@@ -183,6 +202,10 @@ class CellCoaddPsfSurveyTask(PipelineTask):
 
                 inexact_psf = bool(int(mask[center_i]) & inexact_psf_bit)
 
+                coverage = np.nan
+                if n_image is not None:
+                    coverage = float(np.median(n_image[inner].array))
+
                 rows.append(
                     {
                         "patch": patch_id,
@@ -193,6 +216,7 @@ class CellCoaddPsfSurveyTask(PipelineTask):
                         "psf_ixy": psf_ixy,
                         "psf_sigma": psf_sigma,
                         "pwf": pwf,
+                        "coverage": coverage,
                         "inexact_psf": inexact_psf,
                     }
                 )
@@ -200,8 +224,8 @@ class CellCoaddPsfSurveyTask(PipelineTask):
         if not rows:
             table = Table(
                 names=["patch", "cell_ix", "cell_iy",
-                       "psf_ixx", "psf_iyy", "psf_ixy", "psf_sigma", "pwf", "inexact_psf"],
-                dtype=["i4", "i4", "i4", "f8", "f8", "f8", "f8", "f8", "bool"],
+                       "psf_ixx", "psf_iyy", "psf_ixy", "psf_sigma", "pwf", "coverage", "inexact_psf"],
+                dtype=["i4", "i4", "i4", "f8", "f8", "f8", "f8", "f8", "f8", "bool"],
             )
         else:
             table = Table(rows=rows)

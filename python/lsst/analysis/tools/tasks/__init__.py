@@ -6,6 +6,7 @@ from .calexpSummaryAnalysis import *
 from .calibrationAnalysis import *
 from .catalogMatch import *
 from .ccdVisitTableAnalysis import *
+from .cellCoaddPsfSurvey import *
 from .coaddDepthSummary import *
 from .coaddDepthSummaryPlot import *
 from .coaddDepthTableTractAnalysis import *

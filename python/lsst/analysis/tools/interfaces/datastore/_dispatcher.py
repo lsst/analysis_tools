@@ -204,7 +204,7 @@ class SasquatchDispatcher:
     def _populateClusterId(self) -> None:
         """Get Sasquatch kafka cluster ID."""
 
-        headers = {"content-type": "application/json"}
+        headers = {"content-type": "application/json", "Authorization": f"Bearer {self.token}"}
 
         try:
             with http_client() as session:
@@ -231,7 +231,7 @@ class SasquatchDispatcher:
 
         """
 
-        headers = {"content-type": "application/json"}
+        headers = {"content-type": "application/json", "Authorization": f"Bearer {self.token}"}
 
         topic_config = {
             "topic_name": f"{self.namespace}.{topic_name}",
@@ -692,7 +692,10 @@ class SasquatchDispatcher:
             extraFields=extraFields,
         )
 
-        headers = {"content-type": "application/vnd.kafka.avro.v2+json"}
+        headers = {
+            "content-type": "application/vnd.kafka.avro.v2+json",
+            "Authorization": f"Bearer {self.token}",
+        }
         data: dict[str, Any] = dict()
         partialUpload = False
         uploadFailed = []

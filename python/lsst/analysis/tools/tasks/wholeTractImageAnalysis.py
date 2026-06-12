@@ -22,17 +22,22 @@
 __all__ = (
     "WholeTractImageAnalysisConfig",
     "WholeTractImageAnalysisTask",
+    "WholeTractMaskFractionAnalysisTask",
     "MakeBinnedCoaddConfig",
     "MakeBinnedCoaddTask",
 )
 
+from collections import defaultdict
 from collections.abc import Mapping
 from typing import Any
+
+import numpy as np
 
 import lsst.pipe.base as pipeBase
 from lsst.daf.butler import DataCoordinate
 from lsst.ip.isr.binImageDataTask import binImageData
-from lsst.pex.config import Field
+from lsst.pex.config import Field, ListField
+from lsst.pex.exceptions import InvalidParameterError
 from lsst.pipe.base import (
     InputQuantizedConnection,
     OutputQuantizedConnection,
@@ -96,17 +101,23 @@ class WholeTractImageAnalysisConnections(
                 multiple=self.data.multiple,
             )
 
+        if config.outputDimensions:
+            self.dimensions.clear()
+            self.dimensions.update(frozenset(sorted(config.outputDimensions)))
+
 
 class WholeTractImageAnalysisConfig(
     AnalysisBaseConfig, pipelineConnections=WholeTractImageAnalysisConnections
 ):
-    dataStorageClass = Field(
+    dataStorageClass = Field[str](
         default="ExposureF",
-        dtype=str,
         doc=(
             "Override the storageClass of the input data. "
             "Must be of type `Image`, `MaskedImage` or `Exposure`, or one of their subtypes."
         ),
+    )
+    outputDimensions = ListField[str](
+        default=(), doc=("Override the dimensions of the output data." "Also overrides the task dimensions.")
     )
 
 
@@ -190,6 +201,111 @@ class WholeTractImageAnalysisTask(AnalysisPipelineTask):
 
         self._populatePlotInfoWithDataId(plotInfo, dataId)
         return plotInfo
+
+
+class WholeTractMaskFractionAnalysisConfig(
+    WholeTractImageAnalysisConfig, pipelineConnections=WholeTractImageAnalysisConnections
+):
+    maskPlanes = ListField[str](
+        doc="Mask plane names to aggregate fractions of.",
+        default=[
+            "BAD",
+            "CLIPPED",
+            "CR",
+            "DETECTED",
+            "DETECTED_NEGATIVE",
+            "EDGE",
+            "INEXACT_PSF",
+            "INTRP",
+            "NO_DATA",
+            "NOT_DEBLENDED",
+            "REJECTED",
+            "SAT",
+            "STREAK",
+            "SUSPECT",
+            "UNMASKEDNAN",
+            "VIGNETTED",
+        ],
+    )
+
+
+class WholeTractMaskFractionAnalysisTask(AnalysisPipelineTask):
+    """Computes per-patch mask plane pixel fractions."""
+
+    ConfigClass = WholeTractMaskFractionAnalysisConfig
+    _DefaultName = "wholeTractMaskFractionAnalysis"
+
+    def runQuantum(
+        self,
+        butlerQC: QuantumContext,
+        inputRefs: InputQuantizedConnection,
+        outputRefs: OutputQuantizedConnection,
+    ) -> None:
+        inputs = butlerQC.get(inputRefs)
+        dataId = butlerQC.quantum.dataId
+        plotInfo = self.parsePlotInfo(None, dataId)
+
+        handles = inputs["data"]
+
+        all_planes = set(self.config.maskPlanes) | {"NO_DATA"}
+
+        keyedData = self._computeMaskFractions(handles, all_planes)
+
+        outputs = self.run(data=keyedData, plotInfo=plotInfo, bands=dataId["band"])
+        self.putByBand(butlerQC, outputs, outputRefs)
+
+    def _computeMaskFractions(self, handles, all_planes):
+        """Compute per-patch mask plane fractions across a set of patch
+        handles.
+
+        Parameters
+        ----------
+        handles : `list`
+            Deferred dataset handles, one per patch. Each must return an
+            exposure-like object with a ``getMask()`` method.
+        all_planes : `set` [`str`]
+            Mask plane names to compute fractions for. Must include
+            ``"NO_DATA"``.
+
+        Returns
+        -------
+        keyedData : `dict` [`str`, `numpy.ndarray`]
+            Arrays of per-patch fractions, keyed by ``"{plane}_fraction"``
+            and ``"{plane}_valid_data_fraction"``, plus
+            ``"valid_data_pixel_count"``.
+        """
+        fractions: defaultdict[str, list[float]] = defaultdict(lambda: [float("nan")] * len(handles))
+        valid_data_pixel_counts: list[int] = [float("nan")] * len(handles)
+
+        for i, handle in enumerate(handles):
+            exp = handle.get()
+            mask = exp.getMask()
+            arr = mask.array
+
+            no_data_bit = mask.getPlaneBitMask("NO_DATA")
+            valid_data = (arr & no_data_bit) == 0
+
+            total = arr.size
+            n_valid_data = int(np.sum(valid_data))
+            valid_data_pixel_counts[i] = n_valid_data
+            for plane in all_planes:
+                try:
+                    bit = mask.getPlaneBitMask(plane)
+                except InvalidParameterError:
+                    continue
+                flagged = (arr & bit) != 0
+                fractions[f"{plane}_fraction"][i] = float(np.sum(flagged)) / total
+                if plane != "NO_DATA":
+                    value = (
+                        float(np.sum(flagged & valid_data)) / n_valid_data
+                        if n_valid_data > 0
+                        else float("nan")
+                    )
+                    fractions[f"{plane}_valid_data_fraction"][i] = value
+
+        keyedData = {k: np.array(v) for k, v in fractions.items() if v}
+        keyedData["valid_data_pixel_count"] = np.array(valid_data_pixel_counts)
+        return keyedData
 
 
 class MakeBinnedCoaddConnections(

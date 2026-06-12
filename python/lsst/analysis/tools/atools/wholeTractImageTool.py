@@ -25,6 +25,7 @@ __all__ = (
     "WholeTractClippedMaskTool",
     "WholeTractPostageStampTool",
     "WholeTractNImageTool",
+    "WholeTractMaskFractionTool",
 )
 
 from ..actions.plot.calculateRange import Linear, MinMax
@@ -95,3 +96,13 @@ class WholeTractNImageTool(AnalysisTool):
         self.produce.plot.noDataColor = "white"
         self.produce.plot.noDataValue = 0
         self.produce.plot.vmaxFloor = 10
+
+
+class WholeTractMaskFractionTool(AnalysisTool):
+    """Aggregates per-patch mask plane pixel fractions across a tract."""
+
+    parameterizedBand = False
+
+    def finalize(self):
+        super().finalize()
+        self.produce.metric.units = {name: "" for name, _ in self.process.calculateActions.items()}

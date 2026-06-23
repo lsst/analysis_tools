@@ -46,3 +46,11 @@ tasks:
       inputDataDimensions: ["instrument", "visit", "detector"]
       outputDimensions: ["instrument", "visit"]
       file: $ANALYSIS_TOOLS_DIR/config/aggregateCalibrateImageMetadata.py
+  makeMetricTableAggregateCalibrateImageMetadata:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: "calibrateImage_metadata_aggregate_metrics"
+      connections.outputTableName: "calibrateImage_metadata_aggregate_metricsTable"
+      inputDataDimensions: ["instrument", "visit"]
+      outputTableDimensions: ["instrument"]
+      dataIdFieldsToIncludeAsColumns: ["visit", "band"]

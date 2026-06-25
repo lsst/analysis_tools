@@ -38,6 +38,7 @@ class CalibrationTool(AnalysisTool):
     parameterizedBand: bool = False
 
     def setDefaults(self):
+        super().setDefaults()
         self.process.buildActions.x = LoadVector(vectorKey="detector")
         self.process.buildActions.y = LoadVector(vectorKey="amplifier")
         self.process.buildActions.detector = LoadVector(vectorKey="detector")

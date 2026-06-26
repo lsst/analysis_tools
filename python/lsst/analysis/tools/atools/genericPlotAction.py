@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __all__ = ("StructPlotAction",)
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from lsst.pex.config import Config
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
@@ -53,5 +53,11 @@ class StructPlotAction(PlotAction):
     def __call__(self, data: KeyedData, **kwargs) -> PlotResultType:
         results = {}
         for key, action in self.actions.items():
-            results[f"{key}_{action.getPlotType()}"] = action(data=data, **kwargs)
+            results_action = action(data=data, **kwargs)
+            # Support both types of PlotAction return
+            if isinstance(results_action, Mapping):
+                for key_action, result_action in results_action.items():
+                    results[f"{key_action}_{action.getPlotType()}"] = result_action
+            else:
+                results[f"{key}_{action.getPlotType()}"] = results_action
         return results

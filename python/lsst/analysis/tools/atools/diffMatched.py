@@ -71,6 +71,7 @@ from ..actions.vector import (
     DownselectVector,
     IsMatchedObjectSameClass,
     LoadVector,
+    Log10Vector,
     MultiplyVector,
     SubtractVector,
 )
@@ -1231,6 +1232,69 @@ class MatchedRefCoaddDiffDistanceZoomTool(MatchedRefCoaddDiffDistanceTool):
         super().setDefaults()
         self.produce.plot.yLims = [0, self.limits_diff_pos_mas_zoom_default[1]]
         self.produce.metric = NoMetric
+
+
+class MatchedRefCoaddRatioTool(MatchedRefCoaddDiffPlot):
+    """Tool for the ratio between two comparable columns."""
+
+    key_numerator = Field[str](
+        doc="The key for the numerator",
+        optional=False,
+    )
+    key_divisor = Field[str](
+        doc="The key for the divisor",
+        optional=False,
+    )
+    log10_y = Field[bool](doc="Whether to take log10 of the ratio", default=True)
+    mag_sn = Field[str](default="sersic_err", doc="Flux (magnitude) field to use for S/N binning on plot")
+    name_short_ratio = Field[str](doc="The short name for this ratio to use in metrics")
+    prefix_metric = Field[str](doc="The categorical prefix for metrics (e.g. astrom, photom, morph)")
+    # Default coords are in degrees and we want mas
+    scale_factor = Field[float](
+        doc="The factor to multiply distances by (e.g. the pixel scale if coordinates have pixel units or "
+        "the desired spherical coordinate unit conversion otherwise)",
+        default=1.0,
+    )
+
+    def finalize(self):
+        # Check if it has already been finalized
+        if not hasattr(self.process.buildActions, "diff"):
+            # Set before MagnitudeScatterPlot.finalize to undo PSF default.
+            # Matched ref tables may not have PSF fluxes, or prefer CModel.
+            self._set_flux_default("mag_sn")
+            super().finalize()
+            self._set_actions()
+            name_short_x = self.config_mag_x.name_flux_short
+            name_short_y = self.config_mag_y.name_flux_short
+
+            action = DivideVector(
+                actionA=MultiplyVector(
+                    actionA=ConstantValue(value=self.scale_factor),
+                    actionB=LoadVector(vectorKey=self.key_numerator),
+                ),
+                actionB=LoadVector(vectorKey=self.key_divisor),
+            )
+            if self.log10_y:
+                action = Log10Vector(actionA=action)
+            self.process.buildActions.diff = action
+
+            if self.unit is None:
+                self.unit = ""
+            if self.name_prefix is None:
+                self.name_prefix = (
+                    f"{self.prefix_metric}_{name_short_y}_vs_{name_short_x}_{self.name_short_ratio}"
+                )
+
+    def get_key_flux_y(self) -> str:
+        return self.mag_sn
+
+    def reconfigure_dependent_magnitudes(
+        self,
+        key_flux_meas: str | None = None,
+        bands_color: dict[str, str] | None = None,
+    ):
+        if key_flux_meas is not None:
+            _set_field_config(self, name="mag_sn", value=key_flux_meas)
 
 
 def reconfigure_diff_matched_defaults(

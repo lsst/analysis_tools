@@ -52,8 +52,8 @@ class CompletenessPlotTestCase(lsst.utils.tests.TestCase):
 
         plot = CompletenessHist()
 
-        plot.action.action.selector_range_ref.vectorKey = "mag_ref"
-        plot.action.action.selector_range_target.vectorKey = "mag_target"
+        plot.action.actions.selector_range_ref.vectorKey = "mag_ref"
+        plot.action.actions.selector_range_target.vectorKey = "mag_target"
         plot.action.bins.mag_low_max = 25500
         plot.action.bins.mag_interval = 100
         plot.action.bins.mag_width = 200
@@ -91,7 +91,7 @@ class CompletenessPlotTestCase(lsst.utils.tests.TestCase):
         false_positive = np.abs(rng.normal(size=match_distance.size)) > 0.5 * detect_sn
         flux_meas_extra = flux_meas[false_positive]
         nan_extra = np.full_like(flux_meas_extra, np.nan)
-        action_hist = plot.action.action
+        action_hist = plot.action.actions
         action_hist.key_mask_ref = "select_is_ref"
         action_hist.key_mask_target = "select_is_target"
         is_ps = np.concatenate((is_ps, nan_extra))

@@ -299,7 +299,7 @@ class CompletenessHist(PlotAction):
                     else:
                         raise RuntimeError(f"Unimplemented {self.percentiles_style=}")
                     for pct in percentiles:
-                        name_pct = self.action.action.name_mag_completeness(
+                        name_pct = action_hist.name_mag_completeness(
                             self.action.getPercentileName(pct),
                         )
                         if band is not None:

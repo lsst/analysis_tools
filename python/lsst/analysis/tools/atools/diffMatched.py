@@ -58,6 +58,7 @@ from ..actions.config import MagnitudeBinConfig
 from ..actions.keyedData import (
     CalcBinnedCompletenessAction,
     CalcCompletenessHistogramAction,
+    CalcPerPatchMetrics,
     MagnitudeCompletenessConfig,
 )
 from ..actions.plot import CompletenessHist
@@ -87,7 +88,8 @@ from ..actions.vector.selectors import (
     SelectorBase,
     VectorSelector,
 )
-from ..interfaces import AnalysisBaseConfig, BaseMetricAction, NoMetric
+from ..interfaces import AnalysisBaseConfig, BaseMetricAction, NoMetric, NoPlot
+from .diffMatchedPatchPlots import CompletenessPerPatchPropertyMapPlot
 from .genericBuild import MagnitudeTool, MagnitudeXTool, ObjectClassTool
 from .genericMetricAction import StructMetricAction
 from .genericPlotAction import StructPlotAction
@@ -494,7 +496,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
     )
     mag_ref = pexConfig.Field[str](
         default="ref_matched",
-        doc="Flux (magnitude) config key  (to self.fluxes) for reference (true) magnitudes",
+        doc="Flux (magnitude) config key (to self.fluxes) for reference (true) magnitudes",
     )
     mag_target = pexConfig.Field[str](
         default="cmodel_err",
@@ -503,6 +505,10 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
     make_plots = pexConfig.Field[bool](
         default=True,
         doc="Whether to generate plots in addition to metrics",
+    )
+    make_patch_sky_plots = pexConfig.Field[bool](
+        default=False,
+        doc="Whether to generate per-patch sky plots in addition to metrics",
     )
 
     @property
@@ -520,17 +526,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
             self._set_flux_default("mag_ref")
             self._set_flux_default("mag_target")
 
-            # This is the default convention for metric names, originally set
-            # for DC2 truth match but expanded to generic reference catalogs
-            # (including injection catalogs)
-            name_prefix = (
-                self.name_prefix
-                if self.name_prefix
-                else (
-                    f"detect_{self.config_mag_target.name_flux_short}_vs_"
-                    f"{self.config_mag_ref.name_flux_short}_{{name_type}}_"
-                )
-            )
+            name_prefix = self.get_formatted_name_prefix()
             unit_select = ""
             kwargs_matched_class_action = {}
 
@@ -560,9 +556,6 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
             key_mag_ref = f"mag_{self.mag_ref}"
             key_mag_target = f"mag_{self.mag_target}"
             object_classes = self.get_classes()
-            self.produce.metric = StructMetricAction()
-            if self.make_plots:
-                self.produce.plot = StructPlotAction()
 
             for object_class in object_classes:
                 name_type = self.get_class_type(object_class)
@@ -583,6 +576,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         selector_range_target=RangeSelector(vectorKey=key_mag_target),
                         key_mask_ref=name_selector_ref,
                         key_mask_target=name_selector_target,
+                        key_match_distance=self.key_match_distance,
                     ),
                     bins=self.mag_bins,
                 )
@@ -614,6 +608,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         ),
                         key_mask_ref=name_selector_ref,
                         key_mask_target=name_selector_target,
+                        key_match_distance=self.key_match_distance,
                     )
                     setattr(
                         self.process.calculateActions,
@@ -642,6 +637,7 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         selector_range_target=RangeSelector(vectorKey=key_mag_target),
                         key_mask_ref=name_selector_ref,
                         key_mask_target=name_selector_target,
+                        key_match_distance=self.key_match_distance,
                     ),
                     bins=self.mag_bins_plot,
                     config_metrics=self.config_metrics,
@@ -695,6 +691,88 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                         plot_action,
                     )
 
+            if self.make_patch_sky_plots:
+                name_flux_target = self.config_mag_target.name_flux_short
+                name_flux_ref = self.config_mag_ref.name_flux_short
+
+                metric_action = self.process.calculateActions.per_patch_metrics
+                plot_action = self.produce.plot.actions.patch_sky_plots
+                metric_actions = dict(metric_action.actions.items())
+                # If the user specified the required actions, just check them
+                # otherwise, add the ones that are needed
+                validate = len(metric_actions) > 0
+
+                action_metrics = {}
+                actions_to_parse = dict(
+                    (metric_action.actions if validate else self.process.calculateActions).items()
+                )
+                if not validate:
+                    del actions_to_parse["per_patch_metrics"]
+
+                # Get the list of metrics that can be calculated per-patch
+                for name_action, action in actions_to_parse.items():
+                    for key_metric, _ in action.getOutputSchema():
+                        # Use the format for per-patch metrics
+                        action_metrics[metric_action.format.format(metric=key_metric)] = name_action
+
+                actions_to_add = {}
+                metrics_to_add = []
+
+                errors = []
+                for name_metric, config_metric in plot_action.metrics.items():
+                    kwargs_format = {"band": "{band}"} if "{band}" in config_metric.key else {}
+                    key_metric = config_metric.key.format(
+                        name_flux_target=name_flux_target, name_flux_ref=name_flux_ref, **kwargs_format
+                    )
+                    key_metric_formatted = metric_action.format.format(metric=key_metric)
+                    config_metric.key = key_metric_formatted
+                    if (name_action := action_metrics.get(key_metric_formatted)) is None:
+                        errors.append(f"No actions produce {key_metric=} (formatted={key_metric_formatted})")
+                    elif not validate:
+                        if name_action not in actions_to_add:
+                            actions_to_add[name_action] = getattr(self.process.calculateActions, name_action)
+                        metrics_to_add.append(key_metric)
+
+                if errors:
+                    msg_detail = (
+                        "specified in patch_sky_plots.actions"
+                        if validate
+                        else "derived from calculateActions"
+                    )
+                    metric_actions_items = (
+                        plot_action.actions if validate else self.process.calculateActions
+                    ).items()
+                    raise RuntimeError(
+                        f"metric_actions={metric_actions_items}"
+                        f" {msg_detail} has errors:\n{'; '.join(errors)}"
+                    )
+                elif not validate:
+                    for name_action, action in actions_to_add.items():
+                        setattr(metric_action.actions, name_action, action)
+                    metric_action.metrics = metrics_to_add
+            else:
+                if not self.make_plots:
+                    self.produce.plot = NoPlot
+
+                del self.process.calculateActions.per_patch_metrics
+                del self.produce.plot.actions.patch_sky_plots
+
+            super().finalize()
+
+    def get_formatted_name_prefix(self):
+        # This is the default convention for metric names, originally set
+        # for DC2 truth match but expanded to generic reference catalogs
+        # (including injection catalogs)
+        name_prefix = (
+            self.name_prefix
+            if self.name_prefix
+            else (
+                f"detect_{self.config_mag_target.name_flux_short}_vs_"
+                f"{self.config_mag_ref.name_flux_short}_{{name_type}}_"
+            )
+        )
+        return name_prefix
+
     def reconfigure_dependent_magnitudes(
         self,
         key_flux_meas: str | None = None,
@@ -712,6 +790,12 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
         # Completeness/purity don't need a ref/target suffix as they are by
         # definition a function of ref/target mags, respectively
         self.name_suffix = "_mag{name_mag}"
+
+        self.process.calculateActions.per_patch_metrics = CalcPerPatchMetrics()
+
+        self.produce.metric = StructMetricAction()
+        self.produce.plot = StructPlotAction()
+        self.produce.plot.actions.patch_sky_plots = CompletenessPerPatchPropertyMapPlot()
 
 
 class MatchedRefCoaddDiffColorTool(MatchedRefCoaddDiffPlot):

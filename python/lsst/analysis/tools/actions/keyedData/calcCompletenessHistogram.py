@@ -29,7 +29,7 @@ import numpy as np
 import lsst.pex.config as pexConfig
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
-from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema
+from ...interfaces import KeyedData, KeyedDataAction, KeyedDataSchema, Scalar
 from ...math import isPercent
 from ..config import MagnitudeBinConfig
 from .calcBinnedCompleteness import CalcBinnedCompletenessAction
@@ -137,9 +137,12 @@ class CalcCompletenessHistogramAction(KeyedDataAction):
         yield from self.action.getInputSchema()
 
     def getOutputSchema(self) -> KeyedDataSchema:
-        result = {
-            (key, typ) for key, typ in self.action.getOutputSchema() if not self._is_action_key_mask(key)
-        }
+        result = {key: typ for key, typ in self.action.getOutputSchema() if not self._is_action_key_mask(key)}
+        for percentile in sorted(self.config_metrics.completeness_percentiles):
+            name_percentile = self.getPercentileName(percentile)
+            key = self.action.name_mag_completeness(name_percentile)
+            result[key] = Scalar
+        result = tuple((k, v) for k, v in result.items())
         return result
 
     def getPercentileName(self, percentile: float) -> str:

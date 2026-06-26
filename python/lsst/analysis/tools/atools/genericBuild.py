@@ -427,28 +427,39 @@ class MagnitudeTool(ObjectClassTool):
             complete = hasattr(self, attr)
         # Do nothing if already set - may have been called 2+ times
         if not complete:
-            name_found = None
+            name_found = name_mag if name_mag in self.fluxes else None
             drop_err = False
-            # Check if the name with errors is a configured default
-            if name_mag.endswith("_err"):
-                if hasattr(self.fluxes_default, name_mag):
-                    name_found = name_mag
-            else:
-                if hasattr(self.fluxes_default, name_mag):
-                    name_found = name_mag
-                # Check if a config with errors exists but not without
-                elif hasattr(self.fluxes_default, f"{name_mag}_err"):
-                    name_found = f"{name_mag}_err"
-                    # Don't load the errors - no _err suffix == unneeded
-                    drop_err = True
+            is_default = False
+            if not name_found:
+                # Check if the name with errors is a configured default
+                if name_mag.endswith("_err"):
+                    if hasattr(self.fluxes_default, name_mag):
+                        name_found = name_mag
+                        is_default = True
+                else:
+                    if hasattr(self.fluxes_default, name_mag):
+                        name_found = name_mag
+                        is_default = True
+                    # Check if a config with errors exists but not without
+                    elif f"{name_mag}_err" in self.fluxes:
+                        name_found = f"{name_mag}_err"
+                        drop_err = True
+                    elif hasattr(self.fluxes_default, f"{name_mag}_err"):
+                        name_found = f"{name_mag}_err"
+                        is_default = True
+                        # Don't load the errors - no _err suffix == unneeded
+                        drop_err = True
             if name_found:
-                # Copy the config - we don't want to edit in place
-                # Other instances may use them
-                value = copy.copy(getattr(self.fluxes_default, name_found))
-                # Ensure no unneeded error columns are loaded
-                if drop_err:
-                    value.key_flux_error = None
-                self.fluxes[name_found] = value
+                if is_default:
+                    # Copy the config - we don't want to edit in place
+                    # Other instances may use them
+                    value = copy.copy(getattr(self.fluxes_default, name_found))
+                    # Ensure no unneeded error columns are loaded
+                    if drop_err:
+                        value.key_flux_error = None
+                    self.fluxes[name_found] = value
+                else:
+                    value = self.fluxes[name_found]
                 name_found = self._add_flux(name=name_found, config=value, band=band)
             else:
                 raise RuntimeError(

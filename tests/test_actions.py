@@ -25,6 +25,7 @@ from itertools import chain
 import astropy.units as u
 import numpy as np
 import pandas as pd
+import pytest
 
 import lsst.utils.tests
 from lsst.analysis.tools.actions.keyedData.calcDistances import CalcRelativeDistances
@@ -512,6 +513,9 @@ class TestVectorSelectors(unittest.TestCase):
         flux = np.arange(self.size) * 10
         fluxErr = np.ones(self.size) * 0.1
         extendedness = np.arange(20) / 20 - 0.1
+        bands = ["r"] * self.size
+        bands[0] = "i"
+        bands[-1] = "F814W"
 
         self.data = {
             "r_psfFlux": flux,
@@ -522,6 +526,7 @@ class TestVectorSelectors(unittest.TestCase):
             "r_cmodelFluxError": fluxErr,
             "i_extendedness": extendedness,
             "i_extended": extendedness,
+            "refBand": np.array(bands),
         }
         bands = ("r", "i")
         for band in bands:
@@ -608,15 +613,35 @@ class TestVectorSelectors(unittest.TestCase):
         np.testing.assert_array_equal(result, truth)
 
     def testSetSelector(self):
+        selector = SetSelector()
+        with pytest.raises(FieldValidationError):
+            selector.validate()
+
         n_values = 3
         values = self.data["r_psfFlux"][:n_values]
+
         selector = SetSelector(vectorKeys=("r_psfFlux", "i_cmodelFlux"), values=values)
         self._checkSchema(selector, ("r_psfFlux", "i_cmodelFlux"))
+        selector.validate()
+
         result = selector(self.data)
         truth = np.zeros_like(result)
         truth[:n_values] = True
         # i_cModelFlux is just r_psfFlux reversed
         truth[-n_values:] = True
+        np.testing.assert_array_equal(result, truth)
+
+        selector.values_string = ("g", "r")
+        with pytest.raises(FieldValidationError):
+            selector.validate()
+        selector.values = []
+        selector.vectorKeys = ["refBand"]
+
+        result = selector(self.data)
+        truth = np.zeros(len(self.data[selector.vectorKeys[0]]), dtype=bool)
+        for value_string in selector.values_string:
+            truth |= self.data["refBand"] == value_string
+
         np.testing.assert_array_equal(result, truth)
 
     def testSnSelector(self):

@@ -60,7 +60,7 @@ from typing import cast
 
 import numpy as np
 
-from lsst.pex.config import Field
+from lsst.pex.config import Field, FieldValidationError
 from lsst.pex.config.configurableActions import ConfigurableActionStructField
 from lsst.pex.config.listField import ListField
 
@@ -332,6 +332,9 @@ class SetSelector(SelectorBase):
     (index_1, index_2), return all rows with either index_1 or index_2
      in the set (1, 2, 3).
 
+    String values can be given in values_string, but exactly one of values
+    or values_string must be non-empty.
+
     Notes
     -----
     The values are given as floats for flexibility. Integers above
@@ -345,13 +348,29 @@ class SetSelector(SelectorBase):
         listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
     )
     values = ListField[float](
-        doc="The set of acceptable values",
+        doc="The set of acceptable float values. values_string must be empty if set.",
         default=[],
-        listCheck=lambda x: (len(x) > 0) & (len(x) == len(set(x))),
+        listCheck=lambda x: len(x) == len(set(x)),
+    )
+    values_string = ListField[str](
+        doc="The set of acceptable string values. values must be empty if set.",
+        default=[],
+        listCheck=lambda x: len(x) == len(set(x)),
     )
 
     def getInputSchema(self) -> KeyedDataSchema:
         yield from ((key, Vector) for key in self.vectorKeys)
+
+    def validate(self):
+        super().validate()
+        if self.values and self.values_string:
+            raise FieldValidationError(
+                self.__class__.values, self, f"{self.values=} and {self.values_string=} must not both be set"
+            )
+        elif not self.values and not self.values_string:
+            raise FieldValidationError(
+                self.__class__.values, self, "One of self.values and self.values_string must be set"
+            )
 
     def __call__(self, data: KeyedData, **kwargs) -> Vector:
         """Return a mask of rows with values in the specified set.
@@ -366,9 +385,10 @@ class SetSelector(SelectorBase):
             A mask of the rows with values in the specified set.
         """
         mask = np.zeros(len(data[self.vectorKeys[0]]), dtype=bool)
+        values_compare = self.values if self.values else self.values_string
         for key in self.vectorKeys:
             values = cast(Vector, data[key])
-            for compare in self.values:
+            for compare in values_compare:
                 mask |= np.asarray(values == compare)
 
         return cast(Vector, mask)

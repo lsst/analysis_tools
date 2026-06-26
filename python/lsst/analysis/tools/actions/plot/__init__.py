@@ -10,6 +10,7 @@ from .histPlot import *
 from .interpolateDetectorPlot import *
 from .matrixPlot import *
 from .multiVisitCoveragePlot import *
+from .patchActionSkyPlot import *
 from .propertyMapPlot import *
 from .rhoStatisticsPlot import *
 from .scatterplotWithTwoHists import *

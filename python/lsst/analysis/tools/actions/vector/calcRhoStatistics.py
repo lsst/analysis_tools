@@ -49,6 +49,9 @@ if TYPE_CHECKING:
 
 _LOG = logging.getLogger(__name__)
 
+# We need to explicitly turn off multiprocessing in treecorr.
+treecorr.set_max_omp_threads(1)
+
 
 # TO DO: Remove TreecorrConfig in here for next major release (DM-47072)
 @deprecated(

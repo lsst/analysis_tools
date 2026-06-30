@@ -37,13 +37,12 @@ from ..actions.scalar import (
     SigmaMadAction,
 )
 from ..actions.vector import (
-    AngularSeparation, 
-    BandSelector, 
-    DivideVector, 
+    AngularSeparation,
+    BandSelector,
+    DivideVector,
     LoadVector,
 )
 from ..interfaces import AnalysisTool
-
 
 # Common to both CalexpSummaryMetrics and AggregateCalexpSummaryStats.
 # Units in comments indicate compound units, which are unsupported.
@@ -124,7 +123,7 @@ class CalexpMetricHists(AnalysisTool):
         for metric, label in self.metrics.items():
             setattr(self.process.buildActions, metric, LoadVector(vectorKey=metric))
             self.produce.plot.panels[metric] = HistPanel(hists={metric: "Number of calexps"}, label=label)
-            
+
 
 class AggregateCalexpSummaryStats(AnalysisTool):
     """
@@ -133,14 +132,14 @@ class AggregateCalexpSummaryStats(AnalysisTool):
     """
 
     _units = _SUMMARY_STATS_UNITS
-    
+
     aggregators = {
         "min": MinAction,
         "max": MaxAction,
         "median": MedianAction,
         "sigmaMad": SigmaMadAction,
     }
-    
+
     def finalize(self):
         units = {}
         for key in self._units.keys():
@@ -157,7 +156,7 @@ class AggregateCornerSeparations(AnalysisTool):
     Class to calculate aggregate corner-to-corner separations
     from vectors of on-sky corner coordinates.
     """
-    
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -204,4 +203,3 @@ class AggregateCornerSeparations(AnalysisTool):
             "cornerSeparationRatio_median": "",
             "cornerSeparationRatio_sigmaMad": "",
         }
-

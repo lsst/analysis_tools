@@ -24,6 +24,7 @@ __all__ = (
     "CalexpSummaryMetrics",
     "CalexpMetricHists",
     "AggregateCalexpSummaryStats",
+    "AggregateCornerSeparations",
 )
 
 from lsst.pex.config import DictField
@@ -35,7 +36,12 @@ from ..actions.scalar import (
     MinAction,
     SigmaMadAction,
 )
-from ..actions.vector import BandSelector, LoadVector
+from ..actions.vector import (
+    AngularSeparation, 
+    BandSelector, 
+    DivideVector, 
+    LoadVector,
+)
 from ..interfaces import AnalysisTool
 
 
@@ -144,3 +150,58 @@ class AggregateCalexpSummaryStats(AnalysisTool):
                 setattr(self.process.calculateActions, f"{key}_{agg_name}", action)
                 units[f"{key}_{agg_name}"] = self._units[key]
         self.produce.metric.units = units
+
+
+class AggregateCornerSeparations(AnalysisTool):
+    """
+    Class to calculate aggregate corner-to-corner separations
+    from vectors of on-sky corner coordinates.
+    """
+    
+    def setDefaults(self):
+        super().setDefaults()
+
+        self.process.buildActions.cornersep = AngularSeparation(
+            raKey_A="raCorners_0",
+            decKey_A="decCorners_0",
+            raKey_B="raCorners_2",
+            decKey_B="decCorners_2",
+            outputUnit="arcminute",
+        )
+        self.process.buildActions.ratio = DivideVector()
+        self.process.buildActions.ratio.actionA = AngularSeparation(
+            raKey_A="raCorners_0",
+            decKey_A="decCorners_0",
+            raKey_B="raCorners_2",
+            decKey_B="decCorners_2",
+            outputUnit="arcminute",
+        )
+        self.process.buildActions.ratio.actionB = AngularSeparation(
+            raKey_A="raCorners_1",
+            decKey_A="decCorners_1",
+            raKey_B="raCorners_3",
+            decKey_B="decCorners_3",
+            outputUnit="arcminute",
+        )
+
+        self.process.calculateActions.cornerSeparation_min = MinAction(vectorKey="cornersep")
+        self.process.calculateActions.cornerSeparation_max = MaxAction(vectorKey="cornersep")
+        self.process.calculateActions.cornerSeparation_median = MedianAction(vectorKey="cornersep")
+        self.process.calculateActions.cornerSeparation_sigmaMad = SigmaMadAction(vectorKey="cornersep")
+
+        self.process.calculateActions.cornerSeparationRatio_min = MinAction(vectorKey="ratio")
+        self.process.calculateActions.cornerSeparationRatio_max = MaxAction(vectorKey="ratio")
+        self.process.calculateActions.cornerSeparationRatio_median = MedianAction(vectorKey="ratio")
+        self.process.calculateActions.cornerSeparationRatio_sigmaMad = SigmaMadAction(vectorKey="ratio")
+
+        self.produce.metric.units = {
+            "cornerSeparation_min": "arcmin",
+            "cornerSeparation_max": "arcmin",
+            "cornerSeparation_median": "arcmin",
+            "cornerSeparation_sigmaMad": "arcmin",
+            "cornerSeparationRatio_min": "",
+            "cornerSeparationRatio_max": "",
+            "cornerSeparationRatio_median": "",
+            "cornerSeparationRatio_sigmaMad": "",
+        }
+

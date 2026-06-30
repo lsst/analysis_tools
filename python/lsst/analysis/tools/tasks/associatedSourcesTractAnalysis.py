@@ -272,8 +272,8 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
 
         raCorrection, decCorrection = calculate_apparent_motion(dataWithPM, medianMJD)
 
-        dataJoined["coord_ra"] = dataWithPM["coord_ra"] - raCorrection.value
-        dataJoined["coord_dec"] = dataWithPM["coord_dec"] - decCorrection.value
+        dataJoined["coord_ra"][ids] = dataWithPM["coord_ra"] - raCorrection.value
+        dataJoined["coord_dec"][ids] = dataWithPM["coord_dec"] - decCorrection.value
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
         inputs = butlerQC.get(inputRefs)

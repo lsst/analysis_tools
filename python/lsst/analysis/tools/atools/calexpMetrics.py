@@ -23,13 +23,61 @@ from __future__ import annotations
 __all__ = (
     "CalexpSummaryMetrics",
     "CalexpMetricHists",
+    "AggregateCalexpSummaryStats",
 )
 
 from lsst.pex.config import DictField
 
 from ..actions.plot import HistPanel, HistPlot
+from ..actions.scalar import (
+    MaxAction,
+    MedianAction,
+    MinAction,
+    SigmaMadAction,
+)
 from ..actions.vector import BandSelector, LoadVector
 from ..interfaces import AnalysisTool
+
+
+# Common to both CalexpSummaryMetrics and AggregateCalexpSummaryStats.
+# Units in comments indicate compound units, which are unsupported.
+_SUMMARY_STATS_UNITS = {
+    "psfSigma": "pixel",
+    "psfArea": "",  # pixel**2
+    "psfIxx": "",  # pixel**2
+    "psfIyy": "",  # pixel**2
+    "psfIxy": "",  # pixel**2
+    "ra": "degree",
+    "dec": "degree",
+    "pixelScale": "",  # arcsec/pixel.
+    "zenithDistance": "degree",
+    "expTime": "s",
+    "zeroPoint": "mag",
+    "skyBg": "electron",
+    "skyNoise": "electron",
+    "meanVar": "",  # electron**2
+    "astromOffsetMean": "arcsec",
+    "astromOffsetStd": "arcsec",
+    "nPsfStar": "ct",
+    "psfStarDeltaE1Median": "",
+    "psfStarDeltaE2Median": "",
+    "psfStarDeltaE1Scatter": "",
+    "psfStarDeltaE2Scatter": "",
+    "psfStarDeltaSizeMedian": "pixel",
+    "psfStarDeltaSizeScatter": "pixel",
+    "psfStarScaledDeltaSizeScatter": "",
+    "psfTraceRadiusDelta": "pixel",
+    "psfApFluxDelta": "",
+    "psfApCorrSigmaScaledDelta": "",
+    "maxDistToNearestPsf": "pixel",
+    "starEMedian": "",
+    "starUnNormalizedEMedian": "",  # pixel**2
+    "effTime": "s",
+    "effTimePsfSigmaScale": "",
+    "effTimeSkyBgScale": "",
+    "effTimeZeroPointScale": "",
+    "magLim": "mag",
+}
 
 
 class CalexpSummaryMetrics(AnalysisTool):
@@ -40,47 +88,7 @@ class CalexpSummaryMetrics(AnalysisTool):
 
     propagateData: bool = True
 
-    # raCorners and decCorners statistics cannot be written to a metric,
-    # as metrics can only be single-valued (i.e., scalars).
-    # Units in comments are to indicate compound units, which are currently
-    # unsupported.
-    _units = {
-        "psfSigma": "pixel",
-        "psfArea": "",  # pixel**2
-        "psfIxx": "",  # pixel**2
-        "psfIyy": "",  # pixel**2
-        "psfIxy": "",  # pixel**2
-        "ra": "degree",
-        "dec": "degree",
-        "pixelScale": "",  # arcsec/pixel.
-        "zenithDistance": "degree",
-        "expTime": "s",
-        "zeroPoint": "mag",
-        "skyBg": "electron",
-        "skyNoise": "electron",
-        "meanVar": "",  # electron**2
-        "astromOffsetMean": "arcsec",
-        "astromOffsetStd": "arcsec",
-        "nPsfStar": "ct",
-        "psfStarDeltaE1Median": "",
-        "psfStarDeltaE2Median": "",
-        "psfStarDeltaE1Scatter": "",
-        "psfStarDeltaE2Scatter": "",
-        "psfStarDeltaSizeMedian": "pixel",
-        "psfStarDeltaSizeScatter": "pixel",
-        "psfStarScaledDeltaSizeScatter": "",
-        "psfTraceRadiusDelta": "pixel",
-        "psfApFluxDelta": "",
-        "psfApCorrSigmaScaledDelta": "",
-        "maxDistToNearestPsf": "pixel",
-        "starEMedian": "",
-        "starUnNormalizedEMedian": "",  # pixel**2
-        "effTime": "s",
-        "effTimePsfSigmaScale": "",
-        "effTimeSkyBgScale": "",
-        "effTimeZeroPointScale": "",
-        "magLim": "mag",
-    }
+    _units = _SUMMARY_STATS_UNITS
 
     def setDefaults(self):
         super().setDefaults()
@@ -110,3 +118,29 @@ class CalexpMetricHists(AnalysisTool):
         for metric, label in self.metrics.items():
             setattr(self.process.buildActions, metric, LoadVector(vectorKey=metric))
             self.produce.plot.panels[metric] = HistPanel(hists={metric: "Number of calexps"}, label=label)
+            
+
+class AggregateCalexpSummaryStats(AnalysisTool):
+    """
+    Class to calculate per-stat aggregates (min, max, median, sigmaMad) of
+    vectors of summary stats.
+    """
+
+    _units = _SUMMARY_STATS_UNITS
+    
+    aggregators = {
+        "min": MinAction,
+        "max": MaxAction,
+        "median": MedianAction,
+        "sigmaMad": SigmaMadAction,
+    }
+    
+    def finalize(self):
+        units = {}
+        for key in self._units.keys():
+            for agg_name, agg_cls in self.aggregators.items():
+                action = agg_cls()
+                action.vectorKey = key
+                setattr(self.process.calculateActions, f"{key}_{agg_name}", action)
+                units[f"{key}_{agg_name}"] = self._units[key]
+        self.produce.metric.units = units

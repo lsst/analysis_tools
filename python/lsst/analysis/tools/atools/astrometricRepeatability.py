@@ -246,6 +246,7 @@ class AstrometricRelativeRepeatability(AnalysisTool):
             "AMx": "mas",
             "AFx": "percent",
             "ADx": "mas",
+            "nPairs": "count",
         }
 
         self.produce.plot = HistPlot()
@@ -274,6 +275,7 @@ class AstrometricRelativeRepeatability(AnalysisTool):
             "AMx": f"{{band}}_AM{self.xValue}",
             "AFx": f"{{band}}_AF{self.xValue}",
             "ADx": f"{{band}}_AD{self.xValue}",
+            "nPairs": "{band}_nPairs",
         }
 
 

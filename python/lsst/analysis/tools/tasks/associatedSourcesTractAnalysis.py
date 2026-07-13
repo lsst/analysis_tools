@@ -25,7 +25,7 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 import astropy.time
 import astropy.units as u
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import Table, hstack, join
 from scipy.spatial import KDTree
 
 import lsst.pex.config as pexConfig
@@ -34,6 +34,7 @@ from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+import time
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -130,7 +131,16 @@ class AssociatedSourcesTractAnalysisConfig(
         },
         doc="Column names for position and motion parameters in the astrometric correction catalogs.",
     )
-
+    maxVisitCount = pexConfig.Field(
+        dtype=int,
+        default=None,
+        doc=""
+    )
+    maxObjects = pexConfig.Field(
+        dtype=int,
+        default=None,
+        doc=""
+    )
 
 class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
     ConfigClass = AssociatedSourcesTractAnalysisConfig
@@ -167,6 +177,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         visitTable=None,
     ):
         """Concatenate source catalogs and join on associated source IDs."""
+        rng = np.random.default_rng()
 
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
@@ -176,7 +187,24 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         # associatedSource["obj_index"] refers to the corresponding index (row)
         # in associatedSourceIds.
         index = associatedSources["obj_index"]
+        print('Orig number of objects:', len(np.unique(associatedSources["obj_index"])))
         associatedSources["isolated_star_id"] = associatedSourceIds["isolated_star_id"][index]
+
+        if self.config.maxObjects:
+            objectChoice = rng.permutation(associatedSourceIds["isolated_star_id"])[:self.config.maxObjects]
+            
+            # Method 1:
+            t0 = time.time()
+            inds = [id in objectChoice of id in associatedSources["isolated_star_id"]]
+            t1 = time.time()
+            # Method 2:
+            inds2 = join(associatedSources, objectChoice, keys_left='isolated_star_id', keep_order=True,
+                         join_type="left")
+            t2 = time.time()
+            print("join times", t1 - t0, t2 - t1)
+            import ipdb; ipdb.set_trace()
+            associatedSources = associatedSources[inds]
+            print("Clipped number of objects:", len(np.unique(associatedSources["obj_index"])))
 
         trimmedSourceCatalogs = []
         fullCatLen = 0
@@ -196,6 +224,10 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         if "obj_index" in colsNeeded:
             colsNeeded.remove("obj_index")
         colsNeeded += ["sourceId", "coord_ra", "coord_dec"]
+        print("Orig number of visits:", len(sourceCatalogs))
+        if self.config.maxVisitCount:
+            sourceCatalogs = rng.permutation(sourceCatalogs)[:self.config.maxVisitCount]
+            print("Clipped number of visits:", len(sourceCatalogs))
         for sourceCatalogRef in sourceCatalogs:
             sourceCatalog = sourceCatalogRef.get(parameters={"columns": set(colsNeeded)})
             DatasetProvenance.strip_provenance_from_flat_dict(sourceCatalog.meta)

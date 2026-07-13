@@ -24,6 +24,7 @@ import astropy.units as u
 import esutil
 import numpy as np
 from smatch import Matcher
+import time
 
 from lsst.pex.config import Field
 
@@ -118,9 +119,10 @@ class CalcRelativeDistances(KeyedDataAction):
             for counter, ind in enumerate(good):
                 arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
             return arrayOut
-
+        t0 = time.time()
         groupId = _compressArray(data[self.groupKey])
-
+        t1 = time.time()
+        print("Compress array:", t1 - t0)
         nObj = groupId.max() + 1
 
         # Compute the meanRa/meanDec.
@@ -144,7 +146,8 @@ class CalcRelativeDistances(KeyedDataAction):
         meanRa /= nObs
         meanDec /= nObs
         meanRa += rotation
-
+        t2 = time.time()
+        print("Get means:", t2 - t1)
         D = (self.annulus * u.arcmin).to_value(u.degree)
         width = (self.width * u.arcmin).to_value(u.degree)
         annulus = D + (width / 2) * np.array([-1, +1])
@@ -170,7 +173,8 @@ class CalcRelativeDistances(KeyedDataAction):
         else:
             with Matcher(meanRa, meanDec) as m:
                 idx, i1, i2, d = m.query_self(annulus[1], return_indices=True)
-
+        t3 = time.time()
+        print("Get pairs:", t3 - t2)
         inAnnulus = (d > annulus[0]) & (d < annulus[1])
         i1 = i1[inAnnulus]
         i2 = i2[inAnnulus]
@@ -216,7 +220,8 @@ class CalcRelativeDistances(KeyedDataAction):
             np.deg2rad(np.array(data[self.raKey][matchedObsInd2])),
             np.deg2rad(np.array(data[self.decKey][matchedObsInd2])),
         )
-
+        t4 = time.time()
+        print("Calculate separations:", t4 - t3)
         # Compute the mean from the ragged array of pairs by
         # using np.add.at to sum numerator and denominator.
         sepMean = np.zeros(len(i1))
@@ -268,7 +273,8 @@ class CalcRelativeDistances(KeyedDataAction):
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value
         distanceParams["AFx"] = AFx.value
-
+        t5 = time.time()
+        print("Everything else:", t5 - t4)
         return distanceParams
 
 

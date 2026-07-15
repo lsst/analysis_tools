@@ -20,11 +20,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 __all__ = ("CalcRelativeDistances",)
 
+import time
+
 import astropy.units as u
 import esutil
 import numpy as np
 from smatch import Matcher
-import time
 
 from lsst.pex.config import Field
 
@@ -119,6 +120,7 @@ class CalcRelativeDistances(KeyedDataAction):
             for counter, ind in enumerate(good):
                 arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
             return arrayOut
+
         t0 = time.time()
         groupId = _compressArray(data[self.groupKey])
         t1 = time.time()
@@ -181,13 +183,13 @@ class CalcRelativeDistances(KeyedDataAction):
 
         if len(i1) == 0:
             return distanceParams
-
+        print("N pairs:", len(i1))
         if len(i1) > self.maxPairs:
             # Downsample the pairs.
             selection = rng.choice(len(i1), size=self.maxPairs, replace=False)
             i1 = i1[selection]
             i2 = i2[selection]
-
+            print(f"downsample to {self.maxPairs} pairs")
         # Match groups and get indices.
         h, rev = esutil.stat.histogram(groupId, rev=True)
 

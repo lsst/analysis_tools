@@ -25,7 +25,7 @@ __all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalys
 import astropy.time
 import astropy.units as u
 import numpy as np
-from astropy.table import Table, hstack, join
+from astropy.table import Table, hstack, join, vstack
 from scipy.spatial import KDTree
 
 import lsst.pex.config as pexConfig
@@ -34,6 +34,8 @@ from lsst.drp.tasks.gbdesAstrometricFit import calculate_apparent_motion
 from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
+from lsst.sphgeom import HealpixPixelization
+from lsst.geom import SpherePoint
 import time
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
@@ -341,3 +343,104 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         kwargs = {"data": data, "plotInfo": plotInfo, "skymap": inputs["skyMap"], "camera": inputs["camera"]}
         outputs = self.run(**kwargs)
         self.putByBand(butlerQC, outputs, outputRefs)
+
+
+class AssociatedSourcesHealpix3AnalysisConnections(AssociatedSourcesTractAnalysisConnections,
+        dimensions=("healpix3", "instrument"),):
+    associatedSources = ct.Input(
+        doc="Table of associated sources",
+        name="{associatedSourcesInputName}",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=("instrument", "skymap", "tract"),
+        multiple=True,
+    )
+
+    associatedSourceIds = ct.Input(
+        doc="Table containing unique ids for the associated sources",
+        name="{associatedSourceIdsInputName}",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=("instrument", "skymap", "tract"),
+        multiple=True
+    )
+    astrometricCorrectionCatalog = ct.Input(
+        doc="Catalog with proper motion and parallax information.",
+        name="isolated_star_stellar_motions",
+        storageClass="ArrowAstropy",
+        deferLoad=True,
+        dimensions=("instrument", "skymap", "tract"),
+        multiple=True,
+    )
+
+
+class AssociatedSourcesHealpix3AnalysisTask(AssociatedSourcesTractAnalysisTask):
+    ConfigClass = AssociatedSourcesTractAnalysisConfig
+    _DefaultName = "associatedSourcesHealpix3Analysis"
+
+    def getHealpixOverlap(self, sources, sourceIds, pixelId):
+
+        pixelization = HealpixPixelization(3)
+        pixelRegion = pixelization.pixel(pixelId)
+
+        sourceCoords = np.array([SpherePoint(pt['ra'], pt['dec']).getVector() for pt in sourceIds])
+        # TODO Check if SkyCoord.cartesion.xyz is the same and is it faster
+        from astropy.coordinates import SkyCoord
+        sourceCoordsAlt = SkyCoord(sourceIds['ra'] * u.degree, sourceIds['dec'] * u.degree).cartesian.xyz
+        import ipdb; ipdb.set_trace()
+
+        inPixel = pixelRegion.contains(sourceCoords)
+        pixelSourceInds = np.flatnonzero(inPixel)
+        sub1 = np.clip(np.searchsorted(pixelSourceInds, sources['obj_index']), 0, len(pixelSourceInds) - 1)
+        matched = (pixelSourceInds[sub1] == sources['obj_index'])
+
+        return sources[matched], sourceIds[inPixel]
+
+    def runQuantum(self, butlerQC, inputRefs, outputRefs):
+        inputs = butlerQC.get(inputRefs)
+
+        # Load specified columns from source catalogs
+        names = self.collectInputNames()
+        names |= {"sourceId", "coord_ra", "coord_dec"}
+        for item in ["obj_index", "isolated_star_id"]:
+            if item in names:
+                names.remove(item)
+
+        if self.config.applyAstrometricCorrections:
+            astrometricCorrections = inputs["astrometricCorrectionCatalog"].get(
+                parameters={"columns": self.config.astrometricCorrectionParameters.values()}
+            )
+            inputs["astrometricCorrectionCatalog"] = astrometricCorrections
+        else:
+            inputs["astrometricCorrectionCatalog"] = None
+            inputs["visitTable"] = None
+
+        dataId = butlerQC.quantum.dataId
+        plotInfo = self.parsePlotInfo(inputs, dataId, connectionName="associatedSources")
+
+        # TODO: make key used for object index configurable
+        pixelId = dataId['healpix3']
+        inputs["associatedSources"], inputs["associatedSourceIds"] = self.getHealpixCatalogs()
+        associatedSourceRefs = {assocRef.dataId['tract']: assocRef for assocRef in inputs["associatedSources"]}
+        associatedSourceIdRefs = {assocRef.dataId['tract']: assocRef for assocRef in inputs["associatedSourceIds"]}
+        associatedSources = []
+        associatedSourceIds = []
+        for tract in associatedSourceRefs:
+            tractAssociatedSources = self.loadData(associatedSourceRefs[tract], ["obj_index", "sourceId"])
+            tractAssociatedSourceIds = self.loadData(associatedSourceIdRefs[tract], ["isolated_star_id", "ra", "dec"])
+            trimmedSources, trimmedSourceIds = self.getHealpixOverlap(tractAssociatedSources, tractAssociatedSourceIds, pixelId)
+            associatedSources.append(trimmedSources)
+            associatedSourceIds.append(trimmedSourceIds)
+        inputs["associatedSources"] = vstack(associatedSources)
+        inputs["associatedSourceIds"] = vstack(associatedSourceIds)
+
+        if len(inputs["associatedSources"]) == 0:
+            raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
+
+        data = self.callback(inputs, dataId)
+
+        kwargs = {"data": data, "plotInfo": plotInfo, #"skymap": inputs["skyMap"], 
+                  "camera": inputs["camera"]}
+        outputs = self.run(**kwargs)
+        self.putByBand(butlerQC, outputs, outputRefs)
+

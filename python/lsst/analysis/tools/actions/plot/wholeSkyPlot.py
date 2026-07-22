@@ -29,10 +29,11 @@ from collections.abc import Mapping
 
 import matplotlib.patheffects as pathEffects
 import numpy as np
+import skyproj
 import yaml
-from matplotlib import gridspec
+from matplotlib import colorizer, gridspec
 from matplotlib.collections import PatchCollection
-from matplotlib.colors import CenteredNorm
+from matplotlib.colors import CenteredNorm, Normalize
 from matplotlib.figure import Figure
 from matplotlib.patches import Patch, Polygon
 
@@ -68,13 +69,12 @@ class WholeSkyPlot(PlotAction):
     The default axes limits and figure size were chosen to plot HSC PDR2.
     """
 
-    xAxisLabel = Field[str](doc="Label to use for the x axis.", default="RA (degrees)")
-    yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec (degrees)")
+    xAxisLabel = Field[str](doc="Label to use for the x axis.", default="R.A.")
+    yAxisLabel = Field[str](doc="Label to use for the y axis.", default="Dec.")
     zAxisLabel = Field[str](doc="Label to use for the z axis.", default="")
     autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     xLimits = ListField[float](doc="Plotting limits for the x axis.", default=[-5.0, 365.0])
     yLimits = ListField[float](doc="Plotting limits for the y axis.", default=[-10.0, 60.0])
-    autoAxesLimits = Field[bool](doc="Find axes limits automatically.", default=True)
     colorBarMin = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarMax = Field[float](doc="The minimum value of the color bar.", optional=True)
     colorBarRange = Field[float](
@@ -102,6 +102,16 @@ class WholeSkyPlot(PlotAction):
     addThresholds = Field[bool](
         doc="Read in the predefined thresholds and indicate them on the histogram.",
         default=True,
+    )
+
+    publicationStyle = Field[bool](
+        doc="Make a simplified plot for publication use.",
+        default=False,
+    )
+
+    fixAroundZero = Field[bool](
+        doc="Fix the colorbar to be symmetric around zero.",
+        default=False,
     )
 
     def getInputSchema(self, **kwargs) -> KeyedDataSchema:
@@ -272,34 +282,24 @@ class WholeSkyPlot(PlotAction):
                     outlierColor = "fuchsia"
                 norm = CenteredNorm()
 
-        # Create patches using the corners of each tract.
-        patches = []
-        colBarVals = []
-        tracts = []
-        ras = []
-        decs = []
-        mid_ras = []
-        mid_decs = []
-        for i, tract in enumerate(data["tract"]):
-            corners = getTractCorners(skymap, tract)
-            patches.append(Polygon(corners, closed=True))
-            colBarVals.append(data["z"][i])
-            tracts.append(tract)
-            ras.append(corners[0][0])
-            decs.append(corners[0][1])
-            mid_ras.append((corners[0][0] + corners[1][0]) / 2)
-            mid_decs.append((corners[0][1] + corners[2][1]) / 2)
-
         # Setup figure.
-        fig: AnnotatedFigure = make_figure(dpi=300, figsize=(12, 3.5))
+        if not self.publicationStyle:
+            figSize = (11, 3.5)
+        else:
+            figSize = (9, 3.5)
+        fig: AnnotatedFigure = make_figure(dpi=300, figsize=figSize)
         set_rubin_plotstyle()
         gs = gridspec.GridSpec(1, 4)
-        ax = fig.add_subplot(gs[:3])
-        # Add colored patches showing tract metric values.
-        patchCollection = PatchCollection(patches, cmap=colorMap, norm=norm)
-        ax.add_collection(patchCollection)
+        if not self.publicationStyle:
+            ax = fig.add_subplot(gs[:3])
+            sp = skyproj.McBrydeSkyproj(ax=ax)
+        else:
+            ax = fig.add_subplot(111)
+            sp = skyproj.McBrydeSkyproj(ax=ax, extent=[-180, 180, -90, 30])
+        sp.draw_milky_way(label="Milky Way", zorder=-1)
 
         # Define color bar range.
+        colBarVals = data["z"]
         if np.sum(np.isfinite(colBarVals)) > 0:
             med = np.nanmedian(colBarVals)
         else:
@@ -314,8 +314,34 @@ class WholeSkyPlot(PlotAction):
         else:
             vmax = med + self.colorBarRange * sigmaMad
 
+        if self.fixAroundZero:
+            vmax = np.nanmax([np.fabs(vmin), np.fabs(vmax)])
+            vmin = -1 * vmax
+
+        # Create patches using the corners of each tract.
+        tracts = []
+        ras = []
+        decs = []
+        mid_ras = []
+        mid_decs = []
+        norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+        for i, tract in enumerate(data["tract"]):
+            corners = getTractCorners(skymap, tract)
+            tractRas = []
+            tractDecs = []
+            for ra, dec in corners:
+                tractRas.append(ra)
+                tractDecs.append(dec)
+            sp.draw_box(
+                tractRas, tractDecs, facecolor=colorMap(norm(data["z"][i])), edgecolor="none", zorder=20
+            )
+            tracts.append(tract)
+            ras.append(corners[0][0])
+            decs.append(corners[0][1])
+            mid_ras.append((corners[0][0] + corners[1][0]) / 2)
+            mid_decs.append((corners[0][1] + corners[2][1]) / 2)
+
         dataName = self.zAxisLabel.format_map(kwargs)
-        colBarVals = np.array(colBarVals)
         if self.addThresholds and dataName in metricDefs:
             if "lowThreshold" in metricDefs[dataName].keys():
                 lowThreshold = metricDefs[dataName]["lowThreshold"]
@@ -330,66 +356,41 @@ class WholeSkyPlot(PlotAction):
             # Note tracts with metrics outside (vmin, vmax) as outliers.
             outlierInds = np.where((colBarVals < vmin) | (colBarVals > vmax))[0]
 
-        # Initialize legend handles.
-        handles = []
-
-        if self.showOutliers:
+        if self.showOutliers and not self.publicationStyle:
             # Plot the outlier patches.
-            outlierPatches = []
-            if len(outlierInds) > 0:
-                for ind in outlierInds:
-                    outlierPatches.append(patches[ind])
-                outlierPatchCollection = PatchCollection(
-                    outlierPatches,
-                    cmap=colorMap,
-                    norm=norm,
-                    facecolors="none",
-                    edgecolors=outlierColor,
-                    linewidths=0.5,
-                    zorder=100,
-                )
-                ax.add_collection(outlierPatchCollection)
-                # Add legend information.
-                outlierPatch = Patch(
-                    facecolor="none",
-                    edgecolor=outlierColor,
-                    linewidth=0.5,
-                    label="Outlier",
-                )
-                handles.append(outlierPatch)
+            for i, tract in enumerate(data["tract"][outlierInds]):
+                corners = getTractCorners(skymap, tract)
+                tractRas = []
+                tractDecs = []
+                for ra, dec in corners:
+                    tractRas.append(ra)
+                    tractDecs.append(dec)
+                sp.draw_box(tractRas, tractDecs, facecolor="none", edgecolor=outlierColor, linewidth=0.5)
+            outlierLine = sp.ax.plot([-1, -2], [-1, -2], color=outlierColor, label="Outlier")
 
         if self.showNaNs:
             # Plot tracts with NaN metric values.
             nanInds = np.where(~np.isfinite(colBarVals))[0]
-            nanPatches = []
-            if len(nanInds) > 0:
-                for ind in nanInds:
-                    nanPatches.append(patches[ind])
-                nanPatchCollection = PatchCollection(
-                    nanPatches,
-                    cmap=None,
-                    norm=norm,
-                    facecolors="white",
-                    edgecolors="grey",
-                    linestyles="dotted",
-                    linewidths=0.5,
-                    zorder=100,
-                )
-                ax.add_collection(nanPatchCollection)
-                # Add legend information.
-                nanPatch = Patch(
-                    facecolor="white",
+            for i, tract in enumerate(data["tract"][nanInds]):
+                corners = getTractCorners(skymap, tract)
+                tractRas = []
+                tractDecs = []
+                for ra, dec in corners:
+                    tractRas.append(ra)
+                    tractDecs.append(dec)
+                sp.draw_box(
+                    tractRas,
+                    tractDecs,
+                    facecolor="none",
                     edgecolor="grey",
-                    linestyle="dotted",
                     linewidth=0.5,
-                    label="NaN",
+                    linestyle="dotted",
+                    zorder=20,
                 )
-                handles.append(nanPatch)
+            # Add legend information.
+            nanLine = sp.ax.plot([-1, -2], [-1, -2], color="grey", linestyle="dotted", label="NaN")
 
-        if len(handles) > 0:
-            fig.legend(handles=handles)
-
-        if self.labelTracts:
+        if self.labelTracts and not self.publicationStyle:
             # Label the tracts
             for i, tract in enumerate(tracts):
                 ax.text(
@@ -403,69 +404,68 @@ class WholeSkyPlot(PlotAction):
                     zorder=100,
                 )
 
-        ax.set_aspect("equal")
         axPos = ax.get_position()
-        ax1 = fig.add_axes([0.73, 0.25, 0.20, 0.47])
+        if not self.publicationStyle:
+            ax1 = fig.add_axes([0.73, 0.25, 0.20, 0.47])
 
-        if np.sum(np.isfinite(data["z"])) > 0:
-            ax1.hist(data["z"], bins=len(data["z"] / 10), color=stars_color(), histtype="step")
-        else:
-            ax1.text(0.5, 0.5, "Data all NaN/Inf")
-        ax1.set_xlabel("Metric Values")
-        ax1.set_ylabel("Number")
-        ax1.yaxis.set_label_position("right")
-        ax1.yaxis.tick_right()
-
-        if self.addThresholds and dataName in metricDefs:
-            # Check the thresholds are finite and set them to
-            # the min/max of the data if they aren't to calculate
-            # the x range of the plot
-            if np.isfinite(lowThreshold):
-                ax1.axvline(lowThreshold, color=accent_color())
+            if np.sum(np.isfinite(data["z"])) > 0:
+                ax1.hist(data["z"], bins=len(data["z"] / 10), color=stars_color(), histtype="step")
             else:
-                lowThreshold = np.nanmin(colBarVals)
-            if np.isfinite(highThreshold):
-                ax1.axvline(highThreshold, color=accent_color())
+                ax1.text(0.5, 0.5, "Data all NaN/Inf")
+            ax1.set_xlabel("Metric Values")
+            ax1.set_ylabel("Number")
+            ax1.yaxis.set_label_position("right")
+            ax1.yaxis.tick_right()
+
+            if self.addThresholds and dataName in metricDefs and not self.publicationStyle:
+                # Check the thresholds are finite and set them to
+                # the min/max of the data if they aren't to calculate
+                # the x range of the plot
+                if np.isfinite(lowThreshold):
+                    ax1.axvline(lowThreshold, color=accent_color())
+                else:
+                    lowThreshold = np.nanmin(colBarVals)
+                if np.isfinite(highThreshold):
+                    ax1.axvline(highThreshold, color=accent_color())
+                else:
+                    highThreshold = np.nanmax(colBarVals)
+
+                widthThreshold = highThreshold - lowThreshold
+                upperLim = highThreshold + 0.5 * widthThreshold
+                lowerLim = lowThreshold - 0.5 * widthThreshold
+                ax1.set_xlim(lowerLim, upperLim)
+                numOutside = np.sum((data["z"] > upperLim) | (data["z"] < lowerLim))
+                ax1.set_title("Outside plot limits: " + str(numOutside))
+
             else:
-                highThreshold = np.nanmax(colBarVals)
-
-            widthThreshold = highThreshold - lowThreshold
-            upperLim = highThreshold + 0.5 * widthThreshold
-            lowerLim = lowThreshold - 0.5 * widthThreshold
-            ax1.set_xlim(lowerLim, upperLim)
-            numOutside = np.sum((data["z"] > upperLim) | (data["z"] < lowerLim))
-            ax1.set_title("Outside plot limits: " + str(numOutside))
-
-        else:
-            if vmin != vmax and np.isfinite(vmin) and np.isfinite(vmax):
-                ax1.set_xlim(vmin, vmax)
+                if vmin != vmax and np.isfinite(vmin) and np.isfinite(vmax):
+                    ax1.set_xlim(vmin, vmax)
 
         if self.autoAxesLimits:
             xlim, ylim = self._getAxesLimits(ras, decs)
         else:
             xlim, ylim = self.xLimits, self.yLimits
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
-        ax.set_xlabel(self.xAxisLabel)
-        ax.set_ylabel(self.yAxisLabel)
-        ax.invert_xaxis()
+        # sp.ax.set_xlim(xlim)
+        # sp.ax.set_ylim(ylim)
 
-        if self.showOutliers:
+        if self.showOutliers and not self.publicationStyle:
             # Add text boxes to show the number of tracts, number of NaNs,
             # median, sigma MAD, and the five largest outlier values.
             outlierText = self._getMaxOutlierVals(self.colorBarRange, tracts, colBarVals, outlierInds)
-        # Make vertical text spacing readable for different figure sizes.
-        multiplier = 3.5 / fig.get_size_inches()[1]
-        verticalSpacing = 0.028 * multiplier
-        fig.text(
-            0.01,
-            0.01 + 3 * verticalSpacing,
-            f"Num tracts: {len(tracts)}",
-            transform=fig.transFigure,
-            fontsize=8,
-            alpha=0.7,
-        )
-        if self.showNaNs:
+        if not self.publicationStyle:
+            # Make vertical text spacing readable for different figure sizes.
+            multiplier = 3.5 / fig.get_size_inches()[1]
+            verticalSpacing = 0.028 * multiplier
+            fig.text(
+                0.01,
+                0.01 + 3 * verticalSpacing,
+                f"Num tracts: {len(tracts)}",
+                transform=fig.transFigure,
+                fontsize=8,
+                alpha=0.7,
+            )
+
+        if self.showNaNs and not self.publicationStyle:
             fig.text(
                 0.01,
                 0.01 + 2 * verticalSpacing,
@@ -474,31 +474,28 @@ class WholeSkyPlot(PlotAction):
                 fontsize=8,
                 alpha=0.7,
             )
-        fig.text(
-            0.01,
-            0.01 + verticalSpacing,
-            f"Median: {med:.3f}; " + r"$\sigma_{MAD}$" + f": {sigmaMad:.3f}",
-            transform=fig.transFigure,
-            fontsize=8,
-            alpha=0.7,
-        )
-        if self.showOutliers:
+        if not self.publicationStyle:
+            fig.text(
+                0.01,
+                0.01 + verticalSpacing,
+                f"Median: {med:.3f}; " + r"$\sigma_{MAD}$" + f": {sigmaMad:.3f}",
+                transform=fig.transFigure,
+                fontsize=8,
+                alpha=0.7,
+            )
+        if self.showOutliers and not self.publicationStyle:
             fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
 
-        # Truncate the color range to (vmin, vmax).
-        if vmin != vmax and np.isfinite(vmin) and np.isfinite(vmax):
-            colBarVals = np.clip(np.array(colBarVals), vmin, vmax)
-        patchCollection.set_array(colBarVals)
         # Make the color bar with a metric label.
         axPos = ax.get_position()
-        cax = fig.add_axes([0.084, axPos.y1 + 0.02, 0.62, 0.07])
+        cax = fig.add_axes([0.04, 0.15, 0.03, 0.7])
+        cr = colorizer.Colorizer(norm=norm, cmap=colorMap)
         fig.colorbar(
-            patchCollection,
+            colorizer.ColorizingArtist(cr),
             cax=cax,
             shrink=0.7,
             extend="both",
-            location="top",
-            orientation="horizontal",
+            orientation="vertical",
         )
         cbarText = "Metric Values"
 
@@ -511,18 +508,29 @@ class WholeSkyPlot(PlotAction):
             va="center",
             fontsize=10,
             zorder=100,
+            rotation="vertical",
         )
         text.set_path_effects([pathEffects.Stroke(linewidth=3, foreground="w"), pathEffects.Normal()])
 
         # Finalize plot appearance.
-        ax.grid()
-        ax.set_axisbelow(True)
-        addPlotInfo(fig, plotInfo)
-        fig.subplots_adjust(left=0.08, right=0.92, top=0.8, bottom=0.17, wspace=0.05)
+        if not self.publicationStyle:
+            addPlotInfo(fig, plotInfo)
+            fig.subplots_adjust(left=0.02, right=0.92, top=0.8, bottom=0.17, wspace=0.05)
+        else:
+            fig.subplots_adjust(left=0.2, right=0.85, top=0.8, bottom=0.17, wspace=0.05)
         titleText = self.zAxisLabel.format_map(kwargs)
         if "zUnit" in data and data["zUnit"] != "":
             titleText += f" ({data['zUnit']})"
-        fig.suptitle("Metric: " + titleText, fontsize=20)
+        fig.suptitle("Metric: " + titleText, fontsize=12)
+
+        if self.publicationStyle:
+            sp.ax.legend(loc="upper left", bbox_to_anchor=(0.9, 0.1))
+            labelFontsize = 15
+        else:
+            sp.ax.legend(loc="upper right", bbox_to_anchor=(1.22, 1.1))
+            labelFontsize = 10
+        sp.ax.set_xlabel(self.xAxisLabel, fontsize=labelFontsize)
+        sp.ax.set_ylabel(self.yAxisLabel, fontsize=labelFontsize)
 
         # This saves metadata in the PNG that allows the plot-navigator
         # to provide tract numbers and metric values on mouseover.
@@ -554,11 +562,11 @@ class WholeSkyPlot(PlotAction):
         # transformations to be updated to the right values.
         fig.canvas.draw_idle()
 
-        patch_coordinate_entries = [
-            make_patch_md(patch, tract, value, ax)
-            for (patch, tract, value) in zip(patches, tracts, colBarVals)
-        ]
+        # patch_coordinate_entries = [
+        #    make_patch_md(patch, tract, value, ax)
+        #    for (patch, tract, value) in zip(patches, tracts, colBarVals)
+        # ]
 
-        fig.metadata = {"label": "Tract", "boxes": json.dumps(patch_coordinate_entries)}
+        # fig.metadata = {"label": "Tract", "boxes": json.dumps(patch_coordinate_entries)}
 
         return fig

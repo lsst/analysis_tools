@@ -143,10 +143,21 @@ class TargetRefCatDeltaScatterAstrom(TargetRefCatDelta):
         self.process.calculateActions.stars.highSNSelector.fluxType = "{band}_psfFlux_target"
         self.process.calculateActions.stars.fluxType = "{band}_psfFlux_target"
 
-        self.produce = ScatterPlotWithTwoHists()
-        self.produce.plotTypes = ["stars"]
-        self.produce.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
-        self.produce.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        # Calculate median, std, sigmaMad, RMS, and number counts:
+        self.process.calculateActions.ref_offset = MedianAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_mean = MeanAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_stdev = StdevAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_sigmaMad = SigmaMadAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_rms = RmsAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_nstars = CountAction(vectorKey="yStars")
+        self.process.calculateActions.ref_offset_gradient = MedianGradientAction(
+            xsVectorKey="xStars", ysVectorKey="yStars"
+        )
+
+        self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.magLabel = "PSF Magnitude (mag$_{{AB}}$)"
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag$_{{AB}}$)"
         self.applyContext(CoaddContext)
         self.applyContext(RefMatchContext)
 
@@ -294,7 +305,27 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDeltaScatterAstrom):
         )
         self.process.buildActions.yStars.buildAction.actionB = RAcosDec(raKey="ra_ref", decKey="dec_ref")
 
-        self.produce.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
+        self.produce.plot.yAxisLabel = "RA$_{{target}}$ - RA$_{{ref}}$ (mas)"
+
+        self.produce.metric.units = {
+            "ref_offset": "mas",
+            "ref_offset_mean": "mas",
+            "ref_offset_stdev": "mas",
+            "ref_offset_sigmaMad": "mas",
+            "ref_offset_rms": "mas",
+            "ref_offset_nstars": "",
+            "ref_offset_gradient": "mas / mag",
+        }
+
+        self.produce.metric.newNames = {
+            "ref_offset": "{band}_ref_ra_offset_coadd",
+            "ref_offset_mean": "{band}_ref_ra_offset_mean_coadd",
+            "ref_offset_stdev": "{band}_ref_ra_offset_stdev_coadd",
+            "ref_offset_sigmaMad": "{band}_ref_ra_offset_sigmaMad_coadd",
+            "ref_offset_rms": "{band}_ref_ra_offset_rms_coadd",
+            "ref_offset_nstars": "{band}_ref_ra_offset_nstars_coadd",
+            "ref_offset_gradient": "{band}_ref_ra_offset_gradient_coadd",
+        }
 
 
 class TargetRefCatDeltaRAScatterVisitPlot(TargetRefCatDeltaScatterAstromVisit):
@@ -335,7 +366,27 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDeltaScatterAstrom):
         self.process.buildActions.yStars.buildAction.actionA = LoadVector(vectorKey="coord_dec_target")
         self.process.buildActions.yStars.buildAction.actionB = LoadVector(vectorKey="dec_ref")
 
-        self.produce.yAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (mas)"
+        self.produce.plot.yAxisLabel = "Dec$_{{target}}$ - Dec$_{{ref}}$ (mas)"
+
+        self.produce.metric.units = {
+            "ref_offset": "mas",
+            "ref_offset_mean": "mas",
+            "ref_offset_stdev": "mas",
+            "ref_offset_sigmaMad": "mas",
+            "ref_offset_rms": "mas",
+            "ref_offset_nstars": "",
+            "ref_offset_gradient": "mas / mag",
+        }
+
+        self.produce.metric.newNames = {
+            "ref_offset": "{band}_ref_dec_offset_coadd",
+            "ref_offset_mean": "{band}_ref_dec_offset_mean_coadd",
+            "ref_offset_stdev": "{band}_ref_dec_offset_stdev_coadd",
+            "ref_offset_sigmaMad": "{band}_ref_dec_offset_sigmaMad_coadd",
+            "ref_offset_rms": "{band}_ref_dec_offset_rms_coadd",
+            "ref_offset_nstars": "{band}_ref_dec_offset_nstars_coadd",
+            "ref_offset_gradient": "{band}_ref_dec_offset_gradient_coadd",
+        }
 
 
 class TargetRefCatDeltaSkyPlot(TargetRefCatDelta):

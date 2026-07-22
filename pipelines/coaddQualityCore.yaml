@@ -19,6 +19,7 @@ tasks:
       atools.skyObjectSky: SkyObjectSkyPlot
       atools.skyObjectFlux: SkyObjectHistPlot
       atools.psfCModelScatter: PsfCModelScatterPlot  # photometry.py
+      atools.psfSersicScatter: PsfSersicScatterPlot  # photometry.py
       atools.shapeSizeDetRadiusVsCmodelMag: SizeMagnitudePlot
       atools.shapeSizeDetRadiusVsCmodelMag.size_type: "determinantRadius"
       atools.shapeSizeDetRadiusVsCmodelMag.mag_x: "cmodel_err"
@@ -95,6 +96,8 @@ tasks:
       atools.sersicIndexVsSersicMag.applyContext: CoaddContext
       atools.coaddInputCount: CoaddInputCount
       atools.coaddPatchCount: CountPatches  #  counts.py
+      atools.fiveSigmaDepth: FiveSigmaPointSourceDepthMetric  # limitingMagnitudeMetric
+      atools.fiveSigmaDepth.applyContext: CoaddContext
       python: |
         from lsst.analysis.tools.atools import *
         from lsst.analysis.tools.contexts import *

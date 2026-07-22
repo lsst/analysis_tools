@@ -32,10 +32,9 @@ import numpy as np
 import skyproj
 import yaml
 from matplotlib import colorizer, gridspec
-from matplotlib.collections import PatchCollection
-from matplotlib.colors import CenteredNorm, Normalize
+from matplotlib.colors import Normalize
 from matplotlib.figure import Figure
-from matplotlib.patches import Patch, Polygon
+from matplotlib.patches import Rectangle
 
 import lsst.analysis.tools
 from lsst.pex.config import ChoiceField, Field, ListField
@@ -275,12 +274,10 @@ class WholeSkyPlot(PlotAction):
                 if colorMap is None:
                     colorMap = stars_cmap()
                     outlierColor = "red"
-                norm = None
             case "divergent":
                 if colorMap is None:
                     colorMap = divergent_cmap()
                     outlierColor = "fuchsia"
-                norm = CenteredNorm()
 
         # Setup figure.
         if not self.publicationStyle:
@@ -296,6 +293,8 @@ class WholeSkyPlot(PlotAction):
         else:
             ax = fig.add_subplot(111)
             sp = skyproj.McBrydeSkyproj(ax=ax, extent=[-180, 180, -90, 30])
+        proj = sp.ax.projection
+        proj.set_plot_geodesics(False)
         sp.draw_milky_way(label="Milky Way", zorder=-1)
 
         # Define color bar range.
@@ -324,6 +323,7 @@ class WholeSkyPlot(PlotAction):
         decs = []
         mid_ras = []
         mid_decs = []
+        allPatches = []
         norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
         for i, tract in enumerate(data["tract"]):
             corners = getTractCorners(skymap, tract)
@@ -332,9 +332,25 @@ class WholeSkyPlot(PlotAction):
             for ra, dec in corners:
                 tractRas.append(ra)
                 tractDecs.append(dec)
-            sp.draw_box(
-                tractRas, tractDecs, facecolor=colorMap(norm(data["z"][i])), edgecolor="none", zorder=20
+            minRa = np.min(tractRas)
+            maxRa = np.max(tractRas)
+            minDec = np.min(tractDecs)
+            maxDec = np.max(tractDecs)
+            width = maxRa - minRa
+            height = maxDec - minDec
+            if width > 10:
+                width = minRa + 360 - maxRa
+            patch = Rectangle(
+                [minRa, minDec],
+                width,
+                height,
+                facecolor=colorMap(norm(data["z"][i])),
+                edgecolor="none",
+                zorder=20,
             )
+            patch.set_transform(proj)
+            allPatches.append(patch)
+            sp.ax.add_patch(patch)
             tracts.append(tract)
             ras.append(corners[0][0])
             decs.append(corners[0][1])
@@ -365,8 +381,22 @@ class WholeSkyPlot(PlotAction):
                 for ra, dec in corners:
                     tractRas.append(ra)
                     tractDecs.append(dec)
-                sp.draw_box(tractRas, tractDecs, facecolor="none", edgecolor=outlierColor, linewidth=0.5)
-            outlierLine = sp.ax.plot([-1, -2], [-1, -2], color=outlierColor, label="Outlier")
+                minRa = np.min(tractRas)
+                maxRa = np.max(tractRas)
+                minDec = np.min(tractDecs)
+                maxDec = np.max(tractDecs)
+                width = maxRa - minRa
+                height = maxDec - minDec
+                if width > 10:
+                    width = minRa + 360 - maxRa
+                patch = Rectangle(
+                    [minRa, minDec], width, height, facecolor="none", edgecolor=outlierColor, zorder=20
+                )
+                patch.set_transform(proj)
+                sp.ax.add_patch(patch)
+                tracts.append(tract)
+
+            sp.ax.plot([-1, -2], [-1, -2], color=outlierColor, label="Outlier")
 
         if self.showNaNs:
             # Plot tracts with NaN metric values.
@@ -378,17 +408,31 @@ class WholeSkyPlot(PlotAction):
                 for ra, dec in corners:
                     tractRas.append(ra)
                     tractDecs.append(dec)
-                sp.draw_box(
-                    tractRas,
-                    tractDecs,
+                minRa = np.min(tractRas)
+                maxRa = np.max(tractRas)
+                minDec = np.min(tractDecs)
+                maxDec = np.max(tractDecs)
+                width = maxRa - minRa
+                height = maxDec - minDec
+                if width > 10:
+                    width = minRa + 360 - maxRa
+                patch = Rectangle(
+                    [minRa, minDec],
+                    width,
+                    height,
                     facecolor="none",
                     edgecolor="grey",
+                    zorder=20,
                     linewidth=0.5,
                     linestyle="dotted",
-                    zorder=20,
                 )
+                patch.set_transform(proj)
+                allPatches.append(patch)
+                sp.ax.add_patch(patch)
+                tracts.append(tract)
+
             # Add legend information.
-            nanLine = sp.ax.plot([-1, -2], [-1, -2], color="grey", linestyle="dotted", label="NaN")
+            sp.ax.plot([-1, -2], [-1, -2], color="grey", linestyle="dotted", label="NaN")
 
         if self.labelTracts and not self.publicationStyle:
             # Label the tracts
@@ -404,7 +448,6 @@ class WholeSkyPlot(PlotAction):
                     zorder=100,
                 )
 
-        axPos = ax.get_position()
         if not self.publicationStyle:
             ax1 = fig.add_axes([0.73, 0.25, 0.20, 0.47])
 
@@ -445,8 +488,8 @@ class WholeSkyPlot(PlotAction):
             xlim, ylim = self._getAxesLimits(ras, decs)
         else:
             xlim, ylim = self.xLimits, self.yLimits
-        # sp.ax.set_xlim(xlim)
-        # sp.ax.set_ylim(ylim)
+
+        sp.set_extent([xlim[0], xlim[1], ylim[0], ylim[1]])
 
         if self.showOutliers and not self.publicationStyle:
             # Add text boxes to show the number of tracts, number of NaNs,
@@ -487,7 +530,6 @@ class WholeSkyPlot(PlotAction):
             fig.text(0.01, 0.01, outlierText, transform=fig.transFigure, fontsize=8, alpha=0.7)
 
         # Make the color bar with a metric label.
-        axPos = ax.get_position()
         cax = fig.add_axes([0.04, 0.15, 0.03, 0.7])
         cr = colorizer.Colorizer(norm=norm, cmap=colorMap)
         fig.colorbar(
@@ -546,9 +588,11 @@ class WholeSkyPlot(PlotAction):
         # - value: the region's metric, as a string.
         #
         def make_patch_md(patch, id_field, value, ax):
-            path = ax.transData.transform_path(patch.get_path())
-            x_path = [int(x) for x in path.vertices[:, 0].tolist()]
-            y_path = [int(y) for y in path.vertices[:, 1].tolist()]
+            trans = patch.get_transform()
+            path = trans.transform_path(patch.get_path())
+            scale = fig.canvas.device_pixel_ratio
+            x_path = [int(x) for x in (path.vertices[:, 0] / scale).tolist()]
+            y_path = [int(y) for y in (path.vertices[:, 1] / scale).tolist()]
             return {
                 "min_x": min(x_path),
                 "max_x": max(x_path),
@@ -562,11 +606,11 @@ class WholeSkyPlot(PlotAction):
         # transformations to be updated to the right values.
         fig.canvas.draw_idle()
 
-        # patch_coordinate_entries = [
-        #    make_patch_md(patch, tract, value, ax)
-        #    for (patch, tract, value) in zip(patches, tracts, colBarVals)
-        # ]
+        patch_coordinate_entries = [
+            make_patch_md(patch, tract, value, ax)
+            for (patch, tract, value) in zip(allPatches, tracts, colBarVals)
+        ]
 
-        # fig.metadata = {"label": "Tract", "boxes": json.dumps(patch_coordinate_entries)}
+        fig.metadata = {"label": "Tract", "boxes": json.dumps(patch_coordinate_entries)}
 
         return fig

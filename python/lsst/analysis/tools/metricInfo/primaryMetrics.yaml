@@ -1,0 +1,86 @@
+# Primary metrics for the QA alarm system.
+#
+# These are the initial candidates for Tier 1 alarming — one or two metrics per
+# type that cover the most fundamental data quality checks. The full metric set
+# is still evaluated and logged (Tier 2).
+#
+# Structure mirrors metricDescriptions.yaml: task_class -> atool -> [metric_names].
+# Just membership — everything else about a metric (units, sided, metricTypes,
+# description) is already in metricDescriptions.yaml, keyed by the same tuple.
+#
+# This set should be reviewed once real campaign data is available to check for
+# failure modes it misses.
+#
+# DM-55280 added per-visit aggregates (min/max/median/sigmaMad or mad, across
+# the detectors contributing to the visit) of what used to be purely
+# per-detector metrics. Where a primary metric's underlying quantity is now
+# available aggregated, this set alarms on the aggregate rather than the raw
+# per-detector value, so one bad detector isn't diluted into an otherwise
+# unremarkable visit-level picture. The choice of aggregate follows the
+# metric's own failure mode:
+#   - one-sided "badness" metrics use min or max toward the bad direction
+#     (e.g. sat_mask_fraction_max: the worst detector is what matters)
+#   - metrics that should sit in a narrow, well-defined range use both min
+#     and max (e.g. pixelScale, corner-to-corner distances/ratios)
+#   - two-sided offset metrics centered near zero use sigmaMad, since a
+#     detector disagreeing with the rest matters more than raw magnitude
+#     (e.g. psfStarDeltaE1Median_sigmaMad) — but sigmaMad is a *robust*
+#     statistic, deliberately insensitive to a single outlier among many
+#     detectors, so it's paired with min and max too: sigmaMad catches
+#     widespread inconsistency across the focal plane, min/max catch one
+#     lone discrepant detector that sigmaMad alone would under-react to
+
+tasks:
+  lsst.analysis.tools.tasks.metadataAnalysis.AggregatedTaskMetadataAnalysisTask:
+    atools:
+      calibrateImageMetadataMetrics:
+        - bad_mask_fraction_max
+        - sat_mask_fraction_max
+
+  lsst.analysis.tools.tasks.exposureCatalogAnalysis.ExposureCatalogAnalysisTask:
+    atools:
+      aggregateCalexpSummaryStats:
+        - pixelScale_min
+        - pixelScale_max
+        - psfSigma_max
+        - psfStarDeltaE1Median_min
+        - psfStarDeltaE1Median_max
+        - psfStarDeltaE1Median_sigmaMad
+        - psfStarDeltaSizeMedian_min
+        - psfStarDeltaSizeMedian_max
+        - psfStarDeltaSizeMedian_sigmaMad
+        - skyBg_max
+        - skyNoise_max
+        - effTime_min
+        - magLim_min
+      aggregateCornerSeparations:
+        - cornerSeparation_min
+        - cornerSeparation_max
+        - cornerSeparationRatio_min
+        - cornerSeparationRatio_max
+
+  lsst.analysis.tools.tasks.refCatSourceAnalysis.RefCatSourceAnalysisTask:
+    atools:
+      astromDiffMetrics:
+        - AA1_tot
+        - AA1_sigmaMad_tot
+
+  lsst.analysis.tools.tasks.associatedSourcesTractAnalysis.AssociatedSourcesTractAnalysisTask:
+    atools:
+      stellarAstrometricRepeatability1:
+        - '{band}_AM1'
+        - '{band}_AD1'
+        - '{band}_AF1'
+
+  lsst.analysis.tools.tasks.refCatSourcePhotometricAnalysis.RefCatSourcePhotometricAnalysisTask:
+    atools:
+      photomDiffMetrics:
+        - ref_photom_offset_sigmaMad
+
+  lsst.analysis.tools.tasks.objectTableTractAnalysis.ObjectTableTractAnalysisTask:
+    atools:
+      wPerpPSF:
+        - wPerp_psfFlux_sigmaMAD
+      parentDeblenderMetrics:
+        - numDeblendFailed
+        - propPeakDropouts

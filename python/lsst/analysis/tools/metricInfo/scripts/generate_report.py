@@ -59,7 +59,9 @@ import yaml
 log = logging.getLogger(__name__)
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
-METRIC_DESCRIPTIONS_PATH = _SCRIPTS_DIR.parent / "metricDescriptions.yaml"
+_METRICINFO_DIR = _SCRIPTS_DIR.parent
+METRIC_DESCRIPTIONS_PATH = _METRICINFO_DIR / "metricDescriptions.yaml"
+PRIMARY_METRICS_PATH = _METRICINFO_DIR / "primaryMetrics.yaml"
 
 METRICS_PER_PAGE = 4
 DESCRIPTION_WRAP_WIDTH = 38
@@ -70,6 +72,34 @@ BAND_ORDER = {"u": 0, "g": 1, "r": 2, "i": 3, "z": 4, "y": 5}
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def load_primary_metrics(path: Path) -> set[tuple[str, str, str]]:
+    """Load primaryMetrics.yaml and return a set of (task_class, atool, metric_name) tuples.
+
+    Parameters
+    ----------
+    path
+        Path to primaryMetrics.yaml.
+
+    Returns
+    -------
+    set
+        Each element is a ``(task_class, atool, metric_name)`` tuple.  Metric
+        names are in template form (may contain ``{band}``).  Returns an empty
+        set if the file does not exist.
+    """
+    if not path.exists():
+        log.warning("Primary metrics file not found: %s", path)
+        return set()
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    result: set[tuple[str, str, str]] = set()
+    for task_class, task_data in data["tasks"].items():
+        for atool, atool_data in task_data["atools"].items():
+            for metric_name in atool_data:
+                result.add((task_class, atool, metric_name))
+    return result
 
 
 def load_metric_descriptions(path: Path) -> dict[tuple[str, str, str], dict]:
@@ -149,6 +179,7 @@ def _render_page(
     type_label: str,
     page_label: str,
     pipeline_name: str,
+    primary_keys: set[tuple[str, str, str]] | None = None,
 ) -> None:
     n_rows = len(page_metrics)
     n_strata = len(strata)
@@ -201,10 +232,13 @@ def _render_page(
         meta_lines.append(("Task:", task_name))
         meta_lines.append(("ATool:", atool))
 
+        is_primary = primary_keys is not None and (task_name, atool, metric_name) in primary_keys
+        display_name = f"★ {metric_name}" if is_primary else metric_name
         info_ax.text(
-            0.0, 1.0, metric_name,
+            0.0, 1.0, display_name,
             transform=info_ax.transAxes,
             fontsize=7, fontweight="bold",
+            color="#d46000" if is_primary else "black",
             va="top", ha="left", clip_on=False,
         )
         info_ax.text(
@@ -330,6 +364,7 @@ def generate_report(
     pipeline_name: str = "",
     collection: str = "",
     test: bool = False,
+    primary_metrics_path: Path | None = None,
 ) -> None:
     """Generate a threshold report PDF.
 
@@ -347,12 +382,33 @@ def generate_report(
         Butler collection shown on the title page (optional).
     test
         If True, render only the first five pages of the report for testing purposes.
+    primary_metrics_path
+        Path to primaryMetrics.yaml.  Primary metrics are marked with ★ in the
+        PDF.  If None, falls back to the ``is_primary`` column in the CSV if
+        present, otherwise no metrics are marked.
     """
     metric_descs = load_metric_descriptions(METRIC_DESCRIPTIONS_PATH)
     thresh_df = pd.read_csv(thresholds_path)
     if "is_override" not in thresh_df.columns:
         thresh_df["is_override"] = False
     values_df = pd.read_parquet(values_path)
+
+    # Determine which metrics are primary by reading primaryMetrics.yaml directly.
+    # The YAML is the single source of truth — primacy is never stored in the CSV.
+    primary_set = load_primary_metrics(
+        primary_metrics_path if primary_metrics_path is not None else PRIMARY_METRICS_PATH
+    )
+    name_to_class_template = (
+        values_df[["task_name", "task_class", "atool", "metric_name", "template_metric_name"]]
+        .drop_duplicates()
+        .set_index(["task_name", "atool", "metric_name"])
+        [["task_class", "template_metric_name"]]
+    )
+    primary_keys: set[tuple[str, str, str]] = {
+        (task_name, atool, metric_name)
+        for (task_name, atool, metric_name), row in name_to_class_template.iterrows()
+        if (row["task_class"], atool, row["template_metric_name"]) in primary_set
+    }
 
     # Build a description lookup keyed by (task_name, atool, expanded_metric_name).
     # metricDescriptions.yaml is keyed by (task_class, atool, template_metric_name),
@@ -430,6 +486,7 @@ def generate_report(
                     pdf, page_metrics, strata,
                     values_df, thresh_df, name_descs,
                     level, type_label, page_label, pipeline_name,
+                    primary_keys=primary_keys,
                 )
                 pages_rendered += 1
 
@@ -463,6 +520,12 @@ def main() -> int:
         "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
     )
     parser.add_argument(
+        "--primary-metrics",
+        default=str(PRIMARY_METRICS_PATH),
+        metavar="PATH",
+        help="Path to primaryMetrics.yaml (default: %(default)s).",
+    )
+    parser.add_argument(
         "--dummy-report", action="store_true",
         help="Render only the first five pages for testing purposes.",
     )
@@ -486,6 +549,7 @@ def main() -> int:
         pipeline_name=args.pipeline,
         collection=args.collection,
         test=args.dummy_report,
+        primary_metrics_path=Path(args.primary_metrics),
     )
     return 0
 

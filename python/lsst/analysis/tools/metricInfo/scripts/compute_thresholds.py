@@ -643,14 +643,15 @@ def main() -> int:
                 atool, metric_name, gal_lat_bin, n,
             )
 
+        task_class = task_name_to_class[task_name]
+        template = metric_templates.get((task_name, atool, metric_name), metric_name)
+
         override = override_lookup.get((task_name, atool, metric_name))
         if override is not None:
             lower = override["lower"]
             upper = override["upper"]
             is_override = True
         else:
-            task_class = task_name_to_class[task_name]
-            template = metric_templates.get((task_name, atool, metric_name), metric_name)
             desc = metric_descs.get((task_class, atool, template), {})
             sided = desc.get("sided", "one")
 

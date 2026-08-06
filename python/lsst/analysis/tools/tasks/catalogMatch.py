@@ -328,6 +328,8 @@ class CatalogMatchTask(pipeBase.PipelineTask):
             refCatalogNotMatched["matchDistance"] = [np.nan] * len(refCatalogNotMatched)
             tMatched = vstack([tMatched, refCatalogNotMatched])
 
+        tMatched.meta["matchRatio_meta"] = len(tMatched)/len(refCatalog)
+        print(tMatched.meta)
         return pipeBase.Struct(matchedCatalog=tMatched)
 
     def prepColumns(self, bands):

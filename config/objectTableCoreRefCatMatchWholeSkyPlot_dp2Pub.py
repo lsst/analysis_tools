@@ -7,8 +7,10 @@ from lsst.analysis.tools.atools import WholeSkyPlotTool
 keysWithBand = [
     "astromDiffRAScatterPlot_{band}_ref_ra_offset_coadd",
     "astromDiffRAScatterPlot_{band}_ref_ra_offset_sigmaMad_coadd",
+    "astromDiffRAScatterPlot_{band}_ref_ra_match_ratio",
     "astromDiffDecScatterPlot_{band}_ref_dec_offset_coadd",
     "astromDiffDecScatterPlot_{band}_ref_dec_offset_sigmaMad_coadd",
+    "astromDiffDecScatterPlot_{band}_ref_dec_match_ratio",
 ]
 if hasattr(parameters, "objectTableCoreRefCatMatchWholeSkyPlotKeysWithBand"):
     keysWithBand = parameters.objectTableCoreRefCatMatchWholeSkyPlotKeysWithBand
@@ -19,7 +21,7 @@ for keyWithBand in keysWithBand:
     atool = getattr(config.atools, atoolName)
     setattr(atool, "metric", keyWithBand)
     setattr(atool, "publicationStyle", True)
-    if "sigmaMad" not in atoolName:
+    if "sigmaMad" not in atoolName and "ratio" not in atoolName:
         setattr(atool, "fixAroundZero", True)
 
 config.addOutputNamePrefix = True

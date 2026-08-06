@@ -314,6 +314,10 @@ class WholeSkyPlot(PlotAction):
         else:
             vmax = med + self.colorBarRange * sigmaMad
 
+        if med == 0 and sigmaMad == 0:
+            vmin = np.nanmin(colBarVals)
+            vmax = np.nanmax(colBarVals)
+
         if self.fixAroundZero:
             vmax = np.nanmax([np.fabs(vmin), np.fabs(vmax)])
             vmin = -1 * vmax

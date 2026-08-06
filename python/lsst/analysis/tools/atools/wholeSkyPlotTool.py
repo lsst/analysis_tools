@@ -71,10 +71,13 @@ class WholeSkyPlotTool(AnalysisTool):
         if self.publicationStyle:
             self.produce.plot.publicationStyle = True
         self.produce.plot.zAxisLabel = self.metric
-        sequentialMetrics = ["count", "num", "igma", "tdev", "Repeat"]
+        sequentialMetrics = ["count", "num", "igma", "tdev", "Repeat", "ratio"]
         for seqMet in sequentialMetrics:
             if seqMet in self.metric:
                 self.produce.plot.colorMapType = "sequential"
+        if "ratio" in self.metric:
+            self.produce.plot.colorBarMin = 0.0
+            self.produce.plot.colorBarMax = 1.0
         self.produce.plot.fixAroundZero = self.fixAroundZero
         if self.fixAroundZero:
             self.produce.plot.colorMapType = "divergent"

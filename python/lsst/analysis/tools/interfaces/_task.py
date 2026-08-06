@@ -523,6 +523,9 @@ class AnalysisPipelineTask(PipelineTask):
         if "plotInfo" not in kwargs:
             kwargs["plotInfo"] = _StandinPlotInfo()
         kwargs["plotInfo"]["bands"] = kwargs["bands"]
+        for key in data.meta.keys():
+            if "LSST" not in key:
+                data[key] = data.meta[key]
         return self._runTools(data, **kwargs)
 
     def runQuantum(
@@ -685,7 +688,7 @@ class AnalysisPipelineTask(PipelineTask):
         """
         if names is None:
             names = self.collectInputNames()
-        return cast(KeyedData, handle.get(parameters={"columns": names}))
+        return cast(KeyedData, handle.get(parameters={"columns": names, "strip_astropy_meta_yaml": False}))
 
     def collectInputNames(self) -> Iterable[str]:
         """Get the names of the inputs.
@@ -706,5 +709,6 @@ class AnalysisPipelineTask(PipelineTask):
         for band in localBands:
             for action in self.config.atools:
                 for key, _ in action.getFormattedInputSchema(band=band):
-                    inputs.add(key)
+                    if "meta" not in key:
+                        inputs.add(key)
         return inputs

@@ -59,6 +59,7 @@ from ..actions.scalar.scalarActions import (
     RmsAction,
     SigmaMadAction,
     StdevAction,
+    ValueAction,
 )
 from ..actions.vector import (
     AngularSeparation,
@@ -153,6 +154,7 @@ class TargetRefCatDeltaScatterAstrom(TargetRefCatDelta):
         self.process.calculateActions.ref_offset_gradient = MedianGradientAction(
             xsVectorKey="xStars", ysVectorKey="yStars"
         )
+        self.process.calculateActions.match_ratio = ValueAction(vectorKey="matchRatio_meta")
 
         self.produce.plot = ScatterPlotWithTwoHists()
         self.produce.plot.plotTypes = ["stars"]
@@ -315,6 +317,7 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDeltaScatterAstrom):
             "ref_offset_rms": "mas",
             "ref_offset_nstars": "",
             "ref_offset_gradient": "mas / mag",
+            "match_ratio": "",
         }
 
         self.produce.metric.newNames = {
@@ -325,6 +328,7 @@ class TargetRefCatDeltaRAScatterPlot(TargetRefCatDeltaScatterAstrom):
             "ref_offset_rms": "{band}_ref_ra_offset_rms_coadd",
             "ref_offset_nstars": "{band}_ref_ra_offset_nstars_coadd",
             "ref_offset_gradient": "{band}_ref_ra_offset_gradient_coadd",
+            "match_ratio": "{band}_ref_ra_match_ratio",
         }
 
 
@@ -376,6 +380,7 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDeltaScatterAstrom):
             "ref_offset_rms": "mas",
             "ref_offset_nstars": "",
             "ref_offset_gradient": "mas / mag",
+            "match_ratio": "",
         }
 
         self.produce.metric.newNames = {
@@ -386,6 +391,7 @@ class TargetRefCatDeltaDecScatterPlot(TargetRefCatDeltaScatterAstrom):
             "ref_offset_rms": "{band}_ref_dec_offset_rms_coadd",
             "ref_offset_nstars": "{band}_ref_dec_offset_nstars_coadd",
             "ref_offset_gradient": "{band}_ref_dec_offset_gradient_coadd",
+            "match_ratio": "{band}_ref_dec_match_ratio",
         }
 
 

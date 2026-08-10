@@ -20,14 +20,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("CalibStatisticFocalPlanePlot",)
+__all__ = ("CalibStatisticFocalPlanePlot", "CalibAmpMetric")
 
-from lsst.pex.config import Field
+from lsst.pex.config import Field, ListField
 
 from ..actions.plot.focalPlanePlot import FocalPlaneGeometryPlot
 from ..actions.scalar.scalarActions import MedianAction
 from ..actions.vector import LoadVector
-from ..interfaces import AnalysisTool
+from ..interfaces import AnalysisTool, KeyedDataAction, NoPlot, Vector
 
 
 class CalibrationTool(AnalysisTool):
@@ -46,6 +46,44 @@ class CalibrationTool(AnalysisTool):
 
         self.produce.plot = FocalPlaneGeometryPlot()
         self.produce.plot.statistic = "median"
+
+
+class PerAmpKeyedScalars(KeyedDataAction):
+    """Repack per-row values into one mapping keyed by amp."""
+
+    outputKey = Field[str](doc="Name the per-amp mapping is stored under.")
+    groupKeys = ListField[str](doc="Row keys joined to form each amp label.",
+                               default=["detector", "amplifier"])
+    valueKey = Field[str](doc="Per-row value to turn into per-amp metrics.")
+
+    def getInputSchema(self):
+        for k in self.groupKeys:
+            yield (k, Vector)
+        yield (self.valueKey, Vector)
+
+    def __call__(self, data, **kwargs):
+        value = data[self.valueKey.format(**kwargs)]
+        cols = [data[k.format(**kwargs)] for k in self.groupKeys]
+        mapping = {"_".join(str(c[i]) for c in cols): float(value[i])
+                   for i in range(len(value))}
+        return {self.outputKey: mapping}   # wrapped so BaseProcess keeps it grouped
+
+
+class CalibAmpMetric(CalibrationTool):
+    """Doc to add
+    """
+    quantityKey = Field[str](
+        default="DEFECTS_DEFECT_PIXELS", doc="VectorKey to output the per amp value from.")
+    unit = Field[str](default="", doc="Unit of value per amp.")
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.produce.plot = NoPlot()
+
+    def finalize(self):
+        self.process.calculateActions.perAmp = PerAmpKeyedScalars(
+            outputKey="nDefects", valueKey=self.quantityKey)
+        self.produce.metric.units = {"nDefects": self.unit}
 
 
 class CalibStatisticFocalPlanePlot(CalibrationTool):

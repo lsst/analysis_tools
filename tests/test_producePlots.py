@@ -25,11 +25,14 @@ import matplotlib.pyplot as plt
 
 import lsst.utils.tests
 from lsst.analysis.tools.actions.vector import LoadVector
+from lsst.analysis.tools.atools import SkyObjectHistPlot
 from lsst.analysis.tools.interfaces import AnalysisTool, JointAction, PlotAction
 
 # BaseMetricAction is used to produce a real Measurement without needing to
 # hand-roll a MetricAction subclass.
 from lsst.analysis.tools.interfaces._stages import BaseMetricAction
+from lsst.analysis.tools.tasks.objectTableTractAnalysis import ObjectTableTractAnalysisConfig
+from lsst.pipe.base.connections import iterConnections
 from lsst.verify import Measurement
 
 
@@ -84,6 +87,64 @@ class ProducePlotsToolTestCase(TestCase):
 
         tool.doProducePlots = False
         self.assertEqual(tuple(tool.getOutputNames()), tuple())
+
+
+class ProducePlotsTaskTestCase(TestCase):
+    """Test that `AnalysisBaseConfig.doProducePlots` propagates to atools on
+    freeze, without ever re-enabling a tool that has disabled its own plots.
+    """
+
+    def _makeConfig(self, taskDoProducePlots: bool, toolDoProducePlots: bool | None = None):
+        config = ObjectTableTractAnalysisConfig()
+        config.connections.outputName = "test"
+        config.atools.skyObjectHistPlot = SkyObjectHistPlot()
+        if toolDoProducePlots is not None:
+            config.atools.skyObjectHistPlot.doProducePlots = toolDoProducePlots
+        config.doProducePlots = taskDoProducePlots
+        config.validate()
+        config.freeze()
+        return config
+
+    def testTaskLevelForcesToolsOff(self):
+        config = self._makeConfig(taskDoProducePlots=False)
+        self.assertFalse(config.atools.skyObjectHistPlot.doProducePlots)
+
+    def testTaskLevelDoesNotForceToolsOn(self):
+        config = self._makeConfig(taskDoProducePlots=True)
+        self.assertTrue(config.atools.skyObjectHistPlot.doProducePlots)
+
+    def testTaskLevelDoesNotReenableDisabledTool(self):
+        # There may be occasions when one wants to off the plots for one
+        # analysis tool within a suite of analysis tools.
+        config = self._makeConfig(taskDoProducePlots=True, toolDoProducePlots=False)
+        self.assertFalse(config.atools.skyObjectHistPlot.doProducePlots)
+
+
+class ProducePlotsConnectionsTestCase(TestCase):
+    """Test that plot output connections are not created for atools with
+    plots disabled.
+    """
+
+    def _plotConnectionNames(self, config) -> set[str]:
+        connections = config.connections.ConnectionsClass(config=config)
+        return {c.name for c in iterConnections(connections, "outputs") if c.storageClass == "Plot"}
+
+    def _makeConfig(self, doProducePlots: bool):
+        config = ObjectTableTractAnalysisConfig()
+        config.connections.outputName = "test"
+        config.atools.skyObjectHistPlot = SkyObjectHistPlot()
+        config.doProducePlots = doProducePlots
+        config.validate()
+        config.freeze()
+        return config
+
+    def testPlotConnectionsPresentWhenEnabled(self):
+        config = self._makeConfig(doProducePlots=True)
+        self.assertTrue(self._plotConnectionNames(config))
+
+    def testPlotConnectionsAbsentWhenDisabled(self):
+        config = self._makeConfig(doProducePlots=False)
+        self.assertEqual(self._plotConnectionNames(config), set())
 
 
 class MyMemoryTestCase(lsst.utils.tests.MemoryTestCase):

@@ -48,6 +48,16 @@ class WholeSkyPlotTool(AnalysisTool):
         default="e1Diff_{band}_highSNStars_median",
     )
 
+    publicationStyle = Field[bool](
+        doc="Plot a simplified plot for publication use.",
+        default=False,
+    )
+
+    fixAroundZero = Field[bool](
+        doc="Fix the colorbar to be symmetric around zero.",
+        default=False,
+    )
+
     def setDefaults(self):
         super().setDefaults()
 
@@ -58,8 +68,12 @@ class WholeSkyPlotTool(AnalysisTool):
     def finalize(self):
         self.process.buildActions.z = LoadVector(vectorKey=self.metric)
         self.process.buildActions.zUnit = KeyedDataUnitAccessAction(key=self.metric)
+        if self.publicationStyle:
+            self.produce.plot.publicationStyle = True
         self.produce.plot.zAxisLabel = self.metric
         sequentialMetrics = ["count", "ean", "edian", "num", "igma", "tdev", "Repeat"]
-        if any(sequentialMetric in self.metric for sequentialMetric in sequentialMetrics):
-            self.produce.plot.colorMapType = "sequential"
+        for seqMet in sequentialMetrics:
+            if seqMet in self.metric and "iff_" not in self.metric:
+                self.produce.plot.colorMapType = "sequential"
+        self.produce.plot.fixAroundZero = self.fixAroundZero
         super().finalize()

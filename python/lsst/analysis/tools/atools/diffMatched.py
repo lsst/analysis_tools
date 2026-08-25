@@ -752,6 +752,25 @@ class MatchedRefCoaddCompurityTool(MagnitudeTool, MatchedRefCoaddTool):
                     for name_action, action in actions_to_add.items():
                         setattr(metric_action.actions, name_action, action)
                     metric_action.metrics = metrics_to_add
+
+                # The plot action might need e.g. RA/dec columns to set plot
+                # limits
+                input_keys = set(input_[0] for input_ in self.getInputSchema())
+                input_keys.update(set(output_[0] for output_ in metric_action.getOutputSchema()))
+                for input_ in plot_action.getInputSchema():
+                    if (key := input_[0]) not in input_keys:
+                        # It would be preferable to set the attr name to
+                        # something other than key here, such as
+                        # completeness_plot_action_{key}.
+                        # However, this would require changing the relevant
+                        # config value in the plot_action.
+                        # KeyedDataSelectorAction also doesn't seem to work
+                        # for unclear reasons.
+                        setattr(
+                            self.process.buildActions,
+                            key,
+                            LoadVector(vectorKey=key),
+                        )
             else:
                 if not self.make_plots:
                     self.produce.plot = NoPlot

@@ -19,7 +19,11 @@ more intuitive initially we'll talk about tables and column names.
 
 Setting Up the Package and Getting Started With The Stack
 ---------------------------------------------------------
-To set up the stack you need to source your version of:
+The LSST Science Pipelines are installed on the Rubin Science Platform
+(RSP), which we use in this example. If you are developing locally, instructions
+for installing the LSST Science Pipelines can be found
+`here <https://pipelines.lsst.io/install/index.html>`_.
+To set up,
 
 ``source /opt/lsst/software/stack/loadLSST.bash``
 
@@ -32,11 +36,11 @@ then you can git clone the package from https://github.com/lsst/analysis_tools.
 
 ``git clone git@github.com:lsst/analysis_tools.git``
 
-Once the package has been cloned, it needs to be setup and scons needs to be run to build the package.
+Once the package has been cloned, it needs to be set up, and scons needs to be run to build the package.
 
-``setup -j -r repos/analyis_tools``
+``setup -j -r analysis_tools``
 
-``scons repos/analysis_tools``
+``scons analysis_tools``
 
 More details can be found here:
 https://pipelines.lsst.io/install/package-development.html?highlight=github#un-set-up-the-development-package

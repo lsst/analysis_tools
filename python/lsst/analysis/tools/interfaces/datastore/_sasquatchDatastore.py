@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
 from lsst.daf.butler.datastore import DatasetRefURIs, DatastoreConfig, DatastoreOpaqueTable
+from lsst.daf.butler.datastore.constraints import Constraints, ConstraintsConfig
 from lsst.daf.butler.datastore.generic_base import GenericBaseDatastore
 from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
@@ -64,9 +65,18 @@ class SasquatchDatastore(GenericBaseDatastore):
         Unused parameter.
     """
 
-    defaultConfigFile: ClassVar[str | None] = "sasquatchDatastore.yaml"
-    """Path to configuration defaults. Accessed within the ``configs`` resource
-    or relative to a search path. Can be None if no defaults specified.
+    defaultConfigFile: ClassVar[str | None] = "datastores/sasquatchDatastore.yaml"
+    """Path of datastore-specific configuration file to be included in
+    searches when building butler configurations. Relative to each entry of
+    ``DAF_BUTLER_CONFIG_PATH``.
+    """
+
+    builtinConstraints: ClassVar[Mapping[str, list[str]]] = {"accept": ["MetricMeasurementBundle"]}
+    """Constraints the datastore imposes on itself.
+
+    The dispatcher can only serialize metric bundles, so these types are
+    always accepted. Configuration can add further accepted types but can
+    not remove these.
     """
 
     restProxyUrl: str
@@ -107,6 +117,15 @@ class SasquatchDatastore(GenericBaseDatastore):
     ):
         super().__init__(config, bridgeManager)
 
+        # Datastore.__init__ builds constraints purely from configuration,
+        # which leaves the datastore accepting everything when no override
+        # file is found. Fold in the types this datastore can actually
+        # handle so that a missing or incomplete config can not widen them.
+        self.constraints = Constraints(
+            self._merged_constraints(self.config.get("constraints")),
+            universe=bridgeManager.universe,
+        )
+
         # Name ourselves either using an explicit name or a name
         # derived from the (unexpanded) root.
         self.name = self.config.get("name", "{}@{}".format(type(self).__name__, self.config["restProxyUrl"]))
@@ -134,6 +153,37 @@ class SasquatchDatastore(GenericBaseDatastore):
         self.extra_fields = extra_fields if extra_fields else None
 
         self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
+
+    @classmethod
+    def _merged_constraints(cls, configured: Config | None) -> ConstraintsConfig:
+        """Combine the built-in constraints with any from configuration.
+
+        Parameters
+        ----------
+        configured : `lsst.daf.butler.Config` or `None`
+            The ``constraints`` section of the datastore configuration, if
+            any.
+
+        Returns
+        -------
+        constraints : `ConstraintsConfig`
+            The built-in accepted types unioned with those from
+            configuration, along with any configured rejections.
+
+        Notes
+        -----
+        Accepted types are unioned rather than replaced so that a
+        configuration that omits them, or that is never found on the search
+        path, can not widen the datastore to types the dispatcher can not
+        serialize. A configuration can therefore add accepted types but not
+        remove the built-in ones.
+        """
+        merged = ConstraintsConfig(dict(cls.builtinConstraints))
+        if configured is not None:
+            merged["accept"] = sorted(set(merged["accept"]) | set(configured.get("accept", [])))
+            if "reject" in configured:
+                merged["reject"] = list(configured["reject"])
+        return merged
 
     @classmethod
     def _create_from_config(

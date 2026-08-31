@@ -28,8 +28,8 @@ import astropy.units as u
 
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
-from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher
-from lsst.daf.butler import CollectionType, Config
+from lsst.analysis.tools.interfaces.datastore import SasquatchDatastore, SasquatchDispatcher
+from lsst.daf.butler import CollectionType, Config, DatasetTypeNotSupportedError
 from lsst.daf.butler.tests.utils import makeTestTempDir, removeTestTempDir
 from lsst.verify import Measurement
 
@@ -72,6 +72,28 @@ class SasquatchDatastoreTest(unittest.TestCase):
 
         mock_method.assert_called()
         self.assertIs(mock_method.call_args[0][0], bundle)
+
+    def test_rejects_unsupported_dataset_type(self):
+        """The datastore must reject types the dispatcher can not serialize
+        even though its configuration declares no constraints.
+        """
+        butlerTests.addDatasetType(
+            self.butler, "NotAMetric", {"instrument", "visit", "detector"}, "StructuredDataDict"
+        )
+        with self.assertRaises(DatasetTypeNotSupportedError):
+            self.butler.put({"a": 1}, "NotAMetric", run="run1", instrument="DummyCam", visit=42, detector=2)
+
+    def test_configured_constraints_extend_builtin(self):
+        """Configured constraints add to the built-in accepted types rather
+        than replacing them.
+        """
+        self.assertEqual(SasquatchDatastore._merged_constraints(None)["accept"], ["MetricMeasurementBundle"])
+
+        merged = SasquatchDatastore._merged_constraints(
+            Config({"accept": ["OtherBundle"], "reject": ["Unwanted"]})
+        )
+        self.assertEqual(merged["accept"], ["MetricMeasurementBundle", "OtherBundle"])
+        self.assertEqual(merged["reject"], ["Unwanted"])
 
     def test_explicit_timestamp_version(self):
         dispatcher = SasquatchDispatcher("http://test.local", "na")

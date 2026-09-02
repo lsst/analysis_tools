@@ -28,13 +28,33 @@ import astropy.units as u
 
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
-from lsst.analysis.tools.interfaces.datastore import SasquatchDatastore, SasquatchDispatcher
+from lsst.analysis.tools.interfaces.datastore import (
+    DispatchableMetricBundle,
+    MetricMeasurement,
+    MetricName,
+    SasquatchDispatcher,
+)
 from lsst.daf.butler import CollectionType, Config, DatasetTypeNotSupportedError
 from lsst.daf.butler.tests.utils import makeTestTempDir, removeTestTempDir
 from lsst.verify import Measurement
 
 TESTDIR = os.path.abspath(os.path.dirname(__file__))
-CONFIG_FILE = os.path.join(TESTDIR, "config", "butler-sasquatch.yaml")
+
+
+class DuckMetricBundle:
+    """A metric bundle from outside this package.
+
+    Implements the dispatcher interface without inheriting from
+    `MetricMeasurementBundle`, standing in for the type a site other
+    than Rubin might configure this datastore to accept.
+    """
+
+    def __init__(self, data=None):
+        self._data = dict(data or {})
+        self.metricNamePrefix = ""
+
+    def items(self):
+        return self._data.items()
 
 
 class SasquatchDatastoreTest(unittest.TestCase):
@@ -44,6 +64,7 @@ class SasquatchDatastoreTest(unittest.TestCase):
         config = Config()
         config["datastore", "cls"] = "lsst.analysis.tools.interfaces.datastore.SasquatchDatastore"
         config["datastore", "restProxyUrl"] = "https://example.com/sasquatch-rest-proxy"
+        config["storageClasses", "DuckMetricBundle"] = {"pytype": f"{__name__}.DuckMetricBundle"}
 
         dataIds = {
             "instrument": ["DummyCam"],
@@ -73,27 +94,62 @@ class SasquatchDatastoreTest(unittest.TestCase):
         mock_method.assert_called()
         self.assertIs(mock_method.call_args[0][0], bundle)
 
+    def test_put_duck_typed_bundle(self):
+        """A type meeting the protocol dispatches whatever its storage
+        class is called, so sites outside Rubin can configure their own.
+        """
+        butlerTests.addDatasetType(
+            self.butler, "DuckMetrics", {"instrument", "visit", "detector"}, "DuckMetricBundle"
+        )
+        m = Measurement("nopackage.fancyMetric", 42.2 * u.s)
+        bundle = DuckMetricBundle({"m": [m]})
+
+        with patch.object(SasquatchDispatcher, "dispatchRef") as mock_method:
+            self.butler.put(bundle, "DuckMetrics", run="run1", instrument="DummyCam", visit=42, detector=2)
+
+        mock_method.assert_called()
+        self.assertIs(mock_method.call_args[0][0], bundle)
+
+    def test_rejects_non_conforming_measurements(self):
+        """A bundle holding things that are not measurements is rejected
+        before dispatch rather than failing inside the dispatcher.
+        """
+        butlerTests.addDatasetType(
+            self.butler, "DuckMetrics", {"instrument", "visit", "detector"}, "DuckMetricBundle"
+        )
+        bundle = DuckMetricBundle({"m": ["not a measurement"]})
+
+        with patch.object(SasquatchDispatcher, "dispatchRef") as mock_method:
+            with self.assertRaises(DatasetTypeNotSupportedError):
+                self.butler.put(
+                    bundle, "DuckMetrics", run="run1", instrument="DummyCam", visit=42, detector=2
+                )
+
+        mock_method.assert_not_called()
+
+    def test_put_bundle_with_no_measurements(self):
+        """A bundle with nothing to measure has nothing to check and is
+        dispatched unchanged.
+        """
+        butlerTests.addDatasetType(
+            self.butler, "DuckMetrics", {"instrument", "visit", "detector"}, "DuckMetricBundle"
+        )
+        bundle = DuckMetricBundle({"empty": []})
+
+        with patch.object(SasquatchDispatcher, "dispatchRef") as mock_method:
+            self.butler.put(bundle, "DuckMetrics", run="run1", instrument="DummyCam", visit=42, detector=2)
+
+        mock_method.assert_called()
+
     def test_rejects_unsupported_dataset_type(self):
-        """The datastore must reject types the dispatcher can not serialize
-        even though its configuration declares no constraints.
+        """A storage class the configuration accepts is still rejected when
+        its Python type does not provide the dispatcher's interface.
         """
         butlerTests.addDatasetType(
             self.butler, "NotAMetric", {"instrument", "visit", "detector"}, "StructuredDataDict"
         )
-        with self.assertRaises(DatasetTypeNotSupportedError):
+        with self.assertRaisesRegex(DatasetTypeNotSupportedError, "metricNamePrefix"):
             self.butler.put({"a": 1}, "NotAMetric", run="run1", instrument="DummyCam", visit=42, detector=2)
-
-    def test_configured_constraints_extend_builtin(self):
-        """Configured constraints add to the built-in accepted types rather
-        than replacing them.
-        """
-        self.assertEqual(SasquatchDatastore._merged_constraints(None)["accept"], ["MetricMeasurementBundle"])
-
-        merged = SasquatchDatastore._merged_constraints(
-            Config({"accept": ["OtherBundle"], "reject": ["Unwanted"]})
-        )
-        self.assertEqual(merged["accept"], ["MetricMeasurementBundle", "OtherBundle"])
-        self.assertEqual(merged["reject"], ["Unwanted"])
 
     def test_explicit_timestamp_version(self):
         dispatcher = SasquatchDispatcher("http://test.local", "na")
@@ -112,6 +168,25 @@ class SasquatchDatastoreTest(unittest.TestCase):
         dispatcher._handleTimes(meta, bundle, "localRun")
         dt = datetime.datetime(2023, 7, 28, 16, 51, 2, tzinfo=datetime.UTC)
         self.assertEqual(meta["timestamp"], dt.timestamp())
+
+
+class DispatchProtocolTest(unittest.TestCase):
+    """Tests for the structural types describing the dispatcher's interface."""
+
+    def test_bundle_accepts_metric_measurement_bundle(self):
+        self.assertIsInstance(MetricMeasurementBundle(), DispatchableMetricBundle)
+
+    def test_bundle_rejects_plain_dict(self):
+        """A `dict` has ``items`` but no ``metricNamePrefix``."""
+        self.assertNotIsInstance({"a": 1}, DispatchableMetricBundle)
+
+    def test_measurement_accepts_verify_measurement(self):
+        measurement = Measurement("nopackage.fancyMetric", 42.2 * u.s)
+        self.assertIsInstance(measurement, MetricMeasurement)
+        self.assertIsInstance(measurement.metric_name, MetricName)
+
+    def test_measurement_rejects_unrelated_object(self):
+        self.assertNotIsInstance(object(), MetricMeasurement)
 
 
 if __name__ == "__main__":

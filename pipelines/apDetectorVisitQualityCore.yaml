@@ -68,7 +68,6 @@ tasks:
         sciencePsfSize: pixel
         templatePsfSize: pixel
         scaleScienceVarianceFactor: ''
-        scaleTemplateVarianceFactor: ''
         differenceFootprintRatioMean: ''
         differenceFootprintRatioStdev: ''
         differenceFootprintSkyRatioMean: ''
@@ -80,6 +79,23 @@ tasks:
         # Format is "metric name in metadata: subtask that produced it"
         spatialConditionNum: makeKernel
         spatialKernelSum: makeKernel
+      python: |
+        from lsst.analysis.tools.atools import TaskMetadataMetricTool
+  analyzeTemplateMetrics:
+    class: lsst.analysis.tools.tasks.TaskMetadataAnalysisTask
+    config:
+      connections.inputName: buildTemplate_metadata
+      connections.outputName: templateMetadata  # Will be appended with "_metrics"
+      connections.storageClass: TaskMetadata
+      raiseNoWorkFoundOnIncompleteMetadata: true
+      inputDimensions: ["instrument", "visit", "detector"]
+      atools.templateMetadataMetric: TaskMetadataMetricTool
+      atools.templateMetadataMetric.taskName: buildTemplate
+      atools.templateMetadataMetric.metrics:
+        # Format is "metric name in the metadata": units
+        # Scaling the template variance is optional, so this task produces
+        # NoWorkFound when buildTemplate.doScaleVariance is False.
+        scaleTemplateVarianceFactor: ''
       python: |
         from lsst.analysis.tools.atools import TaskMetadataMetricTool
   analyzeDiaSourceDetectionMetrics:

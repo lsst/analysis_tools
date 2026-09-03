@@ -20086,3 +20086,37 @@ tasks:
             two diagonal corner-to-corner separations (dimensionless); a wide scatter indicates inconsistent
             detector-to-detector geometric distortion across the focal plane.
           sided: one
+  lsst.analysis.tools.tasks.diaSourceTableTractAnalysis.DiaSourceTableTractAnalysisTask:
+    atools:
+      NumDiaSources:
+        numDiaSources:
+          units: ct
+          metricTypes:
+          - coadd
+          - counts
+          description: Number of DIA sources in the tract's difference-image source table that pass
+            basic quality selection (not flagged bad, saturated at center, interpolated at center,
+            at the detector edge, or in a no-data region) (count).
+          sided: one
+      NumStreakDiaSources:
+        numStreakDiaSources:
+          units: ct
+          metricTypes:
+          - coadd
+          - counts
+          - detection
+          description: Number of quality-selected DIA sources in the tract (see numDiaSources) whose
+            footprint overlaps a detected satellite or meteor streak, flagged via pixelFlags_streak
+            — spurious detections caused by streak artifacts rather than real transients (count).
+          sided: one
+      NumStreakCenterDiaSources:
+        numStreakCenterDiaSources:
+          units: ct
+          metricTypes:
+          - coadd
+          - counts
+          - detection
+          description: Number of quality-selected DIA sources in the tract (see numDiaSources) whose
+            centroid falls within a detected satellite or meteor streak, flagged via pixelFlags_streakCenter
+            — a stricter subset of numStreakDiaSources (count).
+          sided: one

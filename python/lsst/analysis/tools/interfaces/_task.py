@@ -192,6 +192,8 @@ class AnalysisBaseConnections(
         # AnalysisPlots.
         names: Mapping[str, AnalysisTool] = {}
         for action in config.atools:
+            if not action.doProducePlots:
+                continue
             if action.dynamicOutputNames:
                 outNames = action.getOutputNames(config=config)
             else:
@@ -333,6 +335,12 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
     metric_tags = ListField[str](
         doc="List of tags which will be added to all configurable actions", default=[]
     )
+    doProducePlots = Field[bool](
+        doc="Produce plot outputs for the atools configured on this "
+        "task. Set to False to disable plot generation for all atools "
+        "run by this task while still producing their metrics.",
+        default=True,
+    )
     dataset_identifier = Field[str](doc="An identifier to be associated with output Metrics", optional=True)
     reference_package = Field[str](
         doc="A package who's version, at the time of metric upload to a "
@@ -399,6 +407,8 @@ class AnalysisBaseConfig(PipelineTaskConfig, pipelineConnections=AnalysisBaseCon
             for tool in self.atools:
                 for tag in self.metric_tags:
                     tool.metric_tags.insert(-1, tag)
+                if not self.doProducePlots:
+                    tool.doProducePlots = False
         super().freeze()
 
     def validate(self):

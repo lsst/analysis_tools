@@ -18671,3 +18671,1338 @@ tasks:
           description: Number of detectors contributing a value to this visit's failed_deblend_source_count
             aggregate statistics.
           sided: one
+  lsst.analysis.tools.tasks.exposureCatalogAnalysis.ExposureCatalogAnalysisTask:
+    atools:
+      aggregateCalexpSummaryStats:
+        psfSigma_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of gaussian sigma of
+            the PSF model in pixels, read from the calexp summary statistics. This characterizes the
+            seeing/PSF width for the exposure.
+          sided: one
+        psfSigma_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of gaussian sigma of
+            the PSF model in pixels, read from the calexp summary statistics. This characterizes the
+            seeing/PSF width for the exposure.
+          sided: one
+        psfSigma_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of gaussian sigma of
+            the PSF model in pixels, read from the calexp summary statistics. This characterizes the
+            seeing/PSF width for the exposure.
+          sided: one
+        psfSigma_sigmaMad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of gaussian sigma of the PSF
+            model in pixels, read from the calexp summary statistics. This characterizes the seeing/PSF
+            width for the exposure.
+          sided: one
+        psfArea_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of effective area of
+            the PSF model in pixel^2 (stored as dimensionless), computed from the PSF model shape.
+            Relates to the PSF solid angle.
+          sided: one
+        psfArea_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of effective area of
+            the PSF model in pixel^2 (stored as dimensionless), computed from the PSF model shape.
+            Relates to the PSF solid angle.
+          sided: one
+        psfArea_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of effective area of
+            the PSF model in pixel^2 (stored as dimensionless), computed from the PSF model shape.
+            Relates to the PSF solid angle.
+          sided: one
+        psfArea_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of effective area of the PSF
+            model in pixel^2 (stored as dimensionless), computed from the PSF model shape. Relates
+            to the PSF solid angle.
+          sided: one
+        psfIxx_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of second moment Ixx
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            x-axis.
+          sided: one
+        psfIxx_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of second moment Ixx
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            x-axis.
+          sided: one
+        psfIxx_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of second moment Ixx
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            x-axis.
+          sided: one
+        psfIxx_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of second moment Ixx of the
+            PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the x-axis.
+          sided: one
+        psfIyy_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of second moment Iyy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            y-axis.
+          sided: one
+        psfIyy_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of second moment Iyy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            y-axis.
+          sided: one
+        psfIyy_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of second moment Iyy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the
+            y-axis.
+          sided: one
+        psfIyy_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of second moment Iyy of the
+            PSF model in pixel^2 (stored as dimensionless), describing the PSF shape along the y-axis.
+          sided: one
+        psfIxy_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of cross-moment Ixy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF ellipticity orientation.
+          sided: two
+        psfIxy_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of cross-moment Ixy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF ellipticity orientation.
+          sided: two
+        psfIxy_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of cross-moment Ixy
+            of the PSF model in pixel^2 (stored as dimensionless), describing the PSF ellipticity orientation.
+          sided: two
+        psfIxy_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of cross-moment Ixy of the PSF
+            model in pixel^2 (stored as dimensionless), describing the PSF ellipticity orientation.
+          sided: one
+        ra_min:
+          units: degree
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of right ascension
+            of the exposure boresight center in degrees.
+          sided: one
+        ra_max:
+          units: degree
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of right ascension
+            of the exposure boresight center in degrees.
+          sided: one
+        ra_median:
+          units: degree
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of right ascension of
+            the exposure boresight center in degrees.
+          sided: one
+        ra_sigmaMad:
+          units: degree
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of right ascension of the exposure
+            boresight center in degrees.
+          sided: one
+        dec_min:
+          units: degree
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of declination of the
+            exposure boresight center in degrees.
+          sided: one
+        dec_max:
+          units: degree
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of declination of the
+            exposure boresight center in degrees.
+          sided: one
+        dec_median:
+          units: degree
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of declination of the
+            exposure boresight center in degrees.
+          sided: one
+        dec_sigmaMad:
+          units: degree
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of declination of the exposure
+            boresight center in degrees.
+          sided: one
+        pixelScale_min:
+          units: null
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of pixel scale of the
+            exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
+          sided: one
+        pixelScale_max:
+          units: null
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of pixel scale of the
+            exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
+          sided: one
+        pixelScale_median:
+          units: null
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of pixel scale of the
+            exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
+          sided: one
+        pixelScale_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of pixel scale of the exposure
+            in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
+          sided: one
+        zenithDistance_min:
+          units: degree
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of zenith distance
+            (angle from zenith) of the exposure center at the time of observation, in degrees.
+          sided: one
+        zenithDistance_max:
+          units: degree
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of zenith distance
+            (angle from zenith) of the exposure center at the time of observation, in degrees.
+          sided: one
+        zenithDistance_median:
+          units: degree
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of zenith distance (angle
+            from zenith) of the exposure center at the time of observation, in degrees.
+          sided: one
+        zenithDistance_sigmaMad:
+          units: degree
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of zenith distance (angle from
+            zenith) of the exposure center at the time of observation, in degrees.
+          sided: one
+        expTime_min:
+          units: s
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of exposure time of
+            the visit in seconds.
+          sided: one
+        expTime_max:
+          units: s
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of exposure time of
+            the visit in seconds.
+          sided: one
+        expTime_median:
+          units: s
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of exposure time of
+            the visit in seconds.
+          sided: one
+        expTime_sigmaMad:
+          units: s
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of exposure time of the visit
+            in seconds.
+          sided: one
+        zeroPoint_min:
+          units: mag
+          metricTypes:
+          - visit
+          - photometry
+          description: Minimum, across the detectors contributing to the visit, of photometric zero
+            point of the calibrated exposure in AB magnitudes (mag such that a source with flux 1 count/s
+            has this magnitude).
+          sided: one
+        zeroPoint_max:
+          units: mag
+          metricTypes:
+          - visit
+          - photometry
+          description: Maximum, across the detectors contributing to the visit, of photometric zero
+            point of the calibrated exposure in AB magnitudes (mag such that a source with flux 1 count/s
+            has this magnitude).
+          sided: one
+        zeroPoint_median:
+          units: mag
+          metricTypes:
+          - visit
+          - photometry
+          description: Median, across the detectors contributing to the visit, of photometric zero
+            point of the calibrated exposure in AB magnitudes (mag such that a source with flux 1 count/s
+            has this magnitude).
+          sided: one
+        zeroPoint_sigmaMad:
+          units: mag
+          metricTypes:
+          - visit
+          - photometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of photometric zero point of
+            the calibrated exposure in AB magnitudes (mag such that a source with flux 1 count/s has
+            this magnitude).
+          sided: one
+        skyBg_min:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of sky background level
+            in electrons, as estimated and subtracted from the exposure.
+          sided: one
+        skyBg_max:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of sky background level
+            in electrons, as estimated and subtracted from the exposure.
+          sided: one
+        skyBg_median:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of sky background level
+            in electrons, as estimated and subtracted from the exposure.
+          sided: one
+        skyBg_sigmaMad:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of sky background level in electrons,
+            as estimated and subtracted from the exposure.
+          sided: one
+        skyNoise_min:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of rMS noise of the
+            sky background in electrons, characterizing the per-pixel noise level.
+          sided: one
+        skyNoise_max:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of rMS noise of the
+            sky background in electrons, characterizing the per-pixel noise level.
+          sided: one
+        skyNoise_median:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of rMS noise of the
+            sky background in electrons, characterizing the per-pixel noise level.
+          sided: one
+        skyNoise_sigmaMad:
+          units: electron
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of rMS noise of the sky background
+            in electrons, characterizing the per-pixel noise level.
+          sided: one
+        meanVar_min:
+          units: null
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of mean variance of
+            the calibrated image pixels in electron^2 (stored as dimensionless due to compound unit
+            limitation), used as a noise estimate.
+          sided: one
+        meanVar_max:
+          units: null
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of mean variance of
+            the calibrated image pixels in electron^2 (stored as dimensionless due to compound unit
+            limitation), used as a noise estimate.
+          sided: one
+        meanVar_median:
+          units: null
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of mean variance of
+            the calibrated image pixels in electron^2 (stored as dimensionless due to compound unit
+            limitation), used as a noise estimate.
+          sided: one
+        meanVar_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of mean variance of the calibrated
+            image pixels in electron^2 (stored as dimensionless due to compound unit limitation), used
+            as a noise estimate.
+          sided: one
+        astromOffsetMean_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of mean angular offset
+            in arcseconds between detected sources and the astrometric reference catalog positions,
+            characterizing the residual astrometric accuracy of the exposure.
+          sided: two
+        astromOffsetMean_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of mean angular offset
+            in arcseconds between detected sources and the astrometric reference catalog positions,
+            characterizing the residual astrometric accuracy of the exposure.
+          sided: two
+        astromOffsetMean_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of mean angular offset
+            in arcseconds between detected sources and the astrometric reference catalog positions,
+            characterizing the residual astrometric accuracy of the exposure.
+          sided: two
+        astromOffsetMean_sigmaMad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of mean angular offset in arcseconds
+            between detected sources and the astrometric reference catalog positions, characterizing
+            the residual astrometric accuracy of the exposure.
+          sided: one
+        astromOffsetStd_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of standard deviation
+            of angular offsets in arcseconds between detected sources and the astrometric reference
+            catalog positions.
+          sided: one
+        astromOffsetStd_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of standard deviation
+            of angular offsets in arcseconds between detected sources and the astrometric reference
+            catalog positions.
+          sided: one
+        astromOffsetStd_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of standard deviation
+            of angular offsets in arcseconds between detected sources and the astrometric reference
+            catalog positions.
+          sided: one
+        astromOffsetStd_sigmaMad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of standard deviation of angular
+            offsets in arcseconds between detected sources and the astrometric reference catalog positions.
+          sided: one
+        nPsfStar_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of stars
+            used to build the PSF model for this exposure (count).
+          sided: one
+        nPsfStar_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of stars
+            used to build the PSF model for this exposure (count).
+          sided: one
+        nPsfStar_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of stars used
+            to build the PSF model for this exposure (count).
+          sided: one
+        nPsfStar_sigmaMad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of stars used to build
+            the PSF model for this exposure (count).
+          sided: one
+        psfStarDeltaE1Median_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of median difference
+            between the e1 ellipticity component of stars and the PSF model e1, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e1 direction.
+          sided: two
+        psfStarDeltaE1Median_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of median difference
+            between the e1 ellipticity component of stars and the PSF model e1, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e1 direction.
+          sided: two
+        psfStarDeltaE1Median_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of median difference
+            between the e1 ellipticity component of stars and the PSF model e1, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e1 direction.
+          sided: two
+        psfStarDeltaE1Median_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median difference between
+            the e1 ellipticity component of stars and the PSF model e1, measured on PSF stars (dimensionless).
+            A measure of PSF model accuracy in the e1 direction.
+          sided: one
+        psfStarDeltaE2Median_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of median difference
+            between the e2 ellipticity component of stars and the PSF model e2, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e2 direction.
+          sided: two
+        psfStarDeltaE2Median_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of median difference
+            between the e2 ellipticity component of stars and the PSF model e2, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e2 direction.
+          sided: two
+        psfStarDeltaE2Median_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of median difference
+            between the e2 ellipticity component of stars and the PSF model e2, measured on PSF stars
+            (dimensionless). A measure of PSF model accuracy in the e2 direction.
+          sided: two
+        psfStarDeltaE2Median_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median difference between
+            the e2 ellipticity component of stars and the PSF model e2, measured on PSF stars (dimensionless).
+            A measure of PSF model accuracy in the e2 direction.
+          sided: one
+        psfStarDeltaE1Scatter_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar e1 and PSF model e1, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e1 direction.
+          sided: one
+        psfStarDeltaE1Scatter_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar e1 and PSF model e1, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e1 direction.
+          sided: one
+        psfStarDeltaE1Scatter_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of scatter (robust RMS)
+            of the difference between stellar e1 and PSF model e1, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e1 direction.
+          sided: one
+        psfStarDeltaE1Scatter_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scatter (robust RMS) of the
+            difference between stellar e1 and PSF model e1, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e1 direction.
+          sided: one
+        psfStarDeltaE2Scatter_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar e2 and PSF model e2, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e2 direction.
+          sided: one
+        psfStarDeltaE2Scatter_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar e2 and PSF model e2, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e2 direction.
+          sided: one
+        psfStarDeltaE2Scatter_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of scatter (robust RMS)
+            of the difference between stellar e2 and PSF model e2, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e2 direction.
+          sided: one
+        psfStarDeltaE2Scatter_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scatter (robust RMS) of the
+            difference between stellar e2 and PSF model e2, measured on PSF stars (dimensionless).
+            A measure of PSF model precision in the e2 direction.
+          sided: one
+        psfStarDeltaSizeMedian_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of median difference
+            between the size (trace radius) of stars and the PSF model size, measured on PSF stars
+            in pixels. A measure of PSF model size accuracy.
+          sided: two
+        psfStarDeltaSizeMedian_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of median difference
+            between the size (trace radius) of stars and the PSF model size, measured on PSF stars
+            in pixels. A measure of PSF model size accuracy.
+          sided: two
+        psfStarDeltaSizeMedian_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of median difference
+            between the size (trace radius) of stars and the PSF model size, measured on PSF stars
+            in pixels. A measure of PSF model size accuracy.
+          sided: two
+        psfStarDeltaSizeMedian_sigmaMad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median difference between
+            the size (trace radius) of stars and the PSF model size, measured on PSF stars in pixels.
+            A measure of PSF model size accuracy.
+          sided: one
+        psfStarDeltaSizeScatter_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar size and PSF model size, measured on PSF stars in
+            pixels. A measure of PSF model size precision.
+          sided: one
+        psfStarDeltaSizeScatter_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of scatter (robust
+            RMS) of the difference between stellar size and PSF model size, measured on PSF stars in
+            pixels. A measure of PSF model size precision.
+          sided: one
+        psfStarDeltaSizeScatter_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of scatter (robust RMS)
+            of the difference between stellar size and PSF model size, measured on PSF stars in pixels.
+            A measure of PSF model size precision.
+          sided: one
+        psfStarDeltaSizeScatter_sigmaMad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scatter (robust RMS) of the
+            difference between stellar size and PSF model size, measured on PSF stars in pixels. A
+            measure of PSF model size precision.
+          sided: one
+        psfStarScaledDeltaSizeScatter_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of scatter of the fractional
+            size difference (star size / PSF size - 1) measured on PSF stars, scaled to be dimensionless.
+            A normalized measure of PSF size model precision.
+          sided: one
+        psfStarScaledDeltaSizeScatter_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of scatter of the fractional
+            size difference (star size / PSF size - 1) measured on PSF stars, scaled to be dimensionless.
+            A normalized measure of PSF size model precision.
+          sided: one
+        psfStarScaledDeltaSizeScatter_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of scatter of the fractional
+            size difference (star size / PSF size - 1) measured on PSF stars, scaled to be dimensionless.
+            A normalized measure of PSF size model precision.
+          sided: one
+        psfStarScaledDeltaSizeScatter_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scatter of the fractional
+            size difference (star size / PSF size - 1) measured on PSF stars, scaled to be dimensionless.
+            A normalized measure of PSF size model precision.
+          sided: one
+        psfTraceRadiusDelta_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of the maximum variation
+            in PSF trace radius across the focal plane in pixels, measuring the spatial uniformity
+            of the PSF size model.
+          sided: one
+        psfTraceRadiusDelta_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of the maximum variation
+            in PSF trace radius across the focal plane in pixels, measuring the spatial uniformity
+            of the PSF size model.
+          sided: one
+        psfTraceRadiusDelta_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of the maximum variation
+            in PSF trace radius across the focal plane in pixels, measuring the spatial uniformity
+            of the PSF size model.
+          sided: one
+        psfTraceRadiusDelta_sigmaMad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of the maximum variation in
+            PSF trace radius across the focal plane in pixels, measuring the spatial uniformity of
+            the PSF size model.
+          sided: one
+        psfApFluxDelta_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of the absolute difference
+            (max - min) in PSF aperture flux values evaluated across the focal plane on a grid, measuring
+            the spatial variation in PSF aperture flux.
+          sided: one
+        psfApFluxDelta_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of the absolute difference
+            (max - min) in PSF aperture flux values evaluated across the focal plane on a grid, measuring
+            the spatial variation in PSF aperture flux.
+          sided: one
+        psfApFluxDelta_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of the absolute difference
+            (max - min) in PSF aperture flux values evaluated across the focal plane on a grid, measuring
+            the spatial variation in PSF aperture flux.
+          sided: one
+        psfApFluxDelta_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of the absolute difference (max
+            - min) in PSF aperture flux values evaluated across the focal plane on a grid, measuring
+            the spatial variation in PSF aperture flux.
+          sided: one
+        psfApCorrSigmaScaledDelta_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of the variation in
+            the PSF aperture correction scaled by the sigma of the correction (dimensionless), measuring
+            spatial consistency of the aperture correction model.
+          sided: one
+        psfApCorrSigmaScaledDelta_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of the variation in
+            the PSF aperture correction scaled by the sigma of the correction (dimensionless), measuring
+            spatial consistency of the aperture correction model.
+          sided: one
+        psfApCorrSigmaScaledDelta_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of the variation in
+            the PSF aperture correction scaled by the sigma of the correction (dimensionless), measuring
+            spatial consistency of the aperture correction model.
+          sided: one
+        psfApCorrSigmaScaledDelta_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of the variation in the PSF
+            aperture correction scaled by the sigma of the correction (dimensionless), measuring spatial
+            consistency of the aperture correction model.
+          sided: one
+        maxDistToNearestPsf_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of maximum distance
+            in pixels from any point in the image to the nearest PSF candidate star, characterizing
+            the spatial coverage of the PSF model.
+          sided: one
+        maxDistToNearestPsf_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of maximum distance
+            in pixels from any point in the image to the nearest PSF candidate star, characterizing
+            the spatial coverage of the PSF model.
+          sided: one
+        maxDistToNearestPsf_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of maximum distance
+            in pixels from any point in the image to the nearest PSF candidate star, characterizing
+            the spatial coverage of the PSF model.
+          sided: one
+        maxDistToNearestPsf_sigmaMad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of maximum distance in pixels
+            from any point in the image to the nearest PSF candidate star, characterizing the spatial
+            coverage of the PSF model.
+          sided: one
+        starEMedian_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of median ellipticity
+            magnitude of stars (normalized, dimensionless), characterizing the typical ellipticity
+            of point sources in the exposure.
+          sided: one
+        starEMedian_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of median ellipticity
+            magnitude of stars (normalized, dimensionless), characterizing the typical ellipticity
+            of point sources in the exposure.
+          sided: one
+        starEMedian_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of median ellipticity
+            magnitude of stars (normalized, dimensionless), characterizing the typical ellipticity
+            of point sources in the exposure.
+          sided: one
+        starEMedian_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median ellipticity magnitude
+            of stars (normalized, dimensionless), characterizing the typical ellipticity of point sources
+            in the exposure.
+          sided: one
+        starUnNormalizedEMedian_min:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of median un-normalized
+            ellipticity magnitude sqrt((Ixx - Iyy)^2 + (2*Ixy)^2) of stars in pixel^2 (stored as dimensionless),
+            providing an alternative measure of stellar shape in the exposure.
+          sided: one
+        starUnNormalizedEMedian_max:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of median un-normalized
+            ellipticity magnitude sqrt((Ixx - Iyy)^2 + (2*Ixy)^2) of stars in pixel^2 (stored as dimensionless),
+            providing an alternative measure of stellar shape in the exposure.
+          sided: one
+        starUnNormalizedEMedian_median:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of median un-normalized
+            ellipticity magnitude sqrt((Ixx - Iyy)^2 + (2*Ixy)^2) of stars in pixel^2 (stored as dimensionless),
+            providing an alternative measure of stellar shape in the exposure.
+          sided: one
+        starUnNormalizedEMedian_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median un-normalized ellipticity
+            magnitude sqrt((Ixx - Iyy)^2 + (2*Ixy)^2) of stars in pixel^2 (stored as dimensionless),
+            providing an alternative measure of stellar shape in the exposure.
+          sided: one
+        effTime_min:
+          units: s
+          metricTypes:
+          - visit
+          - depth
+          description: Minimum, across the detectors contributing to the visit, of effective exposure
+            time in seconds, accounting for degraded image quality (seeing, sky background, and throughput)
+            relative to a reference set of conditions.
+          sided: one
+        effTime_max:
+          units: s
+          metricTypes:
+          - visit
+          - depth
+          description: Maximum, across the detectors contributing to the visit, of effective exposure
+            time in seconds, accounting for degraded image quality (seeing, sky background, and throughput)
+            relative to a reference set of conditions.
+          sided: one
+        effTime_median:
+          units: s
+          metricTypes:
+          - visit
+          - depth
+          description: Median, across the detectors contributing to the visit, of effective exposure
+            time in seconds, accounting for degraded image quality (seeing, sky background, and throughput)
+            relative to a reference set of conditions.
+          sided: one
+        effTime_sigmaMad:
+          units: s
+          metricTypes:
+          - visit
+          - depth
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of effective exposure time in
+            seconds, accounting for degraded image quality (seeing, sky background, and throughput)
+            relative to a reference set of conditions.
+          sided: one
+        effTimePsfSigmaScale_min:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the PSF size (dimensionless). Values less than 1 indicate worse-than-reference
+            seeing that reduces the effective depth.
+          sided: one
+        effTimePsfSigmaScale_max:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the PSF size (dimensionless). Values less than 1 indicate worse-than-reference
+            seeing that reduces the effective depth.
+          sided: one
+        effTimePsfSigmaScale_median:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - psf
+          description: Median, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the PSF size (dimensionless). Values less than 1 indicate worse-than-reference
+            seeing that reduces the effective depth.
+          sided: one
+        effTimePsfSigmaScale_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scaling factor applied to
+            effTime due to the PSF size (dimensionless). Values less than 1 indicate worse-than-reference
+            seeing that reduces the effective depth.
+          sided: one
+        effTimeSkyBgScale_min:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the sky background level (dimensionless). Values less than 1 indicate
+            a brighter-than-reference sky that reduces effective depth.
+          sided: one
+        effTimeSkyBgScale_max:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the sky background level (dimensionless). Values less than 1 indicate
+            a brighter-than-reference sky that reduces effective depth.
+          sided: one
+        effTimeSkyBgScale_median:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - sky
+          description: Median, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the sky background level (dimensionless). Values less than 1 indicate
+            a brighter-than-reference sky that reduces effective depth.
+          sided: one
+        effTimeSkyBgScale_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scaling factor applied to
+            effTime due to the sky background level (dimensionless). Values less than 1 indicate a
+            brighter-than-reference sky that reduces effective depth.
+          sided: one
+        effTimeZeroPointScale_min:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - photometry
+          description: Minimum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the photometric throughput (dimensionless). Values less than 1 indicate
+            lower-than-reference throughput that reduces effective depth.
+          sided: one
+        effTimeZeroPointScale_max:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - photometry
+          description: Maximum, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the photometric throughput (dimensionless). Values less than 1 indicate
+            lower-than-reference throughput that reduces effective depth.
+          sided: one
+        effTimeZeroPointScale_median:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - photometry
+          description: Median, across the detectors contributing to the visit, of scaling factor applied
+            to effTime due to the photometric throughput (dimensionless). Values less than 1 indicate
+            lower-than-reference throughput that reduces effective depth.
+          sided: one
+        effTimeZeroPointScale_sigmaMad:
+          units: null
+          metricTypes:
+          - visit
+          - depth
+          - photometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of scaling factor applied to
+            effTime due to the photometric throughput (dimensionless). Values less than 1 indicate
+            lower-than-reference throughput that reduces effective depth.
+          sided: one
+        magLim_min:
+          units: mag
+          metricTypes:
+          - visit
+          - depth
+          description: Minimum, across the detectors contributing to the visit, of estimated 5-sigma
+            point-source limiting magnitude in AB magnitudes for the exposure, combining PSF size,
+            sky background, and photometric throughput.
+          sided: one
+        magLim_max:
+          units: mag
+          metricTypes:
+          - visit
+          - depth
+          description: Maximum, across the detectors contributing to the visit, of estimated 5-sigma
+            point-source limiting magnitude in AB magnitudes for the exposure, combining PSF size,
+            sky background, and photometric throughput.
+          sided: one
+        magLim_median:
+          units: mag
+          metricTypes:
+          - visit
+          - depth
+          description: Median, across the detectors contributing to the visit, of estimated 5-sigma
+            point-source limiting magnitude in AB magnitudes for the exposure, combining PSF size,
+            sky background, and photometric throughput.
+          sided: one
+        magLim_sigmaMad:
+          units: mag
+          metricTypes:
+          - visit
+          - depth
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of estimated 5-sigma point-source
+            limiting magnitude in AB magnitudes for the exposure, combining PSF size, sky background,
+            and photometric throughput.
+          sided: one
+      aggregateCornerSeparations:
+        cornerSeparation_min:
+          units: arcmin
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of each detector's
+            corner-to-corner angular separation in arcminutes — between its raCorners_0/decCorners_0
+            and raCorners_2/decCorners_2 corners in the visitSummary table, i.e. one diagonal of its
+            on-sky footprint.
+          sided: one
+        cornerSeparationRatio_min:
+          units: ''
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of the ratio between
+            each detector's two diagonal corner-to-corner separations (raCorners_0/decCorners_0-to-raCorners_2/decCorners_2,
+            divided by raCorners_1/decCorners_1-to-raCorners_3/decCorners_3, dimensionless); values
+            near 1 indicate a geometrically undistorted detector footprint.
+          sided: two
+        cornerSeparation_max:
+          units: arcmin
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of each detector's
+            corner-to-corner angular separation in arcminutes — between its raCorners_0/decCorners_0
+            and raCorners_2/decCorners_2 corners in the visitSummary table, i.e. one diagonal of its
+            on-sky footprint.
+          sided: one
+        cornerSeparationRatio_max:
+          units: ''
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of the ratio between
+            each detector's two diagonal corner-to-corner separations (raCorners_0/decCorners_0-to-raCorners_2/decCorners_2,
+            divided by raCorners_1/decCorners_1-to-raCorners_3/decCorners_3, dimensionless); values
+            near 1 indicate a geometrically undistorted detector footprint.
+          sided: two
+        cornerSeparation_median:
+          units: arcmin
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of each detector's corner-to-corner
+            angular separation in arcminutes — between its raCorners_0/decCorners_0 and raCorners_2/decCorners_2
+            corners in the visitSummary table, i.e. one diagonal of its on-sky footprint.
+          sided: one
+        cornerSeparationRatio_median:
+          units: ''
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of the ratio between
+            each detector's two diagonal corner-to-corner separations (raCorners_0/decCorners_0-to-raCorners_2/decCorners_2,
+            divided by raCorners_1/decCorners_1-to-raCorners_3/decCorners_3, dimensionless); values
+            near 1 indicate a geometrically undistorted detector footprint.
+          sided: two
+        cornerSeparation_sigmaMad:
+          units: arcmin
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation), across the detectors contributing to the visit, of each detector's corner-to-corner
+            angular separation in arcminutes — between its raCorners_0/decCorners_0 and raCorners_2/decCorners_2
+            corners in the visitSummary table, i.e. one diagonal of its on-sky footprint.
+          sided: one
+        cornerSeparationRatio_sigmaMad:
+          units: ''
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation), across the detectors contributing to the visit, of the ratio between each detector's
+            two diagonal corner-to-corner separations (dimensionless); a wide scatter indicates inconsistent
+            detector-to-detector geometric distortion across the focal plane.
+          sided: one

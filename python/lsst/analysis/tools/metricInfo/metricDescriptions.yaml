@@ -334,7 +334,9 @@ tasks:
           sided: one
         final_adaptive_threshold_value:
           units: null
-          metricTypes: visit
+          metricTypes:
+          - visit
+          - detection
           description: The final adaptive detection threshold value used in the last
             detection pass, renamed from adaptive_threshold_value. This threshold
             is determined adaptively from the image noise and controls which pixels
@@ -437,7 +439,9 @@ tasks:
           sided: one
         pixelScale:
           units: null
-          metricTypes: visit
+          metricTypes:
+          - visit
+          - astrometry
           description: Pixel scale of the exposure in arcseconds per pixel (stored
             as dimensionless due to compound unit limitation).
           sided: one
@@ -14461,6 +14465,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 0 and 3 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14486,6 +14491,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14511,6 +14517,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14536,6 +14543,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14561,6 +14569,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14586,6 +14595,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14611,6 +14621,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14636,6 +14647,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14661,6 +14673,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -14688,6 +14701,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of all injected fake sources (no SNR or magnitude
             filter) that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14713,6 +14727,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 0 and 3 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14738,6 +14753,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14763,6 +14779,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14788,6 +14805,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14813,6 +14831,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14838,6 +14857,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14863,6 +14883,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14888,6 +14909,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -14913,6 +14935,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully recovered as DIA sources (dimensionless,
             range 0-1).
@@ -15139,6 +15162,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of all injected fake sources (no SNR or magnitude
             filter) that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15164,6 +15188,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 0 and 3 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15189,6 +15214,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15214,6 +15240,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 3 and 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15239,6 +15266,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15264,6 +15292,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             between 8 and 10 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15289,6 +15318,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15314,6 +15344,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with forced PSF flux SNR
             above 6 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15339,6 +15370,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -15364,6 +15396,7 @@ tasks:
           units: ''
           metricTypes:
           - visit
+          - detection
           description: Fraction of injected fake sources with true magnitude between
             22 and 24 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
@@ -18402,6 +18435,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - detection
           description: Minimum, across the detectors contributing to the visit, of the final adaptive
             detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
             This threshold is determined adaptively from the image noise and controls which pixels
@@ -18411,6 +18445,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - detection
           description: Maximum, across the detectors contributing to the visit, of the final adaptive
             detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
             This threshold is determined adaptively from the image noise and controls which pixels
@@ -18420,6 +18455,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - detection
           description: Median, across the detectors contributing to the visit, of the final adaptive
             detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
             This threshold is determined adaptively from the image noise and controls which pixels
@@ -18429,6 +18465,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - detection
           description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
             deviation) across the detectors contributing to the visit, of the final adaptive detection
             threshold value used in the last detection pass, renamed from adaptive_threshold_value.
@@ -18915,6 +18952,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - astrometry
           description: Minimum, across the detectors contributing to the visit, of pixel scale of the
             exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
           sided: one
@@ -18922,6 +18960,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - astrometry
           description: Maximum, across the detectors contributing to the visit, of pixel scale of the
             exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
           sided: one
@@ -18929,6 +18968,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - astrometry
           description: Median, across the detectors contributing to the visit, of pixel scale of the
             exposure in arcseconds per pixel (stored as dimensionless due to compound unit limitation).
           sided: one
@@ -18936,6 +18976,7 @@ tasks:
           units: null
           metricTypes:
           - visit
+          - astrometry
           description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
             deviation) across the detectors contributing to the visit, of pixel scale of the exposure
             in arcseconds per pixel (stored as dimensionless due to compound unit limitation).

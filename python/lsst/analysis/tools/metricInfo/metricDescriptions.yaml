@@ -16776,3 +16776,1898 @@ tasks:
           description: Number of patches in the tract with a valid INEXACT_PSF_valid_data_fraction
             value — patches with no valid (non-NO_DATA) pixels are excluded.
           sided: one
+  lsst.analysis.tools.tasks.metadataAnalysis.AggregatedTaskMetadataAnalysisTask:
+    atools:
+      calibrateImageMetadataMetrics:
+        initial_psf_positive_footprint_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_positive_footprint_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_positive_footprint_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_positive_footprint_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of positive source
+            footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_positive_footprint_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's initial_psf_positive_footprint_count
+            aggregate statistics.
+          sided: one
+        initial_psf_negative_footprint_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_negative_footprint_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_negative_footprint_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_negative_footprint_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of negative source
+            footprints detected in the initial PSF detection pass during calibrateImage processing
+            (count).
+          sided: one
+        initial_psf_negative_footprint_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's initial_psf_negative_footprint_count
+            aggregate statistics.
+          sided: one
+        initial_psf_positive_peak_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_positive_peak_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_positive_peak_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_positive_peak_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of positive peaks
+            found within the positive footprints detected during the initial PSF detection pass (count).
+          sided: one
+        initial_psf_positive_peak_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's initial_psf_positive_peak_count
+            aggregate statistics.
+          sided: one
+        initial_psf_negative_peak_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_negative_peak_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_negative_peak_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints detected during the initial PSF detection pass
+            (count).
+          sided: one
+        initial_psf_negative_peak_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of negative peaks
+            found within the negative footprints detected during the initial PSF detection pass (count).
+          sided: one
+        initial_psf_negative_peak_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's initial_psf_negative_peak_count
+            aggregate statistics.
+          sided: one
+        simple_psf_positive_footprint_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the simplified (second-pass) PSF detection step during calibrateImage
+            processing (count).
+          sided: one
+        simple_psf_positive_footprint_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the simplified (second-pass) PSF detection step during calibrateImage
+            processing (count).
+          sided: one
+        simple_psf_positive_footprint_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of positive
+            source footprints detected in the simplified (second-pass) PSF detection step during calibrateImage
+            processing (count).
+          sided: one
+        simple_psf_positive_footprint_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of positive source
+            footprints detected in the simplified (second-pass) PSF detection step during calibrateImage
+            processing (count).
+          sided: one
+        simple_psf_positive_footprint_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's simple_psf_positive_footprint_count
+            aggregate statistics.
+          sided: one
+        simple_psf_negative_footprint_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_footprint_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_footprint_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of negative
+            source footprints detected in the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_footprint_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of negative source
+            footprints detected in the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_footprint_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's simple_psf_negative_footprint_count
+            aggregate statistics.
+          sided: one
+        simple_psf_positive_peak_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_positive_peak_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_positive_peak_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of positive
+            peaks found within the positive footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_positive_peak_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of positive peaks
+            found within the positive footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_positive_peak_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's simple_psf_positive_peak_count
+            aggregate statistics.
+          sided: one
+        simple_psf_negative_peak_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_peak_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_peak_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of negative
+            peaks found within the negative footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_peak_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of negative peaks
+            found within the negative footprints of the simplified PSF detection step (count).
+          sided: one
+        simple_psf_negative_peak_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's simple_psf_negative_peak_count
+            aggregate statistics.
+          sided: one
+        bad_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as BAD (permanently bad pixels or columns) in the calibrated image mask,
+            expressed as a dimensionless fraction of total pixels.
+          sided: one
+        bad_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as BAD (permanently bad pixels or columns) in the calibrated image mask,
+            expressed as a dimensionless fraction of total pixels.
+          sided: one
+        bad_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as BAD (permanently bad pixels or columns) in the calibrated image mask,
+            expressed as a dimensionless fraction of total pixels.
+          sided: one
+        bad_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as BAD (permanently bad pixels or columns) in the calibrated image mask, expressed
+            as a dimensionless fraction of total pixels.
+          sided: one
+        bad_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's bad_mask_fraction aggregate
+            statistics.
+          sided: one
+        cr_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as cosmic rays (CR) in the calibrated image mask.
+          sided: one
+        cr_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as cosmic rays (CR) in the calibrated image mask.
+          sided: one
+        cr_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as cosmic rays (CR) in the calibrated image mask.
+          sided: one
+        cr_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as cosmic rays (CR) in the calibrated image mask.
+          sided: one
+        cr_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's cr_mask_fraction aggregate
+            statistics.
+          sided: one
+        crosstalk_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as affected by electronic crosstalk in the calibrated image mask.
+          sided: one
+        crosstalk_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as affected by electronic crosstalk in the calibrated image mask.
+          sided: one
+        crosstalk_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as affected by electronic crosstalk in the calibrated image mask.
+          sided: one
+        crosstalk_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as affected by electronic crosstalk in the calibrated image mask.
+          sided: one
+        crosstalk_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's crosstalk_mask_fraction
+            aggregate statistics.
+          sided: one
+        detected_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED (part of a positive detected source footprint) in the calibrated
+            image mask.
+          sided: one
+        detected_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED (part of a positive detected source footprint) in the calibrated
+            image mask.
+          sided: one
+        detected_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED (part of a positive detected source footprint) in the calibrated
+            image mask.
+          sided: one
+        detected_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as DETECTED (part of a positive detected source footprint) in the calibrated image
+            mask.
+          sided: one
+        detected_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's detected_mask_fraction
+            aggregate statistics.
+          sided: one
+        detected_negative_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED_NEGATIVE (part of a negative detected source footprint) in the
+            calibrated image mask.
+          sided: one
+        detected_negative_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED_NEGATIVE (part of a negative detected source footprint) in the
+            calibrated image mask.
+          sided: one
+        detected_negative_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as DETECTED_NEGATIVE (part of a negative detected source footprint) in the
+            calibrated image mask.
+          sided: one
+        detected_negative_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as DETECTED_NEGATIVE (part of a negative detected source footprint) in the calibrated
+            image mask.
+          sided: one
+        detected_negative_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's detected_negative_mask_fraction
+            aggregate statistics.
+          sided: one
+        edge_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as EDGE (near the edge of the detector or a bad region boundary) in the
+            calibrated image mask.
+          sided: one
+        edge_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as EDGE (near the edge of the detector or a bad region boundary) in the
+            calibrated image mask.
+          sided: one
+        edge_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as EDGE (near the edge of the detector or a bad region boundary) in the
+            calibrated image mask.
+          sided: one
+        edge_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as EDGE (near the edge of the detector or a bad region boundary) in the calibrated
+            image mask.
+          sided: one
+        edge_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's edge_mask_fraction
+            aggregate statistics.
+          sided: one
+        intrp_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as INTRP (interpolated over, e.g., due to bad columns or saturated pixels)
+            in the calibrated image mask.
+          sided: one
+        intrp_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as INTRP (interpolated over, e.g., due to bad columns or saturated pixels)
+            in the calibrated image mask.
+          sided: one
+        intrp_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as INTRP (interpolated over, e.g., due to bad columns or saturated pixels)
+            in the calibrated image mask.
+          sided: one
+        intrp_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as INTRP (interpolated over, e.g., due to bad columns or saturated pixels) in the
+            calibrated image mask.
+          sided: one
+        intrp_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's intrp_mask_fraction
+            aggregate statistics.
+          sided: one
+        no_data_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as NO_DATA (no valid data available, e.g., outside the detector footprint)
+            in the calibrated image mask.
+          sided: one
+        no_data_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as NO_DATA (no valid data available, e.g., outside the detector footprint)
+            in the calibrated image mask.
+          sided: one
+        no_data_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as NO_DATA (no valid data available, e.g., outside the detector footprint)
+            in the calibrated image mask.
+          sided: one
+        no_data_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as NO_DATA (no valid data available, e.g., outside the detector footprint) in the
+            calibrated image mask.
+          sided: one
+        no_data_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's no_data_mask_fraction
+            aggregate statistics.
+          sided: one
+        sat_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SAT (saturated) in the calibrated image mask.
+          sided: one
+        sat_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SAT (saturated) in the calibrated image mask.
+          sided: one
+        sat_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SAT (saturated) in the calibrated image mask.
+          sided: one
+        sat_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as SAT (saturated) in the calibrated image mask.
+          sided: one
+        sat_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's sat_mask_fraction aggregate
+            statistics.
+          sided: one
+        suspect_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SUSPECT (unreliable data, e.g., near the non-linearity regime) in the
+            calibrated image mask.
+          sided: one
+        suspect_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SUSPECT (unreliable data, e.g., near the non-linearity regime) in the
+            calibrated image mask.
+          sided: one
+        suspect_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels flagged as SUSPECT (unreliable data, e.g., near the non-linearity regime) in the
+            calibrated image mask.
+          sided: one
+        suspect_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            flagged as SUSPECT (unreliable data, e.g., near the non-linearity regime) in the calibrated
+            image mask.
+          sided: one
+        suspect_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's suspect_mask_fraction
+            aggregate statistics.
+          sided: one
+        unmaskednan_mask_fraction_min:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Minimum, across the detectors contributing to the visit, of fraction of detector
+            pixels that contain NaN values but were not masked by any other mask plane, indicating
+            unexpected numerical failures.
+          sided: one
+        unmaskednan_mask_fraction_max:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Maximum, across the detectors contributing to the visit, of fraction of detector
+            pixels that contain NaN values but were not masked by any other mask plane, indicating
+            unexpected numerical failures.
+          sided: one
+        unmaskednan_mask_fraction_median:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Median, across the detectors contributing to the visit, of fraction of detector
+            pixels that contain NaN values but were not masked by any other mask plane, indicating
+            unexpected numerical failures.
+          sided: one
+        unmaskednan_mask_fraction_mad:
+          units: null
+          metricTypes:
+          - visit
+          - mask
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of fraction of detector pixels
+            that contain NaN values but were not masked by any other mask plane, indicating unexpected
+            numerical failures.
+          sided: one
+        unmaskednan_mask_fraction_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - mask
+          - counts
+          description: Number of detectors contributing a value to this visit's unmaskednan_mask_fraction
+            aggregate statistics.
+          sided: one
+        numAvailStars_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of candidate
+            PSF stars available for PSF model fitting (before quality cuts) in the measure_psf subtask,
+            renamed from numAvailStars (count).
+          sided: one
+        numAvailStars_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of candidate
+            PSF stars available for PSF model fitting (before quality cuts) in the measure_psf subtask,
+            renamed from numAvailStars (count).
+          sided: one
+        numAvailStars_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of candidate
+            PSF stars available for PSF model fitting (before quality cuts) in the measure_psf subtask,
+            renamed from numAvailStars (count).
+          sided: one
+        numAvailStars_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of candidate PSF stars
+            available for PSF model fitting (before quality cuts) in the measure_psf subtask, renamed
+            from numAvailStars (count).
+          sided: one
+        numAvailStars_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's psf_available_star_count
+            aggregate statistics.
+          sided: one
+        numGoodStars_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of stars
+            successfully used in the final PSF model fit after quality cuts in the measure_psf subtask,
+            renamed from numGoodStars (count).
+          sided: one
+        numGoodStars_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of stars
+            successfully used in the final PSF model fit after quality cuts in the measure_psf subtask,
+            renamed from numGoodStars (count).
+          sided: one
+        numGoodStars_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of stars successfully
+            used in the final PSF model fit after quality cuts in the measure_psf subtask, renamed
+            from numGoodStars (count).
+          sided: one
+        numGoodStars_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of stars successfully
+            used in the final PSF model fit after quality cuts in the measure_psf subtask, renamed
+            from numGoodStars (count).
+          sided: one
+        numGoodStars_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's psf_good_star_count
+            aggregate statistics.
+          sided: one
+        sky_footprint_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sky source
+            footprints detected and used for sky background estimation in the star_sky_sources subtask
+            (count).
+          sided: one
+        sky_footprint_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sky source
+            footprints detected and used for sky background estimation in the star_sky_sources subtask
+            (count).
+          sided: one
+        sky_footprint_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sky source
+            footprints detected and used for sky background estimation in the star_sky_sources subtask
+            (count).
+          sided: one
+        sky_footprint_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sky source footprints
+            detected and used for sky background estimation in the star_sky_sources subtask (count).
+          sided: one
+        sky_footprint_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Number of detectors contributing a value to this visit's sky_footprint_count
+            aggregate statistics.
+          sided: one
+        post_deblend_source_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of total number of
+            sources remaining in the catalog after the deblending step has separated blended parents
+            into individual child sources (count).
+          sided: one
+        post_deblend_source_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of total number of
+            sources remaining in the catalog after the deblending step has separated blended parents
+            into individual child sources (count).
+          sided: one
+        post_deblend_source_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of total number of sources
+            remaining in the catalog after the deblending step has separated blended parents into individual
+            child sources (count).
+          sided: one
+        post_deblend_source_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of total number of sources remaining
+            in the catalog after the deblending step has separated blended parents into individual
+            child sources (count).
+          sided: one
+        post_deblend_source_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's post_deblend_source_count
+            aggregate statistics.
+          sided: one
+        star_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            classified as stars (point sources) in the calibrated source catalog (count).
+          sided: one
+        star_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            classified as stars (point sources) in the calibrated source catalog (count).
+          sided: one
+        star_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            classified as stars (point sources) in the calibrated source catalog (count).
+          sided: one
+        star_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources classified
+            as stars (point sources) in the calibrated source catalog (count).
+          sided: one
+        star_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's star_count aggregate
+            statistics.
+          sided: one
+        saturated_source_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            that are flagged as saturated in the calibrated source catalog (count).
+          sided: one
+        saturated_source_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            that are flagged as saturated in the calibrated source catalog (count).
+          sided: one
+        saturated_source_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            that are flagged as saturated in the calibrated source catalog (count).
+          sided: one
+        saturated_source_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources that are
+            flagged as saturated in the calibrated source catalog (count).
+          sided: one
+        saturated_source_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's saturated_source_count
+            aggregate statistics.
+          sided: one
+        bad_source_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            flagged as bad (e.g., on bad pixels, interpolated regions, or other quality failures) in
+            the calibrated source catalog (count).
+          sided: one
+        bad_source_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            flagged as bad (e.g., on bad pixels, interpolated regions, or other quality failures) in
+            the calibrated source catalog (count).
+          sided: one
+        bad_source_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            flagged as bad (e.g., on bad pixels, interpolated regions, or other quality failures) in
+            the calibrated source catalog (count).
+          sided: one
+        bad_source_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources flagged
+            as bad (e.g., on bad pixels, interpolated regions, or other quality failures) in the calibrated
+            source catalog (count).
+          sided: one
+        bad_source_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's bad_source_count aggregate
+            statistics.
+          sided: one
+        cosmic_ray_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of cosmic
+            rays identified and repaired by the psf_repair subtask during calibrateImage processing
+            (count).
+          sided: one
+        cosmic_ray_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of cosmic
+            rays identified and repaired by the psf_repair subtask during calibrateImage processing
+            (count).
+          sided: one
+        cosmic_ray_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of cosmic
+            rays identified and repaired by the psf_repair subtask during calibrateImage processing
+            (count).
+          sided: one
+        cosmic_ray_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of cosmic rays identified
+            and repaired by the psf_repair subtask during calibrateImage processing (count).
+          sided: one
+        cosmic_ray_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's cosmic_ray_count aggregate
+            statistics.
+          sided: one
+        matched_psf_star_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of PSF stars
+            that were successfully matched to the reference catalog during PSF model fitting (count).
+          sided: one
+        matched_psf_star_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of PSF stars
+            that were successfully matched to the reference catalog during PSF model fitting (count).
+          sided: one
+        matched_psf_star_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of PSF stars
+            that were successfully matched to the reference catalog during PSF model fitting (count).
+          sided: one
+        matched_psf_star_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of PSF stars that
+            were successfully matched to the reference catalog during PSF model fitting (count).
+          sided: one
+        matched_psf_star_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's matched_psf_star_count
+            aggregate statistics.
+          sided: one
+        final_psf_sigma_min:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Minimum, across the detectors contributing to the visit, of gaussian sigma of
+            the final fitted PSF model in pixels, characterizing the PSF size after the full calibration
+            pipeline has run.
+          sided: one
+        final_psf_sigma_max:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Maximum, across the detectors contributing to the visit, of gaussian sigma of
+            the final fitted PSF model in pixels, characterizing the PSF size after the full calibration
+            pipeline has run.
+          sided: one
+        final_psf_sigma_median:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Median, across the detectors contributing to the visit, of gaussian sigma of
+            the final fitted PSF model in pixels, characterizing the PSF size after the full calibration
+            pipeline has run.
+          sided: one
+        final_psf_sigma_mad:
+          units: pixel
+          metricTypes:
+          - visit
+          - psf
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of gaussian sigma of the final
+            fitted PSF model in pixels, characterizing the PSF size after the full calibration pipeline
+            has run.
+          sided: one
+        final_psf_sigma_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - psf
+          - counts
+          description: Number of detectors contributing a value to this visit's final_psf_sigma aggregate
+            statistics.
+          sided: one
+        astrometry_matches_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            successfully matched to the astrometric reference catalog during the astrometric calibration
+            step (count).
+          sided: one
+        astrometry_matches_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            successfully matched to the astrometric reference catalog during the astrometric calibration
+            step (count).
+          sided: one
+        astrometry_matches_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            successfully matched to the astrometric reference catalog during the astrometric calibration
+            step (count).
+          sided: one
+        astrometry_matches_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources successfully
+            matched to the astrometric reference catalog during the astrometric calibration step (count).
+          sided: one
+        astrometry_matches_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Number of detectors contributing a value to this visit's astrometry_matches_count
+            aggregate statistics.
+          sided: one
+        photometry_matches_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - photometry
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            successfully matched to the photometric reference catalog during the photometric calibration
+            step (count).
+          sided: one
+        photometry_matches_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - photometry
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            successfully matched to the photometric reference catalog during the photometric calibration
+            step (count).
+          sided: one
+        photometry_matches_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - photometry
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            successfully matched to the photometric reference catalog during the photometric calibration
+            step (count).
+          sided: one
+        photometry_matches_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - photometry
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources successfully
+            matched to the photometric reference catalog during the photometric calibration step (count).
+          sided: one
+        photometry_matches_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - photometry
+          - counts
+          description: Number of detectors contributing a value to this visit's photometry_matches_count
+            aggregate statistics.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_median_min:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of median instrumental
+            flux (in ADU) of sky pixels after background subtraction, providing a measure of the residual
+            sky level in the calibrated image.
+          sided: two
+        bg_subtracted_skyPixel_instFlux_median_max:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of median instrumental
+            flux (in ADU) of sky pixels after background subtraction, providing a measure of the residual
+            sky level in the calibrated image.
+          sided: two
+        bg_subtracted_skyPixel_instFlux_median_median:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of median instrumental
+            flux (in ADU) of sky pixels after background subtraction, providing a measure of the residual
+            sky level in the calibrated image.
+          sided: two
+        bg_subtracted_skyPixel_instFlux_median_mad:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median instrumental flux
+            (in ADU) of sky pixels after background subtraction, providing a measure of the residual
+            sky level in the calibrated image.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_median_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Number of detectors contributing a value to this visit's bg_subtracted_skyPixel_instFlux_median
+            aggregate statistics.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_stdev_min:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of standard deviation
+            of the instrumental flux (in ADU) of sky pixels after background subtraction, measuring
+            the noise level of the residual sky.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_stdev_max:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of standard deviation
+            of the instrumental flux (in ADU) of sky pixels after background subtraction, measuring
+            the noise level of the residual sky.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_stdev_median:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of standard deviation
+            of the instrumental flux (in ADU) of sky pixels after background subtraction, measuring
+            the noise level of the residual sky.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_stdev_mad:
+          units: adu
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of standard deviation of the
+            instrumental flux (in ADU) of sky pixels after background subtraction, measuring the noise
+            level of the residual sky.
+          sided: one
+        bg_subtracted_skyPixel_instFlux_stdev_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Number of detectors contributing a value to this visit's bg_subtracted_skyPixel_instFlux_stdev
+            aggregate statistics.
+          sided: one
+        bg_subtracted_skySource_flux_median_min:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of median flux (in
+            nJy) of sky sources after background subtraction, providing a calibrated measure of the
+            residual sky background level.
+          sided: two
+        bg_subtracted_skySource_flux_median_max:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of median flux (in
+            nJy) of sky sources after background subtraction, providing a calibrated measure of the
+            residual sky background level.
+          sided: two
+        bg_subtracted_skySource_flux_median_median:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of median flux (in nJy)
+            of sky sources after background subtraction, providing a calibrated measure of the residual
+            sky background level.
+          sided: two
+        bg_subtracted_skySource_flux_median_mad:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median flux (in nJy) of sky
+            sources after background subtraction, providing a calibrated measure of the residual sky
+            background level.
+          sided: one
+        bg_subtracted_skySource_flux_median_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Number of detectors contributing a value to this visit's bg_subtracted_skySource_flux_median
+            aggregate statistics.
+          sided: one
+        bg_subtracted_skySource_flux_stdev_min:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Minimum, across the detectors contributing to the visit, of standard deviation
+            of flux (in nJy) of sky sources after background subtraction, measuring the scatter in
+            the calibrated residual sky.
+          sided: one
+        bg_subtracted_skySource_flux_stdev_max:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Maximum, across the detectors contributing to the visit, of standard deviation
+            of flux (in nJy) of sky sources after background subtraction, measuring the scatter in
+            the calibrated residual sky.
+          sided: one
+        bg_subtracted_skySource_flux_stdev_median:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Median, across the detectors contributing to the visit, of standard deviation
+            of flux (in nJy) of sky sources after background subtraction, measuring the scatter in
+            the calibrated residual sky.
+          sided: one
+        bg_subtracted_skySource_flux_stdev_mad:
+          units: nJy
+          metricTypes:
+          - visit
+          - sky
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of standard deviation of flux
+            (in nJy) of sky sources after background subtraction, measuring the scatter in the calibrated
+            residual sky.
+          sided: one
+        bg_subtracted_skySource_flux_stdev_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - sky
+          - counts
+          description: Number of detectors contributing a value to this visit's bg_subtracted_skySource_flux_stdev
+            aggregate statistics.
+          sided: one
+        adaptive_threshold_value_min:
+          units: null
+          metricTypes:
+          - visit
+          description: Minimum, across the detectors contributing to the visit, of the final adaptive
+            detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
+            This threshold is determined adaptively from the image noise and controls which pixels
+            are considered detections.
+          sided: one
+        adaptive_threshold_value_max:
+          units: null
+          metricTypes:
+          - visit
+          description: Maximum, across the detectors contributing to the visit, of the final adaptive
+            detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
+            This threshold is determined adaptively from the image noise and controls which pixels
+            are considered detections.
+          sided: one
+        adaptive_threshold_value_median:
+          units: null
+          metricTypes:
+          - visit
+          description: Median, across the detectors contributing to the visit, of the final adaptive
+            detection threshold value used in the last detection pass, renamed from adaptive_threshold_value.
+            This threshold is determined adaptively from the image noise and controls which pixels
+            are considered detections.
+          sided: one
+        adaptive_threshold_value_mad:
+          units: null
+          metricTypes:
+          - visit
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of the final adaptive detection
+            threshold value used in the last detection pass, renamed from adaptive_threshold_value.
+            This threshold is determined adaptively from the image noise and controls which pixels
+            are considered detections.
+          sided: one
+        adaptive_threshold_value_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's final_adaptive_threshold_value
+            aggregate statistics.
+          sided: one
+        initial_to_final_wcs_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of angular offset in
+            arcseconds between the initial (input) WCS and the final astrometrically calibrated WCS,
+            measuring how much the pointing solution was corrected during calibration.
+          sided: one
+        initial_to_final_wcs_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of angular offset in
+            arcseconds between the initial (input) WCS and the final astrometrically calibrated WCS,
+            measuring how much the pointing solution was corrected during calibration.
+          sided: one
+        initial_to_final_wcs_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of angular offset in
+            arcseconds between the initial (input) WCS and the final astrometrically calibrated WCS,
+            measuring how much the pointing solution was corrected during calibration.
+          sided: one
+        initial_to_final_wcs_mad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of angular offset in arcseconds
+            between the initial (input) WCS and the final astrometrically calibrated WCS, measuring
+            how much the pointing solution was corrected during calibration.
+          sided: one
+        initial_to_final_wcs_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Number of detectors contributing a value to this visit's initial_to_final_wcs
+            aggregate statistics.
+          sided: one
+        astrom_offset_mean_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of mean astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_mean_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of mean astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_mean_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of mean astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_mean_mad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of mean astrometric offset in
+            arcseconds between matched sources and the reference catalog positions, after astrometric
+            calibration.
+          sided: one
+        astrom_offset_mean_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Number of detectors contributing a value to this visit's astrom_offset_mean
+            aggregate statistics.
+          sided: one
+        astrom_offset_std_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of standard deviation
+            of astrometric offsets in arcseconds between matched sources and the reference catalog
+            positions, after astrometric calibration.
+          sided: one
+        astrom_offset_std_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of standard deviation
+            of astrometric offsets in arcseconds between matched sources and the reference catalog
+            positions, after astrometric calibration.
+          sided: one
+        astrom_offset_std_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of standard deviation
+            of astrometric offsets in arcseconds between matched sources and the reference catalog
+            positions, after astrometric calibration.
+          sided: one
+        astrom_offset_std_mad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of standard deviation of astrometric
+            offsets in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: one
+        astrom_offset_std_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Number of detectors contributing a value to this visit's astrom_offset_std aggregate
+            statistics.
+          sided: one
+        astrom_offset_median_min:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Minimum, across the detectors contributing to the visit, of median astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_median_max:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Maximum, across the detectors contributing to the visit, of median astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_median_median:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Median, across the detectors contributing to the visit, of median astrometric
+            offset in arcseconds between matched sources and the reference catalog positions, after
+            astrometric calibration.
+          sided: two
+        astrom_offset_median_mad:
+          units: arcsec
+          metricTypes:
+          - visit
+          - astrometry
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of median astrometric offset
+            in arcseconds between matched sources and the reference catalog positions, after astrometric
+            calibration.
+          sided: one
+        astrom_offset_median_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - astrometry
+          - counts
+          description: Number of detectors contributing a value to this visit's astrom_offset_median
+            aggregate statistics.
+          sided: one
+        failed_deblend_source_count_min:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Minimum, across the detectors contributing to the visit, of number of sources
+            for which the deblender failed to produce a valid result, leaving them unprocessed or flagged
+            (count).
+          sided: one
+        failed_deblend_source_count_max:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Maximum, across the detectors contributing to the visit, of number of sources
+            for which the deblender failed to produce a valid result, leaving them unprocessed or flagged
+            (count).
+          sided: one
+        failed_deblend_source_count_median:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Median, across the detectors contributing to the visit, of number of sources
+            for which the deblender failed to produce a valid result, leaving them unprocessed or flagged
+            (count).
+          sided: one
+        failed_deblend_source_count_mad:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Robust scatter (median absolute deviation, scaled to be comparable to a standard
+            deviation) across the detectors contributing to the visit, of number of sources for which
+            the deblender failed to produce a valid result, leaving them unprocessed or flagged (count).
+          sided: one
+        failed_deblend_source_count_ct:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of detectors contributing a value to this visit's failed_deblend_source_count
+            aggregate statistics.
+          sided: one

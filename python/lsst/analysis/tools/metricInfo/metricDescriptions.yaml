@@ -14440,243 +14440,249 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of all injected fake sources (no SNR or magnitude
-            filter) that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Total number of all injected fake sources (no SNR or magnitude filter) that
+            were processed (count).
+          sided: one
+        numFoundFakeSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of all injected fake sources (no SNR or magnitude filter) that were successfully
+            recovered as DIA sources (count).
+          sided: one
+        fractionFoundFakesDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of all injected fake sources (no SNR or magnitude filter) that were
+            successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR0t3Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 0 and 3 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 0 and
+            3 that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            0 and 3 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 0 and 3 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR3t6Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 3 and 6 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 3 and
+            6 that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6t8Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 6 and 8 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 6 and
+            8 that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR8t10Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 8 and 10 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 8 and
+            10 that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 8 and 10 that
+            were successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 8 and 10
+            that were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR10t20Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 10 and 20 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 10 and
+            20 that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 10 and 20 that
+            were successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 10 and 20
+            that were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6tInfMetric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR above 6 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR above 6 that
+            were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR above 6 that were successfully
+            recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR above 6 that were
+            successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag20t22Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            20 and 22 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 20 and 22
+            that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 20 and 22 that were
+            successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 20 and 22 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag22t24Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            22 and 24 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 22 and 24
+            that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 22 and 24 that were
+            successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 22 and 24 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag24t26Metric:
-        numTotalFakeAssocSources:
+        numTotalFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            24 and 26 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 24 and 26
+            that were processed (count).
           sided: one
-        numFoundFakeAssocSources:
+        numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 24 and 26 that were
+            successfully recovered as DIA sources (count).
           sided: one
-        fractionFoundFakesAssocDiaAll:
+        fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 24 and 26 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
   lsst.analysis.tools.tasks.diaFakesVisitAnalysis.DiaFakesVisitAnalysisTask:
     atools:
@@ -14686,25 +14692,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of all injected fake sources (no SNR or magnitude
-            filter) that were processed (count).
+          description: Total number of all injected fake sources (no SNR or magnitude filter) that
+            were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of all injected fake sources (no SNR or magnitude filter)
-            that were successfully recovered as DIA sources (count).
+          description: Number of all injected fake sources (no SNR or magnitude filter) that were successfully
+            recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of all injected fake sources (no SNR or magnitude
-            filter) that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of all injected fake sources (no SNR or magnitude filter) that were
+            successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR0t3Metric:
         numTotalFakeSources:
@@ -14712,25 +14717,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 0 and 3 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 0 and
+            3 that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            0 and 3 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 0 and 3 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR3t6Metric:
         numTotalFakeSources:
@@ -14738,25 +14742,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 3 and 6 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 3 and
+            6 that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6t8Metric:
         numTotalFakeSources:
@@ -14764,25 +14767,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 6 and 8 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 6 and
+            8 that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR8t10Metric:
         numTotalFakeSources:
@@ -14790,25 +14792,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 8 and 10 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 8 and
+            10 that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 8 and 10 that
+            were successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 8 and 10
+            that were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR10t20Metric:
         numTotalFakeSources:
@@ -14816,25 +14817,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 10 and 20 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 10 and
+            20 that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 10 and 20 that
+            were successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 10 and 20
+            that were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6tInfMetric:
         numTotalFakeSources:
@@ -14842,25 +14842,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR above 6 that were processed (count).
+          description: Total number of injected fake sources with forced PSF flux SNR above 6 that
+            were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR above 6 that were successfully
+            recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR above 6 that were
+            successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag20t22Metric:
         numTotalFakeSources:
@@ -14868,25 +14867,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            20 and 22 that were processed (count).
+          description: Total number of injected fake sources with true magnitude between 20 and 22
+            that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 20 and 22 that were
+            successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 20 and 22 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag22t24Metric:
         numTotalFakeSources:
@@ -14894,25 +14892,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            22 and 24 that were processed (count).
+          description: Total number of injected fake sources with true magnitude between 22 and 24
+            that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 22 and 24 that were
+            successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 22 and 24 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag24t26Metric:
         numTotalFakeSources:
@@ -14920,54 +14917,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            24 and 26 that were processed (count).
+          description: Total number of injected fake sources with true magnitude between 24 and 26
+            that were processed (count).
           sided: one
         numFoundFakeSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully recovered as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 24 and 26 that were
+            successfully recovered as DIA sources (count).
           sided: one
         fractionFoundFakesDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully recovered as DIA sources (dimensionless,
-            range 0-1).
-          sided: one
-  lsst.analysis.tools.tasks.diaSourceTableTractAnalysis.DiaSourceTableTractAnalysisTask:
-    atools:
-      NumDiaSources:
-        numDiaSources:
-          units: ct
-          metricTypes:
-          - visit
-          - counts
-          description: Number of good DIA sources (without known bad quality flags)
-            in the difference image source table for the given tract (count).
-          sided: one
-      NumStreakDiaSources:
-        numStreakDiaSources:
-          units: ct
-          metricTypes:
-          - visit
-          - counts
-          description: Number of good DIA sources whose footprint overlaps a STREAK-flagged
-            pixel region in the difference image (count).
-          sided: one
-      NumStreakCenterDiaSources:
-        numStreakCenterDiaSources:
-          units: ct
-          metricTypes:
-          - visit
-          - counts
-          description: Number of good DIA sources with the STREAK flag set at the
-            source center position in the difference image (count).
+          description: Fraction of injected fake sources with true magnitude between 24 and 26 that
+            were successfully recovered as DIA sources (dimensionless, range 0-1).
           sided: one
   lsst.analysis.tools.tasks.diaFakesDetectorVisitAnalysis.AssocDiaFakesDetectorVisitAnalysisTask:
     atools:
@@ -14977,167 +14944,249 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of all injected fake sources (no SNR or magnitude
-            filter) that were processed for association recovery (count).
+          description: Total number of all injected fake sources (no SNR or magnitude filter) that
+            were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of sources remaining in the catalog after the deblending
-            step has separated blended parents into individual child sources (count).
+          description: Number of all injected fake sources (no SNR or magnitude filter) that were successfully
+            associated as DIA sources (count).
           sided: one
-        star_count:
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of all injected fake sources (no SNR or magnitude filter) that were
+            successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaSNR0t3Metric:
+        numTotalFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of sources classified as stars (point sources) in the
-            calibrated source catalog (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 0 and
+            3 that were processed for association recovery (count).
           sided: one
-        saturated_source_count:
+        numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of sources that are flagged as saturated in the calibrated
-            source catalog (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully associated as DIA sources (count).
           sided: one
-        bad_source_count:
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaSNR3t6Metric:
+        numTotalFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of sources flagged as bad (e.g., on bad pixels, interpolated
-            regions, or other quality failures) in the calibrated source catalog (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 3 and
+            6 that were processed for association recovery (count).
           sided: one
-        cosmic_ray_count:
+        numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of cosmic rays identified and repaired by the psf_repair
-            subtask during calibrateImage processing (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully associated as DIA sources (count).
           sided: one
-        matched_psf_star_count:
-          units: ct
+        fractionFoundFakesAssocDiaAll:
+          units: ''
           metricTypes:
           - visit
-          - psf
-          - counts
-          description: Number of PSF stars that were successfully matched to the reference
-            catalog during PSF model fitting (count).
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
-        final_psf_sigma:
-          units: pixel
-          metricTypes:
-          - visit
-          - psf
-          description: Gaussian sigma of the final fitted PSF model in pixels, characterizing
-            the PSF size after the full calibration pipeline has run.
-          sided: one
-        astrometry_matches_count:
-          units: ct
-          metricTypes:
-          - visit
-          - astrometry
-          - counts
-          description: Number of sources successfully matched to the astrometric reference
-            catalog during the astrometric calibration step (count).
-          sided: one
-        photometry_matches_count:
-          units: ct
-          metricTypes:
-          - visit
-          - photometry
-          - counts
-          description: Number of sources successfully matched to the photometric reference
-            catalog during the photometric calibration step (count).
-          sided: one
-        bg_subtracted_skyPixel_instFlux_median:
-          units: adu
-          metricTypes:
-          - visit
-          - sky
-          description: Median instrumental flux (in ADU) of sky pixels after background
-            subtraction, providing a measure of the residual sky level in the calibrated
-            image.
-          sided: two
-        bg_subtracted_skyPixel_instFlux_stdev:
-          units: adu
-          metricTypes:
-          - visit
-          - sky
-          description: Standard deviation of the instrumental flux (in ADU) of sky
-            pixels after background subtraction, measuring the noise level of the
-            residual sky.
-          sided: one
-        bg_subtracted_skySource_flux_median:
-          units: nJy
-          metricTypes:
-          - visit
-          - sky
-          description: Median flux (in nJy) of sky sources after background subtraction,
-            providing a calibrated measure of the residual sky background level.
-          sided: two
-        bg_subtracted_skySource_flux_stdev:
-          units: nJy
-          metricTypes:
-          - visit
-          - sky
-          description: Standard deviation of flux (in nJy) of sky sources after background
-            subtraction, measuring the scatter in the calibrated residual sky.
-          sided: one
-        final_adaptive_threshold_value:
-          units: null
-          metricTypes: visit
-          description: The final adaptive detection threshold value used in the last
-            detection pass, renamed from adaptive_threshold_value. This threshold
-            is determined adaptively from the image noise and controls which pixels
-            are considered detections.
-          sided: one
-        initial_to_final_wcs:
-          units: arcsec
-          metricTypes:
-          - visit
-          - astrometry
-          description: Angular offset in arcseconds between the initial (input) WCS
-            and the final astrometrically calibrated WCS, measuring how much the pointing
-            solution was corrected during calibration.
-          sided: one
-        astrom_offset_mean:
-          units: arcsec
-          metricTypes:
-          - visit
-          - astrometry
-          description: Mean astrometric offset in arcseconds between matched sources
-            and the reference catalog positions, after astrometric calibration.
-          sided: two
-        astrom_offset_std:
-          units: arcsec
-          metricTypes:
-          - visit
-          - astrometry
-          description: Standard deviation of astrometric offsets in arcseconds between
-            matched sources and the reference catalog positions, after astrometric
-            calibration.
-          sided: one
-        astrom_offset_median:
-          units: arcsec
-          metricTypes:
-          - visit
-          - astrometry
-          description: Median astrometric offset in arcseconds between matched sources
-            and the reference catalog positions, after astrometric calibration.
-          sided: two
-        failed_deblend_source_count:
+      numFoundFakesDiaSNR6t8Metric:
+        numTotalFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of sources for which the deblender failed to produce
-            a valid result, leaving them unprocessed or flagged (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 6 and
+            8 that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaSNR8t10Metric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with forced PSF flux SNR between 8 and
+            10 that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with forced PSF flux SNR between 8 and 10 that
+            were successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR between 8 and 10
+            that were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaSNR10t20Metric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with forced PSF flux SNR between 10 and
+            20 that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with forced PSF flux SNR between 10 and 20 that
+            were successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR between 10 and 20
+            that were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaSNR6tInfMetric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with forced PSF flux SNR above 6 that
+            were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with forced PSF flux SNR above 6 that were successfully
+            associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with forced PSF flux SNR above 6 that were
+            successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaMag20t22Metric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with true magnitude between 20 and 22
+            that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with true magnitude between 20 and 22 that were
+            successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with true magnitude between 20 and 22 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaMag22t24Metric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with true magnitude between 22 and 24
+            that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with true magnitude between 22 and 24 that were
+            successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with true magnitude between 22 and 24 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
+          sided: one
+      numFoundFakesDiaMag24t26Metric:
+        numTotalFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Total number of injected fake sources with true magnitude between 24 and 26
+            that were processed for association recovery (count).
+          sided: one
+        numFoundFakeAssocSources:
+          units: ct
+          metricTypes:
+          - visit
+          - counts
+          description: Number of injected fake sources with true magnitude between 24 and 26 that were
+            successfully associated as DIA sources (count).
+          sided: one
+        fractionFoundFakesAssocDiaAll:
+          units: ''
+          metricTypes:
+          - visit
+          - detection
+          description: Fraction of injected fake sources with true magnitude between 24 and 26 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
   lsst.analysis.tools.tasks.diaFakesVisitAnalysis.AssocDiaFakesVisitAnalysisTask:
     atools:
@@ -15147,25 +15196,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of all injected fake sources (no SNR or magnitude
-            filter) that were processed for association recovery (count).
+          description: Total number of all injected fake sources (no SNR or magnitude filter) that
+            were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of all injected fake sources (no SNR or magnitude filter)
-            that were successfully associated as DIA sources (count).
+          description: Number of all injected fake sources (no SNR or magnitude filter) that were successfully
+            associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of all injected fake sources (no SNR or magnitude
-            filter) that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of all injected fake sources (no SNR or magnitude filter) that were
+            successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR0t3Metric:
         numTotalFakeAssocSources:
@@ -15173,25 +15221,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 0 and 3 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 0 and
+            3 that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            0 and 3 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 0 and 3 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 0 and 3 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR3t6Metric:
         numTotalFakeAssocSources:
@@ -15199,25 +15246,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 3 and 6 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 3 and
+            6 that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 3 and 6 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6t8Metric:
         numTotalFakeAssocSources:
@@ -15225,25 +15271,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 6 and 8 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 6 and
+            8 that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            3 and 6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 3 and 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 6 and 8 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR8t10Metric:
         numTotalFakeAssocSources:
@@ -15251,25 +15296,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 8 and 10 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 8 and
+            10 that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 8 and 10 that
+            were successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 8 and 10
+            that were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR10t20Metric:
         numTotalFakeAssocSources:
@@ -15277,25 +15321,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR between 10 and 20 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR between 10 and
+            20 that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR between
-            8 and 10 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR between 10 and 20 that
+            were successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            between 8 and 10 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR between 10 and 20
+            that were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaSNR6tInfMetric:
         numTotalFakeAssocSources:
@@ -15303,25 +15346,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with forced PSF flux
-            SNR above 6 that were processed for association recovery (count).
+          description: Total number of injected fake sources with forced PSF flux SNR above 6 that
+            were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with forced PSF flux SNR above 6 that were successfully
+            associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with forced PSF flux SNR above 6 that were
+            successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag20t22Metric:
         numTotalFakeAssocSources:
@@ -15329,25 +15371,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            20 and 22 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 20 and 22
+            that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with forced PSF flux SNR above
-            6 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 20 and 22 that were
+            successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with forced PSF flux SNR
-            above 6 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 20 and 22 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag22t24Metric:
         numTotalFakeAssocSources:
@@ -15355,25 +15396,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            22 and 24 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 22 and 24
+            that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 22 and 24 that were
+            successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 22 and 24 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
       numFoundFakesDiaMag24t26Metric:
         numTotalFakeAssocSources:
@@ -15381,25 +15421,24 @@ tasks:
           metricTypes:
           - visit
           - counts
-          description: Total number of injected fake sources with true magnitude between
-            24 and 26 that were processed for association recovery (count).
+          description: Total number of injected fake sources with true magnitude between 24 and 26
+            that were processed for association recovery (count).
           sided: one
         numFoundFakeAssocSources:
           units: ct
           metricTypes:
           - visit
           - counts
-          description: Number of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (count).
+          description: Number of injected fake sources with true magnitude between 24 and 26 that were
+            successfully associated as DIA sources (count).
           sided: one
         fractionFoundFakesAssocDiaAll:
           units: ''
           metricTypes:
           - visit
           - detection
-          description: Fraction of injected fake sources with true magnitude between
-            22 and 24 that were successfully associated as DIA sources (dimensionless,
-            range 0-1).
+          description: Fraction of injected fake sources with true magnitude between 24 and 26 that
+            were successfully associated as DIA sources (dimensionless, range 0-1).
           sided: one
   lsst.analysis.tools.tasks.wholeTractImageAnalysis.WholeTractMaskFractionAnalysisTask:
     atools:

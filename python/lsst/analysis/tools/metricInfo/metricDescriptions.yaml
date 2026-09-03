@@ -15368,3 +15368,1411 @@ tasks:
             22 and 24 that were successfully associated as DIA sources (dimensionless,
             range 0-1).
           sided: one
+  lsst.analysis.tools.tasks.wholeTractImageAnalysis.WholeTractMaskFractionAnalysisTask:
+    atools:
+      full_tract:
+        min_BAD_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged BAD (bad pixel in the instrument, including bad amplifiers), as a fraction of all
+            pixels in the patch.
+          sided: one
+        max_BAD_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged BAD (bad pixel in the instrument, including bad amplifiers), as a fraction of all
+            pixels in the patch.
+          sided: one
+        mean_BAD_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            BAD (bad pixel in the instrument, including bad amplifiers), as a fraction of all pixels
+            in the patch.
+          sided: one
+        ct_BAD_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid BAD_fraction value — the sample
+            size behind the tract's BAD mask-fraction statistics.
+          sided: one
+        min_BAD_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged BAD (bad pixel in the instrument, including bad amplifiers), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        max_BAD_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged BAD (bad pixel in the instrument, including bad amplifiers), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        mean_BAD_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged BAD (bad pixel in
+            the instrument, including bad amplifiers), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_BAD_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid BAD_valid_data_fraction value —
+            patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_SAT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SAT (saturated, or affected by saturation in a neighbouring pixel), as a fraction
+            of all pixels in the patch.
+          sided: one
+        max_SAT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SAT (saturated, or affected by saturation in a neighbouring pixel), as a fraction
+            of all pixels in the patch.
+          sided: one
+        mean_SAT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            SAT (saturated, or affected by saturation in a neighbouring pixel), as a fraction of all
+            pixels in the patch.
+          sided: one
+        ct_SAT_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SAT_fraction value — the sample
+            size behind the tract's SAT mask-fraction statistics.
+          sided: one
+        min_SAT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SAT (saturated, or affected by saturation in a neighbouring pixel), as a
+            fraction of valid pixels in the patch.
+          sided: one
+        max_SAT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SAT (saturated, or affected by saturation in a neighbouring pixel), as a
+            fraction of valid pixels in the patch.
+          sided: one
+        mean_SAT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged SAT (saturated,
+            or affected by saturation in a neighbouring pixel), as a fraction of valid pixels in the
+            patch.
+          sided: one
+        ct_SAT_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SAT_valid_data_fraction value —
+            patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_INTRP_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged INTRP (the result of interpolating nearby good pixels), as a fraction of all pixels
+            in the patch.
+          sided: one
+        max_INTRP_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged INTRP (the result of interpolating nearby good pixels), as a fraction of all pixels
+            in the patch.
+          sided: one
+        mean_INTRP_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            INTRP (the result of interpolating nearby good pixels), as a fraction of all pixels in
+            the patch.
+          sided: one
+        ct_INTRP_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid INTRP_fraction value — the sample
+            size behind the tract's INTRP mask-fraction statistics.
+          sided: one
+        min_INTRP_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged INTRP (the result of interpolating nearby good pixels), as a fraction of
+            valid pixels in the patch.
+          sided: one
+        max_INTRP_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged INTRP (the result of interpolating nearby good pixels), as a fraction of
+            valid pixels in the patch.
+          sided: one
+        mean_INTRP_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged INTRP (the result
+            of interpolating nearby good pixels), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_INTRP_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid INTRP_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_CR_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CR (affected by a cosmic ray on at least one input image), as a fraction of all
+            pixels in the patch.
+          sided: one
+        max_CR_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CR (affected by a cosmic ray on at least one input image), as a fraction of all
+            pixels in the patch.
+          sided: one
+        mean_CR_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            CR (affected by a cosmic ray on at least one input image), as a fraction of all pixels
+            in the patch.
+          sided: one
+        ct_CR_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CR_fraction value — the sample size
+            behind the tract's CR mask-fraction statistics.
+          sided: one
+        min_CR_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CR (affected by a cosmic ray on at least one input image), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        max_CR_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CR (affected by a cosmic ray on at least one input image), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        mean_CR_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged CR (affected by
+            a cosmic ray on at least one input image), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_CR_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CR_valid_data_fraction value — patches
+            with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged EDGE (too close to the patch edge to be considered for detection, given the detection
+            kernel size), as a fraction of all pixels in the patch.
+          sided: one
+        max_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged EDGE (too close to the patch edge to be considered for detection, given the detection
+            kernel size), as a fraction of all pixels in the patch.
+          sided: one
+        mean_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            EDGE (too close to the patch edge to be considered for detection, given the detection kernel
+            size), as a fraction of all pixels in the patch.
+          sided: one
+        ct_EDGE_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid EDGE_fraction value — the sample
+            size behind the tract's EDGE mask-fraction statistics.
+          sided: one
+        min_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged EDGE (too close to the patch edge to be considered for detection, given
+            the detection kernel size), as a fraction of valid pixels in the patch.
+          sided: one
+        max_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged EDGE (too close to the patch edge to be considered for detection, given
+            the detection kernel size), as a fraction of valid pixels in the patch.
+          sided: one
+        mean_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged EDGE (too close
+            to the patch edge to be considered for detection, given the detection kernel size), as
+            a fraction of valid pixels in the patch.
+          sided: one
+        ct_EDGE_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid EDGE_valid_data_fraction value —
+            patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_DETECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged DETECTED (part of a detected source), as a fraction of all pixels in the patch.
+          sided: one
+        max_DETECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged DETECTED (part of a detected source), as a fraction of all pixels in the patch.
+          sided: one
+        mean_DETECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            DETECTED (part of a detected source), as a fraction of all pixels in the patch.
+          sided: one
+        ct_DETECTED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid DETECTED_fraction value — the sample
+            size behind the tract's DETECTED mask-fraction statistics.
+          sided: one
+        min_DETECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged DETECTED (part of a detected source), as a fraction of valid pixels in the
+            patch.
+          sided: one
+        max_DETECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged DETECTED (part of a detected source), as a fraction of valid pixels in the
+            patch.
+          sided: one
+        mean_DETECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged DETECTED (part of
+            a detected source), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_DETECTED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid DETECTED_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_DETECTED_NEGATIVE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged DETECTED_NEGATIVE (part of a detected source with negative flux), as a fraction
+            of all pixels in the patch.
+          sided: one
+        max_DETECTED_NEGATIVE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged DETECTED_NEGATIVE (part of a detected source with negative flux), as a fraction
+            of all pixels in the patch.
+          sided: one
+        mean_DETECTED_NEGATIVE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            DETECTED_NEGATIVE (part of a detected source with negative flux), as a fraction of all
+            pixels in the patch.
+          sided: one
+        ct_DETECTED_NEGATIVE_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid DETECTED_NEGATIVE_fraction value
+            — the sample size behind the tract's DETECTED_NEGATIVE mask-fraction statistics.
+          sided: one
+        min_DETECTED_NEGATIVE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged DETECTED_NEGATIVE (part of a detected source with negative flux), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        max_DETECTED_NEGATIVE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged DETECTED_NEGATIVE (part of a detected source with negative flux), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        mean_DETECTED_NEGATIVE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged DETECTED_NEGATIVE
+            (part of a detected source with negative flux), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_DETECTED_NEGATIVE_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid DETECTED_NEGATIVE_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_SUSPECT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SUSPECT (close to the saturation level), as a fraction of all pixels in the patch.
+          sided: one
+        max_SUSPECT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SUSPECT (close to the saturation level), as a fraction of all pixels in the patch.
+          sided: one
+        mean_SUSPECT_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            SUSPECT (close to the saturation level), as a fraction of all pixels in the patch.
+          sided: one
+        ct_SUSPECT_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SUSPECT_fraction value — the sample
+            size behind the tract's SUSPECT mask-fraction statistics.
+          sided: one
+        min_SUSPECT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SUSPECT (close to the saturation level), as a fraction of valid pixels in
+            the patch.
+          sided: one
+        max_SUSPECT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SUSPECT (close to the saturation level), as a fraction of valid pixels in
+            the patch.
+          sided: one
+        mean_SUSPECT_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged SUSPECT (close to
+            the saturation level), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_SUSPECT_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SUSPECT_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_NO_DATA_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged NO_DATA (unavailable — no input data contributed to this pixel), as a fraction
+            of all pixels in the patch.
+          sided: one
+        max_NO_DATA_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged NO_DATA (unavailable — no input data contributed to this pixel), as a fraction
+            of all pixels in the patch.
+          sided: one
+        mean_NO_DATA_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            NO_DATA (unavailable — no input data contributed to this pixel), as a fraction of all pixels
+            in the patch.
+          sided: one
+        ct_NO_DATA_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid NO_DATA_fraction value — the sample
+            size behind the tract's NO_DATA mask-fraction statistics.
+          sided: one
+        min_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged VIGNETTED (vignetted by the optics), as a fraction of all pixels in the patch.
+          sided: one
+        max_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged VIGNETTED (vignetted by the optics), as a fraction of all pixels in the patch.
+          sided: one
+        mean_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            VIGNETTED (vignetted by the optics), as a fraction of all pixels in the patch.
+          sided: one
+        ct_VIGNETTED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid VIGNETTED_fraction value — the sample
+            size behind the tract's VIGNETTED mask-fraction statistics.
+          sided: one
+        min_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged VIGNETTED (vignetted by the optics), as a fraction of valid pixels in the
+            patch.
+          sided: one
+        max_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged VIGNETTED (vignetted by the optics), as a fraction of valid pixels in the
+            patch.
+          sided: one
+        mean_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged VIGNETTED (vignetted
+            by the optics), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_VIGNETTED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid VIGNETTED_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_PARTLY_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged PARTLY_VIGNETTED (partly vignetted by the optics), as a fraction of all pixels
+            in the patch.
+          sided: one
+        max_PARTLY_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged PARTLY_VIGNETTED (partly vignetted by the optics), as a fraction of all pixels
+            in the patch.
+          sided: one
+        mean_PARTLY_VIGNETTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            PARTLY_VIGNETTED (partly vignetted by the optics), as a fraction of all pixels in the patch.
+          sided: one
+        ct_PARTLY_VIGNETTED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid PARTLY_VIGNETTED_fraction value
+            — the sample size behind the tract's PARTLY_VIGNETTED mask-fraction statistics.
+          sided: one
+        min_PARTLY_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged PARTLY_VIGNETTED (partly vignetted by the optics), as a fraction of valid
+            pixels in the patch.
+          sided: one
+        max_PARTLY_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged PARTLY_VIGNETTED (partly vignetted by the optics), as a fraction of valid
+            pixels in the patch.
+          sided: one
+        mean_PARTLY_VIGNETTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged PARTLY_VIGNETTED
+            (partly vignetted by the optics), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_PARTLY_VIGNETTED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid PARTLY_VIGNETTED_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_CROSSTALK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CROSSTALK (affected by crosstalk and corrected accordingly), as a fraction of all
+            pixels in the patch.
+          sided: one
+        max_CROSSTALK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CROSSTALK (affected by crosstalk and corrected accordingly), as a fraction of all
+            pixels in the patch.
+          sided: one
+        mean_CROSSTALK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            CROSSTALK (affected by crosstalk and corrected accordingly), as a fraction of all pixels
+            in the patch.
+          sided: one
+        ct_CROSSTALK_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CROSSTALK_fraction value — the sample
+            size behind the tract's CROSSTALK mask-fraction statistics.
+          sided: one
+        min_CROSSTALK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CROSSTALK (affected by crosstalk and corrected accordingly), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        max_CROSSTALK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CROSSTALK (affected by crosstalk and corrected accordingly), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        mean_CROSSTALK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged CROSSTALK (affected
+            by crosstalk and corrected accordingly), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_CROSSTALK_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CROSSTALK_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_NOT_DEBLENDED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged NOT_DEBLENDED (part of a detection that was not deblended, usually due to size
+            limits), as a fraction of all pixels in the patch.
+          sided: one
+        max_NOT_DEBLENDED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged NOT_DEBLENDED (part of a detection that was not deblended, usually due to size
+            limits), as a fraction of all pixels in the patch.
+          sided: one
+        mean_NOT_DEBLENDED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            NOT_DEBLENDED (part of a detection that was not deblended, usually due to size limits),
+            as a fraction of all pixels in the patch.
+          sided: one
+        ct_NOT_DEBLENDED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid NOT_DEBLENDED_fraction value — the
+            sample size behind the tract's NOT_DEBLENDED mask-fraction statistics.
+          sided: one
+        min_NOT_DEBLENDED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged NOT_DEBLENDED (part of a detection that was not deblended, usually due to
+            size limits), as a fraction of valid pixels in the patch.
+          sided: one
+        max_NOT_DEBLENDED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged NOT_DEBLENDED (part of a detection that was not deblended, usually due to
+            size limits), as a fraction of valid pixels in the patch.
+          sided: one
+        mean_NOT_DEBLENDED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged NOT_DEBLENDED (part
+            of a detection that was not deblended, usually due to size limits), as a fraction of valid
+            pixels in the patch.
+          sided: one
+        ct_NOT_DEBLENDED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid NOT_DEBLENDED_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_SPIKE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SPIKE (in the neighbourhood of a diffraction spike from a bright star), as a fraction
+            of all pixels in the patch.
+          sided: one
+        max_SPIKE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SPIKE (in the neighbourhood of a diffraction spike from a bright star), as a fraction
+            of all pixels in the patch.
+          sided: one
+        mean_SPIKE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            SPIKE (in the neighbourhood of a diffraction spike from a bright star), as a fraction of
+            all pixels in the patch.
+          sided: one
+        ct_SPIKE_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SPIKE_fraction value — the sample
+            size behind the tract's SPIKE mask-fraction statistics.
+          sided: one
+        min_SPIKE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SPIKE (in the neighbourhood of a diffraction spike from a bright star),
+            as a fraction of valid pixels in the patch.
+          sided: one
+        max_SPIKE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SPIKE (in the neighbourhood of a diffraction spike from a bright star),
+            as a fraction of valid pixels in the patch.
+          sided: one
+        mean_SPIKE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged SPIKE (in the neighbourhood
+            of a diffraction spike from a bright star), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_SPIKE_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SPIKE_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_UNMASKEDNAN_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged UNMASKEDNAN (found to be NaN unexpectedly), as a fraction of all pixels in the
+            patch.
+          sided: one
+        max_UNMASKEDNAN_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged UNMASKEDNAN (found to be NaN unexpectedly), as a fraction of all pixels in the
+            patch.
+          sided: one
+        mean_UNMASKEDNAN_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            UNMASKEDNAN (found to be NaN unexpectedly), as a fraction of all pixels in the patch.
+          sided: one
+        ct_UNMASKEDNAN_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid UNMASKEDNAN_fraction value — the
+            sample size behind the tract's UNMASKEDNAN mask-fraction statistics.
+          sided: one
+        min_UNMASKEDNAN_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged UNMASKEDNAN (found to be NaN unexpectedly), as a fraction of valid pixels
+            in the patch.
+          sided: one
+        max_UNMASKEDNAN_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged UNMASKEDNAN (found to be NaN unexpectedly), as a fraction of valid pixels
+            in the patch.
+          sided: one
+        mean_UNMASKEDNAN_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged UNMASKEDNAN (found
+            to be NaN unexpectedly), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_UNMASKEDNAN_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid UNMASKEDNAN_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_STREAK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged STREAK (affected by an extended streak, most likely an artificial satellite), as
+            a fraction of all pixels in the patch.
+          sided: one
+        max_STREAK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged STREAK (affected by an extended streak, most likely an artificial satellite), as
+            a fraction of all pixels in the patch.
+          sided: one
+        mean_STREAK_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            STREAK (affected by an extended streak, most likely an artificial satellite), as a fraction
+            of all pixels in the patch.
+          sided: one
+        ct_STREAK_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid STREAK_fraction value — the sample
+            size behind the tract's STREAK mask-fraction statistics.
+          sided: one
+        min_STREAK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged STREAK (affected by an extended streak, most likely an artificial satellite),
+            as a fraction of valid pixels in the patch.
+          sided: one
+        max_STREAK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged STREAK (affected by an extended streak, most likely an artificial satellite),
+            as a fraction of valid pixels in the patch.
+          sided: one
+        mean_STREAK_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged STREAK (affected
+            by an extended streak, most likely an artificial satellite), as a fraction of valid pixels
+            in the patch.
+          sided: one
+        ct_STREAK_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid STREAK_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_CLIPPED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CLIPPED (identified as a probable artifact when comparing multiple single-visit
+            warps (CLIPPED always implies REJECTED)), as a fraction of all pixels in the patch.
+          sided: one
+        max_CLIPPED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged CLIPPED (identified as a probable artifact when comparing multiple single-visit
+            warps (CLIPPED always implies REJECTED)), as a fraction of all pixels in the patch.
+          sided: one
+        mean_CLIPPED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            CLIPPED (identified as a probable artifact when comparing multiple single-visit warps (CLIPPED
+            always implies REJECTED)), as a fraction of all pixels in the patch.
+          sided: one
+        ct_CLIPPED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CLIPPED_fraction value — the sample
+            size behind the tract's CLIPPED mask-fraction statistics.
+          sided: one
+        min_CLIPPED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CLIPPED (identified as a probable artifact when comparing multiple single-visit
+            warps (CLIPPED always implies REJECTED)), as a fraction of valid pixels in the patch.
+          sided: one
+        max_CLIPPED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged CLIPPED (identified as a probable artifact when comparing multiple single-visit
+            warps (CLIPPED always implies REJECTED)), as a fraction of valid pixels in the patch.
+          sided: one
+        mean_CLIPPED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged CLIPPED (identified
+            as a probable artifact when comparing multiple single-visit warps (CLIPPED always implies
+            REJECTED)), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_CLIPPED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid CLIPPED_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_REJECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged REJECTED (excluded from the coadd here because at least one input visit was masked
+            at this location (REJECTED always implies INEXACT_PSF)), as a fraction of all pixels in
+            the patch.
+          sided: one
+        max_REJECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged REJECTED (excluded from the coadd here because at least one input visit was masked
+            at this location (REJECTED always implies INEXACT_PSF)), as a fraction of all pixels in
+            the patch.
+          sided: one
+        mean_REJECTED_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            REJECTED (excluded from the coadd here because at least one input visit was masked at this
+            location (REJECTED always implies INEXACT_PSF)), as a fraction of all pixels in the patch.
+          sided: one
+        ct_REJECTED_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid REJECTED_fraction value — the sample
+            size behind the tract's REJECTED mask-fraction statistics.
+          sided: one
+        min_REJECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged REJECTED (excluded from the coadd here because at least one input visit
+            was masked at this location (REJECTED always implies INEXACT_PSF)), as a fraction of valid
+            pixels in the patch.
+          sided: one
+        max_REJECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged REJECTED (excluded from the coadd here because at least one input visit
+            was masked at this location (REJECTED always implies INEXACT_PSF)), as a fraction of valid
+            pixels in the patch.
+          sided: one
+        mean_REJECTED_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged REJECTED (excluded
+            from the coadd here because at least one input visit was masked at this location (REJECTED
+            always implies INEXACT_PSF)), as a fraction of valid pixels in the patch.
+          sided: one
+        ct_REJECTED_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid REJECTED_valid_data_fraction value
+            — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_SENSOR_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SENSOR_EDGE (near the edge of a contributing sensor/chip, where the coadd PSF is
+            discontinuous), as a fraction of all pixels in the patch.
+          sided: one
+        max_SENSOR_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged SENSOR_EDGE (near the edge of a contributing sensor/chip, where the coadd PSF is
+            discontinuous), as a fraction of all pixels in the patch.
+          sided: one
+        mean_SENSOR_EDGE_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            SENSOR_EDGE (near the edge of a contributing sensor/chip, where the coadd PSF is discontinuous),
+            as a fraction of all pixels in the patch.
+          sided: one
+        ct_SENSOR_EDGE_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SENSOR_EDGE_fraction value — the
+            sample size behind the tract's SENSOR_EDGE mask-fraction statistics.
+          sided: one
+        min_SENSOR_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SENSOR_EDGE (near the edge of a contributing sensor/chip, where the coadd
+            PSF is discontinuous), as a fraction of valid pixels in the patch.
+          sided: one
+        max_SENSOR_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged SENSOR_EDGE (near the edge of a contributing sensor/chip, where the coadd
+            PSF is discontinuous), as a fraction of valid pixels in the patch.
+          sided: one
+        mean_SENSOR_EDGE_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged SENSOR_EDGE (near
+            the edge of a contributing sensor/chip, where the coadd PSF is discontinuous), as a fraction
+            of valid pixels in the patch.
+          sided: one
+        ct_SENSOR_EDGE_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid SENSOR_EDGE_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one
+        min_INEXACT_PSF_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged INEXACT_PSF (covered by a different set of visits than those contributing to the
+            PSF model for its cell), as a fraction of all pixels in the patch.
+          sided: one
+        max_INEXACT_PSF_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of pixels
+            flagged INEXACT_PSF (covered by a different set of visits than those contributing to the
+            PSF model for its cell), as a fraction of all pixels in the patch.
+          sided: one
+        mean_INEXACT_PSF_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Mean, across the patches in a tract, of the per-patch fraction of pixels flagged
+            INEXACT_PSF (covered by a different set of visits than those contributing to the PSF model
+            for its cell), as a fraction of all pixels in the patch.
+          sided: one
+        ct_INEXACT_PSF_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid INEXACT_PSF_fraction value — the
+            sample size behind the tract's INEXACT_PSF mask-fraction statistics.
+          sided: one
+        min_INEXACT_PSF_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Minimum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged INEXACT_PSF (covered by a different set of visits than those contributing
+            to the PSF model for its cell), as a fraction of valid pixels in the patch.
+          sided: one
+        max_INEXACT_PSF_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Maximum, across the patches in a tract, of the per-patch fraction of valid (non-NO_DATA)
+            pixels flagged INEXACT_PSF (covered by a different set of visits than those contributing
+            to the PSF model for its cell), as a fraction of valid pixels in the patch.
+          sided: one
+        mean_INEXACT_PSF_valid_data_fraction:
+          units: null
+          metricTypes:
+          - coadd
+          - mask
+          description: Weighted mean, across the patches in a tract and weighted by each patch's valid-pixel
+            count, of the per-patch fraction of valid (non-NO_DATA) pixels flagged INEXACT_PSF (covered
+            by a different set of visits than those contributing to the PSF model for its cell), as
+            a fraction of valid pixels in the patch.
+          sided: one
+        ct_INEXACT_PSF_valid_data_fraction:
+          units: ct
+          metricTypes:
+          - coadd
+          - mask
+          - counts
+          description: Number of patches in the tract with a valid INEXACT_PSF_valid_data_fraction
+            value — patches with no valid (non-NO_DATA) pixels are excluded.
+          sided: one

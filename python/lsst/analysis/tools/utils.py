@@ -54,8 +54,15 @@ def getTractCorners(skymap, tractId):
     -----
     Corners are returned in degrees and wrapped in ra.
     """
-    tractCorners = skymap[tractId].getVertexList()
-    corners = _wrapRa([(corner.getRa().asDegrees(), corner.getDec().asDegrees()) for corner in tractCorners])
+    # Get bounding box is needed if the skymap isn't rings
+    # The discrete skymaps don't return a box from
+    # getInnerSkyRegion
+    tractBox = skymap[tractId].getInnerSkyRegion().getBoundingBox()
+    minRa, maxRa = tractBox.getLon().getA().asDegrees(), tractBox.getLon().getB().asDegrees()
+    minDec, maxDec = tractBox.getLat().getA().asDegrees(), tractBox.getLat().getB().asDegrees()
+
+    tractCorners = [(minRa, minDec), (maxRa, minDec), (maxRa, maxDec), (minRa, minDec)]
+    corners = _wrapRa(tractCorners)
 
     return corners
 

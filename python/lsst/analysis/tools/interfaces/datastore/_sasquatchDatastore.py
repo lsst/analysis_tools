@@ -36,6 +36,7 @@ from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
 from lsst.resources import ResourcePath, ResourcePathExpression
 
 from . import SasquatchDispatcher, SasquatchDispatchFailure, SasquatchDispatchPartialFailure
+from ._dispatcher import DEFAULT_TIMEOUT
 
 if TYPE_CHECKING:
     from lsst.daf.butler import Config, DatasetProvenance, DatasetType, LookupKey
@@ -99,6 +100,13 @@ class SasquatchDatastore(GenericBaseDatastore):
     "k1=v1;k2=v2".
     """
 
+    timeout: float | None
+    """Timeout in seconds for each HTTP request made to the rest proxy, read
+    from the ``"timeout"`` entry of the datastore config and defaulting to
+    `DEFAULT_TIMEOUT`. `None` disables it. This bounds how long a `put` can
+    block when the proxy accepts connections but never answers.
+    """
+
     def __init__(
         self,
         config: DatastoreConfig,
@@ -133,7 +141,11 @@ class SasquatchDatastore(GenericBaseDatastore):
                 extra_fields[k] = v
         self.extra_fields = extra_fields if extra_fields else None
 
-        self._dispatcher = SasquatchDispatcher(self.restProxyUrl, self.accessToken, self.namespace)
+        self.timeout = self.config.get("timeout", DEFAULT_TIMEOUT)
+
+        self._dispatcher = SasquatchDispatcher(
+            self.restProxyUrl, self.accessToken, self.namespace, timeout=self.timeout
+        )
 
     @classmethod
     def _create_from_config(
@@ -161,6 +173,15 @@ class SasquatchDatastore(GenericBaseDatastore):
                 log.warning("Failed to dispatch metric bundle to Sasquatch.")
             except SasquatchDispatchPartialFailure:
                 log.warning("Only some of the metrics were successfully dispatched to Sasquatch.")
+            except Exception:
+                # Publishing to Sasquatch is best-effort: an unreachable or
+                # misbehaving proxy, or a bug in preparing the records, must
+                # never fail the butler put (and with it the pipeline task)
+                # that triggered it. Anything the dispatcher did not already
+                # translate into one of the failures above lands here.
+                log.exception(
+                    "Unexpected error dispatching metric bundle %s to Sasquatch; it was not published.", ref
+                )
         else:
             log.debug("Could not put dataset type %s with Sasquatch datastore", ref.datasetType)
             raise DatasetTypeNotSupportedError(

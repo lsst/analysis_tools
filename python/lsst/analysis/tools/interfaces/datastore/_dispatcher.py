@@ -54,6 +54,9 @@ log = logging.getLogger(__name__)
 PARTITIONS = 1
 REPLICATION_FACTOR = 3
 
+DEFAULT_TIMEOUT: float = 30.0
+"""Default timeout in seconds applied to each HTTP request to the proxy."""
+
 IDENTIFIER_KEYS = [
     "detector",
     "patch",
@@ -179,6 +182,11 @@ class SasquatchDispatcher:
     namespace: str = "lsst.dm"
     """The namespace in Sasquatch in which to write the uploaded metrics"""
 
+    timeout: float | None = DEFAULT_TIMEOUT
+    """Timeout in seconds applied to each HTTP request made to the proxy, so
+    that a server which accepts connections but never answers cannot block
+    the caller indefinitely. `None` disables the timeout."""
+
     def __post_init__(self) -> None:
         match ResourcePath(self.url).scheme:
             case "http" | "https":
@@ -208,12 +216,18 @@ class SasquatchDispatcher:
 
         try:
             with http_client() as session:
-                r = session.get(f"{self.url}/v3/clusters", headers=headers)
-                cluster_id = r.json()["data"][0]["cluster_id"]
-                self._cluster_id = str(cluster_id)
+                r = session.get(f"{self.url}/v3/clusters", headers=headers, timeout=self.timeout)
+            # Check the status before parsing the body: an error response
+            # carries an error document (or no JSON at all), not the cluster
+            # list, and must not escape as a bare KeyError/JSONDecodeError.
             r.raise_for_status()
-        except requests.RequestException as e:
+            cluster_id = r.json()["data"][0]["cluster_id"]
+        except (requests.RequestException, LookupError, TypeError, ValueError) as e:
+            # LookupError/TypeError cover a 2xx body that is valid JSON but not
+            # of the expected shape; ValueError covers a body that is not JSON
+            # (requests' JSONDecodeError is also a RequestException).
             raise SasquatchDispatchFailure("Could not retrieve the cluster id for the specified url") from e
+        self._cluster_id = str(cluster_id)
 
     def _create_topic(self, topic_name: str) -> bool:
         """Create a kafka topic in Sasquatch.
@@ -242,7 +256,10 @@ class SasquatchDispatcher:
         try:
             with http_client() as session:
                 r = session.post(
-                    f"{self.url}/v3/clusters/{self.clusterId}/topics", json=topic_config, headers=headers
+                    f"{self.url}/v3/clusters/{self.clusterId}/topics",
+                    json=topic_config,
+                    headers=headers,
+                    timeout=self.timeout,
                 )
             r.raise_for_status()
             log.debug("Created topic %s.%s", self.namespace, topic_name)
@@ -716,7 +733,10 @@ class SasquatchDispatcher:
 
                 try:
                     r = session.post(
-                        f"{self.url}/topics/{self.namespace}.{metric}", json=data, headers=headers
+                        f"{self.url}/topics/{self.namespace}.{metric}",
+                        json=data,
+                        headers=headers,
+                        timeout=self.timeout,
                     )
                     r.raise_for_status()
                     log.debug("Succesfully sent data for metric %s", metric)

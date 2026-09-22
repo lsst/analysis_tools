@@ -20,8 +20,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 __all__ = ("CalcRelativeDistances",)
 
-import time
-
 import astropy.units as u
 import esutil
 import numpy as np
@@ -114,22 +112,8 @@ class CalcRelativeDistances(KeyedDataAction):
 
         rng = np.random.RandomState(seed=self.randomSeed)
 
-        def _compressArray(arrayIn):
-            h, rev = esutil.stat.histogram(arrayIn, rev=True)
-            arrayOut = np.zeros(len(arrayIn), dtype=np.int32)
-            (good,) = np.where(h > 0)
-            for counter, ind in enumerate(good):
-                arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
-            return arrayOut
-
-        t0 = time.time()
-        #import ipdb; ipdb.set_trace()
-        #groupId = _compressArray(data[self.groupKey])
         _, groupId = np.unique(data[self.groupKey], return_inverse=True)
-        t1 = time.time()
-        print("Compress array:", t1 - t0)
         nObj = groupId.max() + 1
-        #nObj = len(ids)
 
         # Compute the meanRa/meanDec.
         meanRa = np.zeros(nObj)
@@ -152,9 +136,7 @@ class CalcRelativeDistances(KeyedDataAction):
         meanRa /= nObs
         meanDec /= nObs
         meanRa += rotation
-        t2 = time.time()
-        print("Get means:", t2 - t1)
-        #import ipdb; ipdb.set_trace()
+
         D = (self.annulus * u.arcmin).to_value(u.degree)
         width = (self.width * u.arcmin).to_value(u.degree)
         annulus = D + (width / 2) * np.array([-1, +1])
@@ -180,21 +162,20 @@ class CalcRelativeDistances(KeyedDataAction):
         else:
             with Matcher(meanRa, meanDec) as m:
                 idx, i1, i2, d = m.query_self(annulus[1], return_indices=True)
-        t3 = time.time()
-        print("Get pairs:", t3 - t2)
+
         inAnnulus = (d > annulus[0]) & (d < annulus[1])
         i1 = i1[inAnnulus]
         i2 = i2[inAnnulus]
 
         if len(i1) == 0:
             return distanceParams
-        print("N pairs:", len(i1))
+
         if len(i1) > self.maxPairs:
             # Downsample the pairs.
             selection = rng.choice(len(i1), size=self.maxPairs, replace=False)
             i1 = i1[selection]
             i2 = i2[selection]
-            print(f"downsample to {self.maxPairs} pairs")
+
         # Match groups and get indices.
         h, rev = esutil.stat.histogram(groupId, rev=True)
 
@@ -228,8 +209,6 @@ class CalcRelativeDistances(KeyedDataAction):
             np.deg2rad(np.array(data[self.decKey][matchedObsInd2])),
         )
 
-        t4 = time.time()
-        print("Calculate separations:", t4 - t3)
         # Compute the mean from the ragged array of pairs by
         # using np.add.at to sum numerator and denominator.
         sepMean = np.zeros(len(i1))
@@ -239,7 +218,6 @@ class CalcRelativeDistances(KeyedDataAction):
         good = nSep > 1
         sepMean[good] /= nSep[good]
         sepMean[~good] = np.nan
-        print(len(matchedPairInd), good.sum(), (nSep == 1).sum(), (nSep == 0).sum())
 
         # There are no good pairs, so return the default.
         if good.sum() == 0:
@@ -260,7 +238,6 @@ class CalcRelativeDistances(KeyedDataAction):
         sepMean[bad2] = np.nan
         sepResiduals = separations - sepMean[matchedPairInd]
         sepResiduals = sepResiduals[np.isfinite(sepResiduals)]
-        #import ipdb; ipdb.set_trace()
 
         # This is always going to be valid because we checked the number
         # of good pairs above.
@@ -283,9 +260,8 @@ class CalcRelativeDistances(KeyedDataAction):
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value
         distanceParams["AFx"] = AFx.value
-        distanceParams['nPairs'] = len(rmsDistances)
-        t5 = time.time()
-        print("Everything else:", t5 - t4)
+        distanceParams["nPairs"] = len(rmsDistances)
+
         return distanceParams
 
 

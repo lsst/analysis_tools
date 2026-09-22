@@ -236,36 +236,9 @@ class AstrometricRelativeRepeatability(AnalysisTool):
         self.process.filterActions.obj_index = DownselectVector(
             vectorKey="obj_index", selector=self.process.filterActions.coord_ra.selector
         )
-        #self.process.filterActions.sourceId = DownselectVector(
-        #    vectorKey="sourceId", selector=self.process.filterActions.coord_ra.selector
-        #)
         self.process.filterActions.visit = DownselectVector(
             vectorKey="visit", selector=self.process.filterActions.coord_ra.selector
         )
-        self.process.filterActions.old_obj_index = DownselectVector(
-            vectorKey="obj_index", selector=self.process.filterActions.coord_ra.selector
-        )
-
-        #self.process.filterActions.coord_ra1 = LoadVector(vectorKey="coord_ra")
-        
-        #self.process.filterActions.coord_dec1 = LoadVector(
-        #    vectorKey="coord_dec",
-        #)
-        #self.process.filterActions.sourceId1 = LoadVector(
-        #    vectorKey="sourceId",
-        #)
-        #self.process.filterActions.obj_index1 = LoadVector(
-        #    vectorKey="isolated_star_id", 
-        #)
-        #self.process.filterActions.visit1 = LoadVector(
-        #    vectorKey="visit", 
-        #)
-        #self.process.filterActions.tract1 = LoadVector(
-        #    vectorKey="tract",
-        #)
-        #self.process.filterActions.old_obj_index1 = LoadVector(
-        #    vectorKey="obj_index", 
-        #)
 
         self.process.calculateActions.rms = CalcRelativeDistances()
 
@@ -302,7 +275,7 @@ class AstrometricRelativeRepeatability(AnalysisTool):
             "AMx": f"{{band}}_AM{self.xValue}",
             "AFx": f"{{band}}_AF{self.xValue}",
             "ADx": f"{{band}}_AD{self.xValue}",
-            "nPairs": f"{{band}}_nPairs",
+            "nPairs": "{band}_nPairs",
         }
 
 

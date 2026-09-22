@@ -20,15 +20,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("AssociatedSourcesTractAnalysisConfig", "AssociatedSourcesTractAnalysisTask", "AssociatedSourcesHealpix3AnalysisTask")
-
-import time
+__all__ = (
+    "AssociatedSourcesTractAnalysisConfig",
+    "AssociatedSourcesTractAnalysisTask",
+    "AssociatedSourcesHealpix3AnalysisTask",
+)
 
 import astropy.time
 import astropy.units as u
 import numpy as np
-from astropy.table import Table, hstack, join, vstack
 from astropy.coordinates import SkyCoord
+from astropy.table import Table, hstack, vstack
 from scipy.spatial import KDTree
 
 import lsst.pex.config as pexConfig
@@ -38,8 +40,6 @@ from lsst.pipe.base import NoWorkFound
 from lsst.pipe.base import connectionTypes as ct
 from lsst.skymap import BaseSkyMap
 from lsst.sphgeom import HealpixPixelization
-from lsst.geom import SpherePoint, degrees
-import time
 
 from ..interfaces import AnalysisBaseConfig, AnalysisBaseConnections, AnalysisPipelineTask
 
@@ -183,8 +183,6 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         """Concatenate source catalogs and join on associated source IDs."""
         rng = np.random.default_rng()
 
-        t00 = time.time()
-
         # Strip any provenance from tables before merging to prevent
         # warnings from conflicts being issued by astropy.utils.merge.
         DatasetProvenance.strip_provenance_from_flat_dict(associatedSources.meta)
@@ -193,9 +191,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         # associatedSource["obj_index"] refers to the corresponding index (row)
         # in associatedSourceIds.
         index = associatedSources["obj_index"]
-        print("Orig number of objects:", len(np.unique(associatedSources["obj_index"])))
         associatedSources["isolated_star_id"] = associatedSourceIds["isolated_star_id"][index]
-        print("Orig length of associated sources:", len(associatedSources))
 
         if self.config.maxObjects:
             objectChoice = rng.permutation(associatedSourceIds["isolated_star_id"])[: self.config.maxObjects]
@@ -207,19 +203,16 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
             )
             matched = objectChoice[sub1] == associatedSources["isolated_star_id"]
             associatedSources = associatedSources[matched]
-            print("Clipped number of objects:", len(np.unique(associatedSources["obj_index"])))
-            print("Clipped length of associated sources:", len(associatedSources))
 
         trimmedSourceCatalogs = []
         fullCatLen = 0
         # It would be preferable to use astropy's built in functions
-        # but they are too slow so we have this wonderful masterpiece
-        # Which is still not fast but two thirds of the time is the butler get
-        
-        reshapedAssocSources = associatedSources["sourceId"].copy()#.reshape(len(associatedSources), 1)
+        # but they are too slow so instead we use a numpy searchsorted
+        # maneuver.
+        sortedAssocSources = associatedSources["sourceId"].copy()
         assocSourcesSort = associatedSources["sourceId"].argsort()
-        reshapedAssocSources.sort()
-        nAssocSources = len(reshapedAssocSources)
+        sortedAssocSources.sort()
+        nAssocSources = len(sortedAssocSources)
         colsNeeded = list(self.collectInputNames())
         # Only get the columns needed for the source catalogues.
         # The isolated_star_id and the obj_index are added later
@@ -232,29 +225,29 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         if "obj_index" in colsNeeded:
             colsNeeded.remove("obj_index")
         colsNeeded += ["sourceId", "coord_ra", "coord_dec"]
-        print("Orig number of visits:", len(sourceCatalogs))
+
         if self.config.maxVisitCount:
             sourceCatalogs = rng.permutation(sourceCatalogs)[: self.config.maxVisitCount]
-            print("Clipped number of visits:", len(sourceCatalogs))
-        t0 = time.time()
-        print("get assoc ids:", t0 - t00)
+
         for sourceCatalogRef in sourceCatalogs:
             sourceCatalog = sourceCatalogRef.get(parameters={"columns": set(colsNeeded)})
             DatasetProvenance.strip_provenance_from_flat_dict(sourceCatalog.meta)
-            reshapedSourceCat = sourceCatalog["sourceId"]#.reshape(len(sourceCatalog), 1)
 
-            sub = np.clip(np.searchsorted(reshapedAssocSources, reshapedSourceCat), 0, nAssocSources - 1)
-            sourceCatalogInds = reshapedAssocSources[sub] == reshapedSourceCat
+            sub = np.clip(
+                np.searchsorted(sortedAssocSources, sourceCatalog["sourceId"]), 0, nAssocSources - 1
+            )
+            sourceCatalogInds = sortedAssocSources[sub] == sourceCatalog["sourceId"]
             assocCatalogInds = sub[sourceCatalogInds]
 
             # Keep only the sources in groups that are fully contained within
             # the tract by matching to the associated sources table
-            trimmedSourceCatalogs.append(hstack([associatedSources[assocSourcesSort][assocCatalogInds], sourceCatalog[sourceCatalogInds]]))
-            assert (associatedSources[assocSourcesSort][assocCatalogInds]['sourceId'] == sourceCatalog[sourceCatalogInds]['sourceId']).all()
+            trimmedSourceCatalogs.append(
+                hstack(
+                    [associatedSources[assocSourcesSort][assocCatalogInds], sourceCatalog[sourceCatalogInds]]
+                )
+            )
             fullCatLen += np.sum(sourceCatalogInds)
 
-        t1 = time.time()
-        print("catalog loading:", t1 - t0)
         columns = trimmedSourceCatalogs[0].columns
         dtypes = trimmedSourceCatalogs[0].dtype
         zeros = np.zeros((fullCatLen, len(columns)))
@@ -263,15 +256,12 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         for trimmedSourceCatalog in trimmedSourceCatalogs:
             fullCat[n : n + len(trimmedSourceCatalog)] = trimmedSourceCatalog
             n += len(trimmedSourceCatalog)
-        t2 = time.time()
-        print("trim", t2 - t1)
+
         if (astrometricCorrectionCatalog is not None) and (len(fullCat) != 0):
             self.applyAstrometricCorrections(fullCat, astrometricCorrectionCatalog, visitTable)
 
         # Keep only finite ras and decs
         keep = np.isfinite(fullCat["coord_ra"]) & np.isfinite(fullCat["coord_dec"])
-        t3 = time.time()
-        print("apply astrometric corrections:", t3 - t2)
         return fullCat[keep]
 
     def applyAstrometricCorrections(self, dataJoined, astrometricCorrectionCatalog, visitTable):
@@ -312,7 +302,7 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         ids = inds < lenAstroCorrCat
 
         dataWithPM = hstack([dataJoined[ids], astrometricCorrectionCatalog[inds[ids]]])
-        assert (dataWithPM['isolated_star_id_1'] == dataWithPM['isolated_star_id_2']).all()
+
         mjds = visitTable.loc[dataWithPM["visit"]]["expMidptMJD"]
         times = astropy.time.Time(mjds, format="mjd", scale="tai")
         dataWithPM["MJD"] = times
@@ -359,8 +349,10 @@ class AssociatedSourcesTractAnalysisTask(AnalysisPipelineTask):
         self.putByBand(butlerQC, outputs, outputRefs)
 
 
-class AssociatedSourcesHealpix3AnalysisConnections(AssociatedSourcesTractAnalysisConnections,
-        dimensions=("healpix3", "instrument"),):
+class AssociatedSourcesHealpix3AnalysisConnections(
+    AssociatedSourcesTractAnalysisConnections,
+    dimensions=("healpix3", "instrument"),
+):
     associatedSources = ct.Input(
         doc="Table of associated sources",
         name="{associatedSourcesInputName}",
@@ -376,7 +368,7 @@ class AssociatedSourcesHealpix3AnalysisConnections(AssociatedSourcesTractAnalysi
         storageClass="ArrowAstropy",
         deferLoad=True,
         dimensions=("instrument", "skymap", "tract"),
-        multiple=True
+        multiple=True,
     )
     astrometricCorrectionCatalog = ct.Input(
         doc="Catalog with proper motion and parallax information.",
@@ -387,10 +379,12 @@ class AssociatedSourcesHealpix3AnalysisConnections(AssociatedSourcesTractAnalysi
         multiple=True,
     )
 
+
 class AssociatedSourcesHealpix3AnalysisConfig(
     AssociatedSourcesTractAnalysisConfig, pipelineConnections=AssociatedSourcesHealpix3AnalysisConnections
 ):
     pass
+
 
 class AssociatedSourcesHealpix3AnalysisTask(AssociatedSourcesTractAnalysisTask):
     ConfigClass = AssociatedSourcesHealpix3AnalysisConfig
@@ -401,22 +395,16 @@ class AssociatedSourcesHealpix3AnalysisTask(AssociatedSourcesTractAnalysisTask):
         pixelization = HealpixPixelization(3)
         pixelRegion = pixelization.pixel(pixelId)
 
-        sourceCoordsAlt = SkyCoord(sourceIds['ra'] * u.degree, sourceIds['dec'] * u.degree).cartesian.xyz
+        sourceCoords = SkyCoord(sourceIds["ra"] * u.degree, sourceIds["dec"] * u.degree).cartesian.xyz
 
-        inPixel = pixelRegion.contains(*sourceCoordsAlt.value)
+        inPixel = pixelRegion.contains(*sourceCoords.value)
         if not inPixel.any():
             return sources[:0]
-        #pixelSourceInds = np.flatnonzero(inPixel)
-        pixelIds = sourceIds[inPixel]['isolated_star_id']
+        pixelIds = sourceIds[inPixel]["isolated_star_id"]
 
-        #sub1 = np.clip(np.searchsorted(pixelSourceInds, sources['obj_index']), 0, len(pixelSourceInds) - 1)
-        #matched = (pixelSourceInds[sub1] == sources['obj_index'])
-        sub1 = np.clip(np.searchsorted(pixelIds, sources['isolated_star_id']), 0, len(pixelIds) - 1)
-        matched = (pixelIds[sub1] == sources['isolated_star_id'])
+        sub1 = np.clip(np.searchsorted(pixelIds, sources["isolated_star_id"]), 0, len(pixelIds) - 1)
+        matched = pixelIds[sub1] == sources["isolated_star_id"]
 
-        #trimmedAstrom = (None if astrometricCorrections is None else astrometricCorrections[inPixel])
-
-        #return sources[matched], sourceIds[inPixel], trimmedAstrom
         return sources[matched]
 
     def runQuantum(self, butlerQC, inputRefs, outputRefs):
@@ -430,56 +418,56 @@ class AssociatedSourcesHealpix3AnalysisTask(AssociatedSourcesTractAnalysisTask):
                 names.remove(item)
 
         dataId = butlerQC.quantum.dataId
-        plotInfo = self.parsePlotInfo({'associatedSources': inputs["associatedSources"][0]}, dataId, connectionName="associatedSources")
+        plotInfo = self.parsePlotInfo(
+            {"associatedSources": inputs["associatedSources"][0]}, dataId, connectionName="associatedSources"
+        )
 
-        # TODO: make key used for object index configurable
-        pixelId = dataId['healpix3']
-        #inputs["associatedSources"], inputs["associatedSourceIds"] = self.getHealpixOverlap()
-        associatedSourceRefs = {assocRef.dataId['tract']: assocRef for assocRef in inputs["associatedSources"]}
-        associatedSourceIdRefs = {assocRef.dataId['tract']: assocRef for assocRef in inputs["associatedSourceIds"]}
-        astrometricCorrectionRefs = {assocRef.dataId['tract']: assocRef for assocRef in inputs["astrometricCorrectionCatalog"]}
-        associatedSources = []
-        associatedSourceIds = []
-        astrometricCorrections = []
+        # Loop over tract inputs, keeping only objects that in this healpix,
+        # then stack in one big table.
+        pixelId = dataId["healpix3"]
+        associatedSourceRefs = {
+            assocRef.dataId["tract"]: assocRef for assocRef in inputs["associatedSources"]
+        }
+        associatedSourceIdRefs = {
+            assocRef.dataId["tract"]: assocRef for assocRef in inputs["associatedSourceIds"]
+        }
+        astrometricCorrectionRefs = {
+            assocRef.dataId["tract"]: assocRef for assocRef in inputs["astrometricCorrectionCatalog"]
+        }
         data = []
         for tract in associatedSourceRefs:
-            print("tract", tract)
             tractAssociatedSources = self.loadData(associatedSourceRefs[tract], ["obj_index", "sourceId"])
-            tractAssociatedSourceIds = self.loadData(associatedSourceIdRefs[tract], ["isolated_star_id", "ra", "dec"])
+            tractAssociatedSourceIds = self.loadData(
+                associatedSourceIdRefs[tract], ["isolated_star_id", "ra", "dec"]
+            )
             if self.config.applyAstrometricCorrections:
                 astromCorrections = astrometricCorrectionRefs[tract].get(
                     parameters={"columns": self.config.astrometricCorrectionParameters.values()}
                 )
             else:
                 astromCorrections = None
-            tractInput = {'associatedSources': tractAssociatedSources,
-                          'associatedSourceIds': tractAssociatedSourceIds,
-                          'astrometricCorrectionCatalog': astromCorrections,
-                          'sourceCatalogs': inputs['sourceCatalogs'],
-                          'visitTable': inputs['visitTable']}
+            tractInput = {
+                "associatedSources": tractAssociatedSources,
+                "associatedSourceIds": tractAssociatedSourceIds,
+                "astrometricCorrectionCatalog": astromCorrections,
+                "sourceCatalogs": inputs["sourceCatalogs"],
+                "visitTable": inputs["visitTable"],
+            }
             tractData = self.callback(tractInput, dataId)
             if len(tractData) == 0:
                 continue
             trimmedData = self.getHealpixOverlap(tractData, tractAssociatedSourceIds, pixelId)
-            trimmedData['tract'] = tract
+            trimmedData["tract"] = tract
             data.append(trimmedData)
         data = vstack(data)
-        """
-        inputs["associatedSources"] = vstack(associatedSources)
-        inputs["associatedSourceIds"] = vstack(associatedSourceIds)
-        if self.config.applyAstrometricCorrections:
-            inputs['astrometricCorrectionCatalog'] = vstack(astrometricCorrections)
-        else:
-            inputs["astrometricCorrectionCatalog"] = None
-            inputs["visitTable"] = None
-        """
-        if len(inputs["associatedSources"]) == 0:
-            raise NoWorkFound(f"No associated sources in tract {dataId.tract.id}")
 
-        #data = self.callback(inputs, dataId)
+        if len(data["associatedSources"]) == 0:
+            raise NoWorkFound(f"No associated sources in healpix {dataId.healpix3.id}")
 
-        kwargs = {"data": data, "plotInfo": plotInfo, #"skymap": inputs["skyMap"], 
-                  "camera": inputs["camera"]}
+        kwargs = {
+            "data": data,
+            "plotInfo": plotInfo,
+            "camera": inputs["camera"],
+        }
         outputs = self.run(**kwargs)
         self.putByBand(butlerQC, outputs, outputRefs)
-

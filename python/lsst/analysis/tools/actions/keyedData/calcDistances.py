@@ -106,6 +106,7 @@ class CalcRelativeDistances(KeyedDataAction):
             "AMx": np.nan,
             "ADx": np.nan,
             "AFx": np.nan,
+            "nPairs": 0,
         }
 
         if len(data[self.groupKey]) == 0:
@@ -122,10 +123,13 @@ class CalcRelativeDistances(KeyedDataAction):
             return arrayOut
 
         t0 = time.time()
-        groupId = _compressArray(data[self.groupKey])
+        #import ipdb; ipdb.set_trace()
+        #groupId = _compressArray(data[self.groupKey])
+        _, groupId = np.unique(data[self.groupKey], return_inverse=True)
         t1 = time.time()
         print("Compress array:", t1 - t0)
         nObj = groupId.max() + 1
+        #nObj = len(ids)
 
         # Compute the meanRa/meanDec.
         meanRa = np.zeros(nObj)
@@ -150,6 +154,7 @@ class CalcRelativeDistances(KeyedDataAction):
         meanRa += rotation
         t2 = time.time()
         print("Get means:", t2 - t1)
+        #import ipdb; ipdb.set_trace()
         D = (self.annulus * u.arcmin).to_value(u.degree)
         width = (self.width * u.arcmin).to_value(u.degree)
         annulus = D + (width / 2) * np.array([-1, +1])
@@ -222,6 +227,7 @@ class CalcRelativeDistances(KeyedDataAction):
             np.deg2rad(np.array(data[self.raKey][matchedObsInd2])),
             np.deg2rad(np.array(data[self.decKey][matchedObsInd2])),
         )
+
         t4 = time.time()
         print("Calculate separations:", t4 - t3)
         # Compute the mean from the ragged array of pairs by
@@ -233,6 +239,7 @@ class CalcRelativeDistances(KeyedDataAction):
         good = nSep > 1
         sepMean[good] /= nSep[good]
         sepMean[~good] = np.nan
+        print(len(matchedPairInd), good.sum(), (nSep == 1).sum(), (nSep == 0).sum())
 
         # There are no good pairs, so return the default.
         if good.sum() == 0:
@@ -253,6 +260,7 @@ class CalcRelativeDistances(KeyedDataAction):
         sepMean[bad2] = np.nan
         sepResiduals = separations - sepMean[matchedPairInd]
         sepResiduals = sepResiduals[np.isfinite(sepResiduals)]
+        #import ipdb; ipdb.set_trace()
 
         # This is always going to be valid because we checked the number
         # of good pairs above.
@@ -275,6 +283,7 @@ class CalcRelativeDistances(KeyedDataAction):
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value
         distanceParams["AFx"] = AFx.value
+        distanceParams['nPairs'] = len(rmsDistances)
         t5 = time.time()
         print("Everything else:", t5 - t4)
         return distanceParams

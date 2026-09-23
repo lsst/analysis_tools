@@ -5,6 +5,9 @@ parameters:
   # Note that these parameter names are shared with ApPipe, and are overwritten
   # by changes in the values there.
   coaddName: goodSeeing
+  # Whether the images this pipeline reads from are legacy afw Exposures or
+  # the new lsst.images types.
+  image_type: legacy
 
 tasks:
   analyzeAssociatedDiaSourceTable:
@@ -272,8 +275,9 @@ tasks:
   analyzePreliminarySummaryStats:
     class: lsst.analysis.tools.tasks.CalexpSummaryAnalysisTask
     config:
-      connections.data: preliminary_visit_image.summaryStats
+      connections.data: preliminary_visit_image
       connections.outputName: initialPviSummary
+      input_image_type: parameters.image_type
       atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
   analyzeVisitSampledImageSubtractionMetrics:

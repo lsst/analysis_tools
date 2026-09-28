@@ -25,6 +25,9 @@ __all__ = (
     "CalexpSummaryAnalysisTask",
 )
 
+import dataclasses
+
+import lsst.pex.config as pexConfig
 from lsst.pipe.base import (
     InputQuantizedConnection,
     OutputQuantizedConnection,
@@ -42,16 +45,37 @@ class CalexpSummaryAnalysisConnections(
     defaultTemplates={"inputName": "calexp.summaryStats", "outputName": "calexpSummary"},
 ):
     data = cT.Input(
-        doc="Calibrated exposure summary statistics to load from the butler",
+        doc="Summary statistics of a visit image, which is a legacy Exposure or an "
+        "lsst.images.VisitImage depending on input_image_type.",
         name="calexp.summaryStats",
         storageClass="ExposureSummaryStats",
         dimensions=("visit", "band", "detector"),
         deferLoad=False,
     )
 
+    def __init__(self, *, config=None):
+        super().__init__(config=config)
+
+        parent = self.data.name.split(".")[0]
+        if config.input_image_type == "future":
+            name = f"{parent}.summary_stats"
+            storage_class = "ObservationSummaryStats"
+        else:
+            name = f"{parent}.summaryStats"
+            storage_class = "ExposureSummaryStats"
+        self.data = dataclasses.replace(self.data, name=name, storageClass=storage_class)
+
 
 class CalexpSummaryAnalysisConfig(AnalysisBaseConfig, pipelineConnections=CalexpSummaryAnalysisConnections):
-    pass
+    input_image_type = pexConfig.ChoiceField[str](
+        "Which image type to read the summary statistics from.",
+        allowed={
+            "legacy": "Read ``summaryStats`` from an `lsst.afw.image.Exposure`.",
+            "future": "Read ``summary_stats`` from an `lsst.images.VisitImage`.",
+        },
+        optional=False,
+        default="legacy",
+    )
 
 
 class CalexpSummaryAnalysisTask(AnalysisPipelineTask):
@@ -70,6 +94,6 @@ class CalexpSummaryAnalysisTask(AnalysisPipelineTask):
 
         summary = inputs["data"]
         if summary is None:
-            raise UpstreamFailureNoWorkFound("No summary stats attached to calexp.")
+            raise UpstreamFailureNoWorkFound("No summary stats attached to the input image.")
         outputs = self.run(data=summary.__dict__)
         butlerQC.put(outputs, outputRefs)

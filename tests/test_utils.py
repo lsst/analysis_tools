@@ -78,6 +78,7 @@ class TestTractPatchUtils(lsst.utils.tests.TestCase):
     def testTractCorners(self):
 
         for i, tractId in enumerate(self.tractIds):
+            print(getTractCorners(self.skyMap, tractId))
             np.testing.assert_array_almost_equal(
                 getTractCorners(self.skyMap, tractId),
                 self.tractCorners[i],

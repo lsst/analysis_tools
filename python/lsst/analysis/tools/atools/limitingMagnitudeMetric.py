@@ -36,21 +36,33 @@ class FiveSigmaPointSourceDepthMetric(AnalysisTool):
     and mean 5-sigma depths are returned.
     """
 
-    parameterizedBand: bool = False
+    def coaddContext(self) -> None:
+
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="{band}_psfFlux")
+
+        self.produce.metric.newNames = {
+            "median5sigmaDepth": "{band}_median5sigmaDepth",
+            "mean5sigmaDepth": "{band}_mean5sigmaDepth",
+        }
+
+    def visitContext(self) -> None:
+        self.parameterizedBand = False
+        self.prep.selectors.starSelector.vectorKey = "extendedness"
+        self.prep.selectors.snSelector.fluxType = "psfFlux"
+        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
 
     def setDefaults(self):
         super().setDefaults()
 
         self.prep.selectors.starSelector = StarSelector()
-        self.prep.selectors.starSelector.vectorKey = "extendedness"
 
         self.prep.selectors.snSelector = SnSelector()
-        self.prep.selectors.snSelector.fluxType = "psfFlux"
         # Select between 4.75 < SNR < 5.25 to get a decent sample:
         self.prep.selectors.snSelector.threshold = 4.75
         self.prep.selectors.snSelector.maxSN = 5.25
 
-        self.process.buildActions.mags = ConvertFluxToMag(vectorKey="psfFlux")
         self.process.calculateActions.median5sigmaDepth = MedianAction(vectorKey="mags")
         self.process.calculateActions.mean5sigmaDepth = MeanAction(vectorKey="mags")
 

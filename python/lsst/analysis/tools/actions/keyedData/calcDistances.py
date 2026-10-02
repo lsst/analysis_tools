@@ -104,6 +104,7 @@ class CalcRelativeDistances(KeyedDataAction):
             "AMx": np.nan,
             "ADx": np.nan,
             "AFx": np.nan,
+            "nPairs": 0,
         }
 
         if len(data[self.groupKey]) == 0:
@@ -111,16 +112,7 @@ class CalcRelativeDistances(KeyedDataAction):
 
         rng = np.random.RandomState(seed=self.randomSeed)
 
-        def _compressArray(arrayIn):
-            h, rev = esutil.stat.histogram(arrayIn, rev=True)
-            arrayOut = np.zeros(len(arrayIn), dtype=np.int32)
-            (good,) = np.where(h > 0)
-            for counter, ind in enumerate(good):
-                arrayOut[rev[rev[ind] : rev[ind + 1]]] = counter
-            return arrayOut
-
-        groupId = _compressArray(data[self.groupKey])
-
+        _, groupId = np.unique(data[self.groupKey], return_inverse=True)
         nObj = groupId.max() + 1
 
         # Compute the meanRa/meanDec.
@@ -268,6 +260,7 @@ class CalcRelativeDistances(KeyedDataAction):
         distanceParams["AMx"] = AMx.value
         distanceParams["ADx"] = ADx.value
         distanceParams["AFx"] = AFx.value
+        distanceParams["nPairs"] = len(rmsDistances)
 
         return distanceParams
 

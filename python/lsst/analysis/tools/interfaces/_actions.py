@@ -302,7 +302,7 @@ class JointAction(AnalysisAction):
     plot = ConfigurableActionField[PlotAction](doc="Action to run that will produce one or more plots")
 
     def __call__(self, data: KeyedData, **kwargs) -> JointResults:
-        if isinstance(self.plot, NoPlot):
+        if isinstance(self.plot, NoPlot) or not kwargs.get("produce_plots", True):
             plots = None
         else:
             plots = self.plot(data, **kwargs)

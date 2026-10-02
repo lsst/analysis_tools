@@ -157,6 +157,13 @@ class AnalysisTool(AnalysisAction):
     key/value.
     """
 
+    doProducePlots = Field[bool](
+        doc="""If this value is set to False, then no plots are generated.
+        Metric generation is unaffected. If the `AnalysisTool` produces no
+        metrics, then no outputs are generated""",
+        default=True,
+    )
+
     def __call__(self, data: KeyedData, **kwargs) -> KeyedResults:
         bands = kwargs.pop("bands", None)
         if "plotInfo" in kwargs and kwargs.get("plotInfo") is not None:
@@ -186,12 +193,17 @@ class AnalysisTool(AnalysisAction):
         # create a shallow copy of kwargs
         kwargs = dict(**kwargs)
         kwargs["metric_tags"] = list(self.metric_tags or ())
+        kwargs["produce_plots"] = self.doProducePlots
         prepped: KeyedData = self.prep(data, **kwargs)  # type: ignore
         if self.propagateData:
             prepped = ChainMap(data, prepped)
         processed: KeyedData = self.process(prepped, **kwargs)  # type: ignore
         if self.propagateData:
             processed = ChainMap(data, processed)
+        # If the analysis tool only produces plots, and doProducePlots is False
+        # then don't run produce; return nothing.
+        if not self.doProducePlots and isinstance(self.produce, PlotAction):
+            return {}
         finalized: (
             Mapping[str, PlotTypes] | PlotTypes | Mapping[str, Measurement] | Measurement | JointResults
         ) = self.produce(
@@ -278,6 +290,8 @@ class AnalysisTool(AnalysisAction):
         result : `tuple` of `str`
             Names for each plot produced by this action.
         """
+        if not self.doProducePlots:
+            return tuple()
         match self.produce:
             case JointAction(plot=NoPlot()):
                 return tuple()

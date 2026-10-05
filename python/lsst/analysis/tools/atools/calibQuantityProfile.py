@@ -33,6 +33,8 @@ __all__ = (
 
 from typing import cast
 
+import numpy as np
+
 from lsst.pex.config import Field
 from lsst.pex.config.configurableActions import ConfigurableActionField
 
@@ -89,21 +91,20 @@ class SingleValueRepacker(KeyedDataAction):
     )
 
     def __call__(self, data: KeyedData, **kwargs) -> KeyedData:
-        repackedData = {}
-        uniquePanelKeys = list(set(data[self.panelKey]))
-
-        # Loop over data vector to repack information as it is expected.
-        for i in range(len(uniquePanelKeys)):
-            repackedData[f"{uniquePanelKeys[i]}_x"] = []
-            repackedData[f"{uniquePanelKeys[i]}"] = []
+        repackedData: dict[str, list] = {}
 
         panelVec = cast(Vector, data[self.panelKey])
         dataVec = cast(Vector, data[self.dataKey])
         quantityVec = cast(Vector, data[self.quantityKey])
+        # cp_verify's results tables also hold per-detector and per-exposure
+        # rows, which have no amplifier and so belong in no panel.
+        panelMask = np.ma.getmaskarray(panelVec)
 
         for i in range(len(panelVec)):
-            repackedData[f"{panelVec[i]}_x"].append(dataVec[i])
-            repackedData[f"{panelVec[i]}"].append(quantityVec[i])
+            if panelMask[i]:
+                continue
+            repackedData.setdefault(f"{panelVec[i]}_x", []).append(dataVec[i])
+            repackedData.setdefault(f"{panelVec[i]}", []).append(quantityVec[i])
 
         return repackedData
 

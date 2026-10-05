@@ -310,7 +310,7 @@ class MatrixPlot(PlotAction):
         if not isinstance(data[self.matrixKey], np.ndarray) and data[self.matrixKey].ndim != 2:
             raise ValueError(f"Input data is not a 2d array: {data[self.matrixKey]}")
         # Check that the keyword arguments are valid.
-        acceptableKwargs = {"plotInfo", "skymap", "band", "metric_tags", "fig"}
+        acceptableKwargs = {"plotInfo", "skymap", "band", "metric_tags", "produce_plots", "fig"}
         if not set(kwargs).issubset(acceptableKwargs):
             raise ValueError(
                 f"Only the following keyword arguments are allowed: {acceptableKwargs}. Got: {kwargs}"

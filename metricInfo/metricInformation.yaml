@@ -263,7 +263,9 @@ diffimLimitingMagnitude:
     debugGroup: diffim
     atoolsFile: diffimMetadataMetrics.py
     description: |
-        The limiting magnitude of the difference image based on photometric zeropoint and average PSF FWHM
+        The 5 sigma point-source limiting AB magnitude of the difference image, from the science and
+        template limits added in quadrature in flux. Each limit uses the median good-pixel variance and
+        the noise-equivalent area of the PSF.
 scaleTemplateVarianceFactor:
     lowThreshold: 0.9
     highThreshold: 1.1

@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-__all__ = ("Ap12PsfSkyPlot", "PsfCModelSkyPlot", "PsfCModelScatterPlot", "PsfApRatio")
+__all__ = ("Ap12PsfSkyPlot", "PsfCModelSkyPlot", "PsfCModelScatterPlot", "PsfApRatio", "PsfSersicScatterPlot")
 
 from ..actions.plot.histPlot import HistPanel, HistPlot
 from ..actions.plot.scatterplotWithTwoHists import ScatterPlotStatsAction, ScatterPlotWithTwoHists
@@ -177,6 +177,58 @@ class PsfCModelScatterPlot(AnalysisTool):
             "median": "{band}_psf_cModel_diff_median",
             "mean": "{band}_psf_cModel_diff_mean",
             "sigmaMad": "{band}_psf_cModel_diff_sigmaMad",
+        }
+
+
+class PsfSersicScatterPlot(AnalysisTool):
+    """Creates a scatterPlot showing the difference between
+    PSF and CModel mags"""
+
+    def setDefaults(self):
+        super().setDefaults()
+        self.prep.selectors.flagSelector = CoaddPlotFlagSelector()
+        self.prep.selectors.flagSelector.bands = []
+
+        self.prep.selectors.snSelector = SnSelector()
+        self.prep.selectors.snSelector.fluxType = "{band}_psfFlux"
+        self.prep.selectors.snSelector.threshold = 300
+
+        self.prep.selectors.starSelector = StarSelector()
+        self.prep.selectors.starSelector.vectorKey = "{band}_extendedness"
+
+        self.process.buildActions.xStars = ConvertFluxToMag()
+        self.process.buildActions.xStars.vectorKey = "{band}_psfFlux"
+        self.process.buildActions.yStars = MagDiff()
+        self.process.buildActions.yStars.col1 = "{band}_psfFlux"
+        self.process.buildActions.yStars.col2 = "{band}_sersicFlux"
+        self.process.buildActions.patch = LoadVector(vectorKey="patch")
+
+        self.process.calculateActions.stars = ScatterPlotStatsAction(vectorKey="yStars")
+        self.process.calculateActions.stars.lowSNSelector.fluxType = "{band}_psfFlux"
+        self.process.calculateActions.stars.highSNSelector.fluxType = "{band}_psfFlux"
+        self.process.calculateActions.stars.fluxType = "{band}_psfFlux"
+
+        self.process.calculateActions.median = MedianAction()
+        self.process.calculateActions.median.vectorKey = "yStars"
+
+        self.process.calculateActions.mean = MeanAction()
+        self.process.calculateActions.mean.vectorKey = "yStars"
+
+        self.process.calculateActions.sigmaMad = SigmaMadAction()
+        self.process.calculateActions.sigmaMad.vectorKey = "yStars"
+
+        self.produce.plot = ScatterPlotWithTwoHists()
+        self.produce.plot.plotTypes = ["stars"]
+        self.produce.plot.xAxisLabel = "PSF Magnitude (mag)"
+        self.produce.plot.yAxisLabel = "PSF - Sersic (mmag)"
+        self.produce.plot.magLabel = "PSF Magnitude (mag)"
+
+        self.produce.metric.units = {"median": "mmag", "sigmaMad": "mmag", "mean": "mmag"}
+
+        self.produce.metric.newNames = {
+            "median": "{band}_psf_sersic_diff_median",
+            "mean": "{band}_psf_sersic_diff_mean",
+            "sigmaMad": "{band}_psf_sersic_diff_sigmaMad",
         }
 
 

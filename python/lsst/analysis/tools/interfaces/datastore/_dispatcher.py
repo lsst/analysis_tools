@@ -21,7 +21,14 @@
 
 from __future__ import annotations
 
-__all__ = ("SasquatchDispatchPartialFailure", "SasquatchDispatchFailure", "SasquatchDispatcher")
+__all__ = (
+    "DispatchableMetricBundle",
+    "MetricMeasurement",
+    "MetricName",
+    "SasquatchDispatchFailure",
+    "SasquatchDispatchPartialFailure",
+    "SasquatchDispatcher",
+)
 
 import calendar
 import datetime
@@ -29,9 +36,9 @@ import json
 import logging
 import math
 import re
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import ItemsView, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, Protocol, cast, runtime_checkable
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -42,9 +49,6 @@ from lsst.resources import ResourcePath
 from lsst.utils.packages import getEnvironmentPackages
 
 from ...utils import http_client
-
-if TYPE_CHECKING:
-    from .. import MetricMeasurementBundle
 
 """Sasquatch datastore"""
 
@@ -81,6 +85,57 @@ class SasquatchDispatchFailure(RuntimeError):
     """
 
     pass
+
+
+@runtime_checkable
+class MetricName(Protocol):
+    """The interface required of the name of a measured metric."""
+
+    metric: str
+    """Name of the metric, without any package qualification."""
+
+
+@runtime_checkable
+class MetricMeasurement(Protocol):
+    """The interface required of a single metric measurement."""
+
+    metric_name: MetricName
+    """Identifier of the metric that was measured."""
+
+    notes: Mapping[str, Any]
+    """Annotations for the measurement, keyed by ``<metric>.<note>``."""
+
+    json: Mapping[str, Any]
+    """The measurement as a mapping with ``metric`` and ``value`` keys.
+
+    This is an attribute rather than a method so that a property such as
+    the one on `lsst.verify.Measurement` satisfies it. It is unrelated to
+    the ``json()`` method of
+    `~lsst.analysis.tools.interfaces.MetricMeasurementBundle`.
+    """
+
+
+@runtime_checkable
+class DispatchableMetricBundle(Protocol):
+    """The interface required of a dataset dispatched to Sasquatch.
+
+    Any in-memory type structurally matching this protocol can be sent to
+    Sasquatch, whatever storage class the butler associates it with.
+    """
+
+    metricNamePrefix: str
+    """String prepended to each metric name to form the topic name."""
+
+    def items(self) -> ItemsView[str, Sequence[MetricMeasurement]]:
+        """Return the measurements, grouped by metric name.
+
+        Returns
+        -------
+        items : `~collections.abc.ItemsView`
+            Must be a re-iterable view rather than a one-shot iterator,
+            because callers are permitted to traverse it more than once.
+        """
+        ...
 
 
 def _tag2VersionTime(productStr: str) -> tuple[str, float]:
@@ -349,7 +404,7 @@ class SasquatchDispatcher:
                 log.error("Unsupported type %s, skipping record", type(value))
                 return {}
 
-    def _handleReferencePackage(self, meta: MutableMapping, bundle: MetricMeasurementBundle) -> None:
+    def _handleReferencePackage(self, meta: MutableMapping, bundle: DispatchableMetricBundle) -> None:
         """Check to see if there is a reference package.
 
         if there is a reference package, determine the datetime associated with
@@ -361,7 +416,7 @@ class SasquatchDispatcher:
         meta : `MutableMapping`
             A mapping which corresponds to fields which should be encoded in
             all records.
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundled metrics
         """
         ref_package, package_version, package_timestamp = "", "", 0.0
@@ -381,7 +436,7 @@ class SasquatchDispatcher:
         meta["reference_package_version"] = package_version
         meta["reference_package_timestamp"] = package_timestamp
 
-    def _handleTimes(self, meta: MutableMapping, bundle: MetricMeasurementBundle, run: str) -> None:
+    def _handleTimes(self, meta: MutableMapping, bundle: DispatchableMetricBundle, run: str) -> None:
         """Add times to the meta fields mapping.
 
         Add all appropriate timestamp fields to the meta field mapping. These
@@ -396,7 +451,7 @@ class SasquatchDispatcher:
         meta : `MutableMapping`
             A mapping which corresponds to fields which should be encoded in
             all records.
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundled metrics
         run : `str`
             The `~lsst.daf.butler.Butler` collection where the
@@ -452,7 +507,7 @@ class SasquatchDispatcher:
         meta: MutableMapping,
         identifierFields: Mapping[str, Any] | None,
         datasetIdentifier: str | None,
-        bundle: MetricMeasurementBundle,
+        bundle: DispatchableMetricBundle,
     ) -> None:
         """Add an identifier to the meta record mapping.
 
@@ -479,7 +534,7 @@ class SasquatchDispatcher:
             each record will belong to one combination of such.
         datasetIdentifier : `str` or `None`
             A string which will be used in creating unique identifier tags.
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundle containing metric values to upload.
         """
         identifier: str
@@ -500,7 +555,7 @@ class SasquatchDispatcher:
 
     def _prepareBundle(
         self,
-        bundle: MetricMeasurementBundle,
+        bundle: DispatchableMetricBundle,
         run: str,
         datasetType: str,
         timestamp: datetime.datetime | None = None,
@@ -514,7 +569,7 @@ class SasquatchDispatcher:
 
         Parameters
         ----------
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundle containing metric values to upload.
         run : `str`
             The run name to associate with these metric values. If this bundle
@@ -628,7 +683,7 @@ class SasquatchDispatcher:
 
     def dispatch(
         self,
-        bundle: MetricMeasurementBundle,
+        bundle: DispatchableMetricBundle,
         run: str,
         datasetType: str,
         timestamp: datetime.datetime | None = None,
@@ -641,7 +696,7 @@ class SasquatchDispatcher:
 
         Parameters
         ----------
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundle containing metric values to upload.
         run : `str`
             The run name to associate with these metric values. If this bundle
@@ -747,7 +802,7 @@ class SasquatchDispatcher:
 
     def dispatchRef(
         self,
-        bundle: MetricMeasurementBundle,
+        bundle: DispatchableMetricBundle,
         ref: DatasetRef,
         timestamp: datetime.datetime | None = None,
         extraFields: Mapping | None = None,
@@ -758,7 +813,7 @@ class SasquatchDispatcher:
 
         Parameters
         ----------
-        bundle : `MetricMeasurementBundle`
+        bundle : `DispatchableMetricBundle`
             The bundle containing metric values to upload.
         ref : `DatasetRef`
             The `Butler` dataset ref corresponding to the input

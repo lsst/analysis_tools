@@ -19,22 +19,85 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Tests for SasquatchDatastore and SasquatchDispatcher.
+
+These catch (1) a put that no longer hands the bundle to the dispatcher,
+(2) a broken or unresponsive Sasquatch proxy failing or hanging the put,
+and with it the pipeline task, and (3) explicit timestamp versions being
+misparsed, or accepted when malformed.
+"""
+
 import datetime
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import astropy.units as u
+import requests
 
 import lsst.daf.butler.tests as butlerTests
 from lsst.analysis.tools.interfaces import MetricMeasurementBundle
-from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher
+from lsst.analysis.tools.interfaces.datastore import SasquatchDispatcher, SasquatchDispatchFailure
+from lsst.analysis.tools.interfaces.datastore._dispatcher import DEFAULT_TIMEOUT
 from lsst.daf.butler import CollectionType, Config
 from lsst.daf.butler.tests.utils import makeTestTempDir, removeTestTempDir
 from lsst.verify import Measurement
 
 TESTDIR = os.path.abspath(os.path.dirname(__file__))
 CONFIG_FILE = os.path.join(TESTDIR, "config", "butler-sasquatch.yaml")
+
+# Where the dispatcher looks up its HTTP session factory, for patching.
+HTTP_CLIENT = "lsst.analysis.tools.interfaces.datastore._dispatcher.http_client"
+DATASTORE_LOGGER = "lsst.analysis.tools.interfaces.datastore._sasquatchDatastore"
+
+
+def _fakeResponse(status: int = 200, json: object = None, jsonError: Exception | None = None) -> MagicMock:
+    """Make a stand-in for a `requests.Response`.
+
+    Parameters
+    ----------
+    status : `int`, optional
+        HTTP status code; ``raise_for_status`` raises for 4xx and 5xx.
+    json : `object`, optional
+        Value returned by ``json()``.
+    jsonError : `Exception`, optional
+        Exception raised by ``json()`` in place of returning ``json``.
+
+    Returns
+    -------
+    response : `unittest.mock.MagicMock`
+        The fake response.
+    """
+    response = MagicMock()
+    response.status_code = status
+    if status >= 400:
+        response.raise_for_status.side_effect = requests.HTTPError(f"HTTP {status}", response=response)
+    if jsonError is not None:
+        response.json.side_effect = jsonError
+    else:
+        response.json.return_value = json
+    return response
+
+
+def _fakeSession(getResponse: MagicMock | None = None, postResponse: MagicMock | None = None) -> MagicMock:
+    """Make a stand-in for a `requests.Session` returning canned responses.
+
+    Parameters
+    ----------
+    getResponse : `unittest.mock.MagicMock`, optional
+        Response returned by ``get``; a bare 200 if not given.
+    postResponse : `unittest.mock.MagicMock`, optional
+        Response returned by ``post``; a bare 200 if not given.
+
+    Returns
+    -------
+    session : `unittest.mock.MagicMock`
+        The fake session.
+    """
+    session = MagicMock()
+    session.get.return_value = getResponse if getResponse is not None else _fakeResponse()
+    session.post.return_value = postResponse if postResponse is not None else _fakeResponse()
+    return session
 
 
 class SasquatchDatastoreTest(unittest.TestCase):
@@ -44,6 +107,7 @@ class SasquatchDatastoreTest(unittest.TestCase):
         config = Config()
         config["datastore", "cls"] = "lsst.analysis.tools.interfaces.datastore.SasquatchDatastore"
         config["datastore", "restProxyUrl"] = "https://example.com/sasquatch-rest-proxy"
+        config["datastore", "timeout"] = 5.5
 
         dataIds = {
             "instrument": ["DummyCam"],
@@ -72,6 +136,64 @@ class SasquatchDatastoreTest(unittest.TestCase):
 
         mock_method.assert_called()
         self.assertIs(mock_method.call_args[0][0], bundle)
+
+    def testPutSurvivesUnexpectedDispatchError(self) -> None:
+        # Publishing to Sasquatch is best-effort: an unexpected error from
+        # the dispatcher (a broken proxy, or a bug preparing the records)
+        # must be logged, not raised, or it fails the put and with it the
+        # pipeline task that wrote the bundle.
+        measurement = Measurement("nopackage.fancyMetric", 42.2 * u.s)
+        bundle = MetricMeasurementBundle({"m": [measurement]})
+
+        with patch.object(SasquatchDispatcher, "dispatchRef", side_effect=KeyError("data")):
+            with self.assertLogs(DATASTORE_LOGGER, level="ERROR") as logs:
+                ref = self.butler.put(
+                    bundle, "Metrics", run="run1", instrument="DummyCam", visit=43, detector=2
+                )
+
+        self.assertIsNotNone(ref)
+        self.assertTrue(any("not published" in line for line in logs.output))
+
+    def testTimeoutConfiguration(self) -> None:
+        # The configured timeout must reach the dispatcher, and a dispatcher
+        # made without one must still get DEFAULT_TIMEOUT rather than none.
+        self.assertEqual(self.butler._datastore.timeout, 5.5)
+        self.assertEqual(self.butler._datastore._dispatcher.timeout, 5.5)
+        self.assertEqual(SasquatchDispatcher("http://test.local", "na").timeout, DEFAULT_TIMEOUT)
+
+    def testRequestsUseTimeout(self) -> None:
+        # An HTTP call made without the timeout lets a proxy that accepts
+        # connections but never answers hang the put indefinitely.
+        dispatcher = SasquatchDispatcher("http://test.local", "na", timeout=12.5)
+        session = _fakeSession(getResponse=_fakeResponse(json={"data": [{"cluster_id": "abc"}]}))
+
+        with patch(HTTP_CLIENT) as mockHttpClient:
+            mockHttpClient.return_value.__enter__.return_value = session
+            self.assertEqual(dispatcher.clusterId, "abc")
+            self.assertTrue(dispatcher._create_topic("some.metric"))
+
+        self.assertEqual(session.get.call_args.kwargs["timeout"], 12.5)
+        self.assertEqual(session.post.call_args.kwargs["timeout"], 12.5)
+
+    def testClusterIdFailuresRaiseDispatchFailure(self) -> None:
+        # Each bad response must surface as SasquatchDispatchFailure, the
+        # failure the datastore expects, not as a bare KeyError, IndexError
+        # or JSONDecodeError. Parsing the body before checking the status
+        # lets the 5xx case through.
+        dispatcher = SasquatchDispatcher("http://test.local", "na")
+        jsonError = requests.exceptions.JSONDecodeError("Expecting value", "<html>", 0)
+        badResponses = {
+            "5xx with an error document": _fakeResponse(503, json={"error_code": 50301}),
+            "2xx without the data key": _fakeResponse(200, json={"error_code": 50301}),
+            "2xx with no clusters": _fakeResponse(200, json={"data": []}),
+            "2xx with a non-JSON body": _fakeResponse(200, jsonError=jsonError),
+        }
+        for description, response in badResponses.items():
+            with self.subTest(description):
+                with patch(HTTP_CLIENT) as mockHttpClient:
+                    mockHttpClient.return_value.__enter__.return_value = _fakeSession(getResponse=response)
+                    with self.assertRaises(SasquatchDispatchFailure):
+                        _ = dispatcher.clusterId
 
     def test_explicit_timestamp_version(self):
         dispatcher = SasquatchDispatcher("http://test.local", "na")

@@ -26,7 +26,7 @@ __all__ = ("SasquatchDatastore",)
 import logging
 import os
 from collections.abc import Collection, Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, get_protocol_members
 
 from lsst.daf.butler import DatasetRef, DatasetTypeNotSupportedError, StorageClass
 from lsst.daf.butler.datastore import DatasetRefURIs, DatastoreConfig, DatastoreOpaqueTable
@@ -34,8 +34,15 @@ from lsst.daf.butler.datastore.generic_base import GenericBaseDatastore
 from lsst.daf.butler.datastore.record_data import DatastoreRecordData
 from lsst.daf.butler.registry.interfaces import DatastoreRegistryBridge
 from lsst.resources import ResourcePath, ResourcePathExpression
+from lsst.utils.introspection import get_full_type_name
 
-from . import SasquatchDispatcher, SasquatchDispatchFailure, SasquatchDispatchPartialFailure
+from . import (
+    DispatchableMetricBundle,
+    MetricMeasurement,
+    SasquatchDispatcher,
+    SasquatchDispatchFailure,
+    SasquatchDispatchPartialFailure,
+)
 
 if TYPE_CHECKING:
     from lsst.daf.butler import Config, DatasetProvenance, DatasetType, LookupKey
@@ -62,11 +69,21 @@ class SasquatchDatastore(GenericBaseDatastore):
         Object that manages the interface between `Registry` and datastores.
     butlerRoot : `str`, optional
         Unused parameter.
+
+    Notes
+    -----
+    Which storage classes reach this datastore is controlled entirely by the
+    ``constraints`` section of its configuration, so a site can accept its
+    own metric types without modifying this package. Configuration can not
+    say whether a storage class's Python type is one the dispatcher
+    understands, so `put` additionally checks the in-memory object against
+    `DispatchableMetricBundle` and `MetricMeasurement`.
     """
 
-    defaultConfigFile: ClassVar[str | None] = "sasquatchDatastore.yaml"
-    """Path to configuration defaults. Accessed within the ``configs`` resource
-    or relative to a search path. Can be None if no defaults specified.
+    defaultConfigFile: ClassVar[str | None] = "datastores/sasquatchDatastore.yaml"
+    """Path of datastore-specific configuration file to be included in
+    searches when building butler configurations. Relative to each entry of
+    ``DAF_BUTLER_CONFIG_PATH``.
     """
 
     restProxyUrl: str
@@ -151,21 +168,69 @@ class SasquatchDatastore(GenericBaseDatastore):
     def bridge(self) -> DatastoreRegistryBridge:
         return self._bridge
 
+    @staticmethod
+    def _check_conforms(dataset: Any, protocol: type, description: str) -> None:
+        """Check that an object provides the interface the dispatcher needs.
+
+        Parameters
+        ----------
+        dataset : `object`
+            The in-memory object to inspect.
+        protocol : `type`
+            The runtime-checkable protocol the object must satisfy.
+        description : `str`
+            Human readable description of the object's role, used in the
+            error message.
+
+        Raises
+        ------
+        DatasetTypeNotSupportedError
+            Raised if the object does not provide the interface. This is
+            the exception a chained datastore expects when a datastore
+            cannot handle a dataset, so raising it lets the chain move on
+            to the next datastore rather than failing the whole put.
+        """
+        if isinstance(dataset, protocol):
+            return
+        missing = sorted(name for name in get_protocol_members(protocol) if not hasattr(dataset, name))
+        raise DatasetTypeNotSupportedError(
+            f"{description} of type {get_full_type_name(dataset)} can not be dispatched to "
+            f"Sasquatch: missing {', '.join(missing)}"
+        )
+
     def put(
         self, inMemoryDataset: Any, ref: DatasetRef, *, provenance: DatasetProvenance | None = None
     ) -> None:
-        if self.constraints.isAcceptable(ref):
-            try:
-                self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
-            except SasquatchDispatchFailure:
-                log.warning("Failed to dispatch metric bundle to Sasquatch.")
-            except SasquatchDispatchPartialFailure:
-                log.warning("Only some of the metrics were successfully dispatched to Sasquatch.")
-        else:
+        if not self.constraints.isAcceptable(ref):
             log.debug("Could not put dataset type %s with Sasquatch datastore", ref.datasetType)
             raise DatasetTypeNotSupportedError(
                 f"Could not put dataset type {ref.datasetType} with Sasquatch datastore"
             )
+
+        # Configuration controls which storage classes reach this datastore,
+        # but says nothing about whether their Python types can actually be
+        # serialized, so check the object itself against the dispatcher's
+        # interface.
+        self._check_conforms(inMemoryDataset, DispatchableMetricBundle, "Dataset")
+
+        # Spot check the first measurement rather than every one: a
+        # non-conforming type is almost always a whole class that a site has
+        # misconfigured, not one stray element. A bundle whose later
+        # measurements are malformed still reaches the dispatcher, which logs
+        # and skips the records it can not parse.
+        first = next(
+            (measurement for _, measurements in inMemoryDataset.items() for measurement in measurements),
+            None,
+        )
+        if first is not None:
+            self._check_conforms(first, MetricMeasurement, "Measurement")
+
+        try:
+            self._dispatcher.dispatchRef(inMemoryDataset, ref, extraFields=self.extra_fields)
+        except SasquatchDispatchFailure:
+            log.warning("Failed to dispatch metric bundle to Sasquatch.")
+        except SasquatchDispatchPartialFailure:
+            log.warning("Only some of the metrics were successfully dispatched to Sasquatch.")
 
     def put_new(self, in_memory_dataset: Any, dataset_ref: DatasetRef) -> Mapping[str, DatasetRef]:
         # Docstring inherited from the base class.

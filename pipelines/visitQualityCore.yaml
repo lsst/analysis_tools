@@ -54,3 +54,21 @@ tasks:
       inputDataDimensions: ["instrument", "visit"]
       outputTableDimensions: ["instrument"]
       dataIdFieldsToIncludeAsColumns: ["visit", "band"]
+  aggregateVisitSummary:
+    class: lsst.analysis.tools.tasks.ExposureCatalogAnalysisTask
+    config:
+      connections.inputName: visitSummary
+      connections.outputName: visit_summary_aggregate
+      inputTableDimensions: ["visit"]
+      taskDimensions: ["visit"]
+      atools.aggregateVisitSummaryStats: AggregateVisitSummaryStats
+      atools.aggregateCornerSeparations: AggregateCornerSeparations
+      python: from lsst.analysis.tools.atools import *
+  makeMetricTableAggregateVisitSummary:
+    class: lsst.analysis.tools.tasks.MakeMetricTableTask
+    config:
+      connections.metricBundleName: visit_summary_aggregate_metrics
+      connections.outputTableName: visit_summary_aggregate_metrics_table
+      inputDataDimensions: ["visit"]
+      outputTableDimensions: ["instrument"]
+      dataIdFieldsToIncludeAsColumns: ["visit", "band"]

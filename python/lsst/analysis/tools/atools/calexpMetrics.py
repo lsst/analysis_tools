@@ -44,7 +44,6 @@ from ..actions.vector import (
 )
 from ..interfaces import AnalysisTool
 
-
 # Common to both CalexpSummaryMetrics and AggregateVisitSummaryStats.
 # Units in comments indicate compound units, which are unsupported.
 _SUMMARY_STATS_UNITS = {

@@ -284,7 +284,7 @@ tasks:
     class: lsst.analysis.tools.tasks.MakeDiffimKernelQuiverPlotVisitTask
     config:
       connections.spatiallySampledMetrics: difference_image_metrics
-      connections.visit_summary: preliminary_visit_summary
+      connections.visit_summary: visit_summary
       connections.quiverKernelPlot: diffimPlots_kernelQuiver_QuiverPlot_visit
 subsets:
   promptQaMetrics:

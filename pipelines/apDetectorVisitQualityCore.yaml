@@ -1,6 +1,15 @@
 description: |
   AP plots and metrics to assess CcdVisit quality in Prompt Processing
   Additional AP metrics may be written in apDetectorVisitQualityExtended
+
+imports:
+  - location: resource://lsst.analysis.tools/resources/pipelines/visitQualityCore.yaml
+    include:
+      # Tasks that aggregate per-detector exposure summary stats to produce
+      # per-visit metrics.
+      - aggregateVisitSummary
+      - makeMetricTableAggregateVisitSummary
+
 parameters:
   # Note that these parameter names are shared with ApPipe, and are overwritten
   # by changes in the values there.
@@ -280,6 +289,10 @@ tasks:
       input_image_type: parameters.image_type
       atools.initialPviSummaryMetrics: CalexpSummaryMetrics
       python: from lsst.analysis.tools.atools import *
+  aggregateVisitSummary:
+    class: lsst.analysis.tools.tasks.ExposureCatalogAnalysisTask
+    config:
+      connections.inputName: visit_summary
   analyzeVisitSampledImageSubtractionMetrics:
     class: lsst.analysis.tools.tasks.MakeDiffimKernelQuiverPlotVisitTask
     config:
@@ -303,3 +316,5 @@ subsets:
     subset:
       - analyzeSampledImageSubtractionMetrics
       - analyzeVisitSampledImageSubtractionMetrics
+      - aggregateVisitSummary
+      - makeMetricTableAggregateVisitSummary

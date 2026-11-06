@@ -180,13 +180,6 @@ class SasquatchDatastore(GenericBaseDatastore):
                 f"Could not put dataset type {ref.datasetType} with Sasquatch datastore"
             )
 
-    def put_new(self, in_memory_dataset: Any, dataset_ref: DatasetRef) -> Mapping[str, DatasetRef]:
-        # Docstring inherited from the base class.
-        self.put(in_memory_dataset, dataset_ref)
-        # Sasquatch is a sort of ephemeral, because we do not store its
-        # datastore records in registry, so return empty dict.
-        return {}
-
     def export_predicted_records(self, refs: Iterable[DatasetRef]) -> dict[str, DatastoreRecordData]:
         return {}
 

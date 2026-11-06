@@ -338,6 +338,7 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
         data: KeyedData,
         camera: Camera,
         plotInfo: Mapping[str, str] | None = None,
+        cmap: list[str] | None = None,
         **kwargs,
     ) -> Figure:
         """Prep the catalogue and then make a focalPlanePlot of the given
@@ -383,6 +384,11 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
                 The tract that the data comes from (`str`).
             ``"bands"``
                 The band(s) that the data comes from (`list` of `str`).
+        cmap : `list` [`str`]
+            Colors to use for the colormap.  Defaults to
+            "midnightBlue", "lightcyan", "darkgreen" for the minimum,
+            midpoint, and maximum.  This list is passed to
+            `.plotUtils.mkColormap`.
 
         Returns
         -------
@@ -390,7 +396,11 @@ class FocalPlaneGeometryPlot(FocalPlanePlot):
             The resulting figure.
         """
 
-        cmap = mkColormap(["midnightBlue", "lightcyan", "darkgreen"])
+        if cmap is None:
+            cmap = mkColormap(["midnightBlue", "lightcyan", "darkgreen"])
+        else:
+            cmap = mkColormap(cmap)
+
         cmap.set_bad(color="none")
 
         if plotInfo is None:
